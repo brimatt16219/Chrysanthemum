@@ -47,6 +47,7 @@ function App() {
   return (
     <div className="min-h-screen w-screen flex items-center justify-center">
       <div className="w-full max-w-4xl rounded-lg p-6">
+        <h1 className="text-center text-yellow-600">Chrysanthemum</h1>
         <Garden
           inventory={inventory}
           removeFromInventory={removeFromInventory}
