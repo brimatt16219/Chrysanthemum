@@ -30,31 +30,29 @@ function App() {
   };
 
   const removeFromInventory = (item: InventoryItem) => {
-    setInventory((prev) =>
-      prev
-        .map((i) => {
-          if (
-            i.type === item.type &&
-            i.traits.color === item.traits.color &&
-            i.traits.shape === item.traits.shape
-          ) {
-            return { ...i, count: i.count - 1 };
-          }
-          return i;
-        })
-        .filter((i) => i.count > 0)
+    setInventory(prev =>
+      prev.map(i => {
+        if (
+          i.type === item.type &&
+          i.traits.color === item.traits.color &&
+          i.traits.shape === item.traits.shape
+        ) {
+          return { ...i, count: Math.max(i.count - 1, 0) };
+        }
+        return i;
+      })
     );
   };
 
   return (
-    <div className="min-h-screen">
-      <h1 className="text-center text-3xl font-bold mt-4">🌼 Chrysanthemum</h1>
-      <Inventory inventory={inventory} />
-      <Garden
-        inventory={inventory}
-        removeFromInventory={removeFromInventory}
-        addToInventory={addToInventory}
-      />
+    <div className="min-h-screen w-screen flex items-center justify-center">
+      <div className="w-full max-w-4xl rounded-lg p-6">
+        <Garden
+          inventory={inventory}
+          removeFromInventory={removeFromInventory}
+          addToInventory={addToInventory}
+        />
+      </div>
     </div>
   );
 }
