@@ -4,6 +4,29 @@ import Garden from '../components/Garden';
 import Inventory from '../components/Inventory';
 
 function App() {
+
+  // Currency
+  const [gold, setGold] = useState<number>(() => {
+    // load from local
+    return Number(localStorage.getItem("gold") ?? 100);
+  })
+
+  const addGold = (amount: number) => {
+    setGold(g => {
+      const next = g + amount;
+      localStorage.setItem("gold", next.toString());
+      return next;
+    });
+  };
+  const spendGold = (amount: number) => {
+    setGold(g => {
+      const next = g - amount;
+      localStorage.setItem("gold", next.toString());
+      return next;
+    });
+  };
+
+  // Inventory
   const [inventory, setInventory] = useState<InventoryItem[]>([
     {
       type: "daisy",
