@@ -141,7 +141,7 @@ const Garden: React.FC<GardenProps> = ({
                 <img
                   src={prefab.icons.bloom}
                   alt={item.type}
-                  className="w-6 h-6 mx-auto mb-1"
+                  className="w-12 h-12 mx-auto mb-1"
                 />
                 <div className="text-sm">{item.type}</div>
                 <div className="text-xs text-gray-600">
@@ -161,7 +161,7 @@ const Garden: React.FC<GardenProps> = ({
               key={plot.id}
               onClick={() => handleClick(rowIndex, colIndex)}
               className={`w-16 h-16 border rounded flex items-center justify-center cursor-pointer ${
-                plot.plant ? "bg-green-300" : "bg-gray-200"
+                plot.plant ? "bg-amber-900" : "bg-green-600"
               }`}
             >
               {plot.plant &&
@@ -175,7 +175,7 @@ const Garden: React.FC<GardenProps> = ({
                         <img
                           src={prefab.icons.seed}
                           alt="seed"
-                          className="w-6 h-6"
+                          className="w-12 h-12"
                         />
                       );
                     case "sprout":
@@ -183,7 +183,7 @@ const Garden: React.FC<GardenProps> = ({
                         <img
                           src={prefab.icons.sprout}
                           alt="sprout"
-                          className="w-6 h-6"
+                          className="w-12 h-12"
                         />
                       );
                     case "bloom":
@@ -191,7 +191,7 @@ const Garden: React.FC<GardenProps> = ({
                         <img
                           src={prefab.icons.bloom}
                           alt="bloom"
-                          className="w-8 h-8"
+                          className="w-12 h-12"
                         />
                       );
                     default:
