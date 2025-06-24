@@ -20,6 +20,9 @@ export interface FlowerPrefab {
     sprout: string;
     bloom: string;
   };
+  price: number;
+  rarity: number;
+  quantity: [number, number];
 }
 
 export const flowerPrefabs: Record<string, FlowerPrefab> = {
@@ -31,6 +34,9 @@ export const flowerPrefabs: Record<string, FlowerPrefab> = {
       sprout: allium_sprout,
       bloom: allium_bloom,
     },
+    price: 10,
+    rarity: 50,
+    quantity: [5, 10],
   },
   azure_bluet: {
     type: "azure_bluet",
@@ -40,6 +46,9 @@ export const flowerPrefabs: Record<string, FlowerPrefab> = {
       sprout: azure_bluet_sprout,
       bloom: azure_bluet_bloom,
     },
+    price: 15,
+    rarity: 40,
+    quantity: [1, 7],
   },
   // Add more flower types here
 };
