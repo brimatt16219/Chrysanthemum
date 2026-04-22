@@ -1,10 +1,11 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import {
   type GameState,
   type OfflineSummary,
   loadGame,
   saveGame,
   tickShop,
+  msUntilShopReset,
 } from "./gameStore";
 
 interface GameContextValue {
@@ -12,6 +13,8 @@ interface GameContextValue {
   update: (newState: GameState) => void;
   offlineSummary: OfflineSummary;
   clearSummary: () => void;
+  shopJustRestocked: boolean;
+  clearShopNotification: () => void;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -28,30 +31,59 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [offlineSummary, setOfflineSummary] = useState<OfflineSummary>(
     loaded.current.summary
   );
+  const [shopJustRestocked, setShopJustRestocked] = useState(false);
 
   // Auto-save whenever state changes
   useEffect(() => {
     saveGame(state);
   }, [state]);
 
-  // Check shop restock every 30s while app is open
+  // Tick every second — detects restock the moment the timer hits 0
   useEffect(() => {
     const interval = setInterval(() => {
-      setState((prev) => tickShop(prev));
-    }, 30_000);
+      setState((prev) => {
+        const msLeft = msUntilShopReset(prev);
+
+        // Timer just hit 0 — restock immediately
+        if (msLeft === 0) {
+          const next = tickShop(prev);
+          if (next !== prev) {
+            // Only notify if state actually changed (i.e. restock happened)
+            setShopJustRestocked(true);
+          }
+          return next;
+        }
+
+        return prev;
+      });
+    }, 1_000);
+
     return () => clearInterval(interval);
   }, []);
 
-  function update(newState: GameState) {
+  const update = useCallback((newState: GameState) => {
     setState(newState);
-  }
+  }, []);
 
   function clearSummary() {
     setOfflineSummary(EMPTY_SUMMARY);
   }
 
+  function clearShopNotification() {
+    setShopJustRestocked(false);
+  }
+
   return (
-    <GameContext.Provider value={{ state, update, offlineSummary, clearSummary }}>
+    <GameContext.Provider
+      value={{
+        state,
+        update,
+        offlineSummary,
+        clearSummary,
+        shopJustRestocked,
+        clearShopNotification,
+      }}
+    >
       {children}
     </GameContext.Provider>
   );

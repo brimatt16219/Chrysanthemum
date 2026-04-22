@@ -3,6 +3,7 @@ import { Garden } from "./components/Garden";
 import { Shop } from "./components/Shop";
 import { Inventory } from "./components/Inventory";
 import { OfflineBanner } from "./components/OfflineBanner";
+import { ShopRestockBanner } from "./components/ShopRestockBanner";
 import { useGame } from "./store/GameContext";
 import { msUntilShopReset } from "./store/gameStore";
 
@@ -17,7 +18,7 @@ function formatCountdown(ms: number): string {
 }
 
 export default function App() {
-  const { state, offlineSummary, clearSummary } = useGame();
+  const { state, offlineSummary, clearSummary, shopJustRestocked, clearShopNotification } = useGame();
   const [tab, setTab] = useState<Tab>("garden");
   const [countdown, setCountdown] = useState(() => msUntilShopReset(state));
   const [showBanner, setShowBanner] = useState(true);
@@ -40,6 +41,10 @@ export default function App() {
       {/* Offline banner */}
       {showBanner && (
         <OfflineBanner summary={offlineSummary} onDismiss={handleDismissBanner} />
+      )}
+
+      {shopJustRestocked && (
+        <ShopRestockBanner onDismiss={clearShopNotification} />
       )}
 
       {/* HUD */}
