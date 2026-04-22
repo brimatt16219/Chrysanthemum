@@ -43,7 +43,7 @@ export function Shop() {
 
       {/* Coins */}
       <div className="flex items-center gap-2 bg-card/40 border border-border rounded-lg px-4 py-2.5">
-        <span className="text-lg">🪙</span>
+        <span className="text-lg">🟡</span>
         <span className="text-sm font-mono font-medium">
           {state.coins.toLocaleString()} coins
         </span>

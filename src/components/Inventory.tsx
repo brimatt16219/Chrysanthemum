@@ -51,14 +51,14 @@ export function Inventory() {
         <div className="text-right">
           <p className="text-xs text-muted-foreground">Total value</p>
           <p className="text-sm font-mono font-semibold text-primary">
-            {totalValue.toLocaleString()} 🪙
+            {totalValue.toLocaleString()} 🟡
           </p>
         </div>
       </div>
 
       {/* Coins */}
       <div className="flex items-center gap-2 bg-card/40 border border-border rounded-lg px-4 py-2.5">
-        <span className="text-lg">🪙</span>
+        <span className="text-lg">🟡</span>
         <span className="text-sm font-mono font-medium">
           {state.coins.toLocaleString()} coins
         </span>
@@ -70,7 +70,7 @@ export function Inventory() {
           onClick={handleSellAll}
           className="w-full py-2.5 rounded-xl border border-primary text-primary text-sm font-semibold hover:bg-primary/10 transition-colors"
         >
-          Sell Everything — {totalValue.toLocaleString()} 🪙
+          Sell Everything — {totalValue.toLocaleString()} 🟡
         </button>
       )}
 

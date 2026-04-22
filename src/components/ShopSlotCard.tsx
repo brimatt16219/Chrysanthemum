@@ -66,7 +66,7 @@ export function ShopSlotCard({ slot }: Props) {
               }
             `}
           >
-            {slot.price} 🪙
+            {slot.price} 🟡
           </button>
         </div>
       </div>
@@ -115,7 +115,7 @@ export function ShopSlotCard({ slot }: Props) {
       <div className="text-xs text-muted-foreground font-mono space-y-0.5">
         <p>Seed → Sprout: {formatDuration(species.growthTime.seed)}</p>
         <p>Sprout → Bloom: {formatDuration(species.growthTime.sprout)}</p>
-        <p className="text-foreground/60">Sells for: {species.sellValue} 🪙</p>
+        <p className="text-foreground/60">Sells for: {species.sellValue} 🟡</p>
       </div>
 
       <div className="flex items-center justify-between mt-auto pt-1">
@@ -133,7 +133,7 @@ export function ShopSlotCard({ slot }: Props) {
             }
           `}
         >
-          {slot.price} 🪙
+          {slot.price} 🟡
         </button>
       </div>
     </div>

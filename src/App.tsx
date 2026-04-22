@@ -49,7 +49,7 @@ export default function App() {
             🌸 Chrysanthemum
           </h1>
           <div className="flex items-center gap-4">
-            <span className="text-sm font-mono">🪙 {state.coins.toLocaleString()}</span>
+            <span className="text-sm font-mono">🟡 {state.coins.toLocaleString()}</span>
             <span className="text-xs text-muted-foreground font-mono hidden sm:block">
               Shop {formatCountdown(countdown)}
             </span>

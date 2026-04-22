@@ -53,7 +53,7 @@ export function HarvestPopup({ speciesId, mutation, onDone }: Props) {
       >
         <span className="text-base">{species.emoji.bloom}</span>
         <span className={`text-xs font-bold font-mono ${mut ? mut.color : rarity?.color}`}>
-          +{value} 🪙
+          +{value} 🟡
         </span>
       </div>
     </div>

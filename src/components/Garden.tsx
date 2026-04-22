@@ -107,7 +107,7 @@ export function Garden() {
               }
             `}
           >
-            Upgrade to {nextUpgrade.label} — {nextUpgrade.cost.toLocaleString()} 🪙
+            Upgrade to {nextUpgrade.label} — {nextUpgrade.cost.toLocaleString()} 🟡
           </button>
           <p className="text-xs text-muted-foreground">{nextUpgrade.description}</p>
         </div>

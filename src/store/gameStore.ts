@@ -160,7 +160,7 @@ function generateShop(): ShopSlot[] {
     const species = getFlower(id)!;
     return {
       speciesId: id,
-      price: Math.max(5, Math.floor(species.sellValue * 0.6)),
+      price:  species.sellValue * 2,
       quantity: Math.floor(Math.random() * 4) + 2,
     };
   });

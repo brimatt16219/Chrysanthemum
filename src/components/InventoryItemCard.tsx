@@ -57,7 +57,7 @@ export function InventoryItemCard({ item }: Props) {
           </span>
         </div>
         <p className="text-xs text-muted-foreground mt-0.5">
-          {item.quantity}× · {valuePerItem} 🪙 each · {totalValue} 🪙 total
+          {item.quantity}× · {valuePerItem} 🟡 each · {totalValue} 🟡 total
         </p>
       </div>
 
