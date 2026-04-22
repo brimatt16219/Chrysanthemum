@@ -34,11 +34,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     saveGame(state);
   }, [state]);
 
-  // Check shop restock every minute while app is open
+  // Check shop restock every 30s while app is open
   useEffect(() => {
     const interval = setInterval(() => {
       setState((prev) => tickShop(prev));
-    }, 60_000);
+    }, 30_000);
     return () => clearInterval(interval);
   }, []);
 

@@ -53,7 +53,7 @@ export interface OfflineSummary {
 // ── Constants ──────────────────────────────────────────────────────────────
 
 const SAVE_KEY = "chrysanthemum_save";
-const SHOP_RESET_INTERVAL = 60 * 60 * 1_000; // 1 hour
+const SHOP_RESET_INTERVAL = 10 * 60 * 1_000; // 10 min
 const SHOP_FLOWER_SLOTS = 4;
 
 // ── Grid helpers ───────────────────────────────────────────────────────────
