@@ -1,4 +1,4 @@
-import { type OfflineSummary } from "../store/gameStore";
+import type { OfflineSummary } from "../store/gameStore";
 
 interface Props {
   summary: OfflineSummary;
@@ -51,7 +51,7 @@ export function OfflineBanner({ summary, onDismiss }: Props) {
               <div>
                 <p className="text-sm font-semibold">Shop has restocked</p>
                 <p className="text-xs text-muted-foreground">
-                  Fresh selection of seeds available
+                  Fresh seeds and fertilizer available
                 </p>
               </div>
             </div>

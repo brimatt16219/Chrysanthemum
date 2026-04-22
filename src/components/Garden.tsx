@@ -3,15 +3,13 @@ import { useGame } from "../store/GameContext";
 import { useGrowthTick } from "../hooks/useGrowthTick";
 import { PlotTile } from "./PlotTile";
 import { SeedPicker } from "./SeedPicker";
-import { getCurrentStage, harvestPlant, plantSeed } from "../store/gameStore";
-import { getFlower, RARITY_CONFIG } from "../data/flowers";
+import { getCurrentStage, plantSeed, upgradeFarm } from "../store/gameStore";
 import { getNextUpgrade, getCurrentTier } from "../data/upgrades";
 
 export function Garden() {
   const { state, update } = useGame();
-  useGrowthTick(5_000); // re-render every 5s
+  useGrowthTick(5_000);
 
-  // Which empty plot is selected (waiting for seed pick)
   const [selectedPlot, setSelectedPlot] = useState<{ row: number; col: number } | null>(null);
 
   const nextUpgrade = getNextUpgrade(state.farmSize);
@@ -19,23 +17,10 @@ export function Garden() {
 
   function handlePlotClick(row: number, col: number) {
     const plot = state.grid[row][col];
-
     if (!plot.plant) {
-      // Open seed picker for this plot
       setSelectedPlot({ row, col });
-      return;
     }
-
-    // If bloomed, harvest it
-    const stage = getCurrentStage(plot.plant, Date.now());
-    if (stage === "bloom") {
-      const next = harvestPlant(state, row, col);
-      if (next) {
-        update(next);
-        const species = getFlower(plot.plant.speciesId);
-        // Brief harvest feedback could go here
-      }
-    }
+    // harvesting is handled inside PlotTile
   }
 
   function handleSeedSelect(speciesId: string) {
@@ -46,20 +31,13 @@ export function Garden() {
   }
 
   function handleUpgrade() {
-    const next = getNextUpgrade(state.farmSize);
-    if (!next || state.coins < next.cost) return;
-    update({
-      ...state,
-      coins: state.coins - next.cost,
-      farmSize: next.size,
-      grid: state.grid, // resizeGrid is called inside upgradeFarm
-    });
+    const next = upgradeFarm(state);
+    if (next) update(next);
   }
 
-  // Count bloomed plants for the harvest hint
-  const bloomedCount = state.grid.flat().filter(
-    (p) => p.plant && getCurrentStage(p.plant, Date.now()) === "bloom"
-  ).length;
+  const bloomedCount = state.grid
+    .flat()
+    .filter((p) => p.plant && getCurrentStage(p.plant, Date.now()) === "bloom").length;
 
   return (
     <div className="flex flex-col items-center gap-6">
@@ -89,7 +67,9 @@ export function Garden() {
               <PlotTile
                 key={plot.id}
                 plot={plot}
-                onClick={() => handlePlotClick(row, col)}
+                row={row}
+                col={col}
+                onEmptyClick={() => handlePlotClick(row, col)}
                 isSelected={
                   selectedPlot?.row === row && selectedPlot?.col === col
                 }
@@ -98,18 +78,22 @@ export function Garden() {
           })}
         </div>
 
-        {/* Seed picker — floats above the grid */}
+        {/* Seed picker — floats below the grid */}
         {selectedPlot && (
-          <div className="absolute left-1/2 -translate-x-1/2 top-full mt-3 z-20">
-            <SeedPicker
-              onSelect={handleSeedSelect}
-              onClose={() => setSelectedPlot(null)}
-            />
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm"
+            onClick={() => setSelectedPlot(null)}
+          >
+            <div onClick={(e) => e.stopPropagation()}>
+              <SeedPicker
+                onSelect={handleSeedSelect}
+                onClose={() => setSelectedPlot(null)}
+              />
+            </div>
           </div>
         )}
       </div>
 
-      {/* Upgrade button */}
+      {/* Farm upgrade */}
       {nextUpgrade && (
         <div className="text-center space-y-1">
           <button
@@ -123,7 +107,7 @@ export function Garden() {
               }
             `}
           >
-            Upgrade to {nextUpgrade.label} — {nextUpgrade.cost} 🪙
+            Upgrade to {nextUpgrade.label} — {nextUpgrade.cost.toLocaleString()} 🪙
           </button>
           <p className="text-xs text-muted-foreground">{nextUpgrade.description}</p>
         </div>

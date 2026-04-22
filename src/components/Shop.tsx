@@ -3,11 +3,18 @@ import { useGame } from "../store/GameContext";
 import { msUntilShopReset } from "../store/gameStore";
 import { ShopSlotCard } from "./ShopSlotCard";
 
+function formatCountdown(ms: number): string {
+  const totalSec = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60).toString().padStart(2, "0");
+  const s = (totalSec % 60).toString().padStart(2, "0");
+  return h > 0 ? `${h}:${m}:${s}` : `${m}:${s}`;
+}
+
 export function Shop() {
   const { state } = useGame();
   const [countdown, setCountdown] = useState(() => msUntilShopReset(state));
 
-  // Tick countdown every second
   useEffect(() => {
     const id = setInterval(() => {
       setCountdown(msUntilShopReset(state));
@@ -23,7 +30,7 @@ export function Shop() {
         <div>
           <h2 className="text-lg font-bold">Flower Shop</h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Buy seeds to plant in your garden
+            Buy seeds and fertilizer for your garden
           </p>
         </div>
         <div className="text-right">
@@ -34,10 +41,12 @@ export function Shop() {
         </div>
       </div>
 
-      {/* Coins reminder */}
+      {/* Coins */}
       <div className="flex items-center gap-2 bg-card/40 border border-border rounded-lg px-4 py-2.5">
         <span className="text-lg">🪙</span>
-        <span className="text-sm font-mono font-medium">{state.coins.toLocaleString()} coins</span>
+        <span className="text-sm font-mono font-medium">
+          {state.coins.toLocaleString()} coins
+        </span>
       </div>
 
       {/* Shop grid */}
@@ -47,18 +56,9 @@ export function Shop() {
         ))}
       </div>
 
-      {/* Footer note */}
       <p className="text-xs text-muted-foreground text-center pb-4">
         Shop stock is random every hour. Rarer flowers appear less often.
       </p>
     </div>
   );
-}
-
-function formatCountdown(ms: number): string {
-  const totalSec = Math.max(0, Math.floor(ms / 1000));
-  const h = Math.floor(totalSec / 3600);
-  const m = Math.floor((totalSec % 3600) / 60).toString().padStart(2, "0");
-  const s = (totalSec % 60).toString().padStart(2, "0");
-  return h > 0 ? `${h}:${m}:${s}` : `${m}:${s}`;
 }

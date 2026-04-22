@@ -9,11 +9,12 @@ interface Props {
 export function SeedPicker({ onSelect, onClose }: Props) {
   const { state } = useGame();
 
-  const seeds = state.inventory.filter((i) => i.quantity > 0);
+  // Only show items without a mutation (those are seeds, not harvested blooms)
+  const seeds = state.inventory.filter((i) => i.quantity > 0 && !i.mutation);
 
   if (seeds.length === 0) {
     return (
-      <div className="bg-card border border-border rounded-xl p-4 text-center space-y-2 w-64">
+      <div className="bg-card border border-border rounded-xl p-4 text-center space-y-2 w-80 shadow-xl z-50">
         <p className="text-sm text-muted-foreground">No seeds in inventory.</p>
         <p className="text-xs text-muted-foreground">Buy seeds from the Shop tab.</p>
         <button
@@ -27,10 +28,13 @@ export function SeedPicker({ onSelect, onClose }: Props) {
   }
 
   return (
-    <div className="bg-card border border-border rounded-xl p-3 w-64 shadow-xl">
+    <div className="bg-card border border-border rounded-xl p-3 w-80 shadow-xl z-50">
       <div className="flex items-center justify-between mb-3">
         <p className="text-sm font-semibold">Select a seed to plant</p>
-        <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-xs">
+        <button
+          onClick={onClose}
+          className="text-muted-foreground hover:text-foreground text-xs"
+        >
           ✕
         </button>
       </div>

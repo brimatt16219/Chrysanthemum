@@ -1,14 +1,79 @@
 import { getFlower, RARITY_CONFIG } from "../data/flowers";
+import { FERTILIZERS } from "../data/upgrades";
 import { useGame } from "../store/GameContext";
-import { buyFromShop } from "../store/gameStore";
+import { buyFromShop, buyFertilizer } from "../store/gameStore";
 import type { ShopSlot } from "../store/gameStore";
 
 interface Props {
   slot: ShopSlot;
 }
 
+function formatDuration(ms: number): string {
+  const totalSec = ms / 1000;
+  if (totalSec < 60) return `${totalSec}s`;
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return s > 0 ? `${m}m ${s}s` : `${m}m`;
+}
+
 export function ShopSlotCard({ slot }: Props) {
   const { state, update } = useGame();
+
+  // ── Fertilizer slot ──────────────────────────────────────────────────────
+  if (slot.isFertilizer && slot.fertilizerType) {
+    const fert = FERTILIZERS[slot.fertilizerType];
+    const canAfford = state.coins >= slot.price;
+    const outOfStock = slot.quantity === 0;
+
+    function handleBuyFert() {
+      const next = buyFertilizer(state, slot.fertilizerType!);
+      if (next) update(next);
+    }
+
+    return (
+      <div
+        className={`
+          flex flex-col gap-3 bg-card/60 border rounded-xl p-4 transition-all duration-200
+          ${outOfStock ? "border-border opacity-50" : "border-border hover:border-primary/40"}
+        `}
+      >
+        <div className="flex items-start justify-between">
+          <span className="text-4xl">{fert.emoji}</span>
+          <span className={`text-xs font-mono px-2 py-0.5 rounded-full border ${fert.color} border-current bg-current/10`}>
+            Fertilizer
+          </span>
+        </div>
+        <div>
+          <h3 className="font-semibold text-sm">{fert.name}</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">{fert.description}</p>
+        </div>
+        <div className="text-xs text-muted-foreground font-mono">
+          <p>Speed boost: {fert.speedMultiplier}×</p>
+          <p className="text-foreground/60">Applied per plot</p>
+        </div>
+        <div className="flex items-center justify-between mt-auto pt-1">
+          <span className="text-xs text-muted-foreground">
+            {outOfStock ? "Out of stock" : `${slot.quantity} left`}
+          </span>
+          <button
+            onClick={handleBuyFert}
+            disabled={!canAfford || outOfStock}
+            className={`
+              px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150
+              ${canAfford && !outOfStock
+                ? "bg-primary text-primary-foreground hover:scale-105"
+                : "bg-secondary text-muted-foreground cursor-not-allowed"
+              }
+            `}
+          >
+            {slot.price} 🪙
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Flower seed slot ─────────────────────────────────────────────────────
   const species = getFlower(slot.speciesId);
   if (!species) return null;
 
@@ -31,15 +96,15 @@ export function ShopSlotCard({ slot }: Props) {
         }
       `}
     >
-      {/* Emoji + rarity */}
       <div className="flex items-start justify-between">
         <span className="text-4xl">{species.emoji.bloom}</span>
-        <span className={`text-xs font-mono font-medium px-2 py-0.5 rounded-full border ${rarity.color} border-current bg-current/10`}>
+        <span
+          className={`text-xs font-mono font-medium px-2 py-0.5 rounded-full border ${rarity.color} border-current bg-current/10`}
+        >
           {rarity.label}
         </span>
       </div>
 
-      {/* Name + description */}
       <div>
         <h3 className="font-semibold text-sm">{species.name}</h3>
         <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
@@ -47,14 +112,12 @@ export function ShopSlotCard({ slot }: Props) {
         </p>
       </div>
 
-      {/* Growth time */}
       <div className="text-xs text-muted-foreground font-mono space-y-0.5">
         <p>Seed → Sprout: {formatDuration(species.growthTime.seed)}</p>
         <p>Sprout → Bloom: {formatDuration(species.growthTime.sprout)}</p>
         <p className="text-foreground/60">Sells for: {species.sellValue} 🪙</p>
       </div>
 
-      {/* Stock + buy button */}
       <div className="flex items-center justify-between mt-auto pt-1">
         <span className="text-xs text-muted-foreground">
           {outOfStock ? "Out of stock" : `${slot.quantity} left`}
@@ -75,12 +138,4 @@ export function ShopSlotCard({ slot }: Props) {
       </div>
     </div>
   );
-}
-
-function formatDuration(ms: number): string {
-  const totalSec = ms / 1000;
-  if (totalSec < 60) return `${totalSec}s`;
-  const m = Math.floor(totalSec / 60);
-  const s = totalSec % 60;
-  return s > 0 ? `${m}m ${s}s` : `${m}m`;
 }

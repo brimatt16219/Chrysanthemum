@@ -39,10 +39,7 @@ export default function App() {
 
       {/* Offline banner */}
       {showBanner && (
-        <OfflineBanner
-          summary={offlineSummary}
-          onDismiss={handleDismissBanner}
-        />
+        <OfflineBanner summary={offlineSummary} onDismiss={handleDismissBanner} />
       )}
 
       {/* HUD */}
@@ -78,6 +75,8 @@ export default function App() {
               {t === "garden" ? "🌱 Garden"
                : t === "shop" ? "🛒 Shop"
                : "🎒 Inventory"}
+
+              {/* Inventory badge */}
               {t === "inventory" && inventoryCount > 0 && (
                 <span className="absolute top-2 right-6 w-4 h-4 bg-primary rounded-full text-[10px] text-primary-foreground flex items-center justify-center font-bold">
                   {inventoryCount > 9 ? "9+" : inventoryCount}

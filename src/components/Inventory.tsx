@@ -1,26 +1,25 @@
 import { useGame } from "../store/GameContext";
 import { getFlower } from "../data/flowers";
+import { MUTATIONS } from "../data/flowers";
 import { InventoryItemCard } from "./InventoryItemCard";
 import { sellFlower } from "../store/gameStore";
 
 export function Inventory() {
   const { state, update } = useGame();
 
-  // Split inventory into seeds vs harvested blooms
-  // Seeds are items you haven't grown yet — they came from the shop
-  // For now all inventory items are treated the same way,
-  // but we label them by what they are
   const items = state.inventory.filter((i) => i.quantity > 0);
 
   const totalValue = items.reduce((sum, item) => {
     const species = getFlower(item.speciesId);
-    return sum + (species?.sellValue ?? 0) * item.quantity;
+    const mut = item.mutation ? MUTATIONS[item.mutation] : null;
+    const valuePerItem = Math.floor((species?.sellValue ?? 0) * (mut?.valueMultiplier ?? 1));
+    return sum + valuePerItem * item.quantity;
   }, 0);
 
   function handleSellAll() {
     let current = state;
     for (const item of items) {
-      const next = sellFlower(current, item.speciesId, item.quantity);
+      const next = sellFlower(current, item.speciesId, item.quantity, item.mutation);
       if (next) current = next;
     }
     update(current);
@@ -65,8 +64,8 @@ export function Inventory() {
         </span>
       </div>
 
-      {/* Sell all button */}
-      {items.length > 1 && (
+      {/* Sell all */}
+      {items.length > 0 && (
         <button
           onClick={handleSellAll}
           className="w-full py-2.5 rounded-xl border border-primary text-primary text-sm font-semibold hover:bg-primary/10 transition-colors"
@@ -77,8 +76,8 @@ export function Inventory() {
 
       {/* Item list */}
       <div className="flex flex-col gap-3">
-        {items.map((item) => (
-          <InventoryItemCard key={item.speciesId} item={item} />
+        {items.map((item, i) => (
+          <InventoryItemCard key={`${item.speciesId}-${item.mutation ?? "none"}-${i}`} item={item} />
         ))}
       </div>
     </div>

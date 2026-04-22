@@ -29,10 +29,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     loaded.current.summary
   );
 
+  // Auto-save whenever state changes
   useEffect(() => {
     saveGame(state);
   }, [state]);
 
+  // Check shop restock every minute while app is open
   useEffect(() => {
     const interval = setInterval(() => {
       setState((prev) => tickShop(prev));

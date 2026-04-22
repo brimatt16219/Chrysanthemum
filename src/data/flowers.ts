@@ -2,21 +2,6 @@ export type Rarity = "common" | "uncommon" | "rare" | "legendary" | "mythic";
 
 export type GrowthStage = "seed" | "sprout" | "bloom";
 
-export interface FlowerSpecies {
-  id: string;
-  name: string;
-  description: string;
-  emoji: Record<GrowthStage, string>;
-  rarity: Rarity;
-  growthTime: {
-    seed: number;    // ms from seed → sprout
-    sprout: number;  // ms from sprout → bloom
-  };
-  sellValue: number;   // coins when harvested
-  shopWeight: number;  // higher = appears more often in shop
-}
-
-// ── ADD NEW FLOWERS HERE ───────────────────────────────────────────────────
 export type MutationType =
   | "golden"
   | "rainbow"
@@ -28,38 +13,38 @@ export type MutationType =
 export interface Mutation {
   id: MutationType;
   name: string;
-  emoji: string;          // overlaid on the bloom emoji
+  emoji: string;
   description: string;
-  valueMultiplier: number; // 1.0 = no change, 2.0 = double sell value
-  chance: number;          // 0–1 probability on harvest
-  color: string;           // tailwind text color for badge
+  valueMultiplier: number;
+  chance: number;
+  color: string;
 }
 
 export const MUTATIONS: Record<MutationType, Mutation> = {
-  golden:   { id: "golden",   name: "Golden",   emoji: "✨", description: "Shimmers with golden light.",     valueMultiplier: 3.0, chance: 0.05,  color: "text-yellow-400" },
-  rainbow:  { id: "rainbow",  name: "Rainbow",  emoji: "🌈", description: "Every color at once.",            valueMultiplier: 2.5, chance: 0.06,  color: "text-pink-400"   },
-  giant:    { id: "giant",    name: "Giant",    emoji: "⬆️", description: "Twice the size of a normal bloom.", valueMultiplier: 2.0, chance: 0.08,  color: "text-green-400"  },
-  moonlit:  { id: "moonlit",  name: "Moonlit",  emoji: "🌙", description: "Glows faintly in the dark.",      valueMultiplier: 2.0, chance: 0.07,  color: "text-blue-300"   },
-  frozen:   { id: "frozen",   name: "Frozen",   emoji: "❄️", description: "Crystallized mid-bloom.",         valueMultiplier: 1.5, chance: 0.10,  color: "text-cyan-400"   },
-  scorched: { id: "scorched", name: "Scorched", emoji: "🔥", description: "Survived extreme heat.",          valueMultiplier: 1.5, chance: 0.10,  color: "text-orange-400" },
+  golden:   { id: "golden",   name: "Golden",   emoji: "✨", description: "Shimmers with golden light.",       valueMultiplier: 3.0, chance: 0.05, color: "text-yellow-400" },
+  rainbow:  { id: "rainbow",  name: "Rainbow",  emoji: "🌈", description: "Every color at once.",              valueMultiplier: 2.5, chance: 0.06, color: "text-pink-400"   },
+  giant:    { id: "giant",    name: "Giant",    emoji: "⬆️", description: "Twice the size of a normal bloom.", valueMultiplier: 2.0, chance: 0.08, color: "text-green-400"  },
+  moonlit:  { id: "moonlit",  name: "Moonlit",  emoji: "🌙", description: "Glows faintly in the dark.",        valueMultiplier: 2.0, chance: 0.07, color: "text-blue-300"   },
+  frozen:   { id: "frozen",   name: "Frozen",   emoji: "❄️", description: "Crystallized mid-bloom.",           valueMultiplier: 1.5, chance: 0.10, color: "text-cyan-400"   },
+  scorched: { id: "scorched", name: "Scorched", emoji: "🔥", description: "Survived extreme heat.",            valueMultiplier: 1.5, chance: 0.10, color: "text-orange-400" },
 };
 
-// Add to FlowerSpecies — which mutations CAN appear on this flower
-// Leave empty array to disable mutations for a species
 export interface FlowerSpecies {
   id: string;
   name: string;
   description: string;
   emoji: Record<GrowthStage, string>;
   rarity: Rarity;
-  growthTime: { seed: number; sprout: number };
+  growthTime: {
+    seed: number;
+    sprout: number;
+  };
   sellValue: number;
   shopWeight: number;
-  possibleMutations: MutationType[];  // ← add this
+  possibleMutations: MutationType[];
 }
 
-// Update FLOWERS array — add possibleMutations to each entry
-// Common flowers get simpler mutations, rarer ones get the premium ones
+// ── ADD NEW FLOWERS HERE ───────────────────────────────────────────────────
 export const FLOWERS: FlowerSpecies[] = [
   {
     id: "daisy",
@@ -152,15 +137,13 @@ export const FLOWERS: FlowerSpecies[] = [
 ];
 // ──────────────────────────────────────────────────────────────────────────
 
-// Lookup helper — getFlower("daisy") returns the full species object
 export const getFlower = (id: string): FlowerSpecies | undefined =>
   FLOWERS.find((f) => f.id === id);
 
-// Rarity display config — color and label for UI badges
 export const RARITY_CONFIG: Record<Rarity, { label: string; color: string; glow: string }> = {
-  common:    { label: "Common",    color: "text-gray-400",    glow: "" },
-  uncommon:  { label: "Uncommon",  color: "text-green-400",   glow: "shadow-[0_0_8px_rgba(74,222,128,0.4)]" },
-  rare:      { label: "Rare",      color: "text-blue-400",    glow: "shadow-[0_0_8px_rgba(96,165,250,0.5)]" },
-  legendary: { label: "Legendary", color: "text-yellow-400",  glow: "shadow-[0_0_12px_rgba(250,204,21,0.6)]" },
-  mythic:    { label: "Mythic",    color: "text-pink-400",    glow: "shadow-[0_0_16px_rgba(244,114,182,0.7)]" },
+  common:    { label: "Common",    color: "text-gray-400",   glow: "" },
+  uncommon:  { label: "Uncommon",  color: "text-green-400",  glow: "shadow-[0_0_8px_rgba(74,222,128,0.4)]" },
+  rare:      { label: "Rare",      color: "text-blue-400",   glow: "shadow-[0_0_8px_rgba(96,165,250,0.5)]" },
+  legendary: { label: "Legendary", color: "text-yellow-400", glow: "shadow-[0_0_12px_rgba(250,204,21,0.6)]" },
+  mythic:    { label: "Mythic",    color: "text-pink-400",   glow: "shadow-[0_0_16px_rgba(244,114,182,0.7)]" },
 };

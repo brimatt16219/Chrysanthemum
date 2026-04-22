@@ -1,4 +1,4 @@
-import { getFlower, RARITY_CONFIG } from "../data/flowers";
+import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
 import { useGame } from "../store/GameContext";
 import { sellFlower } from "../store/gameStore";
 import type { InventoryItem } from "../store/gameStore";
@@ -13,15 +13,17 @@ export function InventoryItemCard({ item }: Props) {
   if (!species) return null;
 
   const rarity = RARITY_CONFIG[species.rarity];
-  const totalValue = species.sellValue * item.quantity;
+  const mut = item.mutation ? MUTATIONS[item.mutation] : null;
+  const valuePerItem = Math.floor(species.sellValue * (mut?.valueMultiplier ?? 1));
+  const totalValue = valuePerItem * item.quantity;
 
   function handleSellOne() {
-    const next = sellFlower(state, item.speciesId, 1);
+    const next = sellFlower(state, item.speciesId, 1, item.mutation);
     if (next) update(next);
   }
 
   function handleSellAll() {
-    const next = sellFlower(state, item.speciesId, item.quantity);
+    const next = sellFlower(state, item.speciesId, item.quantity, item.mutation);
     if (next) update(next);
   }
 
@@ -29,22 +31,33 @@ export function InventoryItemCard({ item }: Props) {
     <div
       className={`
         flex items-center gap-4 bg-card/60 border border-border rounded-xl px-4 py-3
-        hover:border-primary/30 transition-all duration-200 ${rarity.glow}
+        hover:border-primary/30 transition-all duration-200
+        ${mut ? `${MUTATIONS[item.mutation!].color.replace("text-", "shadow-").replace("400", "400/20")}` : rarity.glow}
       `}
     >
       {/* Emoji */}
-      <span className="text-3xl flex-shrink-0">{species.emoji.bloom}</span>
+      <div className="relative flex-shrink-0">
+        <span className="text-3xl">{species.emoji.bloom}</span>
+        {mut && (
+          <span className="absolute -top-1 -right-1 text-sm">{mut.emoji}</span>
+        )}
+      </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <h3 className="font-semibold text-sm truncate">{species.name}</h3>
+          {mut && (
+            <span className={`text-xs font-mono font-bold ${mut.color}`}>
+              {mut.name}
+            </span>
+          )}
           <span className={`text-xs font-mono ${rarity.color}`}>
             {rarity.label}
           </span>
         </div>
         <p className="text-xs text-muted-foreground mt-0.5">
-          {item.quantity}× · {species.sellValue} 🪙 each · {totalValue} 🪙 total
+          {item.quantity}× · {valuePerItem} 🪙 each · {totalValue} 🪙 total
         </p>
       </div>
 

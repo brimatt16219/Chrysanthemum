@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
-// Forces re-render on an interval so time-based growth stays visually current.
-// Nothing in the game state changes — just the UI re-reads Date.now().
+// Forces a re-render on an interval so time-based growth stays visually current.
+// Nothing in game state changes — components just re-read Date.now().
 export function useGrowthTick(intervalMs = 5_000) {
   const [, setTick] = useState(0);
 
