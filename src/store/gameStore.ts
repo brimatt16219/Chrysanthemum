@@ -160,15 +160,19 @@ export function saveGame(state: GameState): void {
   }
 }
 
-export function loadGame(): GameState {
+export function loadGame(): { state: GameState; summary: OfflineSummary } {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
-    if (!raw) return defaultState();
+    if (!raw) {
+      const state = defaultState();
+      return { state, summary: { minutesAway: 0, readyToHarvest: 0, shopRestocked: false } };
+    }
     const parsed = JSON.parse(raw) as GameState;
     return applyOfflineTick(parsed);
   } catch (e) {
     console.warn("Failed to load save, starting fresh:", e);
-    return defaultState();
+    const state = defaultState();
+    return { state, summary: { minutesAway: 0, readyToHarvest: 0, shopRestocked: false } };
   }
 }
 
@@ -182,22 +186,39 @@ export function resetGame(): GameState {
 // Called once on load. Handles everything that happened while the tab was closed:
 // — growth is already handled by getCurrentStage() at render time (time-based)
 // — shop restock: if >= 1 hour has passed since last reset, generate new stock
-function applyOfflineTick(state: GameState): GameState {
-  const now = Date.now();
-  let updated = { ...state };
+export interface OfflineSummary {
+  minutesAway: number;
+  readyToHarvest: number;    // plants that bloomed while away
+  shopRestocked: boolean;
+}
 
-  // Check if shop needs restocking
+// Change the return type and export the summary
+export function applyOfflineTick(state: GameState): {
+  state: GameState;
+  summary: OfflineSummary;
+} {
+  const now = Date.now();
+  const minutesAway = Math.floor((now - state.lastSaved) / 60_000);
+  let updated = { ...state };
+  let shopRestocked = false;
+
   const timeSinceReset = now - state.lastShopReset;
   if (timeSinceReset >= SHOP_RESET_INTERVAL) {
-    updated = {
-      ...updated,
-      shop: generateShop(),
-      lastShopReset: now,
-    };
-    console.log(`[Chrysanthemum] Shop restocked after ${Math.floor(timeSinceReset / 60_000)} minutes offline.`);
+    updated = { ...updated, shop: generateShop(), lastShopReset: now };
+    shopRestocked = true;
   }
 
-  return updated;
+  // Count how many plants bloomed while away
+  const readyToHarvest = updated.grid
+    .flat()
+    .filter(
+      (p) => p.plant && getCurrentStage(p.plant, now) === "bloom"
+    ).length;
+
+  return {
+    state: updated,
+    summary: { minutesAway, readyToHarvest, shopRestocked },
+  };
 }
 
 // ── Game actions ───────────────────────────────────────────────────────────

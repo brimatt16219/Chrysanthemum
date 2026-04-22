@@ -2,33 +2,48 @@ import { useState, useEffect } from "react";
 import { Garden } from "./components/Garden";
 import { Shop } from "./components/Shop";
 import { Inventory } from "./components/Inventory";
+import { OfflineBanner } from "./components/OfflineBanner";
 import { useGame } from "./store/GameContext";
 import { msUntilShopReset } from "./store/gameStore";
 
 type Tab = "garden" | "shop" | "inventory";
 
+function formatCountdown(ms: number): string {
+  const totalSec = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60).toString().padStart(2, "0");
+  const s = (totalSec % 60).toString().padStart(2, "0");
+  return h > 0 ? `${h}:${m}:${s}` : `${m}:${s}`;
+}
+
 export default function App() {
-  const { state } = useGame();
+  const { state, offlineSummary, clearSummary } = useGame();
   const [tab, setTab] = useState<Tab>("garden");
   const [countdown, setCountdown] = useState(() => msUntilShopReset(state));
+  const [showBanner, setShowBanner] = useState(true);
 
   useEffect(() => {
     const id = setInterval(() => setCountdown(msUntilShopReset(state)), 1_000);
     return () => clearInterval(id);
   }, [state.lastShopReset]);
 
-  function formatCountdown(ms: number): string {
-    const totalSec = Math.max(0, Math.floor(ms / 1000));
-    const h = Math.floor(totalSec / 3600);
-    const m = Math.floor((totalSec % 3600) / 60).toString().padStart(2, "0");
-    const s = (totalSec % 60).toString().padStart(2, "0");
-    return h > 0 ? `${h}:${m}:${s}` : `${m}:${s}`;
-  }
-
   const inventoryCount = state.inventory.reduce((s, i) => s + i.quantity, 0);
+
+  function handleDismissBanner() {
+    setShowBanner(false);
+    clearSummary();
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
+
+      {/* Offline banner */}
+      {showBanner && (
+        <OfflineBanner
+          summary={offlineSummary}
+          onDismiss={handleDismissBanner}
+        />
+      )}
 
       {/* HUD */}
       <header className="sticky top-0 z-30 bg-card/80 backdrop-blur border-b border-border px-4 py-3">
@@ -63,7 +78,6 @@ export default function App() {
               {t === "garden" ? "🌱 Garden"
                : t === "shop" ? "🛒 Shop"
                : "🎒 Inventory"}
-              {/* Badge for inventory count */}
               {t === "inventory" && inventoryCount > 0 && (
                 <span className="absolute top-2 right-6 w-4 h-4 bg-primary rounded-full text-[10px] text-primary-foreground flex items-center justify-center font-bold">
                   {inventoryCount > 9 ? "9+" : inventoryCount}
