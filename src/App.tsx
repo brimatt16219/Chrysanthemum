@@ -35,7 +35,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col garden-theme">
 
       {/* Offline banner */}
       {showBanner && (
