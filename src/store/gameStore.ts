@@ -1,5 +1,5 @@
 import { FLOWERS, MUTATIONS, getFlower, type GrowthStage, type MutationType } from "../data/flowers";
-import { FARM_UPGRADES, FERTILIZERS, getNextUpgrade, type FertilizerType } from "../data/upgrades";
+import { FERTILIZERS, getNextUpgrade, type FertilizerType } from "../data/upgrades";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 

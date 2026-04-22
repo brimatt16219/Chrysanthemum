@@ -5,7 +5,7 @@ import {
   getStageProgress,
   harvestPlant,
 } from "../store/gameStore";
-import { getFlower, RARITY_CONFIG, MUTATIONS, type MutationType } from "../data/flowers";
+import { getFlower, RARITY_CONFIG, type MutationType } from "../data/flowers";
 import { FERTILIZERS } from "../data/upgrades";
 import { HarvestPopup } from "./HarvestPopup";
 import { PlotTooltip } from "./PlotTooltip";
