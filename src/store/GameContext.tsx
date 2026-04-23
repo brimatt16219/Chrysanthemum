@@ -164,7 +164,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         await saveToCloud(u.id, ticked);
         localStorage.removeItem("chrysanthemum_save");
         setTimeout(() => { authInProgress.current = false; }, 1_500);
-      } else if (localSave && localSave.lastSaved > cloudSave.lastSaved + 60_000) {
+      } else if (localSave && localSave.lastSaved > cloudSave.lastSaved + 300_000) {
         console.log("[handleSignIn] branch: MIGRATION MODAL");
         setPendingMigration({ localSave, cloudSave });
         authInProgress.current = false;
@@ -223,6 +223,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   async function resolveMigration(choice: "local" | "cloud") {
     if (!pendingMigration || !user) return;
+
+    // Clear localStorage immediately regardless of choice
+    localStorage.removeItem("chrysanthemum_save");
+
     const saveToUse = choice === "local"
       ? pendingMigration.localSave
       : pendingMigration.cloudSave;
@@ -231,7 +235,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setState(ticked);
     setOfflineSummary(summary);
     await saveToCloud(user.id, ticked);
-    localStorage.removeItem("chrysanthemum_save");
     setPendingMigration(null);
   }
 
