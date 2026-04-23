@@ -12,6 +12,7 @@ import { FriendsPage } from "./components/FriendsPage";
 import { FriendRequestNotification } from "./components/FriendRequestNotification";
 import { GiftsPage } from "./components/GiftsPage";
 import { GiftNotification } from "./components/GiftNotification";
+import { LeaderboardPage } from "./components/LeaderboardPage";
 import { useGiftNotifications } from "./hooks/useGiftNotifications";
 import { useGame } from "./store/GameContext";
 import { useFriendRequests } from "./hooks/useFriendRequests";
@@ -20,7 +21,7 @@ import { getFlower } from "./data/flowers";
 
 
 type Tab = "garden" | "shop" | "inventory" | "social";
-type SocialView = "search" | "friends" | "gifts" | "profile";
+type SocialView = "search" | "friends" | "gifts" | "leaderboard" | "profile";
 
 function formatCountdown(ms: number): string {
   const totalSec = Math.max(0, Math.floor(ms / 1000));
@@ -214,7 +215,7 @@ export default function App() {
               {/* Social sub-nav */}
               {socialView !== "profile" && (
                 <div className="flex gap-2 mb-6">
-                  {(["search", "friends", "gifts"] as SocialView[]).map((v) => (
+                  {(["search", "friends", "gifts", "leaderboard"] as SocialView[]).map((v) => (
                     <button
                       key={v}
                       onClick={() => setSocialView(v)}
@@ -226,7 +227,10 @@ export default function App() {
                         }
                       `}
                     >
-                      {v === "search" ? "🔍 Search" : v === "friends" ? "👥 Friends" : "🎁 Gifts"}
+                      {v === "search"      ? "🔍 Search"
+                      : v === "friends"   ? "👥 Friends"
+                      : v === "gifts"     ? "🎁 Gifts"
+                      : "🏆 Ranks"}
                       {v === "friends" && pendingCount > 0 && (
                         <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
                           {pendingCount}
@@ -245,6 +249,9 @@ export default function App() {
               {socialView === "search"  && <SearchPage onViewProfile={handleViewProfile} />}
               {socialView === "friends" && <FriendsPage onViewProfile={handleViewProfile} />}
               {socialView === "gifts" && <GiftsPage onViewProfile={handleViewProfile} />}
+              {socialView === "leaderboard" && (
+                <LeaderboardPage onViewProfile={handleViewProfile} />
+              )}
               {socialView === "profile" && viewingProfile && (
                 <ProfilePage
                   username={viewingProfile}
