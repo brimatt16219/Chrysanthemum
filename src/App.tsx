@@ -6,10 +6,13 @@ import { OfflineBanner } from "./components/OfflineBanner";
 import { ShopRestockBanner } from "./components/ShopRestockBanner";
 import { UsernameModal } from "./components/UsernameModal";
 import { SaveMigrationModal } from "./components/SaveMigrationModal";
+import { SearchPage } from "./components/SearchPage";
+import { ProfilePage } from "./components/ProfilePage";
 import { useGame } from "./store/GameContext";
 import { msUntilShopReset } from "./store/gameStore";
+import { getFlower } from "./data/flowers";
 
-type Tab = "garden" | "shop" | "inventory";
+type Tab = "garden" | "shop" | "inventory" | "social";
 
 function formatCountdown(ms: number): string {
   const totalSec = Math.max(0, Math.floor(ms / 1000));
@@ -20,7 +23,6 @@ function formatCountdown(ms: number): string {
 }
 
 export default function App() {
-
   const {
     state, offlineSummary, clearSummary,
     shopJustRestocked, clearShopNotification,
@@ -30,9 +32,10 @@ export default function App() {
     needsUsername, completeUsername,
   } = useGame();
 
-  const [tab, setTab]         = useState<Tab>("garden");
+  const [tab, setTab]           = useState<Tab>("garden");
   const [countdown, setCountdown] = useState(() => msUntilShopReset(state));
   const [showBanner, setShowBanner] = useState(true);
+  const [viewingProfile, setViewingProfile] = useState<string | null>(null);
 
   useEffect(() => {
     const id = setInterval(() => setCountdown(msUntilShopReset(state)), 1_000);
@@ -40,6 +43,11 @@ export default function App() {
   }, [state.lastShopReset]);
 
   const inventoryCount = state.inventory.reduce((s, i) => s + i.quantity, 0);
+
+  function handleViewProfile(username: string) {
+    setViewingProfile(username);
+    setTab("social");
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -68,7 +76,10 @@ export default function App() {
       {/* HUD */}
       <header className="sticky top-0 z-30 bg-card/80 backdrop-blur border-b border-border px-4 py-3">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <h1 className="text-lg font-bold text-primary tracking-wide">
+          <h1
+            className="text-lg font-bold text-primary tracking-wide cursor-pointer"
+            onClick={() => { setTab("garden"); setViewingProfile(null); }}
+          >
             🌸 Chrysanthemum
           </h1>
           <div className="flex items-center gap-3">
@@ -76,14 +87,19 @@ export default function App() {
             <span className="text-xs text-muted-foreground font-mono hidden sm:block">
               Shop {formatCountdown(countdown)}
             </span>
-
-            {/* Auth button */}
             {!authLoading && (
               user ? (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground hidden sm:block">
-                    {profile?.username ?? "..."}
-                  </span>
+                  <button
+                    onClick={() => { setViewingProfile(profile?.username ?? null); setTab("social"); }}
+                    className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5"
+                  >
+                    {/* Show avatar emoji on mobile, full username on desktop */}
+                    <span className="text-base">
+                      {getFlower(profile?.display_flower ?? "daisy")?.emoji.bloom ?? "🌸"}
+                    </span>
+                    <span className="hidden sm:block">{profile?.username ?? "..."}</span>
+                  </button>
                   <button
                     onClick={signOut}
                     className="text-xs px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
@@ -107,23 +123,26 @@ export default function App() {
       {/* Tabs */}
       <nav className="bg-card/40 border-b border-border">
         <div className="max-w-2xl mx-auto flex">
-          {(["garden", "shop", "inventory"] as Tab[]).map((t) => (
+          {(["garden", "shop", "inventory", "social"] as Tab[]).map((t) => (
             <button
               key={t}
-              onClick={() => setTab(t)}
+              onClick={() => { setTab(t); if (t !== "social") setViewingProfile(null); }}
               className={`
-                flex-1 py-3 text-sm font-medium capitalize transition-colors border-b-2 relative
+                flex-1 py-3 text-sm font-medium transition-colors border-b-2 relative
                 ${tab === t
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground"
                 }
               `}
             >
-              {t === "garden" ? "🌱 Garden"
-               : t === "shop" ? "🛒 Shop"
-               : "🎒 Inventory"}
+              {t === "garden"    ? "🌱"
+               : t === "shop"   ? "🛒"
+               : t === "inventory" ? "🎒"
+               : "🌍"}
+              <span className="ml-1 hidden sm:inline capitalize">{t}</span>
+
               {t === "inventory" && inventoryCount > 0 && (
-                <span className="absolute top-2 right-6 w-4 h-4 bg-primary rounded-full text-[10px] text-primary-foreground flex items-center justify-center font-bold">
+                <span className="absolute top-2 right-1 sm:right-6 w-4 h-4 bg-primary rounded-full text-[10px] text-primary-foreground flex items-center justify-center font-bold">
                   {inventoryCount > 9 ? "9+" : inventoryCount}
                 </span>
               )}
@@ -137,7 +156,35 @@ export default function App() {
         {tab === "garden"    && <Garden />}
         {tab === "shop"      && <Shop />}
         {tab === "inventory" && <Inventory />}
+        {tab === "social"    && (
+          viewingProfile
+            ? <ProfilePage
+                username={viewingProfile}
+                onBack={() => setViewingProfile(null)}
+              />
+            : user
+            ? <SearchPage onViewProfile={handleViewProfile} />
+            : <GuestSocialPrompt onSignIn={signInWithGoogle} />
+        )}
       </main>
+    </div>
+  );
+}
+
+function GuestSocialPrompt({ onSignIn }: { onSignIn: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
+      <p className="text-5xl">🌍</p>
+      <p className="font-semibold">Sign in to access social features</p>
+      <p className="text-sm text-muted-foreground max-w-xs">
+        Search for other players, view their gardens, and show off your collection.
+      </p>
+      <button
+        onClick={onSignIn}
+        className="mt-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+      >
+        Sign in with Google
+      </button>
     </div>
   );
 }

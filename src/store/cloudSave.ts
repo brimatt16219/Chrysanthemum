@@ -101,3 +101,53 @@ export async function saveToCloud(
   }
   return true;
 }
+
+// Search users by username (partial match)
+export async function searchUsers(query: string): Promise<CloudProfile[]> {
+  if (!query.trim()) return [];
+
+  const { data, error } = await supabase
+    .from("users")
+    .select("*")
+    .ilike("username", `%${query.trim()}%`)
+    .limit(20);
+
+  if (error || !data) return [];
+  return data as CloudProfile[];
+}
+
+// Get a public profile by username
+export async function getProfileByUsername(
+  username: string
+): Promise<CloudProfile | null> {
+  const { data, error } = await supabase
+    .from("users")
+    .select("*")
+    .eq("username", username)
+    .single();
+
+  if (error || !data) return null;
+  return data as CloudProfile;
+}
+
+// Get a public game save by user ID (for garden viewer)
+export async function getPublicSave(userId: string): Promise<GameState | null> {
+  const { data, error } = await supabase
+    .from("game_saves")
+    .select("*")
+    .eq("user_id", userId)
+    .single();
+
+  if (error || !data) return null;
+
+  return {
+    coins:         data.coins,
+    farmSize:      data.farm_size,
+    grid:          data.grid,
+    inventory:     data.inventory,
+    fertilizers:   data.fertilizers,
+    shop:          data.shop,
+    lastShopReset: data.last_shop_reset,
+    lastSaved:     data.last_saved,
+  } as GameState;
+}
