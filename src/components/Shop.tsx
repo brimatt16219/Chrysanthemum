@@ -57,7 +57,7 @@ export function Shop() {
       </div>
 
       <p className="text-xs text-muted-foreground text-center pb-4">
-        Shop stock is random every hour. Rarer flowers appear less often.
+        Shop stock is random every 5 minutes. Rarer flowers appear less often.
       </p>
     </div>
   );
