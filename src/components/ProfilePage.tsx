@@ -5,6 +5,8 @@ import type { GameState } from "../store/gameStore";
 import { ReadOnlyGarden } from "./ReadOnlyGarden";
 import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
 import { useGame } from "../store/GameContext";
+import { FriendButton } from "./FriendButton";
+
 
 interface Props {
   username: string;
@@ -96,6 +98,12 @@ export function ProfilePage({ username, onBack }: Props) {
             Joined {new Date(profile.created_at).toLocaleDateString(undefined, { month: "short", year: "numeric" })}
           </p>
         </div>
+
+        {!isOwnProfile && profile && (
+        <div className="mt-3">
+            <FriendButton theirId={profile.id} theirUsername={profile.username} />
+        </div>
+        )}
       </div>
 
       {/* Stats row */}

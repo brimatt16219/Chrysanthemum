@@ -151,3 +151,208 @@ export async function getPublicSave(userId: string): Promise<GameState | null> {
     lastSaved:     data.last_saved,
   } as GameState;
 }
+
+export type FriendshipStatus = "none" | "pending_sent" | "pending_received" | "accepted";
+
+export interface Friendship {
+  id: string;
+  requester_id: string;
+  receiver_id: string;
+  status: "pending" | "accepted";
+  created_at: string;
+}
+
+export interface FriendWithProfile {
+  friendship: Friendship;
+  profile: CloudProfile;
+}
+
+// Get friendship status between two users
+export async function getFriendshipStatus(
+  myId: string,
+  theirId: string
+): Promise<{ status: FriendshipStatus; friendshipId: string | null }> {
+  const { data, error } = await supabase
+    .from("friendships")
+    .select("*")
+    .or(
+      `and(requester_id.eq.${myId},receiver_id.eq.${theirId}),` +
+      `and(requester_id.eq.${theirId},receiver_id.eq.${myId})`
+    )
+    .maybeSingle();
+
+  if (error || !data) return { status: "none", friendshipId: null };
+
+  if (data.status === "accepted") return { status: "accepted", friendshipId: data.id };
+  if (data.requester_id === myId)  return { status: "pending_sent", friendshipId: data.id };
+  return { status: "pending_received", friendshipId: data.id };
+}
+
+// Send a friend request
+export async function sendFriendRequest(
+  myId: string,
+  theirId: string
+): Promise<boolean> {
+  const { error } = await supabase
+    .from("friendships")
+    .insert({ requester_id: myId, receiver_id: theirId });
+  return !error;
+}
+
+// Accept a friend request
+export async function acceptFriendRequest(friendshipId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("friendships")
+    .update({ status: "accepted" })
+    .eq("id", friendshipId);
+  return !error;
+}
+
+// Decline or cancel a friend request / unfriend
+export async function removeFriendship(friendshipId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("friendships")
+    .delete()
+    .eq("id", friendshipId);
+  return !error;
+}
+
+// Get all friends and pending requests for a user
+export async function getFriends(userId: string): Promise<{
+  friends: FriendWithProfile[];
+  pendingReceived: FriendWithProfile[];
+  pendingSent: FriendWithProfile[];
+}> {
+  const { data, error } = await supabase
+    .from("friendships")
+    .select("*")
+    .or(`requester_id.eq.${userId},receiver_id.eq.${userId}`);
+
+  if (error || !data) return { friends: [], pendingReceived: [], pendingSent: [] };
+
+  const friends: FriendWithProfile[]         = [];
+  const pendingReceived: FriendWithProfile[] = [];
+  const pendingSent: FriendWithProfile[]     = [];
+
+  for (const f of data as Friendship[]) {
+    const otherId = f.requester_id === userId ? f.receiver_id : f.requester_id;
+    const profile = await getProfile(otherId);
+    if (!profile) continue;
+
+    const entry: FriendWithProfile = { friendship: f, profile };
+
+    if (f.status === "accepted") {
+      friends.push(entry);
+    } else if (f.requester_id === userId) {
+      pendingSent.push(entry);
+    } else {
+      pendingReceived.push(entry);
+    }
+  }
+
+  return { friends, pendingReceived, pendingSent };
+}
+
+// Count pending received requests (for notification badge)
+export async function getPendingRequestCount(userId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from("friendships")
+    .select("*", { count: "exact", head: true })
+    .eq("receiver_id", userId)
+    .eq("status", "pending");
+
+  return error ? 0 : (count ?? 0);
+}
+
+export interface Gift {
+  id: string;
+  sender_id: string;
+  receiver_id: string;
+  species_id: string;
+  mutation?: string;
+  message?: string;
+  claimed: boolean;
+  created_at: string;
+}
+
+export interface GiftWithSender {
+  gift: Gift;
+  senderProfile: CloudProfile;
+}
+
+// Send a gift — removes from sender inventory, inserts gift row
+export async function sendGift(
+  senderId: string,
+  receiverId: string,
+  speciesId: string,
+  mutation: string | undefined,
+  message: string | undefined
+): Promise<boolean> {
+  const { error } = await supabase
+    .from("gifts")
+    .insert({
+      sender_id:   senderId,
+      receiver_id: receiverId,
+      species_id:  speciesId,
+      mutation:    mutation ?? null,
+      message:     message  ?? null,
+    });
+
+  if (error) {
+    console.error("sendGift error:", error);
+    return false;
+  }
+  return true;
+}
+
+// Get unclaimed gifts for a user
+export async function getPendingGifts(userId: string): Promise<GiftWithSender[]> {
+  const { data, error } = await supabase
+    .from("gifts")
+    .select("*")
+    .eq("receiver_id", userId)
+    .eq("claimed", false)
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return [];
+
+  const result: GiftWithSender[] = [];
+  for (const gift of data as Gift[]) {
+    const senderProfile = await getProfile(gift.sender_id);
+    if (senderProfile) result.push({ gift, senderProfile });
+  }
+  return result;
+}
+
+// Count unclaimed gifts
+export async function getPendingGiftCount(userId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from("gifts")
+    .select("*", { count: "exact", head: true })
+    .eq("receiver_id", userId)
+    .eq("claimed", false);
+
+  return error ? 0 : (count ?? 0);
+}
+
+// Mark a gift as claimed
+export async function claimGift(giftId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("gifts")
+    .update({ claimed: true })
+    .eq("id", giftId);
+
+  return !error;
+}
+
+// Get sent gift history
+export async function getSentGifts(userId: string): Promise<Gift[]> {
+  const { data, error } = await supabase
+    .from("gifts")
+    .select("*")
+    .eq("sender_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  return error || !data ? [] : (data as Gift[]);
+}

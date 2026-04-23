@@ -8,11 +8,15 @@ import { UsernameModal } from "./components/UsernameModal";
 import { SaveMigrationModal } from "./components/SaveMigrationModal";
 import { SearchPage } from "./components/SearchPage";
 import { ProfilePage } from "./components/ProfilePage";
+import { FriendsPage } from "./components/FriendsPage";
+import { FriendRequestNotification } from "./components/FriendRequestNotification";
 import { useGame } from "./store/GameContext";
+import { useFriendRequests } from "./hooks/useFriendRequests";
 import { msUntilShopReset } from "./store/gameStore";
 import { getFlower } from "./data/flowers";
 
 type Tab = "garden" | "shop" | "inventory" | "social";
+type SocialView = "search" | "friends" | "profile";
 
 function formatCountdown(ms: number): string {
   const totalSec = Math.max(0, Math.floor(ms / 1000));
@@ -32,10 +36,13 @@ export default function App() {
     needsUsername, completeUsername,
   } = useGame();
 
+  const { pendingCount, newRequest, clearNewRequest } = useFriendRequests(user?.id ?? null);
+
   const [tab, setTab]           = useState<Tab>("garden");
+  const [socialView, setSocialView] = useState<SocialView>("search");
+  const [viewingProfile, setViewingProfile] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(() => msUntilShopReset(state));
   const [showBanner, setShowBanner] = useState(true);
-  const [viewingProfile, setViewingProfile] = useState<string | null>(null);
 
   useEffect(() => {
     const id = setInterval(() => setCountdown(msUntilShopReset(state)), 1_000);
@@ -46,13 +53,19 @@ export default function App() {
 
   function handleViewProfile(username: string) {
     setViewingProfile(username);
+    setSocialView("profile");
     setTab("social");
+  }
+
+  function handleBackFromProfile() {
+    setViewingProfile(null);
+    setSocialView("search");
   }
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
 
-      {/* Modals */}
+      {/* Modals & notifications */}
       {showBanner && (
         <OfflineBanner
           summary={offlineSummary}
@@ -61,6 +74,16 @@ export default function App() {
       )}
       {shopJustRestocked && (
         <ShopRestockBanner onDismiss={clearShopNotification} />
+      )}
+      {newRequest && (
+        <FriendRequestNotification
+          onDismiss={clearNewRequest}
+          onView={() => {
+            clearNewRequest();
+            setSocialView("friends");
+            setTab("social");
+          }}
+        />
       )}
       {needsUsername && user && (
         <UsernameModal user={user} onComplete={completeUsername} />
@@ -91,10 +114,13 @@ export default function App() {
               user ? (
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => { setViewingProfile(profile?.username ?? null); setTab("social"); }}
+                    onClick={() => {
+                      setViewingProfile(profile?.username ?? null);
+                      setSocialView("profile");
+                      setTab("social");
+                    }}
                     className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5"
                   >
-                    {/* Show avatar emoji on mobile, full username on desktop */}
                     <span className="text-base">
                       {getFlower(profile?.display_flower ?? "daisy")?.emoji.bloom ?? "🌸"}
                     </span>
@@ -126,7 +152,10 @@ export default function App() {
           {(["garden", "shop", "inventory", "social"] as Tab[]).map((t) => (
             <button
               key={t}
-              onClick={() => { setTab(t); if (t !== "social") setViewingProfile(null); }}
+              onClick={() => {
+                setTab(t);
+                if (t !== "social") setViewingProfile(null);
+              }}
               className={`
                 flex-1 py-3 text-sm font-medium transition-colors border-b-2 relative
                 ${tab === t
@@ -135,15 +164,23 @@ export default function App() {
                 }
               `}
             >
-              {t === "garden"    ? "🌱"
-               : t === "shop"   ? "🛒"
+              {t === "garden" ? "🌱"
+               : t === "shop" ? "🛒"
                : t === "inventory" ? "🎒"
                : "🌍"}
               <span className="ml-1 hidden sm:inline capitalize">{t}</span>
 
+              {/* Inventory badge */}
               {t === "inventory" && inventoryCount > 0 && (
                 <span className="absolute top-2 right-1 sm:right-6 w-4 h-4 bg-primary rounded-full text-[10px] text-primary-foreground flex items-center justify-center font-bold">
                   {inventoryCount > 9 ? "9+" : inventoryCount}
+                </span>
+              )}
+
+              {/* Friend request badge */}
+              {t === "social" && pendingCount > 0 && (
+                <span className="absolute top-2 right-1 sm:right-6 w-4 h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
+                  {pendingCount > 9 ? "9+" : pendingCount}
                 </span>
               )}
             </button>
@@ -157,14 +194,46 @@ export default function App() {
         {tab === "shop"      && <Shop />}
         {tab === "inventory" && <Inventory />}
         {tab === "social"    && (
-          viewingProfile
-            ? <ProfilePage
-                username={viewingProfile}
-                onBack={() => setViewingProfile(null)}
-              />
-            : user
-            ? <SearchPage onViewProfile={handleViewProfile} />
-            : <GuestSocialPrompt onSignIn={signInWithGoogle} />
+          user ? (
+            <>
+              {/* Social sub-nav */}
+              {socialView !== "profile" && (
+                <div className="flex gap-2 mb-6">
+                  {(["search", "friends"] as SocialView[]).map((v) => (
+                    <button
+                      key={v}
+                      onClick={() => setSocialView(v)}
+                      className={`
+                        px-4 py-2 rounded-xl text-xs font-semibold transition-all relative
+                        ${socialView === v
+                          ? "bg-primary/20 border border-primary/50 text-primary"
+                          : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
+                        }
+                      `}
+                    >
+                      {v === "search" ? "🔍 Search" : "👥 Friends"}
+                      {v === "friends" && pendingCount > 0 && (
+                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
+                          {pendingCount}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {socialView === "search"  && <SearchPage onViewProfile={handleViewProfile} />}
+              {socialView === "friends" && <FriendsPage onViewProfile={handleViewProfile} />}
+              {socialView === "profile" && viewingProfile && (
+                <ProfilePage
+                  username={viewingProfile}
+                  onBack={handleBackFromProfile}
+                />
+              )}
+            </>
+          ) : (
+            <GuestSocialPrompt onSignIn={signInWithGoogle} />
+          )
         )}
       </main>
     </div>
