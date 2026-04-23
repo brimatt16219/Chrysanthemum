@@ -30,6 +30,7 @@ interface GameContextValue {
   authLoading: boolean;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
   pendingMigration: { localSave: GameState; cloudSave: GameState } | null;
   resolveMigration: (choice: "local" | "cloud") => Promise<void>;
   needsUsername: boolean;
@@ -45,166 +46,170 @@ const EMPTY_SUMMARY: OfflineSummary = {
 };
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
-  const loaded = useRef(loadGame());
-
-  const [state, setState]                         = useState<GameState>(loaded.current.state);
-  const [offlineSummary, setOfflineSummary]       = useState<OfflineSummary>(loaded.current.summary);
+  const [state, setState]                       = useState<GameState>(() => defaultState());
+  const [offlineSummary, setOfflineSummary]     = useState<OfflineSummary>(EMPTY_SUMMARY);
   const [shopJustRestocked, setShopJustRestocked] = useState(false);
-
-  const [user, setUser]               = useState<User | null>(null);
-  const [profile, setProfile]         = useState<CloudProfile | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
-  const [needsUsername, setNeedsUsername] = useState(false);
-
+  const [user, setUser]                         = useState<User | null>(null);
+  const [profile, setProfile]                   = useState<CloudProfile | null>(null);
+  const [authLoading, setAuthLoading]           = useState(true);
+  const [needsUsername, setNeedsUsername]       = useState(false);
   const [pendingMigration, setPendingMigration] = useState<{
     localSave: GameState;
     cloudSave: GameState;
   } | null>(null);
 
-  // Prevents handleSignIn from running concurrently or for the same user twice
-  const handlingSignIn  = useRef(false);
-  const lastHandledUser = useRef<string | null>(null);
+  const saveEnabled   = useRef(false);
+  // Tracks the user ID of the session we already loaded
+  // so SIGNED_IN after INITIAL_SESSION doesn't double-load
+  const loadedUserId  = useRef<string | null>(null);
 
-  // Blocks auto-save during auth flow so stale default state can't overwrite cloud
-  const authInProgress = useRef(true);
+  // ── Load session ──────────────────────────────────────────────────────────
+  async function loadUserSession(u: User | null) {
+    saveEnabled.current = false;
 
-  // ── Auth ──────────────────────────────────────────────────────────────────
-  useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
-      if (error) {
-        // Session is invalid — clear it
-        await supabase.auth.signOut();
-        authInProgress.current = false;
+    if (!u) {
+      const { state: localState, summary } = loadGame();
+      setState(localState);
+      setOfflineSummary(summary);
+      setUser(null);
+      setProfile(null);
+      loadedUserId.current = null;
+      saveEnabled.current  = true;
+      setAuthLoading(false);
+      return;
+    }
+
+    // Skip if we already loaded this exact user
+    if (loadedUserId.current === u.id) {
+      console.log("[auth] session already loaded for", u.id, "— skipping");
+      setAuthLoading(false);
+      return;
+    }
+
+    loadedUserId.current = u.id;
+    setUser(u);
+
+    try {
+      const p = await getProfile(u.id);
+
+      if (!p) {
+        setNeedsUsername(true);
         setAuthLoading(false);
         return;
       }
 
-      const u = session?.user ?? null;
-      setUser(u);
-      if (u) {
-        await handleSignIn(u);
-      } else {
-        authInProgress.current = false;
-      }
-      setAuthLoading(false);
-    });
+      setProfile(p);
 
+      const cloudSave = await loadCloudSave(u.id);
+      const localRaw  = localStorage.getItem("chrysanthemum_save");
+      const localSave = localRaw ? (JSON.parse(localRaw) as GameState) : null;
+
+      localStorage.removeItem("chrysanthemum_save");
+
+      if (!cloudSave) {
+        const saveToUse = localSave ?? defaultState();
+        const { state: ticked, summary } = applyOfflineTick(saveToUse);
+        setState(ticked);
+        setOfflineSummary(summary);
+        await saveToCloud(u.id, ticked);
+      } else if (localSave && localSave.lastSaved > cloudSave.lastSaved + 300_000) {
+        setPendingMigration({ localSave, cloudSave });
+        setAuthLoading(false);
+        return;
+      } else {
+        const { state: ticked, summary } = applyOfflineTick(cloudSave);
+        setState(ticked);
+        setOfflineSummary(summary);
+      }
+
+      setTimeout(() => { saveEnabled.current = true; }, 1_000);
+    } catch (e) {
+      console.error("[loadUserSession] error:", e);
+      const { state: localState, summary } = loadGame();
+      setState(localState);
+      setOfflineSummary(summary);
+      saveEnabled.current = true;
+    }
+
+    setAuthLoading(false);
+  }
+
+  // ── Auth listener ─────────────────────────────────────────────────────────
+  useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        const u = session?.user ?? null;
-        setUser(u);
+        console.log("[auth]", event, session?.user?.id ?? "none");
 
-        if (event === "SIGNED_IN" && u) {
-          await handleSignIn(u);
+        if (event === "INITIAL_SESSION") {
+          if (!session) {
+            // Clear stale tokens
+            Object.keys(localStorage)
+              .filter((k) => k.startsWith("sb-"))
+              .forEach((k) => localStorage.removeItem(k));
+          }
+          await loadUserSession(session?.user ?? null);
+          return;
+        }
+
+        if (event === "SIGNED_IN") {
+          // loadUserSession skips if already loaded for this user
+          await loadUserSession(session?.user ?? null);
+          return;
         }
 
         if (event === "SIGNED_OUT") {
+          saveEnabled.current  = false;
+          loadedUserId.current = null;
+          Object.keys(localStorage)
+            .filter((k) => k.startsWith("sb-"))
+            .forEach((k) => localStorage.removeItem(k));
+          setUser(null);
           setProfile(null);
           setNeedsUsername(false);
-          lastHandledUser.current = null;
-          handlingSignIn.current  = false;
-
-          // Clear localStorage so it doesn't interfere with next sign-in
+          setPendingMigration(null);
           localStorage.removeItem("chrysanthemum_save");
-
-          // Reset to a fresh default state for guest play
-          const fresh = defaultState();
-          setState(fresh);
+          setState(defaultState());
           setOfflineSummary(EMPTY_SUMMARY);
-
-          // Unblock after reset is committed
-          setTimeout(() => { authInProgress.current = false; }, 500);
+          setTimeout(() => { saveEnabled.current = true; }, 500);
+          setAuthLoading(false);
+          return;
         }
 
-        setAuthLoading(false);
+        if (event === "TOKEN_REFRESHED") {
+          // Silently update user — do NOT reload save
+          if (session?.user) setUser(session.user);
+          return;
+        }
+
+        if (event === "USER_UPDATED") {
+          // Just refresh profile data — do NOT reload save
+          if (session?.user) {
+            setUser(session.user);
+            const p = await getProfile(session.user.id);
+            if (p) setProfile(p);
+          }
+          return;
+        }
       }
     );
 
     return () => subscription.unsubscribe();
   }, []);
 
-  async function handleSignIn(u: User) {
-    if (handlingSignIn.current || lastHandledUser.current === u.id) {
-      console.log("[handleSignIn] skipping duplicate for", u.id);
-      return;
-    }
-
-    handlingSignIn.current  = true;
-    authInProgress.current  = true;
-    lastHandledUser.current = u.id;
-
-    console.log("[handleSignIn] running for", u.id);
-
-    try {
-      const p = await getProfile(u.id);
-      console.log("[handleSignIn] profile result:", p);
-
-      if (!p) {
-        setNeedsUsername(true);
-        authInProgress.current = false;
-        return;
-      }
-
-      setProfile(p);
-
-      console.log("[handleSignIn] loading cloud save...");
-      const cloudSave = await loadCloudSave(u.id);
-      console.log("[handleSignIn] cloudSave result:", cloudSave?.coins ?? "NULL");
-
-      const localRaw  = localStorage.getItem("chrysanthemum_save");
-      const localSave = localRaw ? loadGame().state : null;
-      console.log("[handleSignIn] localSave coins:", localSave?.coins ?? "NULL");
-
-      if (!cloudSave) {
-        console.log("[handleSignIn] branch: NO CLOUD SAVE");
-        const saveToUse = localSave ?? loaded.current.state;
-        const { state: ticked, summary } = applyOfflineTick(saveToUse);
-        setState(ticked);
-        setOfflineSummary(summary);
-        await saveToCloud(u.id, ticked);
-        localStorage.removeItem("chrysanthemum_save");
-        setTimeout(() => { authInProgress.current = false; }, 1_500);
-      } else if (localSave && localSave.lastSaved > cloudSave.lastSaved + 300_000) {
-        console.log("[handleSignIn] branch: MIGRATION MODAL");
-        setPendingMigration({ localSave, cloudSave });
-        authInProgress.current = false;
-      } else {
-        console.log("[handleSignIn] branch: USE CLOUD SAVE — coins:", cloudSave.coins);
-        const { state: ticked, summary } = applyOfflineTick(cloudSave);
-        setState(ticked);
-        setOfflineSummary(summary);
-        localStorage.removeItem("chrysanthemum_save");
-        setTimeout(() => { authInProgress.current = false; }, 1_500);
-      }
-    } catch (e) {
-      console.error("[handleSignIn] CAUGHT ERROR:", e);
-      authInProgress.current = false;
-    } finally {
-      handlingSignIn.current = false;
-    }
-  }
-
-  // ── Auto-save — blocked during auth flow ──────────────────────────────────
+  // ── Auto-save ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (authInProgress.current) {
-      console.log("[autosave] BLOCKED by authInProgress — coins:", state.coins);
-      return;
-    }
-
+    if (!saveEnabled.current) return;
     if (user && !pendingMigration && !needsUsername) {
-      console.log("[autosave] saving to cloud — coins:", state.coins);
       saveToCloud(user.id, state);
     } else if (!user) {
       saveGame(state);
     }
-  }, [state, user]);
+  }, [state]);
 
-  // ── Shop tick — every second ───────────────────────────────────────────────
+  // ── Shop tick ─────────────────────────────────────────────────────────────
   useEffect(() => {
     const interval = setInterval(() => {
-      // Don't tick during auth flow
-      if (authInProgress.current) return;
-
+      if (!saveEnabled.current) return;
       setState((prev) => {
         const msLeft = msUntilShopReset(prev);
         if (msLeft === 0) {
@@ -221,32 +226,37 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ── Actions ───────────────────────────────────────────────────────────────
   const update = useCallback((newState: GameState) => setState(newState), []);
 
+  async function refreshProfile() {
+    if (!user) return;
+    const p = await getProfile(user.id);
+    if (p) setProfile(p);
+  }
+
   async function resolveMigration(choice: "local" | "cloud") {
     if (!pendingMigration || !user) return;
-
-    // Clear localStorage immediately regardless of choice
     localStorage.removeItem("chrysanthemum_save");
-
     const saveToUse = choice === "local"
       ? pendingMigration.localSave
       : pendingMigration.cloudSave;
-
     const { state: ticked, summary } = applyOfflineTick(saveToUse);
     setState(ticked);
     setOfflineSummary(summary);
     await saveToCloud(user.id, ticked);
     setPendingMigration(null);
+    setTimeout(() => { saveEnabled.current = true; }, 500);
   }
 
   function completeUsername(_username: string) {
     setNeedsUsername(false);
     if (user) {
-      getProfile(user.id).then((p) => {
+      getProfile(user.id).then(async (p) => {
         setProfile(p);
-        const saveToUse = loaded.current.state;
-        saveToCloud(user.id, saveToUse);
+        const fresh = defaultState();
+        setState(fresh);
+        await saveToCloud(user.id, fresh);
         localStorage.removeItem("chrysanthemum_save");
-        authInProgress.current = false;
+        setTimeout(() => { saveEnabled.current = true; }, 500);
+        setAuthLoading(false);
       });
     }
   }
@@ -259,7 +269,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function signOut() {
-    authInProgress.current = true;
+    saveEnabled.current = false;
     await supabase.auth.signOut();
   }
 
@@ -270,6 +280,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       shopJustRestocked, clearShopNotification: () => setShopJustRestocked(false),
       user, profile, authLoading,
       signInWithGoogle, signOut,
+      refreshProfile,
       pendingMigration, resolveMigration,
       needsUsername, completeUsername,
     }}>

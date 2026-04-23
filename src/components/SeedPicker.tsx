@@ -10,7 +10,7 @@ export function SeedPicker({ onSelect, onClose }: Props) {
   const { state } = useGame();
 
   // Only show items without a mutation (those are seeds, not harvested blooms)
-  const seeds = state.inventory.filter((i) => i.quantity > 0 && !i.mutation);
+  const seeds = state.inventory.filter((i) => i.quantity > 0 && i.isSeed);
 
   if (seeds.length === 0) {
     return (

@@ -9,19 +9,18 @@ import { SaveMigrationModal } from "./components/SaveMigrationModal";
 import { SearchPage } from "./components/SearchPage";
 import { ProfilePage } from "./components/ProfilePage";
 import { FriendsPage } from "./components/FriendsPage";
-import { FriendRequestNotification } from "./components/FriendRequestNotification";
 import { GiftsPage } from "./components/GiftsPage";
-import { GiftNotification } from "./components/GiftNotification";
 import { LeaderboardPage } from "./components/LeaderboardPage";
-import { useGiftNotifications } from "./hooks/useGiftNotifications";
+import { FriendRequestNotification } from "./components/FriendRequestNotification";
+import { GiftNotification } from "./components/GiftNotification";
 import { useGame } from "./store/GameContext";
 import { useFriendRequests } from "./hooks/useFriendRequests";
+import { useGiftNotifications } from "./hooks/useGiftNotifications";
 import { msUntilShopReset } from "./store/gameStore";
 import { getFlower } from "./data/flowers";
 
-
 type Tab = "garden" | "shop" | "inventory" | "social";
-type SocialView = "search" | "friends" | "gifts" | "leaderboard" | "profile";
+type SocialView = "search" | "friends" | "gifts" | "leaderboard";
 
 function formatCountdown(ms: number): string {
   const totalSec = Math.max(0, Math.floor(ms / 1000));
@@ -42,13 +41,17 @@ export default function App() {
   } = useGame();
 
   const { pendingCount, newRequest, clearNewRequest } = useFriendRequests(user?.id ?? null);
-
-  const [tab, setTab]           = useState<Tab>("garden");
-  const [socialView, setSocialView] = useState<SocialView>("search");
-  const [viewingProfile, setViewingProfile] = useState<string | null>(null);
-  const [countdown, setCountdown] = useState(() => msUntilShopReset(state));
-  const [showBanner, setShowBanner] = useState(true);
   const { pendingCount: giftCount, newGift, clearNewGift } = useGiftNotifications(user?.id ?? null);
+
+  const [tab, setTab]               = useState<Tab>("garden");
+  const [socialView, setSocialView] = useState<SocialView>("search");
+  const [countdown, setCountdown]   = useState(() => msUntilShopReset(state));
+  const [showBanner, setShowBanner] = useState(true);
+
+  // Profile overlay — sits on top of any tab, back button returns to previous tab
+  const [profileUsername, setProfileUsername] = useState<string | null>(null);
+  const [profileReturnTab, setProfileReturnTab] = useState<Tab>("social");
+  const [profileReturnView, setProfileReturnView] = useState<SocialView>("search");
 
   useEffect(() => {
     const id = setInterval(() => setCountdown(msUntilShopReset(state)), 1_000);
@@ -58,20 +61,28 @@ export default function App() {
   const inventoryCount = state.inventory.reduce((s, i) => s + i.quantity, 0);
 
   function handleViewProfile(username: string) {
-    setViewingProfile(username);
-    setSocialView("profile");
-    setTab("social");
+    // Remember where we came from so back button returns there
+    setProfileReturnTab(tab);
+    setProfileReturnView(socialView);
+    setProfileUsername(username);
   }
 
   function handleBackFromProfile() {
-    setViewingProfile(null);
-    setSocialView("search");
+    setProfileUsername(null);
+    setTab(profileReturnTab);
+    setSocialView(profileReturnView);
+  }
+
+  function handleTabChange(t: Tab) {
+    setTab(t);
+    // Clear profile overlay when switching tabs
+    setProfileUsername(null);
   }
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
 
-      {/* Modals & notifications */}
+      {/* Modals & toasts */}
       {showBanner && (
         <OfflineBanner
           summary={offlineSummary}
@@ -88,6 +99,18 @@ export default function App() {
             clearNewRequest();
             setSocialView("friends");
             setTab("social");
+            setProfileUsername(null);
+          }}
+        />
+      )}
+      {newGift && (
+        <GiftNotification
+          onDismiss={clearNewGift}
+          onView={() => {
+            clearNewGift();
+            setSocialView("gifts");
+            setTab("social");
+            setProfileUsername(null);
           }}
         />
       )}
@@ -101,23 +124,13 @@ export default function App() {
           onChoose={resolveMigration}
         />
       )}
-      {newGift && (
-        <GiftNotification
-          onDismiss={clearNewGift}
-          onView={() => {
-            clearNewGift();
-            setSocialView("gifts");
-            setTab("social");
-          }}
-        />
-      )}
 
       {/* HUD */}
       <header className="sticky top-0 z-30 bg-card/80 backdrop-blur border-b border-border px-4 py-3">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <h1
             className="text-lg font-bold text-primary tracking-wide cursor-pointer"
-            onClick={() => { setTab("garden"); setViewingProfile(null); }}
+            onClick={() => { handleTabChange("garden"); }}
           >
             🌸 Chrysanthemum
           </h1>
@@ -130,11 +143,7 @@ export default function App() {
               user ? (
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => {
-                      setViewingProfile(profile?.username ?? null);
-                      setSocialView("profile");
-                      setTab("social");
-                    }}
+                    onClick={() => handleViewProfile(profile?.username ?? "")}
                     className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5"
                   >
                     <span className="text-base">
@@ -168,13 +177,10 @@ export default function App() {
           {(["garden", "shop", "inventory", "social"] as Tab[]).map((t) => (
             <button
               key={t}
-              onClick={() => {
-                setTab(t);
-                if (t !== "social") setViewingProfile(null);
-              }}
+              onClick={() => handleTabChange(t)}
               className={`
                 flex-1 py-3 text-sm font-medium transition-colors border-b-2 relative
-                ${tab === t
+                ${tab === t && !profileUsername
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground"
                 }
@@ -186,14 +192,11 @@ export default function App() {
                : "🌍"}
               <span className="ml-1 hidden sm:inline capitalize">{t}</span>
 
-              {/* Inventory badge */}
               {t === "inventory" && inventoryCount > 0 && (
                 <span className="absolute top-2 right-1 sm:right-6 w-4 h-4 bg-primary rounded-full text-[10px] text-primary-foreground flex items-center justify-center font-bold">
                   {inventoryCount > 9 ? "9+" : inventoryCount}
                 </span>
               )}
-
-              {/* Friend request badge */}
               {t === "social" && (pendingCount + giftCount) > 0 && (
                 <span className="absolute top-2 right-1 sm:right-6 w-4 h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
                   {(pendingCount + giftCount) > 9 ? "9+" : pendingCount + giftCount}
@@ -206,62 +209,63 @@ export default function App() {
 
       {/* Content */}
       <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-8">
-        {tab === "garden"    && <Garden />}
-        {tab === "shop"      && <Shop />}
-        {tab === "inventory" && <Inventory />}
-        {tab === "social"    && (
-          user ? (
-            <>
-              {/* Social sub-nav */}
-              {socialView !== "profile" && (
-                <div className="flex gap-2 mb-6">
-                  {(["search", "friends", "gifts", "leaderboard"] as SocialView[]).map((v) => (
-                    <button
-                      key={v}
-                      onClick={() => setSocialView(v)}
-                      className={`
-                        px-4 py-2 rounded-xl text-xs font-semibold transition-all relative
-                        ${socialView === v
-                          ? "bg-primary/20 border border-primary/50 text-primary"
-                          : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
-                        }
-                      `}
-                    >
-                      {v === "search"      ? "🔍 Search"
-                      : v === "friends"   ? "👥 Friends"
-                      : v === "gifts"     ? "🎁 Gifts"
-                      : "🏆 Ranks"}
-                      {v === "friends" && pendingCount > 0 && (
-                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
-                          {pendingCount}
-                        </span>
-                      )}
-                      {v === "gifts" && giftCount > 0 && (
-                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
-                          {giftCount}
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
 
-              {socialView === "search"  && <SearchPage onViewProfile={handleViewProfile} />}
-              {socialView === "friends" && <FriendsPage onViewProfile={handleViewProfile} />}
-              {socialView === "gifts" && <GiftsPage onViewProfile={handleViewProfile} />}
-              {socialView === "leaderboard" && (
-                <LeaderboardPage onViewProfile={handleViewProfile} />
-              )}
-              {socialView === "profile" && viewingProfile && (
-                <ProfilePage
-                  username={viewingProfile}
-                  onBack={handleBackFromProfile}
-                />
-              )}
-            </>
-          ) : (
-            <GuestSocialPrompt onSignIn={signInWithGoogle} />
-          )
+        {/* Profile overlay — shown on top of any tab */}
+        {profileUsername ? (
+          <ProfilePage
+            username={profileUsername}
+            onBack={handleBackFromProfile}
+          />
+        ) : (
+          <>
+            {tab === "garden"    && <Garden />}
+            {tab === "shop"      && <Shop />}
+            {tab === "inventory" && <Inventory />}
+            {tab === "social"    && (
+              user ? (
+                <>
+                  {/* Social sub-nav */}
+                  <div className="flex gap-2 mb-6 flex-wrap">
+                    {(["search", "friends", "gifts", "leaderboard"] as SocialView[]).map((v) => (
+                      <button
+                        key={v}
+                        onClick={() => setSocialView(v)}
+                        className={`
+                          px-4 py-2 rounded-xl text-xs font-semibold transition-all relative
+                          ${socialView === v
+                            ? "bg-primary/20 border border-primary/50 text-primary"
+                            : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
+                          }
+                        `}
+                      >
+                        {v === "search"      ? "🔍 Search"
+                         : v === "friends"   ? "👥 Friends"
+                         : v === "gifts"     ? "🎁 Gifts"
+                         : "🏆 Ranks"}
+                        {v === "friends" && pendingCount > 0 && (
+                          <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
+                            {pendingCount}
+                          </span>
+                        )}
+                        {v === "gifts" && giftCount > 0 && (
+                          <span className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
+                            {giftCount}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+
+                  {socialView === "search"      && <SearchPage onViewProfile={handleViewProfile} />}
+                  {socialView === "friends"     && <FriendsPage onViewProfile={handleViewProfile} />}
+                  {socialView === "gifts"       && <GiftsPage onViewProfile={handleViewProfile} />}
+                  {socialView === "leaderboard" && <LeaderboardPage onViewProfile={handleViewProfile} />}
+                </>
+              ) : (
+                <GuestSocialPrompt onSignIn={signInWithGoogle} />
+              )
+            )}
+          </>
         )}
       </main>
     </div>

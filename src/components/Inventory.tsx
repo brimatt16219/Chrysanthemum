@@ -1,8 +1,8 @@
 import { useGame } from "../store/GameContext";
-import { getFlower } from "../data/flowers";
+import { getFlower, RARITY_CONFIG } from "../data/flowers";
 import { MUTATIONS } from "../data/flowers";
 import { InventoryItemCard } from "./InventoryItemCard";
-import { sellFlower } from "../store/gameStore";
+import { sellFlower, type InventoryItem } from "../store/gameStore";
 
 export function Inventory() {
   const { state, update } = useGame();
@@ -15,6 +15,9 @@ export function Inventory() {
     const valuePerItem = Math.floor((species?.sellValue ?? 0) * (mut?.valueMultiplier ?? 1));
     return sum + valuePerItem * item.quantity;
   }, 0);
+
+  const seeds  = items.filter((i) => i.isSeed);
+  const blooms = items.filter((i) => !i.isSeed);
 
   function handleSellAll() {
     let current = state;
@@ -75,10 +78,55 @@ export function Inventory() {
       )}
 
       {/* Item list */}
-      <div className="flex flex-col gap-3">
+      {/* <div className="flex flex-col gap-3">
         {items.map((item, i) => (
           <InventoryItemCard key={`${item.speciesId}-${item.mutation ?? "none"}-${i}`} item={item} />
         ))}
+      </div> */}
+
+      {/* Seeds — can only be planted */}
+      {seeds.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-xs font-mono text-muted-foreground uppercase tracking-wide">
+            Seeds ({seeds.reduce((s, i) => s + i.quantity, 0)}) — Plant in garden
+          </h3>
+          {seeds.map((item, i) => (
+            <SeedInventoryRow key={`seed-${item.speciesId}-${i}`} item={item} />
+          ))}
+        </div>
+      )}
+
+      {/* Blooms — can be sold */}
+      {blooms.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-xs font-mono text-muted-foreground uppercase tracking-wide">
+            Harvested ({blooms.reduce((s, i) => s + i.quantity, 0)}) — Ready to sell
+          </h3>
+          {blooms.map((item, i) => (
+            <InventoryItemCard key={`bloom-${item.speciesId}-${item.mutation ?? "none"}-${i}`} item={item} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SeedInventoryRow({ item }: { item: InventoryItem }) {
+  const species = getFlower(item.speciesId);
+  const rarity  = species ? RARITY_CONFIG[species.rarity] : null;
+  if (!species) return null;
+
+  return (
+    <div className="flex items-center gap-4 bg-card/60 border border-border rounded-xl px-4 py-3">
+      <span className="text-3xl flex-shrink-0">{species.emoji.seed}</span>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <h3 className="font-semibold text-sm">{species.name} Seed</h3>
+          <span className={`text-xs font-mono ${rarity?.color}`}>{rarity?.label}</span>
+        </div>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          ×{item.quantity} · Plant in your garden to grow
+        </p>
       </div>
     </div>
   );

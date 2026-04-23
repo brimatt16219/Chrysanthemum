@@ -18,6 +18,7 @@ export interface InventoryItem {
   speciesId: string;
   quantity: number;
   mutation?: MutationType;
+  isSeed? : boolean;
 }
 
 export interface FertilizerItem {
@@ -274,8 +275,9 @@ export function plantSeed(
   const plot = state.grid[row]?.[col];
   if (!plot || plot.plant) return null;
 
+  // Only plant seeds, not harvested blooms
   const invItem = state.inventory.find(
-    (i) => i.speciesId === speciesId && !i.mutation
+    (i) => i.speciesId === speciesId && i.isSeed
   );
   if (!invItem || invItem.quantity < 1) return null;
 
@@ -289,7 +291,7 @@ export function plantSeed(
 
   const newInventory = state.inventory
     .map((i) =>
-      i.speciesId === speciesId && !i.mutation
+      i.speciesId === speciesId && i.isSeed
         ? { ...i, quantity: i.quantity - 1 }
         : i
     )
@@ -336,15 +338,15 @@ export function harvestPlant(
   );
 
   const existing = state.inventory.find(
-    (i) => i.speciesId === speciesId && i.mutation === mutation
+    (i) => i.speciesId === speciesId && i.mutation === mutation && !i.isSeed
   );
   const newInventory = existing
     ? state.inventory.map((i) =>
-        i.speciesId === speciesId && i.mutation === mutation
+        i.speciesId === speciesId && i.mutation === mutation && !i.isSeed
           ? { ...i, quantity: i.quantity + 1 }
           : i
       )
-    : [...state.inventory, { speciesId, quantity: 1, mutation }];
+    : [...state.inventory, { speciesId, quantity: 1, mutation, isSeed: false }];
 
   return {
     state: { ...state, coins: state.coins + bonusCoins, grid: newGrid, inventory: newInventory },
@@ -358,8 +360,9 @@ export function sellFlower(
   quantity: number = 1,
   mutation?: MutationType
 ): GameState | null {
+  // Only sell harvested blooms, never seeds
   const item = state.inventory.find(
-    (i) => i.speciesId === speciesId && i.mutation === mutation
+    (i) => i.speciesId === speciesId && i.mutation === mutation && !i.isSeed
   );
   if (!item || item.quantity < quantity) return null;
 
@@ -371,8 +374,8 @@ export function sellFlower(
 
   const newInventory = state.inventory
     .map((i) =>
-      i.speciesId === speciesId && i.mutation === mutation
-        ? { ...i, quantity: i.quantity - quantity }
+      i.speciesId === speciesId && i.mutation === mutation && !i.isSeed
+        ? { ...i, quantity: i.quantity - 1 }
         : i
     )
     .filter((i) => i.quantity > 0);
@@ -380,10 +383,7 @@ export function sellFlower(
   return { ...state, coins: state.coins + earned, inventory: newInventory };
 }
 
-export function buyFromShop(
-  state: GameState,
-  speciesId: string
-): GameState | null {
+export function buyFromShop(state: GameState, speciesId: string): GameState | null {
   const slot = state.shop.find((s) => s.speciesId === speciesId && !s.isFertilizer);
   if (!slot || slot.quantity < 1) return null;
   if (state.coins < slot.price) return null;
@@ -394,14 +394,15 @@ export function buyFromShop(
       : s
   );
 
-  const existing = state.inventory.find((i) => i.speciesId === speciesId && !i.mutation);
+  // Seeds are tracked separately from harvested blooms
+  const existing = state.inventory.find((i) => i.speciesId === speciesId && i.isSeed);
   const newInventory = existing
     ? state.inventory.map((i) =>
-        i.speciesId === speciesId && !i.mutation
+        i.speciesId === speciesId && i.isSeed
           ? { ...i, quantity: i.quantity + 1 }
           : i
       )
-    : [...state.inventory, { speciesId, quantity: 1 }];
+    : [...state.inventory, { speciesId, quantity: 1, isSeed: true }];
 
   return { ...state, coins: state.coins - slot.price, shop: newShop, inventory: newInventory };
 }
