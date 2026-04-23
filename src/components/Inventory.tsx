@@ -20,7 +20,12 @@ export function Inventory() {
   function handleSellAll() {
     let current = state;
     for (const item of blooms) {
-      const next = sellFlower(current, item.speciesId, item.quantity, item.mutation as MutationType | undefined);
+      const next = sellFlower(
+        current,
+        item.speciesId,
+        item.quantity,
+        item.mutation as MutationType | undefined
+      );
       if (next) current = next;
     }
     update(current);

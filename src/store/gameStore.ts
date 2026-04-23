@@ -1,5 +1,5 @@
 import { FLOWERS, MUTATIONS, getFlower, type GrowthStage, type MutationType } from "../data/flowers";
-import { FERTILIZERS, getNextUpgrade, type FertilizerType } from "../data/upgrades";
+import { FERTILIZERS, getNextUpgrade, getCurrentTier, type FertilizerType } from "../data/upgrades";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -18,7 +18,7 @@ export interface InventoryItem {
   speciesId: string;
   quantity: number;
   mutation?: MutationType;
-  isSeed? : boolean;
+  isSeed?: boolean;
 }
 
 export interface FertilizerItem {
@@ -53,9 +53,8 @@ export interface OfflineSummary {
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
-const SAVE_KEY = "chrysanthemum_save";
-const SHOP_RESET_INTERVAL = 5 * 60 * 1_000; // 5 min
-const SHOP_FLOWER_SLOTS = 4;
+const SAVE_KEY             = "chrysanthemum_save";
+const SHOP_RESET_INTERVAL  = 5 * 60 * 1_000; // 5 minutes
 
 // ── Grid helpers ───────────────────────────────────────────────────────────
 
@@ -133,67 +132,68 @@ export function getMsUntilNextStage(plant: PlantedFlower, now: number): number {
 
 // ── Shop helpers ───────────────────────────────────────────────────────────
 
-function weightedSample(count: number): string[] {
-  const pool: string[] = [];
-  FLOWERS.forEach((f) => {
-    for (let i = 0; i < f.shopWeight; i++) pool.push(f.id);
-  });
+function generateShop(farmSize: number = 3): ShopSlot[] {
+  const tier        = getCurrentTier(farmSize);
+  const flowerSlots = tier.shopSlots; // scales with farm size: 3→4→5→6
 
-  const picked = new Set<string>();
-  const result: string[] = [];
-  let attempts = 0;
+  const available   = FLOWERS.filter((f) => f.shopWeight > 0);
+  const totalWeight = available.reduce((s, f) => s + f.shopWeight, 0);
 
-  while (result.length < count && attempts < 1000) {
-    const id = pool[Math.floor(Math.random() * pool.length)];
-    if (!picked.has(id)) {
-      picked.add(id);
-      result.push(id);
+  const chosen: ShopSlot[] = [];
+  const usedIds             = new Set<string>();
+  let   attempts            = 0;
+
+  while (chosen.length < flowerSlots && attempts < 1_000) {
+    let roll = Math.random() * totalWeight;
+    for (const f of available) {
+      roll -= f.shopWeight;
+      if (roll <= 0 && !usedIds.has(f.id)) {
+        chosen.push({
+          speciesId: f.id,
+          price:     Math.max(5, Math.floor(f.sellValue * 0.6)),
+          quantity:  Math.floor(Math.random() * 4) + 1,
+        });
+        usedIds.add(f.id);
+        break;
+      }
     }
     attempts++;
   }
 
-  return result;
-}
+  // Always add 2 fertilizer slots
+  chosen.push(
+    {
+      speciesId:     "fertilizer_basic",
+      isFertilizer:  true,
+      fertilizerType: "basic",
+      price:         FERTILIZERS.basic.shopPrice,
+      quantity:      3,
+    },
+    {
+      speciesId:     "fertilizer_premium",
+      isFertilizer:  true,
+      fertilizerType: "premium",
+      price:         FERTILIZERS.premium.shopPrice,
+      quantity:      2,
+    }
+  );
 
-function generateShop(): ShopSlot[] {
-  const flowerIds = weightedSample(SHOP_FLOWER_SLOTS);
-  const flowerSlots: ShopSlot[] = flowerIds.map((id) => {
-    const species = getFlower(id)!;
-    return {
-      speciesId: id,
-      price:  Math.max(5, Math.floor(species.sellValue * 0.6)),
-      quantity: Math.floor(Math.random() * 4) + 2,
-    };
-  });
-
-  const fertTypes: FertilizerType[] = ["basic", "premium", "miracle"];
-  const pickedFerts = [...fertTypes].sort(() => Math.random() - 0.5).slice(0, 2);
-
-  const fertSlots: ShopSlot[] = pickedFerts.map((type) => ({
-    speciesId: `fertilizer_${type}`,
-    price: FERTILIZERS[type].shopPrice,
-    quantity: Math.floor(Math.random() * 3) + 1,
-    isFertilizer: true,
-    fertilizerType: type,
-  }));
-
-  return [...flowerSlots, ...fertSlots];
+  return chosen;
 }
 
 // ── Default state ──────────────────────────────────────────────────────────
 
 export function defaultState(): GameState {
+  const size = 3;
   return {
-    coins: 50,
-    farmSize: 3,
-    grid: makeGrid(3),
-    inventory: [],
-    fertilizers: [
-      { type: "basic", quantity: 3 },
-    ],
-    shop: generateShop(),
+    coins:         100,
+    farmSize:      size,
+    grid:          makeGrid(size),
+    inventory:     [],
+    fertilizers:   [{ type: "basic", quantity: 3 }],
+    shop:          generateShop(size),
     lastShopReset: Date.now(),
-    lastSaved: Date.now(),
+    lastSaved:     Date.now(),
   };
 }
 
@@ -230,15 +230,27 @@ export function resetGame(): GameState {
 
 // ── Offline tick ───────────────────────────────────────────────────────────
 
-export function applyOfflineTick(state: GameState): { state: GameState; summary: OfflineSummary } {
-  const now = Date.now();
-  const minutesAway = Math.floor((now - state.lastSaved) / 60_000);
-  let updated = { ...state };
-  let shopRestocked = false;
+export function applyOfflineTick(save: GameState): { state: GameState; summary: OfflineSummary } {
+  const now          = Date.now();
+  const minutesAway  = Math.floor((now - save.lastSaved) / 60_000);
 
-  const timeSinceReset = now - state.lastShopReset;
+  // Rebuild grid if empty or wrong size (e.g. after SQL reset)
+  const expectedSize = save.farmSize ?? 3;
+  const needsRebuild =
+    !save.grid ||
+    save.grid.length === 0 ||
+    save.grid.length !== expectedSize;
+
+  let updated: GameState = {
+    ...save,
+    grid: needsRebuild ? makeGrid(expectedSize) : save.grid,
+  };
+
+  let shopRestocked = false;
+  const timeSinceReset = now - updated.lastShopReset;
+
   if (timeSinceReset >= SHOP_RESET_INTERVAL) {
-    updated = { ...updated, shop: generateShop(), lastShopReset: now };
+    updated      = { ...updated, shop: generateShop(updated.farmSize), lastShopReset: now };
     shopRestocked = true;
   }
 
@@ -247,17 +259,21 @@ export function applyOfflineTick(state: GameState): { state: GameState; summary:
     .filter((p) => p.plant && getCurrentStage(p.plant, now) === "bloom").length;
 
   return {
-    state: updated,
+    state:   updated,
     summary: { minutesAway, readyToHarvest, shopRestocked },
   };
 }
 
-// ── Shop tick (called every minute while app is open) ─────────────────────
+// ── Shop tick (called every second while app is open) ─────────────────────
 
 export function tickShop(state: GameState): GameState {
   const now = Date.now();
   if (now - state.lastShopReset < SHOP_RESET_INTERVAL) return state;
-  return { ...state, shop: generateShop(), lastShopReset: now };
+  return {
+    ...state,
+    shop:          generateShop(state.farmSize), // scale slots to farm size
+    lastShopReset: now,
+  };
 }
 
 export function msUntilShopReset(state: GameState): number {
@@ -275,7 +291,7 @@ export function plantSeed(
   const plot = state.grid[row]?.[col];
   if (!plot || plot.plant) return null;
 
-  // Only plant seeds, not harvested blooms
+  // Only seeds can be planted — not harvested blooms
   const invItem = state.inventory.find(
     (i) => i.speciesId === speciesId && i.isSeed
   );
@@ -323,8 +339,8 @@ export function harvestPlant(
   if (stage !== "bloom") return null;
 
   const { speciesId } = plot.plant;
-  const mutation = rollMutation(speciesId);
-  const species = getFlower(speciesId)!;
+  const mutation      = rollMutation(speciesId);
+  const species       = getFlower(speciesId)!;
 
   const bonusCoins = mutation
     ? Math.floor(species.sellValue * (MUTATIONS[mutation].valueMultiplier - 1))
@@ -360,7 +376,6 @@ export function sellFlower(
   quantity: number = 1,
   mutation?: MutationType
 ): GameState | null {
-  // Only sell harvested blooms, never seeds
   const item = state.inventory.find(
     (i) => i.speciesId === speciesId && i.mutation === mutation && !i.isSeed
   );
@@ -370,12 +385,12 @@ export function sellFlower(
   if (!species) return null;
 
   const multiplier = mutation ? MUTATIONS[mutation].valueMultiplier : 1;
-  const earned = Math.floor(species.sellValue * multiplier) * quantity;
+  const earned     = Math.floor(species.sellValue * multiplier) * quantity;
 
   const newInventory = state.inventory
     .map((i) =>
       i.speciesId === speciesId && i.mutation === mutation && !i.isSeed
-        ? { ...i, quantity: i.quantity - 1 }
+        ? { ...i, quantity: i.quantity - quantity }
         : i
     )
     .filter((i) => i.quantity > 0);
@@ -394,7 +409,7 @@ export function buyFromShop(state: GameState, speciesId: string): GameState | nu
       : s
   );
 
-  // Seeds are tracked separately from harvested blooms
+  // Mark as seed — cannot be sold directly
   const existing = state.inventory.find((i) => i.speciesId === speciesId && i.isSeed);
   const newInventory = existing
     ? state.inventory.map((i) =>
@@ -432,8 +447,8 @@ export function buyFertilizer(
 
   return {
     ...state,
-    coins: state.coins - slot.price,
-    shop: newShop,
+    coins:       state.coins - slot.price,
+    shop:        newShop,
     fertilizers: newFertilizers,
   };
 }
@@ -476,11 +491,13 @@ export function upgradeFarm(state: GameState): GameState | null {
   if (!next) return null;
   if (state.coins < next.cost) return null;
 
+  const newSize = next.size;
+
   return {
     ...state,
-    coins: state.coins - next.cost,
-    farmSize: next.size,
-    grid: resizeGrid(state.grid, next.size),
+    coins:    state.coins - next.cost,
+    farmSize: newSize,
+    grid:     resizeGrid(state.grid, newSize),
+    shop:     generateShop(newSize), // regenerate shop immediately with new slot count
   };
 }
-
