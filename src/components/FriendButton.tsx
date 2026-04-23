@@ -13,7 +13,7 @@ interface Props {
   theirUsername: string;
 }
 
-export function FriendButton({ theirId, theirUsername }: Props) {
+export function FriendButton({ theirId }: Props) {
   const { user } = useGame();
   const [status, setStatus]           = useState<FriendshipStatus>("none");
   const [friendshipId, setFriendshipId] = useState<string | null>(null);

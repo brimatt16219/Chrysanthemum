@@ -227,7 +227,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setPendingMigration(null);
   }
 
-  function completeUsername(username: string) {
+  function completeUsername(_username: string) {
     setNeedsUsername(false);
     if (user) {
       getProfile(user.id).then((p) => {

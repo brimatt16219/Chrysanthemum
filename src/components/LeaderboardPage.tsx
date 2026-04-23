@@ -28,7 +28,7 @@ function timeAgo(dateStr: string): string {
 const RANK_MEDALS: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" };
 
 export function LeaderboardPage({ onViewProfile }: Props) {
-  const { user, profile, state } = useGame();
+  const { user, state } = useGame();
 
   const [activeTab, setActiveTab]   = useState<LeaderboardTab>("global");
   const [entries, setEntries]       = useState<LeaderboardEntry[]>([]);
@@ -56,8 +56,6 @@ export function LeaderboardPage({ onViewProfile }: Props) {
   }, [activeTab, user]);
 
   useEffect(() => { load(); }, [load]);
-
-  const myEntry = entries.find((e) => e.id === user?.id);
 
   return (
     <div className="flex flex-col gap-5">

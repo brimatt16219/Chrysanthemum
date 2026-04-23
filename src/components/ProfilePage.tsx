@@ -15,7 +15,7 @@ interface Props {
 }
 
 export function ProfilePage({ username, onBack }: Props) {
-  const { user, profile: myProfile, state, update } = useGame();
+  const { user, profile: myProfile, state } = useGame();
   const [profile, setProfile]   = useState<CloudProfile | null>(null);
   const [save, setSave]         = useState<GameState | null>(null);
   const [loading, setLoading]   = useState(true);
@@ -204,7 +204,7 @@ export function ProfilePage({ username, onBack }: Props) {
 // ── Display flower picker ──────────────────────────────────────────────────
 
 function DisplayFlowerPicker() {
-  const { user, profile, state, update } = useGame();
+  const { user, profile, state } = useGame();
   const [open, setOpen]       = useState(false);
   const [saving, setSaving]   = useState(false);
 
