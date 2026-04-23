@@ -51,7 +51,7 @@ export default function App() {
       <header className="sticky top-0 z-30 bg-card/80 backdrop-blur border-b border-border px-4 py-3">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <h1 className="text-lg font-bold text-primary tracking-wide">
-            🌸 Chrysanthemum
+            Chrysanthemum
           </h1>
           <div className="flex items-center gap-4">
             <span className="text-sm font-mono">🟡 {state.coins.toLocaleString()}</span>
@@ -64,7 +64,7 @@ export default function App() {
 
       {/* Tabs */}
       <nav className="bg-card/40 border-b border-border">
-        <div className="max-w-2xl mx-auto flex">
+        <div className="max-w-2xl mx-auto flex text-center">
           {(["garden", "shop", "inventory"] as Tab[]).map((t) => (
             <button
               key={t}
@@ -77,9 +77,9 @@ export default function App() {
                 }
               `}
             >
-              {t === "garden" ? "🌱 Garden"
-               : t === "shop" ? "🛒 Shop"
-               : "🎒 Inventory"}
+              {t === "garden" ? " Garden"
+               : t === "shop" ? " Shop"
+               : " Inventory"}
 
               {/* Inventory badge */}
               {t === "inventory" && inventoryCount > 0 && (

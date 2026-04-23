@@ -214,7 +214,7 @@ export const FLOWERS: FlowerSpecies[] = [
     rarity: "rare",
     growthTime: { seed: 600_000, sprout: 1_200_000 },
     sellValue: 300,
-    shopWeight: 10,
+    shopWeight: 11,
     possibleMutations: ["moonlit", "frozen", "rainbow"],
   },
   {
@@ -225,7 +225,7 @@ export const FLOWERS: FlowerSpecies[] = [
     rarity: "rare",
     growthTime: { seed: 900_000, sprout: 1_800_000 },
     sellValue: 500,
-    shopWeight: 6,
+    shopWeight: 7,
     possibleMutations: ["golden", "moonlit", "rainbow"],
   },
   {
@@ -236,7 +236,7 @@ export const FLOWERS: FlowerSpecies[] = [
     rarity: "rare",
     growthTime: { seed: 720_000, sprout: 1_440_000 },
     sellValue: 380,
-    shopWeight: 8,
+    shopWeight: 9,
     possibleMutations: ["rainbow", "golden"],
   },
   {
@@ -247,7 +247,7 @@ export const FLOWERS: FlowerSpecies[] = [
     rarity: "rare",
     growthTime: { seed: 840_000, sprout: 1_680_000 },
     sellValue: 450,
-    shopWeight: 7,
+    shopWeight: 8,
     possibleMutations: ["golden", "scorched"],
   },
   {
@@ -258,7 +258,7 @@ export const FLOWERS: FlowerSpecies[] = [
     rarity: "rare",
     growthTime: { seed: 780_000, sprout: 1_560_000 },
     sellValue: 420,
-    shopWeight: 7,
+    shopWeight: 8,
     possibleMutations: ["moonlit", "rainbow"],
   },
   {
@@ -269,7 +269,7 @@ export const FLOWERS: FlowerSpecies[] = [
     rarity: "rare",
     growthTime: { seed: 660_000, sprout: 1_320_000 },
     sellValue: 340,
-    shopWeight: 9,
+    shopWeight: 10,
     possibleMutations: ["moonlit", "frozen"],
   },
   {
@@ -280,7 +280,7 @@ export const FLOWERS: FlowerSpecies[] = [
     rarity: "rare",
     growthTime: { seed: 960_000, sprout: 1_920_000 },
     sellValue: 550,
-    shopWeight: 5,
+    shopWeight: 6,
     possibleMutations: ["rainbow", "moonlit", "golden"],
   },
 
