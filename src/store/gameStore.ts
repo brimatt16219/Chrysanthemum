@@ -181,7 +181,7 @@ function generateShop(): ShopSlot[] {
 
 // ── Default state ──────────────────────────────────────────────────────────
 
-function defaultState(): GameState {
+export function defaultState(): GameState {
   return {
     coins: 50,
     farmSize: 3,
@@ -482,3 +482,4 @@ export function upgradeFarm(state: GameState): GameState | null {
     grid: resizeGrid(state.grid, next.size),
   };
 }
+

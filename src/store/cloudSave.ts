@@ -356,3 +356,75 @@ export async function getSentGifts(userId: string): Promise<Gift[]> {
 
   return error || !data ? [] : (data as Gift[]);
 }
+
+export interface LeaderboardEntry {
+  id: string;
+  username: string;
+  display_flower: string;
+  coins: number;
+  farm_size: number;
+  updated_at: string;
+  rank: number;
+}
+
+// Global top 50
+export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
+  const { data, error } = await supabase
+    .from("leaderboard")
+    .select("*")
+    .order("rank", { ascending: true })
+    .limit(50);
+
+  if (error || !data) {
+    console.error("getLeaderboard error:", error);
+    return [];
+  }
+  return data as LeaderboardEntry[];
+}
+
+// Friends leaderboard — your rank among friends
+export async function getFriendsLeaderboard(
+  userId: string
+): Promise<LeaderboardEntry[]> {
+  // Get friend IDs
+  const { data: friendships, error: fError } = await supabase
+    .from("friendships")
+    .select("requester_id, receiver_id")
+    .or(`requester_id.eq.${userId},receiver_id.eq.${userId}`)
+    .eq("status", "accepted");
+
+  if (fError || !friendships) return [];
+
+  const friendIds = friendships.map((f) =>
+    f.requester_id === userId ? f.receiver_id : f.requester_id
+  );
+
+  // Include yourself
+  const allIds = [...friendIds, userId];
+
+  const { data, error } = await supabase
+    .from("leaderboard")
+    .select("*")
+    .in("id", allIds)
+    .order("coins", { ascending: false });
+
+  if (error || !data) return [];
+
+  // Re-rank within this group
+  return (data as LeaderboardEntry[]).map((entry, i) => ({
+    ...entry,
+    rank: i + 1,
+  }));
+}
+
+// Get a single user's global rank
+export async function getMyRank(userId: string): Promise<number | null> {
+  const { data, error } = await supabase
+    .from("leaderboard")
+    .select("rank")
+    .eq("id", userId)
+    .single();
+
+  if (error || !data) return null;
+  return data.rank;
+}
