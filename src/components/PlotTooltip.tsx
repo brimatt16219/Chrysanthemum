@@ -13,6 +13,7 @@ interface Props {
   plant: PlantedFlower;
   row: number;
   col: number;
+  onClose?: () => void;
 }
 
 function formatMs(ms: number): string {
@@ -26,18 +27,18 @@ function formatMs(ms: number): string {
   return remM > 0 ? `${h}h ${remM}m` : `${h}h`;
 }
 
-export function PlotTooltip({ plant, row, col }: Props) {
+export function PlotTooltip({ plant, row, col, onClose }: Props) {
   const { state, update } = useGame();
   const [showFertPicker, setShowFertPicker] = useState(false);
 
-  const now = Date.now();
+  const now     = Date.now();
   const species = getFlower(plant.speciesId);
   if (!species) return null;
 
-  const stage = getCurrentStage(plant, now);
-  const msLeft = getMsUntilNextStage(plant, now);
-  const rarity = RARITY_CONFIG[species.rarity];
-  const isBloomed = stage === "bloom";
+  const stage         = getCurrentStage(plant, now);
+  const msLeft        = getMsUntilNextStage(plant, now);
+  const rarity        = RARITY_CONFIG[species.rarity];
+  const isBloomed     = stage === "bloom";
   const hasFertilizer = !!plant.fertilizer;
   const availableFerts = state.fertilizers.filter((f) => f.quantity > 0);
 
@@ -45,6 +46,7 @@ export function PlotTooltip({ plant, row, col }: Props) {
     const next = applyFertilizer(state, row, col, type);
     if (next) update(next);
     setShowFertPicker(false);
+    onClose?.(); // close tooltip after applying fertilizer
   }
 
   return (
@@ -54,10 +56,20 @@ export function PlotTooltip({ plant, row, col }: Props) {
         {/* Header */}
         <div className="flex items-center gap-2">
           <span className="text-xl">{species.emoji[stage]}</span>
-          <div>
+          <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold leading-tight">{species.name}</p>
             <p className={`text-[10px] font-mono ${rarity.color}`}>{rarity.label}</p>
           </div>
+          {/* Close button */}
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="text-muted-foreground hover:text-foreground text-xs flex-shrink-0 leading-none"
+              aria-label="Close"
+            >
+              ✕
+            </button>
+          )}
         </div>
 
         {/* Status */}
