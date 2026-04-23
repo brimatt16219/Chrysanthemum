@@ -359,7 +359,6 @@ export const FLOWERS: FlowerSpecies[] = [
     shopWeight: 2,
     possibleMutations: ["frozen", "moonlit"],
   },
-  // NEW legendary
   {
     id: "nestbloom",
     name: "Nestbloom",
@@ -370,6 +369,17 @@ export const FLOWERS: FlowerSpecies[] = [
     sellValue: 2_800,
     shopWeight: 2,
     possibleMutations: ["giant", "moonlit", "golden"],
+  },
+  {
+    id: "candy_blossom",
+    name: "Candy Blossom",
+    description: "Petals made of pure sugar. Smells like a carnival.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🍭" },
+    rarity: "legendary",
+    growthTime: { seed: 7_500_000, sprout: 15_000_000 },
+    sellValue: 2_400,
+    shopWeight: 2,
+    possibleMutations: ["rainbow", "golden", "frozen"],
   },
 
   // ── MYTHIC ──────────────────────────────────────────────────────────────
