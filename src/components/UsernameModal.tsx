@@ -69,7 +69,7 @@ export function UsernameModal({ user, onComplete }: Props) {
         <button
           onClick={handleSubmit}
           disabled={loading || !username.trim()}
-          className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+          className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 text-center"
         >
           {loading ? "Saving..." : "Let's grow! 🌱"}
         </button>
