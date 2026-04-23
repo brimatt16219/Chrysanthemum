@@ -4,6 +4,8 @@ import { Shop } from "./components/Shop";
 import { Inventory } from "./components/Inventory";
 import { OfflineBanner } from "./components/OfflineBanner";
 import { ShopRestockBanner } from "./components/ShopRestockBanner";
+import { UsernameModal } from "./components/UsernameModal";
+import { SaveMigrationModal } from "./components/SaveMigrationModal";
 import { useGame } from "./store/GameContext";
 import { msUntilShopReset } from "./store/gameStore";
 
@@ -18,8 +20,17 @@ function formatCountdown(ms: number): string {
 }
 
 export default function App() {
-  const { state, offlineSummary, clearSummary, shopJustRestocked, clearShopNotification } = useGame();
-  const [tab, setTab] = useState<Tab>("garden");
+
+  const {
+    state, offlineSummary, clearSummary,
+    shopJustRestocked, clearShopNotification,
+    user, profile, authLoading,
+    signInWithGoogle, signOut,
+    pendingMigration, resolveMigration,
+    needsUsername, completeUsername,
+  } = useGame();
+
+  const [tab, setTab]         = useState<Tab>("garden");
   const [countdown, setCountdown] = useState(() => msUntilShopReset(state));
   const [showBanner, setShowBanner] = useState(true);
 
@@ -30,41 +41,72 @@ export default function App() {
 
   const inventoryCount = state.inventory.reduce((s, i) => s + i.quantity, 0);
 
-  function handleDismissBanner() {
-    setShowBanner(false);
-    clearSummary();
-  }
-
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col garden-theme">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
 
-      {/* Offline banner */}
+      {/* Modals */}
       {showBanner && (
-        <OfflineBanner summary={offlineSummary} onDismiss={handleDismissBanner} />
+        <OfflineBanner
+          summary={offlineSummary}
+          onDismiss={() => { setShowBanner(false); clearSummary(); }}
+        />
       )}
-
       {shopJustRestocked && (
         <ShopRestockBanner onDismiss={clearShopNotification} />
+      )}
+      {needsUsername && user && (
+        <UsernameModal user={user} onComplete={completeUsername} />
+      )}
+      {pendingMigration && (
+        <SaveMigrationModal
+          localSave={pendingMigration.localSave}
+          cloudSave={pendingMigration.cloudSave}
+          onChoose={resolveMigration}
+        />
       )}
 
       {/* HUD */}
       <header className="sticky top-0 z-30 bg-card/80 backdrop-blur border-b border-border px-4 py-3">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <h1 className="text-lg font-bold text-primary tracking-wide">
-            Chrysanthemum
+            🌸 Chrysanthemum
           </h1>
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-mono">🟡 {state.coins.toLocaleString()}</span>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-mono">🪙 {state.coins.toLocaleString()}</span>
             <span className="text-xs text-muted-foreground font-mono hidden sm:block">
               Shop {formatCountdown(countdown)}
             </span>
+
+            {/* Auth button */}
+            {!authLoading && (
+              user ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground hidden sm:block">
+                    {profile?.username ?? "..."}
+                  </span>
+                  <button
+                    onClick={signOut}
+                    className="text-xs px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
+                  >
+                    Sign out
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={signInWithGoogle}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
+                >
+                  Sign in
+                </button>
+              )
+            )}
           </div>
         </div>
       </header>
 
       {/* Tabs */}
       <nav className="bg-card/40 border-b border-border">
-        <div className="max-w-2xl mx-auto flex text-center">
+        <div className="max-w-2xl mx-auto flex">
           {(["garden", "shop", "inventory"] as Tab[]).map((t) => (
             <button
               key={t}
@@ -77,11 +119,9 @@ export default function App() {
                 }
               `}
             >
-              {t === "garden" ? " Garden"
-               : t === "shop" ? " Shop"
-               : " Inventory"}
-
-              {/* Inventory badge */}
+              {t === "garden" ? "🌱 Garden"
+               : t === "shop" ? "🛒 Shop"
+               : "🎒 Inventory"}
               {t === "inventory" && inventoryCount > 0 && (
                 <span className="absolute top-2 right-6 w-4 h-4 bg-primary rounded-full text-[10px] text-primary-foreground flex items-center justify-center font-bold">
                   {inventoryCount > 9 ? "9+" : inventoryCount}
