@@ -22,11 +22,20 @@ export function FriendsPage({ onViewProfile }: Props) {
   const load = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const result = await getFriends(user.id);
-    setFriends(result.friends);
-    setPendingReceived(result.pendingReceived);
-    setPendingSent(result.pendingSent);
-    setLoading(false);
+
+    const timeout = setTimeout(() => setLoading(false), 10_000);
+
+    try {
+      const result = await getFriends(user.id);
+      setFriends(result.friends);
+      setPendingReceived(result.pendingReceived);
+      setPendingSent(result.pendingSent);
+    } catch (e) {
+      console.error("Failed to load friends:", e);
+    } finally {
+      clearTimeout(timeout);
+      setLoading(false);
+    }
   }, [user]);
 
   useEffect(() => { load(); }, [load]);

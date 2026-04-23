@@ -23,9 +23,18 @@ export function GiftsPage({ onViewProfile }: Props) {
   const load = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const g = await getPendingGifts(user.id);
-    setGifts(g);
-    setLoading(false);
+
+    const timeout = setTimeout(() => setLoading(false), 10_000);
+
+    try {
+      const g = await getPendingGifts(user.id);
+      setGifts(g);
+    } catch (e) {
+      console.error("Failed to load gifts:", e);
+    } finally {
+      clearTimeout(timeout);
+      setLoading(false);
+    }
   }, [user]);
 
   useEffect(() => { load(); }, [load]);

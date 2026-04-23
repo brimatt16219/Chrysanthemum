@@ -230,13 +230,20 @@ export async function getFriends(userId: string): Promise<{
 
   if (error || !data) return { friends: [], pendingReceived: [], pendingSent: [] };
 
+  // Fetch all profiles in parallel instead of sequentially
+  const otherIds = (data as Friendship[]).map((f) =>
+    f.requester_id === userId ? f.receiver_id : f.requester_id
+  );
+
+  const profiles = await Promise.all(otherIds.map((id) => getProfile(id)));
+
   const friends: FriendWithProfile[]         = [];
   const pendingReceived: FriendWithProfile[] = [];
   const pendingSent: FriendWithProfile[]     = [];
 
-  for (const f of data as Friendship[]) {
-    const otherId = f.requester_id === userId ? f.receiver_id : f.requester_id;
-    const profile = await getProfile(otherId);
+  for (let i = 0; i < (data as Friendship[]).length; i++) {
+    const f       = (data as Friendship[])[i];
+    const profile = profiles[i];
     if (!profile) continue;
 
     const entry: FriendWithProfile = { friendship: f, profile };
@@ -316,11 +323,19 @@ export async function getPendingGifts(userId: string): Promise<GiftWithSender[]>
 
   if (error || !data) return [];
 
+  // Fetch all sender profiles in parallel
+  const senderProfiles = await Promise.all(
+    (data as Gift[]).map((gift) => getProfile(gift.sender_id))
+  );
+
   const result: GiftWithSender[] = [];
-  for (const gift of data as Gift[]) {
-    const senderProfile = await getProfile(gift.sender_id);
-    if (senderProfile) result.push({ gift, senderProfile });
+  for (let i = 0; i < (data as Gift[]).length; i++) {
+    const senderProfile = senderProfiles[i];
+    if (senderProfile) {
+      result.push({ gift: (data as Gift[])[i], senderProfile });
+    }
   }
+
   return result;
 }
 

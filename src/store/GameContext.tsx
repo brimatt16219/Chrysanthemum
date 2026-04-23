@@ -70,7 +70,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   // ── Auth ──────────────────────────────────────────────────────────────────
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
+      if (error) {
+        // Session is invalid — clear it
+        await supabase.auth.signOut();
+        authInProgress.current = false;
+        setAuthLoading(false);
+        return;
+      }
+
       const u = session?.user ?? null;
       setUser(u);
       if (u) {
