@@ -142,7 +142,7 @@ export function ProfilePage({ username, onBack }: Props) {
       {save && (
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: "Coins",   value: save.coins.toLocaleString(), emoji: "🪙" },
+            { label: "Coins",   value: save.coins.toLocaleString(), emoji: "🟡" },
             { label: "Items",   value: totalItems.toString(),       emoji: "🎒" },
             { label: "Species", value: uniqueSpecies.toString(),    emoji: "🌸" },
           ].map(({ label, value, emoji }) => (

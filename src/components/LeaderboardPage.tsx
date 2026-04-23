@@ -109,7 +109,7 @@ export function LeaderboardPage({ onViewProfile }: Props) {
             <p className="text-sm font-bold">
               {myRank ? `#${myRank}` : "Unranked"}{" "}
               <span className="text-muted-foreground font-normal">
-                · {state.coins.toLocaleString()} 🪙
+                · {state.coins.toLocaleString()} 🟡
               </span>
             </p>
           </div>
@@ -205,7 +205,7 @@ export function LeaderboardPage({ onViewProfile }: Props) {
                   <p className="text-sm font-mono font-semibold">
                     {entry.coins.toLocaleString()}
                   </p>
-                  <p className="text-xs text-muted-foreground">🪙</p>
+                  <p className="text-xs text-muted-foreground">🟡</p>
                 </div>
               </button>
             );

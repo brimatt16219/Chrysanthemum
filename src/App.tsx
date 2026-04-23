@@ -122,7 +122,7 @@ export default function App() {
             🌸 Chrysanthemum
           </h1>
           <div className="flex items-center gap-3">
-            <span className="text-sm font-mono">🪙 {state.coins.toLocaleString()}</span>
+            <span className="text-sm font-mono">🟡 {state.coins.toLocaleString()}</span>
             <span className="text-xs text-muted-foreground font-mono hidden sm:block">
               Shop {formatCountdown(countdown)}
             </span>
@@ -164,7 +164,7 @@ export default function App() {
 
       {/* Tabs */}
       <nav className="bg-card/40 border-b border-border">
-        <div className="max-w-2xl mx-auto flex">
+        <div className="max-w-2xl mx-auto flex text-center">
           {(["garden", "shop", "inventory", "social"] as Tab[]).map((t) => (
             <button
               key={t}

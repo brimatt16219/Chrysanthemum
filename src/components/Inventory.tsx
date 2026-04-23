@@ -68,7 +68,7 @@ export function Inventory() {
       {items.length > 0 && (
         <button
           onClick={handleSellAll}
-          className="w-full py-2.5 rounded-xl border border-primary text-primary text-sm font-semibold hover:bg-primary/10 transition-colors"
+          className="w-full py-2.5 rounded-xl border border-primary text-primary text-sm font-semibold hover:bg-primary/10 transition-colors text-center"
         >
           Sell Everything — {totalValue.toLocaleString()} 🟡
         </button>
