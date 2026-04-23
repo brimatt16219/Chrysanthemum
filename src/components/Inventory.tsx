@@ -1,28 +1,26 @@
 import { useGame } from "../store/GameContext";
-import { getFlower, RARITY_CONFIG } from "../data/flowers";
-import { MUTATIONS } from "../data/flowers";
+import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
+import type { MutationType } from "../data/flowers";
 import { InventoryItemCard } from "./InventoryItemCard";
 import { sellFlower, type InventoryItem } from "../store/gameStore";
 
 export function Inventory() {
   const { state, update } = useGame();
 
-  const items = state.inventory.filter((i) => i.quantity > 0);
-
-  const totalValue = items.reduce((sum, item) => {
-    const species = getFlower(item.speciesId);
-    const mut = item.mutation ? MUTATIONS[item.mutation] : null;
-    const valuePerItem = Math.floor((species?.sellValue ?? 0) * (mut?.valueMultiplier ?? 1));
-    return sum + valuePerItem * item.quantity;
-  }, 0);
-
+  const items  = state.inventory.filter((i) => i.quantity > 0);
   const seeds  = items.filter((i) => i.isSeed);
   const blooms = items.filter((i) => !i.isSeed);
 
+  const totalBloomValue = blooms.reduce((sum, item) => {
+    const species = getFlower(item.speciesId);
+    const mut     = item.mutation ? MUTATIONS[item.mutation as MutationType] : null;
+    return sum + Math.floor((species?.sellValue ?? 0) * (mut?.valueMultiplier ?? 1)) * item.quantity;
+  }, 0);
+
   function handleSellAll() {
     let current = state;
-    for (const item of items) {
-      const next = sellFlower(current, item.speciesId, item.quantity, item.mutation);
+    for (const item of blooms) {
+      const next = sellFlower(current, item.speciesId, item.quantity, item.mutation as MutationType | undefined);
       if (next) current = next;
     }
     update(current);
@@ -48,15 +46,18 @@ export function Inventory() {
         <div>
           <h2 className="text-lg font-bold">Inventory</h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {items.length} species · {items.reduce((s, i) => s + i.quantity, 0)} total items
+            {seeds.reduce((s, i) => s + i.quantity, 0)} seeds ·{" "}
+            {blooms.reduce((s, i) => s + i.quantity, 0)} blooms
           </p>
         </div>
-        <div className="text-right">
-          <p className="text-xs text-muted-foreground">Total value</p>
-          <p className="text-sm font-mono font-semibold text-primary">
-            {totalValue.toLocaleString()} 🟡
-          </p>
-        </div>
+        {blooms.length > 0 && (
+          <div className="text-right">
+            <p className="text-xs text-muted-foreground">Bloom value</p>
+            <p className="text-sm font-mono font-semibold text-primary">
+              {totalBloomValue.toLocaleString()} 🟡
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Coins */}
@@ -67,22 +68,15 @@ export function Inventory() {
         </span>
       </div>
 
-      {/* Sell all */}
-      {items.length > 0 && (
+      {/* Sell all blooms */}
+      {blooms.length > 0 && (
         <button
           onClick={handleSellAll}
           className="w-full py-2.5 rounded-xl border border-primary text-primary text-sm font-semibold hover:bg-primary/10 transition-colors text-center"
         >
-          Sell Everything — {totalValue.toLocaleString()} 🟡
+          Sell All Blooms — {totalBloomValue.toLocaleString()} 🟡
         </button>
       )}
-
-      {/* Item list */}
-      {/* <div className="flex flex-col gap-3">
-        {items.map((item, i) => (
-          <InventoryItemCard key={`${item.speciesId}-${item.mutation ?? "none"}-${i}`} item={item} />
-        ))}
-      </div> */}
 
       {/* Seeds — can only be planted */}
       {seeds.length > 0 && (
@@ -103,7 +97,10 @@ export function Inventory() {
             Harvested ({blooms.reduce((s, i) => s + i.quantity, 0)}) — Ready to sell
           </h3>
           {blooms.map((item, i) => (
-            <InventoryItemCard key={`bloom-${item.speciesId}-${item.mutation ?? "none"}-${i}`} item={item} />
+            <InventoryItemCard
+              key={`bloom-${item.speciesId}-${item.mutation ?? "none"}-${i}`}
+              item={item}
+            />
           ))}
         </div>
       )}
