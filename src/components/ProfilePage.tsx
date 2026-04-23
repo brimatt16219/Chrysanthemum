@@ -6,6 +6,7 @@ import { ReadOnlyGarden } from "./ReadOnlyGarden";
 import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
 import { useGame } from "../store/GameContext";
 import { FriendButton } from "./FriendButton";
+import { SendGiftModal } from "./SendGiftModal";
 
 
 interface Props {
@@ -19,6 +20,8 @@ export function ProfilePage({ username, onBack }: Props) {
   const [save, setSave]         = useState<GameState | null>(null);
   const [loading, setLoading]   = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [showGiftModal, setShowGiftModal] = useState(false);
+  const [giftSent, setGiftSent]           = useState(false);
 
   const isOwnProfile = myProfile?.username === username;
 
@@ -99,11 +102,40 @@ export function ProfilePage({ username, onBack }: Props) {
           </p>
         </div>
 
-        {!isOwnProfile && profile && (
-        <div className="mt-3">
-            <FriendButton theirId={profile.id} theirUsername={profile.username} />
-        </div>
-        )}
+        {/* Send gift button */}
+        {!isOwnProfile && profile && user && (
+            <div className="flex gap-2 mt-3 flex-wrap">
+                <FriendButton theirId={profile.id} theirUsername={profile.username} />
+                <button
+                onClick={() => setShowGiftModal(true)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold border border-border text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
+                >
+                🎁 Send Gift
+                </button>
+            </div>
+            )}
+
+            {/* Gift sent confirmation */}
+            {giftSent && (
+            <div className="mt-3 flex items-center gap-2 text-xs text-green-400 font-mono">
+                <span>✓</span>
+                <span>Gift sent!</span>
+            </div>
+            )}
+
+            {/* Gift modal */}
+            {showGiftModal && profile && (
+            <SendGiftModal
+                receiverId={profile.id}
+                receiverUsername={profile.username}
+                onClose={() => setShowGiftModal(false)}
+                onSent={() => {
+                setShowGiftModal(false);
+                setGiftSent(true);
+                setTimeout(() => setGiftSent(false), 3_000);
+                }}
+            />
+            )}
       </div>
 
       {/* Stats row */}

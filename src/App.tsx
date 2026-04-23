@@ -10,13 +10,17 @@ import { SearchPage } from "./components/SearchPage";
 import { ProfilePage } from "./components/ProfilePage";
 import { FriendsPage } from "./components/FriendsPage";
 import { FriendRequestNotification } from "./components/FriendRequestNotification";
+import { GiftsPage } from "./components/GiftsPage";
+import { GiftNotification } from "./components/GiftNotification";
+import { useGiftNotifications } from "./hooks/useGiftNotifications";
 import { useGame } from "./store/GameContext";
 import { useFriendRequests } from "./hooks/useFriendRequests";
 import { msUntilShopReset } from "./store/gameStore";
 import { getFlower } from "./data/flowers";
 
+
 type Tab = "garden" | "shop" | "inventory" | "social";
-type SocialView = "search" | "friends" | "profile";
+type SocialView = "search" | "friends" | "gifts" | "profile";
 
 function formatCountdown(ms: number): string {
   const totalSec = Math.max(0, Math.floor(ms / 1000));
@@ -43,6 +47,7 @@ export default function App() {
   const [viewingProfile, setViewingProfile] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(() => msUntilShopReset(state));
   const [showBanner, setShowBanner] = useState(true);
+  const { pendingCount: giftCount, newGift, clearNewGift } = useGiftNotifications(user?.id ?? null);
 
   useEffect(() => {
     const id = setInterval(() => setCountdown(msUntilShopReset(state)), 1_000);
@@ -93,6 +98,16 @@ export default function App() {
           localSave={pendingMigration.localSave}
           cloudSave={pendingMigration.cloudSave}
           onChoose={resolveMigration}
+        />
+      )}
+      {newGift && (
+        <GiftNotification
+          onDismiss={clearNewGift}
+          onView={() => {
+            clearNewGift();
+            setSocialView("gifts");
+            setTab("social");
+          }}
         />
       )}
 
@@ -178,9 +193,9 @@ export default function App() {
               )}
 
               {/* Friend request badge */}
-              {t === "social" && pendingCount > 0 && (
+              {t === "social" && (pendingCount + giftCount) > 0 && (
                 <span className="absolute top-2 right-1 sm:right-6 w-4 h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
-                  {pendingCount > 9 ? "9+" : pendingCount}
+                  {(pendingCount + giftCount) > 9 ? "9+" : pendingCount + giftCount}
                 </span>
               )}
             </button>
@@ -199,7 +214,7 @@ export default function App() {
               {/* Social sub-nav */}
               {socialView !== "profile" && (
                 <div className="flex gap-2 mb-6">
-                  {(["search", "friends"] as SocialView[]).map((v) => (
+                  {(["search", "friends", "gifts"] as SocialView[]).map((v) => (
                     <button
                       key={v}
                       onClick={() => setSocialView(v)}
@@ -211,10 +226,15 @@ export default function App() {
                         }
                       `}
                     >
-                      {v === "search" ? "🔍 Search" : "👥 Friends"}
+                      {v === "search" ? "🔍 Search" : v === "friends" ? "👥 Friends" : "🎁 Gifts"}
                       {v === "friends" && pendingCount > 0 && (
                         <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
                           {pendingCount}
+                        </span>
+                      )}
+                      {v === "gifts" && giftCount > 0 && (
+                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
+                          {giftCount}
                         </span>
                       )}
                     </button>
@@ -224,6 +244,7 @@ export default function App() {
 
               {socialView === "search"  && <SearchPage onViewProfile={handleViewProfile} />}
               {socialView === "friends" && <FriendsPage onViewProfile={handleViewProfile} />}
+              {socialView === "gifts" && <GiftsPage onViewProfile={handleViewProfile} />}
               {socialView === "profile" && viewingProfile && (
                 <ProfilePage
                   username={viewingProfile}
