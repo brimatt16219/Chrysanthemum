@@ -79,7 +79,7 @@ export const FLOWERS: FlowerSpecies[] = [
     id: "poppy",
     name: "Poppy",
     description: "Vivid red petals that catch every breeze.",
-    emoji: { seed: "🌱", sprout: "🌿", bloom: "🌺" },
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "📍" },
     rarity: "common",
     growthTime: { seed: 100_000, sprout: 200_000 },
     sellValue: 14,
