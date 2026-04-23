@@ -58,14 +58,34 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     cloudSave: GameState;
   } | null>(null);
 
-  const saveEnabled   = useRef(false);
-  // Tracks the user ID of the session we already loaded
-  // so SIGNED_IN after INITIAL_SESSION doesn't double-load
-  const loadedUserId  = useRef<string | null>(null);
+  const saveEnabled        = useRef(false);
+  const isLoading          = useRef(false);
+  const loadedFor          = useRef<string | null>(null);
+  // Set to true once INITIAL_SESSION has fired.
+  // SIGNED_IN is ignored until this is true, because Supabase fires
+  // SIGNED_IN during _initialize before the client is ready to make requests.
+  const initialSessionFired = useRef(false);
+  const stateRef            = useRef(state);
+
+  useEffect(() => { stateRef.current = state; }, [state]);
 
   // ── Load session ──────────────────────────────────────────────────────────
   async function loadUserSession(u: User | null) {
+    console.log("[load] called — isLoading:", isLoading.current, "loadedFor:", loadedFor.current, "u:", u?.id ?? "null");
+
+    if (isLoading.current) {
+      console.log("[load] DROPPED — lock held");
+      return;
+    }
+    if (u && loadedFor.current === u.id) {
+      console.log("[load] DROPPED — same user already loaded");
+      setAuthLoading(false);
+      return;
+    }
+
+    isLoading.current   = true;
     saveEnabled.current = false;
+    console.log("[load] ACQUIRED lock for", u?.id ?? "guest");
 
     if (!u) {
       const { state: localState, summary } = loadGame();
@@ -73,34 +93,35 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       setOfflineSummary(summary);
       setUser(null);
       setProfile(null);
-      loadedUserId.current = null;
-      saveEnabled.current  = true;
+      loadedFor.current   = null;
+      saveEnabled.current = true;
+      isLoading.current   = false;
       setAuthLoading(false);
+      console.log("[load] guest loaded — coins:", localState.coins);
       return;
     }
 
-    // Skip if we already loaded this exact user
-    if (loadedUserId.current === u.id) {
-      console.log("[auth] session already loaded for", u.id, "— skipping");
-      setAuthLoading(false);
-      return;
-    }
-
-    loadedUserId.current = u.id;
+    loadedFor.current = u.id;
     setUser(u);
 
     try {
+      console.log("[load] fetching profile...");
       const p = await getProfile(u.id);
+      console.log("[load] profile:", p?.username ?? "null");
 
       if (!p) {
         setNeedsUsername(true);
+        isLoading.current = false;
         setAuthLoading(false);
         return;
       }
 
       setProfile(p);
 
+      console.log("[load] fetching cloud save...");
       const cloudSave = await loadCloudSave(u.id);
+      console.log("[load] cloudSave coins:", cloudSave?.coins ?? "null");
+
       const localRaw  = localStorage.getItem("chrysanthemum_save");
       const localSave = localRaw ? (JSON.parse(localRaw) as GameState) : null;
 
@@ -109,29 +130,39 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       if (!cloudSave) {
         const saveToUse = localSave ?? defaultState();
         const { state: ticked, summary } = applyOfflineTick(saveToUse);
+        console.log("[load] no cloud save — coins:", ticked.coins);
         setState(ticked);
         setOfflineSummary(summary);
         await saveToCloud(u.id, ticked);
       } else if (localSave && localSave.lastSaved > cloudSave.lastSaved + 300_000) {
+        console.log("[load] migration needed");
         setPendingMigration({ localSave, cloudSave });
+        isLoading.current = false;
         setAuthLoading(false);
         return;
       } else {
         const { state: ticked, summary } = applyOfflineTick(cloudSave);
+        console.log("[load] using cloud save — coins:", ticked.coins);
         setState(ticked);
         setOfflineSummary(summary);
       }
 
-      setTimeout(() => { saveEnabled.current = true; }, 1_000);
+      setTimeout(() => {
+        console.log("[load] saves ENABLED — coins:", stateRef.current.coins);
+        saveEnabled.current = true;
+      }, 1_000);
+
     } catch (e) {
-      console.error("[loadUserSession] error:", e);
+      console.error("[load] ERROR:", e);
       const { state: localState, summary } = loadGame();
       setState(localState);
       setOfflineSummary(summary);
       saveEnabled.current = true;
     }
 
+    isLoading.current = false;
     setAuthLoading(false);
+    console.log("[load] DONE for", u.id);
   }
 
   // ── Auth listener ─────────────────────────────────────────────────────────
@@ -141,28 +172,34 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         console.log("[auth]", event, session?.user?.id ?? "none");
 
         if (event === "INITIAL_SESSION") {
-          if (!session) {
-            // Clear stale tokens
-            Object.keys(localStorage)
-              .filter((k) => k.startsWith("sb-"))
-              .forEach((k) => localStorage.removeItem(k));
-          }
+          // Supabase is now fully initialized — safe to make requests
+          initialSessionFired.current = true;
           await loadUserSession(session?.user ?? null);
           return;
         }
 
         if (event === "SIGNED_IN") {
-          // loadUserSession skips if already loaded for this user
+          // Supabase fires SIGNED_IN during _initialize BEFORE the client
+          // is ready. We must wait for INITIAL_SESSION first.
+          if (!initialSessionFired.current) {
+            console.log("[auth] SIGNED_IN ignored — waiting for INITIAL_SESSION");
+            return;
+          }
+          // After INITIAL_SESSION, SIGNED_IN means a genuine new OAuth login
           await loadUserSession(session?.user ?? null);
           return;
         }
 
         if (event === "SIGNED_OUT") {
-          saveEnabled.current  = false;
-          loadedUserId.current = null;
+          isLoading.current            = false;
+          loadedFor.current            = null;
+          initialSessionFired.current  = false;
+          saveEnabled.current          = false;
+
           Object.keys(localStorage)
             .filter((k) => k.startsWith("sb-"))
             .forEach((k) => localStorage.removeItem(k));
+
           setUser(null);
           setProfile(null);
           setNeedsUsername(false);
@@ -176,13 +213,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (event === "TOKEN_REFRESHED") {
-          // Silently update user — do NOT reload save
           if (session?.user) setUser(session.user);
           return;
         }
 
         if (event === "USER_UPDATED") {
-          // Just refresh profile data — do NOT reload save
           if (session?.user) {
             setUser(session.user);
             const p = await getProfile(session.user.id);

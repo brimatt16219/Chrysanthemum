@@ -11,14 +11,24 @@ export interface CloudProfile {
 // ── Profile ────────────────────────────────────────────────────────────────
 
 export async function getProfile(userId: string): Promise<CloudProfile | null> {
-  const { data, error } = await supabase
-    .from("users")
-    .select("*")
-    .eq("id", userId)
-    .single();
+  try {
+    const result = await Promise.race([
+      supabase
+        .from("users")
+        .select("*")
+        .eq("id", userId)
+        .single(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("getProfile timeout")), 5_000)
+      ),
+    ]) as { data: CloudProfile | null; error: unknown };
 
-  if (error || !data) return null;
-  return data as CloudProfile;
+    if (result.error || !result.data) return null;
+    return result.data as CloudProfile;
+  } catch (e) {
+    console.warn("[getProfile] failed:", e);
+    return null;
+  }
 }
 
 export async function createProfile(
@@ -55,25 +65,34 @@ export async function updateDisplayFlower(
 // ── Game save ──────────────────────────────────────────────────────────────
 
 export async function loadCloudSave(userId: string): Promise<GameState | null> {
-  const { data, error } = await supabase
-    .from("game_saves")
-    .select("*")
-    .eq("user_id", userId)
-    .single();
+  try {
+    const result = await Promise.race([
+      supabase
+        .from("game_saves")
+        .select("*")
+        .eq("user_id", userId)
+        .single(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("loadCloudSave timeout")), 5_000)
+      ),
+    ]) as { data: Record<string, unknown> | null; error: unknown };
 
-  if (error || !data) return null;
-
-  // Map DB columns back to GameState shape
-  return {
-    coins:          data.coins,
-    farmSize:       data.farm_size,
-    grid:           data.grid,
-    inventory:      data.inventory,
-    fertilizers:    data.fertilizers,
-    shop:           data.shop,
-    lastShopReset:  data.last_shop_reset,
-    lastSaved:      data.last_saved,
-  } as GameState;
+    if (result.error || !result.data) return null;
+    const data = result.data;
+    return {
+      coins:         data.coins,
+      farmSize:      data.farm_size,
+      grid:          data.grid,
+      inventory:     data.inventory,
+      fertilizers:   data.fertilizers,
+      shop:          data.shop,
+      lastShopReset: data.last_shop_reset,
+      lastSaved:     data.last_saved,
+    } as GameState;
+  } catch (e) {
+    console.warn("[loadCloudSave] failed:", e);
+    return null;
+  }
 }
 
 export async function saveToCloud(
