@@ -34,7 +34,7 @@ export interface Fertilizer {
 }
 
 export const FERTILIZERS: Record<FertilizerType, Fertilizer> = {
-  basic:   { id: "basic",   name: "Basic Fertilizer",   description: "Speeds growth by 2×.",  emoji: "🌿", speedMultiplier: 2.0,  shopPrice: 40,  color: "text-green-400"  },
-  premium: { id: "premium", name: "Premium Fertilizer", description: "Speeds growth by 5×.",  emoji: "⚗️", speedMultiplier: 5.0,  shopPrice: 175, color: "text-blue-400"   },
-  miracle: { id: "miracle", name: "Miracle Fertilizer", description: "Speeds growth by 10×.", emoji: "💫", speedMultiplier: 10.0, shopPrice: 700, color: "text-yellow-400" },
+  basic:   { id: "basic",   name: "Basic Fertilizer",   description: "Speeds growth by 2×.",  emoji: "🌿", speedMultiplier: 2.0,  shopPrice: 50,  color: "text-green-400"  },
+  premium: { id: "premium", name: "Premium Fertilizer", description: "Speeds growth by 5×.",  emoji: "⚗️", speedMultiplier: 5.0,  shopPrice: 250, color: "text-blue-400"   },
+  miracle: { id: "miracle", name: "Miracle Fertilizer", description: "Speeds growth by 10×.", emoji: "💫", speedMultiplier: 10.0, shopPrice: 1000, color: "text-yellow-400" },
 };
