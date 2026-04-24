@@ -179,7 +179,7 @@ export default function App() {
 
       {/* Tabs */}
       <nav className="bg-card/40 border-b border-border">
-        <div className="w-full sm:max-w-2xl sm:mx-auto flex">
+        <div className="w-full sm:max-w-2xl sm:mx-auto flex text-center">
           {(["garden", "shop", "inventory", "codex", "social"] as Tab[]).map((t) => (
             <button
               key={t}
