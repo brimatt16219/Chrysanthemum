@@ -290,7 +290,9 @@ function CompactCodex({
   pct: number;
 }) {
   // Show up to 20 discovered bloom emojis as a preview
-  const discoveredSpecies = FLOWERS.filter((f) => isDiscovered(discovered, f.id));
+  const discoveredSpecies = FLOWERS
+    .filter((f) => isDiscovered(discovered, f.id))
+    .sort((a, b) => b.sellValue - a.sellValue);
   const preview           = discoveredSpecies.slice(0, 20);
 
   return (
