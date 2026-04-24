@@ -16,6 +16,7 @@ const DEFAULT: WeatherState = {
 
 export function useWeather() {
   const [weather, setWeather] = useState<WeatherState>(DEFAULT);
+  const [, setTick] = useState(0); // force re-render tick
 
   useEffect(() => {
     // Load current weather on mount
@@ -51,11 +52,17 @@ export function useWeather() {
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    // Tick every second so isActive re-evaluates when weather expires
+    const ticker = setInterval(() => setTick((n) => n + 1), 1_000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(ticker);
+    };
   }, []);
 
   const now        = Date.now();
-  const isActive   = weather.endsAt > now;
+  const isActive   = weather.endsAt > now && weather.type !== "clear";
   const msLeft     = Math.max(0, weather.endsAt - now);
   const activeType = isActive ? weather.type : "clear";
 
