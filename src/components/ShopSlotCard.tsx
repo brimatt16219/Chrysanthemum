@@ -1,9 +1,10 @@
 import { getFlower, RARITY_CONFIG } from "../data/flowers";
 import { FERTILIZERS } from "../data/upgrades";
 import { useGame } from "../store/GameContext";
-import { buyFromShop, buyFertilizer } from "../store/gameStore";
+import { buyFromShop, buyFertilizer, getSpeciesCompletion } from "../store/gameStore";
 import type { ShopSlot } from "../store/gameStore";
 import type { Rarity } from "../data/flowers";
+
 
 interface Props {
   slot: ShopSlot;
@@ -97,6 +98,8 @@ export function ShopSlotCard({ slot }: Props) {
   const canAfford  = state.coins >= slot.price;
   const outOfStock = slot.quantity === 0;
   const isNew      = !state.discovered.includes(species.id);
+  const isComplete = getSpeciesCompletion(state.discovered, species.id).found ===
+                   getSpeciesCompletion(state.discovered, species.id).total;
 
   function handleBuy() {
     const next = buyFromShop(state, slot.speciesId);
@@ -118,6 +121,14 @@ export function ShopSlotCard({ slot }: Props) {
         <div className="absolute -top-3 -right-2 z-10">
           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md ${rarityBadgeClass(species.rarity)}`}>
             ✦ NEW
+          </span>
+        </div>
+      )}
+      
+      {isComplete && !outOfStock && (
+        <div className="absolute -top-3 -right-2 z-10">
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md ${rarityBadgeClass(species.rarity)}`}>
+            ✦ DONE
           </span>
         </div>
       )}
