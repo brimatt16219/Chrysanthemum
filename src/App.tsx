@@ -141,11 +141,11 @@ export default function App() {
       <header className="sticky top-0 z-30 bg-card/80 backdrop-blur border-b border-border">
         <div className="w-full sm:max-w-2xl sm:mx-auto flex items-center justify-between px-3 sm:px-4 py-3">
           <h1
-            className="text-lg font-bold text-primary tracking-wide cursor-pointer"
+            className="text-lg font-bold text-primary tracking-wide cursor-pointer flex items-center gap-1"
             onClick={() => handleTabChange("garden")}
           >
             <span>🌸</span>
-            <span className="hidden sm:block">Chrysanthemum</span>
+            <span className="hidden sm:inline">Chrysanthemum</span>
           </h1>
           <div className="flex items-center gap-2 sm:gap-3">
             <WeatherBanner
@@ -167,7 +167,7 @@ export default function App() {
                     <span className="text-base">
                       {getFlower(profile?.display_flower ?? "daisy")?.emoji.bloom ?? "🌸"}
                     </span>
-                    <span className="hidden sm:block">{profile?.username ?? "..."}</span>
+                    <span>{profile?.username ?? "..."}</span>
                   </button>
                   <button
                     onClick={signOut}
