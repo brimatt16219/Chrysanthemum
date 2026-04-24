@@ -9,11 +9,16 @@ interface Props {
 }
 
 function formatDuration(ms: number): string {
-  const totalSec = ms / 1000;
-  if (totalSec < 60) return `${totalSec}s`;
-  const m = Math.floor(totalSec / 60);
-  const s = totalSec % 60;
-  return s > 0 ? `${m}m ${s}s` : `${m}m`;
+  const totalSec = Math.floor(ms / 1_000);
+  const hours    = Math.floor(totalSec / 3_600);
+  const minutes  = Math.floor((totalSec % 3_600) / 60);
+  const seconds  = totalSec % 60;
+
+  if (hours > 0 && minutes > 0) return `${hours}hr ${minutes}m`;
+  if (hours > 0)                return `${hours}hr`;
+  if (minutes > 0 && seconds > 0) return `${minutes}m ${seconds}s`;
+  if (minutes > 0)              return `${minutes}m`;
+  return `${seconds}s`;
 }
 
 export function ShopSlotCard({ slot }: Props) {
@@ -21,7 +26,7 @@ export function ShopSlotCard({ slot }: Props) {
 
   // ── Fertilizer slot ──────────────────────────────────────────────────────
   if (slot.isFertilizer && slot.fertilizerType) {
-    const fert = FERTILIZERS[slot.fertilizerType];
+    const fert      = FERTILIZERS[slot.fertilizerType];
     const canAfford = state.coins >= slot.price;
     const outOfStock = slot.quantity === 0;
 
@@ -77,8 +82,8 @@ export function ShopSlotCard({ slot }: Props) {
   const species = getFlower(slot.speciesId);
   if (!species) return null;
 
-  const rarity = RARITY_CONFIG[species.rarity];
-  const canAfford = state.coins >= slot.price;
+  const rarity     = RARITY_CONFIG[species.rarity];
+  const canAfford  = state.coins >= slot.price;
   const outOfStock = slot.quantity === 0;
 
   function handleBuy() {
