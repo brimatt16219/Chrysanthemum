@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { getProfileByUsername, getPublicSave, updateDisplayFlower } from "../store/cloudSave";
 import type { CloudProfile } from "../store/cloudSave";
-import type { GameState, InventoryItem } from "../store/gameStore";
+import type { GameState } from "../store/gameStore";
 import { ReadOnlyGarden } from "./ReadOnlyGarden";
-import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
+import { getFlower, RARITY_CONFIG, MUTATIONS, FLOWERS } from "../data/flowers";
 import type { MutationType } from "../data/flowers";
 import { useGame } from "../store/GameContext";
 import { FriendButton } from "./FriendButton";
@@ -18,14 +18,13 @@ interface Props {
 export function ProfilePage({ username, onBack }: Props) {
   const { user, profile: myProfile, state, refreshProfile } = useGame();
 
-  const [profile, setProfile]     = useState<CloudProfile | null>(null);
-  const [save, setSave]           = useState<GameState | null>(null);
-  const [loading, setLoading]     = useState(true);
-  const [notFound, setNotFound]   = useState(false);
+  const [profile, setProfile]             = useState<CloudProfile | null>(null);
+  const [save, setSave]                   = useState<GameState | null>(null);
+  const [loading, setLoading]             = useState(true);
+  const [notFound, setNotFound]           = useState(false);
   const [showGiftModal, setShowGiftModal] = useState(false);
-  const [giftSent, setGiftSent]   = useState(false);
+  const [giftSent, setGiftSent]           = useState(false);
 
-  // isOwnProfile uses user.id for reliability
   const isOwnProfile = !!(user && profile && user.id === profile.id);
 
   useEffect(() => {
@@ -40,13 +39,14 @@ export function ProfilePage({ username, onBack }: Props) {
       setProfile(p);
 
       const isOwn = user?.id === p.id;
-      const s = isOwn ? state : await getPublicSave(p.id);
+      const s     = isOwn ? state : await getPublicSave(p.id);
       setSave(s);
       setLoading(false);
     }
     load();
   }, [username, user?.id]);
 
+  // Keep local profile in sync with context after display flower change
   useEffect(() => {
     if (myProfile && profile && myProfile.id === profile.id) {
       setProfile(myProfile);
@@ -71,12 +71,10 @@ export function ProfilePage({ username, onBack }: Props) {
     </div>
   );
 
-  const displayFlower = getFlower(profile.display_flower);
-  const displayRarity = displayFlower ? RARITY_CONFIG[displayFlower.rarity] : null;
-  const totalItems    = save?.inventory.reduce((s, i) => s + i.quantity, 0) ?? 0;
-  const uniqueSpecies = new Set(save?.inventory.map((i) => i.speciesId) ?? []).size;
-
-  // Find mutation on the display flower if any
+  const displayFlower   = getFlower(profile.display_flower);
+  const displayRarity   = displayFlower ? RARITY_CONFIG[displayFlower.rarity] : null;
+  const totalItems      = save?.inventory.reduce((s, i) => s + i.quantity, 0) ?? 0;
+  const uniqueSpecies   = new Set(save?.inventory.map((i) => i.speciesId) ?? []).size;
   const displayMutation = save?.inventory.find(
     (i) => i.speciesId === profile.display_flower && i.mutation
   )?.mutation;
@@ -134,7 +132,7 @@ export function ProfilePage({ username, onBack }: Props) {
         </div>
       </div>
 
-      {/* Friend + gift buttons */}
+      {/* Friend + gift buttons — other players only */}
       {!isOwnProfile && user && (
         <div className="flex gap-2 flex-wrap">
           <FriendButton theirId={profile.id} theirUsername={profile.username} />
@@ -157,7 +155,7 @@ export function ProfilePage({ username, onBack }: Props) {
       {save && (
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: "Coins",   value: save.coins.toLocaleString(), emoji: "🟡" },
+            { label: "Coins",   value: save.coins.toLocaleString(), emoji: "🪙" },
             { label: "Items",   value: totalItems.toString(),       emoji: "🎒" },
             { label: "Species", value: uniqueSpecies.toString(),    emoji: "🌸" },
           ].map(({ label, value, emoji }) => (
@@ -171,9 +169,9 @@ export function ProfilePage({ username, onBack }: Props) {
       )}
 
       {/* Display flower picker — own profile only */}
-      {isOwnProfile && save && (
+      {isOwnProfile && (
         <DisplayFlowerPicker
-          inventory={save.inventory}
+          discovered={save?.discovered ?? state.discovered}
           currentFlower={profile.display_flower}
           onUpdated={refreshProfile}
         />
@@ -182,21 +180,19 @@ export function ProfilePage({ username, onBack }: Props) {
       {/* Garden */}
       {save && save.grid.length > 0 && (
         <div className="bg-card/60 border border-border rounded-2xl p-5">
-          <h3 className="text-sm font-semibold mb-4">
-            {isOwnProfile ? "Your Garden" : `${profile.username}'s Garden`}
-          </h3>
+          <h3 className="text-sm font-semibold mb-4">Your Garden</h3>
           <ReadOnlyGarden grid={save.grid} farmSize={save.farmSize} />
         </div>
       )}
 
-      {/* Collection */}
-      {save && save.inventory.length > 0 && (
+      {/* Collection — blooms only */}
+      {save && save.inventory.filter(i => !i.isSeed).length > 0 && (
         <div className="bg-card/60 border border-border rounded-2xl p-5">
           <h3 className="text-sm font-semibold mb-4">
             {isOwnProfile ? "Your Collection" : `${profile.username}'s Collection`}
           </h3>
           <div className="flex flex-wrap gap-2">
-            {save.inventory.map((item, i) => {
+            {save.inventory.filter(i => !i.isSeed).map((item, i) => {
               const species = getFlower(item.speciesId);
               const mut     = item.mutation ? MUTATIONS[item.mutation as MutationType] : null;
               const rarity  = species ? RARITY_CONFIG[species.rarity] : null;
@@ -245,94 +241,83 @@ export function ProfilePage({ username, onBack }: Props) {
 // ── Display flower picker ─────────────────────────────────────────────────
 
 interface PickerProps {
-  inventory: InventoryItem[];
+  discovered: string[];   // codex discovered array from game state
   currentFlower: string;
   onUpdated: () => Promise<void>;
 }
 
-function DisplayFlowerPicker({ inventory, currentFlower, onUpdated }: PickerProps) {
+function DisplayFlowerPicker({ discovered, currentFlower, onUpdated }: PickerProps) {
   const { user } = useGame();
   const [open, setOpen]     = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Show every inventory item — both plain and mutated variants
-  const options = inventory.filter((i) => i.quantity > 0);
+  // Any species the player has discovered (base entry = "speciesId" in discovered)
+  const unlockedFlowers = FLOWERS.filter((f) => discovered.includes(f.id));
 
   async function handlePick(speciesId: string) {
     if (!user) return;
     setSaving(true);
-    // updateDisplayFlower stores the speciesId only
-    // mutation is shown based on what's in inventory at render time
     await updateDisplayFlower(user.id, speciesId);
     await onUpdated();
     setSaving(false);
     setOpen(false);
   }
 
-  if (options.length === 0) return null;
-
   return (
     <div className="bg-card/60 border border-border rounded-2xl p-5">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold">Display Flower</h3>
-        <button
-          onClick={() => setOpen((v) => !v)}
-          className="text-xs text-primary hover:underline"
-        >
-          {open ? "Cancel" : "Change"}
-        </button>
+        <div>
+          <h3 className="text-sm font-semibold">Display Flower</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {unlockedFlowers.length > 0
+              ? `${unlockedFlowers.length} flower${unlockedFlowers.length !== 1 ? "s" : ""} unlocked`
+              : "Harvest flowers to unlock display options"
+            }
+          </p>
+        </div>
+        {unlockedFlowers.length > 0 && (
+          <button
+            onClick={() => setOpen((v) => !v)}
+            className="text-xs text-primary hover:underline flex-shrink-0"
+          >
+            {open ? "Cancel" : "Change"}
+          </button>
+        )}
       </div>
 
-      {!open ? (
-        <p className="text-xs text-muted-foreground">
-          Choose any flower from your collection to show on your profile.
-        </p>
-      ) : (
-        <div className="flex flex-col gap-1.5 mt-2 max-h-64 overflow-y-auto">
-          {options.map((item, idx) => {
-            const species   = getFlower(item.speciesId);
-            const mut       = item.mutation ? MUTATIONS[item.mutation as MutationType] : null;
-            const rarity    = species ? RARITY_CONFIG[species.rarity] : null;
-            const isCurrent = currentFlower === item.speciesId && !item.mutation;
-
-            if (!species) return null;
+      {unlockedFlowers.length === 0 ? (
+        <div className="flex items-center gap-3 py-2">
+          <span className="text-2xl">🌱</span>
+          <p className="text-xs text-muted-foreground">
+            Harvest your first flower to unlock display options.
+          </p>
+        </div>
+      ) : !open ? null : (
+        <div className="flex flex-col gap-1.5 mt-2 max-h-72 overflow-y-auto">
+          {unlockedFlowers.map((flower) => {
+            const rarity    = RARITY_CONFIG[flower.rarity];
+            const isCurrent = currentFlower === flower.id;
 
             return (
               <button
-                key={`${item.speciesId}-${item.mutation ?? "none"}-${idx}`}
-                onClick={() => handlePick(item.speciesId)}
+                key={flower.id}
+                onClick={() => handlePick(flower.id)}
                 disabled={saving}
                 className={`
-                  relative flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-left
+                  flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-left
                   ${isCurrent
                     ? "border-primary bg-primary/20"
                     : "border-border hover:border-primary/50 bg-background"
                   }
                 `}
               >
-                {/* Flower avatar */}
-                <div className="relative flex-shrink-0">
-                  <span className="text-2xl">{species.emoji.bloom}</span>
-                  {mut && (
-                    <span className="absolute -top-1 -right-1 text-xs">{mut.emoji}</span>
-                  )}
+                <div className="w-9 h-9 flex items-center justify-center flex-shrink-0">
+                  <span className="text-2xl leading-none">{flower.emoji.bloom}</span>
                 </div>
-
-                {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <p className="text-sm font-medium">{species.name}</p>
-                    {mut && (
-                      <span className={`text-xs font-mono font-bold ${mut.color}`}>
-                        {mut.name}
-                      </span>
-                    )}
-                  </div>
-                  <p className={`text-xs font-mono ${rarity?.color}`}>
-                    {rarity?.label} · ×{item.quantity}
-                  </p>
+                  <p className="text-sm font-medium">{flower.name}</p>
+                  <p className={`text-xs font-mono ${rarity.color}`}>{rarity.label}</p>
                 </div>
-
                 {isCurrent && (
                   <span className="text-xs text-primary font-mono flex-shrink-0">current</span>
                 )}
