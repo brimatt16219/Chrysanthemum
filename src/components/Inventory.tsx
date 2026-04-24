@@ -3,13 +3,15 @@ import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
 import type { MutationType } from "../data/flowers";
 import { InventoryItemCard } from "./InventoryItemCard";
 import { sellFlower, type InventoryItem } from "../store/gameStore";
+import { FERTILIZERS } from "../data/upgrades";
 
 export function Inventory() {
   const { state, update } = useGame();
 
-  const items  = state.inventory.filter((i) => i.quantity > 0);
-  const seeds  = items.filter((i) => i.isSeed);
-  const blooms = items.filter((i) => !i.isSeed);
+  const items       = state.inventory.filter((i) => i.quantity > 0);
+  const seeds       = items.filter((i) => i.isSeed);
+  const blooms      = items.filter((i) => !i.isSeed);
+  const fertilizers = state.fertilizers.filter((f) => f.quantity > 0);
 
   const totalBloomValue = blooms.reduce((sum, item) => {
     const species = getFlower(item.speciesId);
@@ -31,7 +33,9 @@ export function Inventory() {
     update(current);
   }
 
-  if (items.length === 0) {
+  const isEmpty = items.length === 0 && fertilizers.length === 0;
+
+  if (isEmpty) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
         <span className="text-5xl">🎒</span>
@@ -53,6 +57,9 @@ export function Inventory() {
           <p className="text-xs text-muted-foreground mt-0.5">
             {seeds.reduce((s, i) => s + i.quantity, 0)} seeds ·{" "}
             {blooms.reduce((s, i) => s + i.quantity, 0)} blooms
+            {fertilizers.length > 0 && (
+              <> · {fertilizers.reduce((s, f) => s + f.quantity, 0)} fertilizers</>
+            )}
           </p>
         </div>
         {blooms.length > 0 && (
@@ -81,6 +88,37 @@ export function Inventory() {
         >
           Sell All Blooms — {totalBloomValue.toLocaleString()} 🟡
         </button>
+      )}
+
+      {/* Fertilizers */}
+      {fertilizers.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-xs font-mono text-muted-foreground uppercase tracking-wide">
+            Fertilizers ({fertilizers.reduce((s, f) => s + f.quantity, 0)}) — Apply in garden
+          </h3>
+          {fertilizers.map((f) => {
+            const fert = FERTILIZERS[f.type];
+            return (
+              <div
+                key={f.type}
+                className="flex items-center gap-4 bg-card/60 border border-border rounded-xl px-4 py-3"
+              >
+                <span className="text-3xl flex-shrink-0">{fert.emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-semibold text-sm">{fert.name}</h3>
+                    <span className={`text-xs font-mono ${fert.color}`}>
+                      {fert.speedMultiplier}× speed
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    ×{f.quantity} · Apply to a growing plant
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       )}
 
       {/* Seeds — can only be planted */}
