@@ -203,7 +203,7 @@ export function saveGame(state: GameState): void {
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify({ ...state, lastSaved: Date.now() }));
   } catch (e) {
-    console.warn("Failed to save game:", e);
+    // console.warn("Failed to save game:", e);
   }
 }
 
@@ -217,7 +217,7 @@ export function loadGame(): { state: GameState; summary: OfflineSummary } {
     const parsed = JSON.parse(raw) as GameState;
     return applyOfflineTick(parsed);
   } catch (e) {
-    console.warn("Failed to load save, starting fresh:", e);
+    // console.warn("Failed to load save, starting fresh:", e);
     const state = defaultState();
     return { state, summary: { minutesAway: 0, readyToHarvest: 0, shopRestocked: false } };
   }

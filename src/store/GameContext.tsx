@@ -71,21 +71,21 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   // ── Load session ──────────────────────────────────────────────────────────
   async function loadUserSession(u: User | null) {
-    console.log("[load] called — isLoading:", isLoading.current, "loadedFor:", loadedFor.current, "u:", u?.id ?? "null");
+    // console.log("[load] called — isLoading:", isLoading.current, "loadedFor:", loadedFor.current, "u:", u?.id ?? "null");
 
     if (isLoading.current) {
-      console.log("[load] DROPPED — lock held");
+      // console.log("[load] DROPPED — lock held");
       return;
     }
     if (u && loadedFor.current === u.id) {
-      console.log("[load] DROPPED — same user already loaded");
+      // console.log("[load] DROPPED — same user already loaded");
       setAuthLoading(false);
       return;
     }
 
     isLoading.current   = true;
     saveEnabled.current = false;
-    console.log("[load] ACQUIRED lock for", u?.id ?? "guest");
+    // console.log("[load] ACQUIRED lock for", u?.id ?? "guest");
 
     if (!u) {
       const { state: localState, summary } = loadGame();
@@ -97,7 +97,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       saveEnabled.current = true;
       isLoading.current   = false;
       setAuthLoading(false);
-      console.log("[load] guest loaded — coins:", localState.coins);
+      // console.log("[load] guest loaded — coins:", localState.coins);
       return;
     }
 
@@ -105,9 +105,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setUser(u);
 
     try {
-      console.log("[load] fetching profile...");
+      // console.log("[load] fetching profile...");
       const p = await getProfile(u.id);
-      console.log("[load] profile:", p?.username ?? "null");
+      // console.log("[load] profile:", p?.username ?? "null");
 
       if (!p) {
         setNeedsUsername(true);
@@ -118,9 +118,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
       setProfile(p);
 
-      console.log("[load] fetching cloud save...");
+      // console.log("[load] fetching cloud save...");
       const cloudSave = await loadCloudSave(u.id);
-      console.log("[load] cloudSave coins:", cloudSave?.coins ?? "null");
+      // console.log("[load] cloudSave coins:", cloudSave?.coins ?? "null");
 
       const localRaw  = localStorage.getItem("chrysanthemum_save");
       const localSave = localRaw ? (JSON.parse(localRaw) as GameState) : null;
@@ -130,30 +130,30 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       if (!cloudSave) {
         const saveToUse = localSave ?? defaultState();
         const { state: ticked, summary } = applyOfflineTick(saveToUse);
-        console.log("[load] no cloud save — coins:", ticked.coins);
+        // console.log("[load] no cloud save — coins:", ticked.coins);
         setState(ticked);
         setOfflineSummary(summary);
         await saveToCloud(u.id, ticked);
       } else if (localSave && localSave.lastSaved > cloudSave.lastSaved + 300_000) {
-        console.log("[load] migration needed");
+        // console.log("[load] migration needed");
         setPendingMigration({ localSave, cloudSave });
         isLoading.current = false;
         setAuthLoading(false);
         return;
       } else {
         const { state: ticked, summary } = applyOfflineTick(cloudSave);
-        console.log("[load] using cloud save — coins:", ticked.coins);
+        // console.log("[load] using cloud save — coins:", ticked.coins);
         setState(ticked);
         setOfflineSummary(summary);
       }
 
       setTimeout(() => {
-        console.log("[load] saves ENABLED — coins:", stateRef.current.coins);
+        // console.log("[load] saves ENABLED — coins:", stateRef.current.coins);
         saveEnabled.current = true;
       }, 1_000);
 
     } catch (e) {
-      console.error("[load] ERROR:", e);
+      // console.error("[load] ERROR:", e);
       const { state: localState, summary } = loadGame();
       setState(localState);
       setOfflineSummary(summary);
@@ -162,14 +162,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
     isLoading.current = false;
     setAuthLoading(false);
-    console.log("[load] DONE for", u.id);
+    // console.log("[load] DONE for", u.id);
   }
 
   // ── Auth listener ─────────────────────────────────────────────────────────
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log("[auth]", event, session?.user?.id ?? "none");
+        // console.log("[auth]", event, session?.user?.id ?? "none");
 
         if (event === "INITIAL_SESSION") {
           // Supabase is now fully initialized — safe to make requests
@@ -182,7 +182,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           // Supabase fires SIGNED_IN during _initialize BEFORE the client
           // is ready. We must wait for INITIAL_SESSION first.
           if (!initialSessionFired.current) {
-            console.log("[auth] SIGNED_IN ignored — waiting for INITIAL_SESSION");
+            // console.log("[auth] SIGNED_IN ignored — waiting for INITIAL_SESSION");
             return;
           }
           // After INITIAL_SESSION, SIGNED_IN means a genuine new OAuth login

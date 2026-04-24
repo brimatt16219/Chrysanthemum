@@ -31,7 +31,7 @@ export function FriendsPage({ onViewProfile }: Props) {
       setPendingReceived(result.pendingReceived);
       setPendingSent(result.pendingSent);
     } catch (e) {
-      console.error("Failed to load friends:", e);
+      // console.error("Failed to load friends:", e);
     } finally {
       clearTimeout(timeout);
       setLoading(false);

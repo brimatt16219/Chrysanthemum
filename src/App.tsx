@@ -18,6 +18,8 @@ import { useFriendRequests } from "./hooks/useFriendRequests";
 import { useGiftNotifications } from "./hooks/useGiftNotifications";
 import { msUntilShopReset } from "./store/gameStore";
 import { getFlower } from "./data/flowers";
+import { useVersionCheck } from "./hooks/useVersionCheck";
+import { UpdateBanner } from "./components/UpdateBanner";
 
 type Tab = "garden" | "shop" | "inventory" | "social";
 type SocialView = "search" | "friends" | "gifts" | "leaderboard";
@@ -52,6 +54,9 @@ export default function App() {
   const [profileUsername, setProfileUsername] = useState<string | null>(null);
   const [profileReturnTab, setProfileReturnTab] = useState<Tab>("social");
   const [profileReturnView, setProfileReturnView] = useState<SocialView>("search");
+
+  const updateAvailable = useVersionCheck();
+  const [dismissedUpdate, setDismissedUpdate] = useState(false);
 
   useEffect(() => {
     const id = setInterval(() => setCountdown(msUntilShopReset(state)), 1_000);
@@ -123,6 +128,10 @@ export default function App() {
           cloudSave={pendingMigration.cloudSave}
           onChoose={resolveMigration}
         />
+      )}
+
+      {updateAvailable && !dismissedUpdate && (
+        <UpdateBanner onDismiss={() => setDismissedUpdate(true)} />
       )}
 
       {/* HUD */}

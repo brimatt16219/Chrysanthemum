@@ -26,7 +26,7 @@ export async function getProfile(userId: string): Promise<CloudProfile | null> {
     if (result.error || !result.data) return null;
     return result.data as CloudProfile;
   } catch (e) {
-    console.warn("[getProfile] failed:", e);
+    // console.warn("[getProfile] failed:", e);
     return null;
   }
 }
@@ -42,9 +42,9 @@ export async function createProfile(
     .single();
 
   if (error) {
-    console.error("createProfile error code:", error.code);
-    console.error("createProfile error message:", error.message);
-    console.error("createProfile error details:", error.details);
+    // console.error("createProfile error code:", error.code);
+    // console.error("createProfile error message:", error.message);
+    // console.error("createProfile error details:", error.details);
     return null;
   }
 
@@ -90,7 +90,7 @@ export async function loadCloudSave(userId: string): Promise<GameState | null> {
       lastSaved:     data.last_saved,
     } as GameState;
   } catch (e) {
-    console.warn("[loadCloudSave] failed:", e);
+    // console.warn("[loadCloudSave] failed:", e);
     return null;
   }
 }
@@ -109,7 +109,7 @@ export async function saveToCloud(
   // If cloud is newer than what we're writing, skip the write
   // This prevents an older session from overwriting a newer one
   if (current?.last_saved && current.last_saved > state.lastSaved) {
-    console.warn("[saveToCloud] skipping — cloud is newer", current.last_saved, "vs", state.lastSaved);
+    // console.warn("[saveToCloud] skipping — cloud is newer", current.last_saved, "vs", state.lastSaved);
     return false;
   }
 
@@ -129,7 +129,7 @@ export async function saveToCloud(
     });
 
   if (error) {
-    console.error("Failed to save to cloud:", error);
+    // console.error("Failed to save to cloud:", error);
     return false;
   }
   return true;
@@ -339,7 +339,7 @@ export async function sendGift(
     });
 
   if (error) {
-    console.error("sendGift error:", error);
+    // console.error("sendGift error:", error);
     return false;
   }
   return true;
@@ -424,7 +424,7 @@ export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
     .limit(50);
 
   if (error || !data) {
-    console.error("getLeaderboard error:", error);
+    // console.error("getLeaderboard error:", error);
     return [];
   }
   return data as LeaderboardEntry[];

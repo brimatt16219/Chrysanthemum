@@ -30,7 +30,7 @@ export function GiftsPage({ onViewProfile }: Props) {
       const g = await getPendingGifts(user.id);
       setGifts(g);
     } catch (e) {
-      console.error("Failed to load gifts:", e);
+      // console.error("Failed to load gifts:", e);
     } finally {
       clearTimeout(timeout);
       setLoading(false);
