@@ -44,8 +44,6 @@ export interface FlowerSpecies {
   possibleMutations: MutationType[];
 }
 
-
-
 export const FLOWERS: FlowerSpecies[] = [
 
   // ── COMMON ──────────────────────────────────────────────────────────────
@@ -180,6 +178,50 @@ export const FLOWERS: FlowerSpecies[] = [
     sellValue: 13,
     shopWeight: 52,
     possibleMutations: ["moonlit", "frozen"],
+  },
+  {
+    id: "sprig",
+    name: "Sprig",
+    description: "Barely a flower. Barely worth growing. And yet.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🎍" },
+    rarity: "common",
+    growthTime: { seed: 60_000, sprout: 120_000 },
+    sellValue: 7,
+    shopWeight: 68,
+    possibleMutations: ["giant", "frozen"],
+  },
+  {
+    id: "dewdrop",
+    name: "Dewdrop",
+    description: "Tiny white petals that glisten like morning dew.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "💧" },
+    rarity: "common",
+    growthTime: { seed: 65_000, sprout: 130_000 },
+    sellValue: 9,
+    shopWeight: 63,
+    possibleMutations: ["frozen", "moonlit"],
+  },
+  {
+    id: "ember_moss",
+    name: "Ember Moss",
+    description: "Low to the ground and warm to the touch.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🔴" },
+    rarity: "common",
+    growthTime: { seed: 70_000, sprout: 140_000 },
+    sellValue: 10,
+    shopWeight: 60,
+    possibleMutations: ["scorched", "giant"],
+  },
+  {
+    id: "pebblebloom",
+    name: "Pebblebloom",
+    description: "Grows between cobblestones. Impossibly resilient.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🗿" },
+    rarity: "common",
+    growthTime: { seed: 68_000, sprout: 136_000 },
+    sellValue: 9,
+    shopWeight: 62,
+    possibleMutations: ["giant", "scorched"],
   },
 
   // ── UNCOMMON ────────────────────────────────────────────────────────────
@@ -325,6 +367,50 @@ export const FLOWERS: FlowerSpecies[] = [
     sellValue: 53,
     shopWeight: 26,
     possibleMutations: ["golden", "scorched"],
+  },
+  {
+    id: "thornwhistle",
+    name: "Thornwhistle",
+    description: "Thorns whistle in the wind. Locals find it unsettling.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🌵" },
+    rarity: "uncommon",
+    growthTime: { seed: 280_000, sprout: 560_000 },
+    sellValue: 43,
+    shopWeight: 31,
+    possibleMutations: ["scorched", "giant"],
+  },
+  {
+    id: "starwort",
+    name: "Starwort",
+    description: "Five perfect petals, like a star pressed into the earth.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "✳️" },
+    rarity: "uncommon",
+    growthTime: { seed: 290_000, sprout: 580_000 },
+    sellValue: 44,
+    shopWeight: 30,
+    possibleMutations: ["moonlit", "golden"],
+  },
+  {
+    id: "inkbloom",
+    name: "Inkbloom",
+    description: "Deep purple-black petals. Used as dye by ancient civilisations.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🟣" },
+    rarity: "uncommon",
+    growthTime: { seed: 310_000, sprout: 620_000 },
+    sellValue: 47,
+    shopWeight: 29,
+    possibleMutations: ["moonlit", "rainbow"],
+  },
+  {
+    id: "mintleaf",
+    name: "Mintleaf",
+    description: "Technically a herb. Technically a flower. Delicious either way.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🫙" },
+    rarity: "uncommon",
+    growthTime: { seed: 295_000, sprout: 590_000 },
+    sellValue: 45,
+    shopWeight: 30,
+    possibleMutations: ["frozen", "giant"],
   },
 
   // ── RARE ────────────────────────────────────────────────────────────────
@@ -482,6 +568,39 @@ export const FLOWERS: FlowerSpecies[] = [
     shopWeight: 8,
     possibleMutations: ["moonlit", "rainbow", "frozen"],
   },
+  {
+    id: "glassbell",
+    name: "Glassbell",
+    description: "Translucent petals. You can see right through it.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🔭" },
+    rarity: "rare",
+    growthTime: { seed: 1_100_000, sprout: 2_200_000 },
+    sellValue: 200,
+    shopWeight: 12,
+    possibleMutations: ["frozen", "moonlit"],
+  },
+  {
+    id: "stormcaller",
+    name: "Stormcaller",
+    description: "Blooms just before rain. Gardeners use it as a forecast.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "⛈️" },
+    rarity: "rare",
+    growthTime: { seed: 1_140_000, sprout: 2_280_000 },
+    sellValue: 210,
+    shopWeight: 11,
+    possibleMutations: ["frozen", "scorched", "giant"],
+  },
+  {
+    id: "amber_crown",
+    name: "Amber Crown",
+    description: "Fossilised resin blooms. Ancient and warm.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🟠" },
+    rarity: "rare",
+    growthTime: { seed: 1_200_000, sprout: 2_400_000 },
+    sellValue: 225,
+    shopWeight: 11,
+    possibleMutations: ["golden", "scorched"],
+  },
 
   // ── LEGENDARY ───────────────────────────────────────────────────────────
   {
@@ -627,6 +746,39 @@ export const FLOWERS: FlowerSpecies[] = [
     shopWeight: 4,
     possibleMutations: ["moonlit", "rainbow", "golden"],
   },
+  {
+    id: "verdant_crown",
+    name: "Verdant Crown",
+    description: "Worn by ancient kings. Still radiates authority.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "👑" },
+    rarity: "legendary",
+    growthTime: { seed: 6_600_000, sprout: 13_200_000 },
+    sellValue: 2_100,
+    shopWeight: 4,
+    possibleMutations: ["golden", "rainbow", "giant"],
+  },
+  {
+    id: "ironwood_bloom",
+    name: "Ironwood Bloom",
+    description: "Petals harder than steel. Bends light instead of breaking.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "⚙️" },
+    rarity: "legendary",
+    growthTime: { seed: 6_800_000, sprout: 13_600_000 },
+    sellValue: 2_150,
+    shopWeight: 4,
+    possibleMutations: ["giant", "scorched", "frozen"],
+  },
+  {
+    id: "sundial",
+    name: "Sundial",
+    description: "Tracks the sun perfectly. Never casts a shadow at noon.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🕐" },
+    rarity: "legendary",
+    growthTime: { seed: 7_000_000, sprout: 14_000_000 },
+    sellValue: 2_200,
+    shopWeight: 4,
+    possibleMutations: ["golden", "scorched", "moonlit"],
+  },
 
   // ── MYTHIC ──────────────────────────────────────────────────────────────
   {
@@ -707,7 +859,6 @@ export const FLOWERS: FlowerSpecies[] = [
     possibleMutations: ["golden", "rainbow", "giant", "moonlit", "frozen", "scorched"],
   },
 ];
-// ──────────────────────────────────────────────────────────────────────────
 
 export const getFlower = (id: string): FlowerSpecies | undefined =>
   FLOWERS.find((f) => f.id === id);
