@@ -1,5 +1,5 @@
 import { FLOWERS, MUTATIONS, getFlower, type GrowthStage, type MutationType } from "../data/flowers";
-import { FERTILIZERS, getNextUpgrade, type FertilizerType } from "../data/upgrades";
+import { FERTILIZERS, getNextUpgrade, getCurrentTier, type FertilizerType } from "../data/upgrades";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -113,26 +113,68 @@ export function getSpeciesCompletion(discovered: string[], speciesId: string): {
   return { found, total };
 }
 
-function pickWeighted<T extends { shopWeight: number }>(
-  items: T[],
-  count: number
-): T[] {
-  const chosen: T[] = [];
-  const used = new Set<T>();
+// ── Shop helpers ───────────────────────────────────────────────────────────
 
-  const totalWeight = items.reduce((sum, i) => sum + i.shopWeight, 0);
+function generateShop(farmSize: number = 3): ShopSlot[] {
+  const tier        = getCurrentTier(farmSize);
+  const flowerSlots = tier.shopSlots;
+
+  const chosen: ShopSlot[] = [];
+  const usedIds = new Set<string>();
+
+  // ── FLOWERS ─────────────────────────────
+  const available   = FLOWERS.filter((f) => f.shopWeight > 0);
+  const totalWeight = available.reduce((s, f) => s + f.shopWeight, 0);
 
   let attempts = 0;
 
-  while (chosen.length < count && attempts < 1000) {
+  while (chosen.length < flowerSlots && attempts < 1000) {
     let roll = Math.random() * totalWeight;
 
-    for (const item of items) {
-      roll -= item.shopWeight;
+    for (const f of available) {
+      roll -= f.shopWeight;
 
-      if (roll <= 0 && !used.has(item)) {
-        chosen.push(item);
-        used.add(item);
+      if (roll <= 0 && !usedIds.has(f.id)) {
+        chosen.push({
+          speciesId: f.id,
+          price: Math.max(5, Math.floor(f.sellValue * 0.6)),
+          quantity: Math.floor(Math.random() * 4) + 1,
+        });
+
+        usedIds.add(f.id);
+        break;
+      }
+    }
+
+    attempts++;
+  }
+
+  // ── FERTILIZERS (weighted, 2 picks) ─────
+  const ferts = Object.values(FERTILIZERS);
+  const fertTotalWeight = ferts.reduce((s, f) => s + f.shopWeight, 0);
+
+  let fertCount = 0;
+  attempts = 0;
+
+  while (fertCount < 2 && attempts < 1000) {
+    let roll = Math.random() * fertTotalWeight;
+
+    for (const f of ferts) {
+      roll -= f.shopWeight;
+
+      const id = `fertilizer_${f.id}`;
+
+      if (roll <= 0 && !usedIds.has(id)) {
+        chosen.push({
+          speciesId: id,
+          isFertilizer: true,
+          fertilizerType: f.id,
+          price: f.shopPrice,
+          quantity: Math.floor(Math.random() * 3) + 1,
+        });
+
+        usedIds.add(id);
+        fertCount++;
         break;
       }
     }
@@ -142,43 +184,6 @@ function pickWeighted<T extends { shopWeight: number }>(
 
   return chosen;
 }
-
-// ── Shop helpers ───────────────────────────────────────────────────────────
-
-export function generateShop(flowerSlots: number): ShopSlot[] {
-  const chosen: ShopSlot[] = [];
-
-  // ── FLOWERS ─────────────────────────────
-  const availableFlowers = FLOWERS.filter(f => f.shopWeight > 0);
-
-  const selectedFlowers = pickWeighted(availableFlowers, flowerSlots);
-
-  for (const f of selectedFlowers) {
-    chosen.push({
-      speciesId: f.id,
-      price: Math.max(5, Math.floor(f.sellValue * 0.6)),
-      quantity: Math.floor(Math.random() * 4) + 1,
-    });
-  }
-
-  // ── FERTILIZERS ─────────────────────────
-  const fertilizerPool = Object.values(FERTILIZERS);
-
-  const selectedFertilizers = pickWeighted(fertilizerPool, 2);
-
-  for (const f of selectedFertilizers) {
-    chosen.push({
-      speciesId: `fertilizer_${f.id}`,
-      isFertilizer: true,
-      fertilizerType: f.id,
-      price: f.shopPrice,
-      quantity: Math.floor(Math.random() * 3) + 1,
-    });
-  }
-
-  return chosen;
-}
-
 // ── Default state ──────────────────────────────────────────────────────────
 
 export function defaultState(): GameState {
