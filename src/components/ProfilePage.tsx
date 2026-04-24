@@ -8,6 +8,7 @@ import type { MutationType } from "../data/flowers";
 import { useGame } from "../store/GameContext";
 import { FriendButton } from "./FriendButton";
 import { SendGiftModal } from "./SendGiftModal";
+import { Codex } from "./Codex";
 
 interface Props {
   username: string;
@@ -214,6 +215,14 @@ export function ProfilePage({ username, onBack }: Props) {
             })}
           </div>
         </div>
+      )}
+
+      {/* Codex preview */}
+      {save && (
+        <Codex
+          compact
+          discoveredOverride={save.discovered ?? []}
+        />
       )}
 
       {/* Gift modal */}

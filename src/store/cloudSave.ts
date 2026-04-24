@@ -25,8 +25,7 @@ export async function getProfile(userId: string): Promise<CloudProfile | null> {
 
     if (result.error || !result.data) return null;
     return result.data as CloudProfile;
-  } catch (e) {
-    // console.warn("[getProfile] failed:", e);
+  } catch {
     return null;
   }
 }
@@ -41,13 +40,7 @@ export async function createProfile(
     .select()
     .single();
 
-  if (error) {
-    // console.error("createProfile error code:", error.code);
-    // console.error("createProfile error message:", error.message);
-    // console.error("createProfile error details:", error.details);
-    return null;
-  }
-
+  if (error) return null;
   return data as CloudProfile;
 }
 
@@ -88,9 +81,9 @@ export async function loadCloudSave(userId: string): Promise<GameState | null> {
       shop:          data.shop,
       lastShopReset: data.last_shop_reset,
       lastSaved:     data.last_saved,
+      discovered:    (data.discovered as string[]) ?? [],
     } as GameState;
-  } catch (e) {
-    // console.warn("[loadCloudSave] failed:", e);
+  } catch {
     return null;
   }
 }
@@ -111,6 +104,7 @@ export async function saveToCloud(
       shop:            state.shop,
       last_shop_reset: state.lastShopReset,
       last_saved:      Date.now(),
+      discovered:      state.discovered ?? [],
       updated_at:      new Date().toISOString(),
     });
 
@@ -121,7 +115,8 @@ export async function saveToCloud(
   return true;
 }
 
-// Search users by username (partial match)
+// ── Public profile / save ──────────────────────────────────────────────────
+
 export async function searchUsers(query: string): Promise<CloudProfile[]> {
   if (!query.trim()) return [];
 
@@ -135,7 +130,6 @@ export async function searchUsers(query: string): Promise<CloudProfile[]> {
   return data as CloudProfile[];
 }
 
-// Get a public profile by username
 export async function getProfileByUsername(
   username: string
 ): Promise<CloudProfile | null> {
@@ -149,7 +143,6 @@ export async function getProfileByUsername(
   return data as CloudProfile;
 }
 
-// Get a public game save by user ID (for garden viewer)
 export async function getPublicSave(userId: string): Promise<GameState | null> {
   const { data, error } = await supabase
     .from("game_saves")
@@ -168,8 +161,11 @@ export async function getPublicSave(userId: string): Promise<GameState | null> {
     shop:          data.shop,
     lastShopReset: data.last_shop_reset,
     lastSaved:     data.last_saved,
+    discovered:    (data.discovered as string[]) ?? [],
   } as GameState;
 }
+
+// ── Friendships ───────────────────────────────────────────────────────────
 
 export type FriendshipStatus = "none" | "pending_sent" | "pending_received" | "accepted";
 
@@ -186,7 +182,6 @@ export interface FriendWithProfile {
   profile: CloudProfile;
 }
 
-// Get friendship status between two users
 export async function getFriendshipStatus(
   myId: string,
   theirId: string
@@ -207,7 +202,6 @@ export async function getFriendshipStatus(
   return { status: "pending_received", friendshipId: data.id };
 }
 
-// Send a friend request
 export async function sendFriendRequest(
   myId: string,
   theirId: string
@@ -218,7 +212,6 @@ export async function sendFriendRequest(
   return !error;
 }
 
-// Accept a friend request
 export async function acceptFriendRequest(friendshipId: string): Promise<boolean> {
   const { error } = await supabase
     .from("friendships")
@@ -227,7 +220,6 @@ export async function acceptFriendRequest(friendshipId: string): Promise<boolean
   return !error;
 }
 
-// Decline or cancel a friend request / unfriend
 export async function removeFriendship(friendshipId: string): Promise<boolean> {
   const { error } = await supabase
     .from("friendships")
@@ -236,7 +228,6 @@ export async function removeFriendship(friendshipId: string): Promise<boolean> {
   return !error;
 }
 
-// Get all friends and pending requests for a user
 export async function getFriends(userId: string): Promise<{
   friends: FriendWithProfile[];
   pendingReceived: FriendWithProfile[];
@@ -249,7 +240,6 @@ export async function getFriends(userId: string): Promise<{
 
   if (error || !data) return { friends: [], pendingReceived: [], pendingSent: [] };
 
-  // Fetch all profiles in parallel instead of sequentially
   const otherIds = (data as Friendship[]).map((f) =>
     f.requester_id === userId ? f.receiver_id : f.requester_id
   );
@@ -279,7 +269,6 @@ export async function getFriends(userId: string): Promise<{
   return { friends, pendingReceived, pendingSent };
 }
 
-// Count pending received requests (for notification badge)
 export async function getPendingRequestCount(userId: string): Promise<number> {
   const { count, error } = await supabase
     .from("friendships")
@@ -289,6 +278,8 @@ export async function getPendingRequestCount(userId: string): Promise<number> {
 
   return error ? 0 : (count ?? 0);
 }
+
+// ── Gifts ─────────────────────────────────────────────────────────────────
 
 export interface Gift {
   id: string;
@@ -306,7 +297,6 @@ export interface GiftWithSender {
   senderProfile: CloudProfile;
 }
 
-// Send a gift — removes from sender inventory, inserts gift row
 export async function sendGift(
   senderId: string,
   receiverId: string,
@@ -324,14 +314,10 @@ export async function sendGift(
       message:     message  ?? null,
     });
 
-  if (error) {
-    // console.error("sendGift error:", error);
-    return false;
-  }
+  if (error) return false;
   return true;
 }
 
-// Get unclaimed gifts for a user
 export async function getPendingGifts(userId: string): Promise<GiftWithSender[]> {
   const { data, error } = await supabase
     .from("gifts")
@@ -342,7 +328,6 @@ export async function getPendingGifts(userId: string): Promise<GiftWithSender[]>
 
   if (error || !data) return [];
 
-  // Fetch all sender profiles in parallel
   const senderProfiles = await Promise.all(
     (data as Gift[]).map((gift) => getProfile(gift.sender_id))
   );
@@ -358,7 +343,6 @@ export async function getPendingGifts(userId: string): Promise<GiftWithSender[]>
   return result;
 }
 
-// Count unclaimed gifts
 export async function getPendingGiftCount(userId: string): Promise<number> {
   const { count, error } = await supabase
     .from("gifts")
@@ -369,7 +353,6 @@ export async function getPendingGiftCount(userId: string): Promise<number> {
   return error ? 0 : (count ?? 0);
 }
 
-// Mark a gift as claimed
 export async function claimGift(giftId: string): Promise<boolean> {
   const { error } = await supabase
     .from("gifts")
@@ -379,7 +362,6 @@ export async function claimGift(giftId: string): Promise<boolean> {
   return !error;
 }
 
-// Get sent gift history
 export async function getSentGifts(userId: string): Promise<Gift[]> {
   const { data, error } = await supabase
     .from("gifts")
@@ -391,6 +373,8 @@ export async function getSentGifts(userId: string): Promise<Gift[]> {
   return error || !data ? [] : (data as Gift[]);
 }
 
+// ── Leaderboard ───────────────────────────────────────────────────────────
+
 export interface LeaderboardEntry {
   id: string;
   username: string;
@@ -401,7 +385,6 @@ export interface LeaderboardEntry {
   rank: number;
 }
 
-// Global top 50
 export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
   const { data, error } = await supabase
     .from("leaderboard")
@@ -409,18 +392,13 @@ export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
     .order("rank", { ascending: true })
     .limit(50);
 
-  if (error || !data) {
-    // console.error("getLeaderboard error:", error);
-    return [];
-  }
+  if (error || !data) return [];
   return data as LeaderboardEntry[];
 }
 
-// Friends leaderboard — your rank among friends
 export async function getFriendsLeaderboard(
   userId: string
 ): Promise<LeaderboardEntry[]> {
-  // Get friend IDs
   const { data: friendships, error: fError } = await supabase
     .from("friendships")
     .select("requester_id, receiver_id")
@@ -433,7 +411,6 @@ export async function getFriendsLeaderboard(
     f.requester_id === userId ? f.receiver_id : f.requester_id
   );
 
-  // Include yourself
   const allIds = [...friendIds, userId];
 
   const { data, error } = await supabase
@@ -444,14 +421,12 @@ export async function getFriendsLeaderboard(
 
   if (error || !data) return [];
 
-  // Re-rank within this group
   return (data as LeaderboardEntry[]).map((entry, i) => ({
     ...entry,
     rank: i + 1,
   }));
 }
 
-// Get a single user's global rank
 export async function getMyRank(userId: string): Promise<number | null> {
   const { data, error } = await supabase
     .from("leaderboard")

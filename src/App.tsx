@@ -13,6 +13,7 @@ import { GiftsPage } from "./components/GiftsPage";
 import { LeaderboardPage } from "./components/LeaderboardPage";
 import { FriendRequestNotification } from "./components/FriendRequestNotification";
 import { GiftNotification } from "./components/GiftNotification";
+import { Codex } from "./components/Codex";
 import { useGame } from "./store/GameContext";
 import { useFriendRequests } from "./hooks/useFriendRequests";
 import { useGiftNotifications } from "./hooks/useGiftNotifications";
@@ -21,7 +22,7 @@ import { getFlower } from "./data/flowers";
 import { useVersionCheck } from "./hooks/useVersionCheck";
 import { UpdateBanner } from "./components/UpdateBanner";
 
-type Tab = "garden" | "shop" | "inventory" | "social";
+type Tab = "garden" | "shop" | "inventory" | "social" | "codex";
 type SocialView = "search" | "friends" | "gifts" | "leaderboard";
 
 function formatCountdown(ms: number): string {
@@ -183,7 +184,7 @@ export default function App() {
       {/* Tabs */}
       <nav className="bg-card/40 border-b border-border">
         <div className="max-w-2xl mx-auto flex text-center">
-          {(["garden", "shop", "inventory", "social"] as Tab[]).map((t) => (
+          {(["garden", "shop", "inventory", "codex", "social"] as Tab[]).map((t) => (
             <button
               key={t}
               onClick={() => handleTabChange(t)}
@@ -195,10 +196,11 @@ export default function App() {
                 }
               `}
             >
-              {t === "garden" ? "🌱"
-               : t === "shop" ? "🛒"
-               : t === "inventory" ? "🎒"
-               : "🌍"}
+              {t === "garden"    ? "🌱"
+              : t === "shop"    ? "🛒"
+              : t === "inventory" ? "🎒"
+              : t === "codex"   ? "📖"
+              : "🌍"}
               <span className="ml-1 hidden sm:inline capitalize">{t}</span>
 
               {t === "inventory" && inventoryCount > 0 && (
@@ -230,6 +232,7 @@ export default function App() {
             {tab === "garden"    && <Garden />}
             {tab === "shop"      && <Shop />}
             {tab === "inventory" && <Inventory />}
+            {tab === "codex" && <Codex />}
             {tab === "social"    && (
               user ? (
                 <>

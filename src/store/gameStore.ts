@@ -43,6 +43,9 @@ export interface GameState {
   shop: ShopSlot[];
   lastShopReset: number;
   lastSaved: number;
+  // Codex — tracks every species + mutation combo ever harvested
+  // Format: "speciesId" for base, "speciesId:mutationId" for mutated
+  discovered: string[];
 }
 
 export interface OfflineSummary {
@@ -53,8 +56,8 @@ export interface OfflineSummary {
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
-const SAVE_KEY             = "chrysanthemum_save";
-const SHOP_RESET_INTERVAL  = 5 * 60 * 1_000; // 5 minutes
+const SAVE_KEY            = "chrysanthemum_save";
+const SHOP_RESET_INTERVAL = 5 * 60 * 1_000; // 5 minutes
 
 // ── Grid helpers ───────────────────────────────────────────────────────────
 
@@ -74,6 +77,192 @@ export function resizeGrid(old: Plot[][], newSize: number): Plot[][] {
       return existing ?? { id: `${row}-${col}`, plant: null };
     })
   );
+}
+
+// ── Codex helpers ──────────────────────────────────────────────────────────
+
+// Total possible codex entries: 1 base + N mutations per species
+export function getTotalCodexEntries(): number {
+  return FLOWERS.reduce((total, f) => total + 1 + f.possibleMutations.length, 0);
+}
+
+// Build the codex key for a harvest
+export function codexKey(speciesId: string, mutation?: MutationType): string {
+  return mutation ? `${speciesId}:${mutation}` : speciesId;
+}
+
+// Check if a specific entry is discovered
+export function isDiscovered(discovered: string[], speciesId: string, mutation?: MutationType): boolean {
+  return discovered.includes(codexKey(speciesId, mutation));
+}
+
+// Get completion count for a specific species (base + mutations)
+export function getSpeciesCompletion(discovered: string[], speciesId: string): {
+  found: number;
+  total: number;
+} {
+  const species = getFlower(speciesId);
+  if (!species) return { found: 0, total: 0 };
+
+  const total = 1 + species.possibleMutations.length;
+  let found = 0;
+  if (isDiscovered(discovered, speciesId)) found++;
+  for (const mut of species.possibleMutations) {
+    if (isDiscovered(discovered, speciesId, mut)) found++;
+  }
+  return { found, total };
+}
+
+// ── Shop helpers ───────────────────────────────────────────────────────────
+
+function generateShop(farmSize: number = 3): ShopSlot[] {
+  const tier        = getCurrentTier(farmSize);
+  const flowerSlots = tier.shopSlots;
+
+  const available   = FLOWERS.filter((f) => f.shopWeight > 0);
+  const totalWeight = available.reduce((s, f) => s + f.shopWeight, 0);
+
+  const chosen: ShopSlot[] = [];
+  const usedIds             = new Set<string>();
+  let   attempts            = 0;
+
+  while (chosen.length < flowerSlots && attempts < 1_000) {
+    let roll = Math.random() * totalWeight;
+    for (const f of available) {
+      roll -= f.shopWeight;
+      if (roll <= 0 && !usedIds.has(f.id)) {
+        chosen.push({
+          speciesId: f.id,
+          price:     Math.max(5, Math.floor(f.sellValue * 0.6)),
+          quantity:  Math.floor(Math.random() * 4) + 1,
+        });
+        usedIds.add(f.id);
+        break;
+      }
+    }
+    attempts++;
+  }
+
+  chosen.push(
+    {
+      speciesId:      "fertilizer_basic",
+      isFertilizer:   true,
+      fertilizerType: "basic",
+      price:          FERTILIZERS.basic.shopPrice,
+      quantity:       3,
+    },
+    {
+      speciesId:      "fertilizer_premium",
+      isFertilizer:   true,
+      fertilizerType: "premium",
+      price:          FERTILIZERS.premium.shopPrice,
+      quantity:       2,
+    }
+  );
+
+  return chosen;
+}
+
+// ── Default state ──────────────────────────────────────────────────────────
+
+export function defaultState(): GameState {
+  const size = 3;
+  return {
+    coins:         100,
+    farmSize:      size,
+    grid:          makeGrid(size),
+    inventory:     [],
+    fertilizers:   [{ type: "basic", quantity: 3 }],
+    shop:          generateShop(size),
+    lastShopReset: Date.now(),
+    lastSaved:     Date.now(),
+    discovered:    [],
+  };
+}
+
+// ── Save / Load ────────────────────────────────────────────────────────────
+
+export function saveGame(state: GameState): void {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ ...state, lastSaved: Date.now() }));
+  } catch (e) {
+    console.warn("Failed to save game:", e);
+  }
+}
+
+export function loadGame(): { state: GameState; summary: OfflineSummary } {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) {
+      const state = defaultState();
+      return { state, summary: { minutesAway: 0, readyToHarvest: 0, shopRestocked: false } };
+    }
+    const parsed = JSON.parse(raw) as GameState;
+    // Backfill discovered for saves that predate the codex
+    if (!parsed.discovered) parsed.discovered = [];
+    return applyOfflineTick(parsed);
+  } catch (e) {
+    console.warn("Failed to load save, starting fresh:", e);
+    const state = defaultState();
+    return { state, summary: { minutesAway: 0, readyToHarvest: 0, shopRestocked: false } };
+  }
+}
+
+export function resetGame(): GameState {
+  localStorage.removeItem(SAVE_KEY);
+  return defaultState();
+}
+
+// ── Offline tick ───────────────────────────────────────────────────────────
+
+export function applyOfflineTick(save: GameState): { state: GameState; summary: OfflineSummary } {
+  const now         = Date.now();
+  const minutesAway = Math.floor((now - save.lastSaved) / 60_000);
+
+  const expectedSize = save.farmSize ?? 3;
+  const needsRebuild =
+    !save.grid ||
+    save.grid.length === 0 ||
+    save.grid.length !== expectedSize;
+
+  let updated: GameState = {
+    ...save,
+    grid:       needsRebuild ? makeGrid(expectedSize) : save.grid,
+    discovered: save.discovered ?? [],
+  };
+
+  let shopRestocked    = false;
+  const timeSinceReset = now - updated.lastShopReset;
+
+  if (timeSinceReset >= SHOP_RESET_INTERVAL) {
+    updated       = { ...updated, shop: generateShop(updated.farmSize), lastShopReset: now };
+    shopRestocked = true;
+  }
+
+  const readyToHarvest = updated.grid
+    .flat()
+    .filter((p) => p.plant && getCurrentStage(p.plant, now) === "bloom").length;
+
+  return {
+    state:   updated,
+    summary: { minutesAway, readyToHarvest, shopRestocked },
+  };
+}
+
+// ── Shop tick ─────────────────────────────────────────────────────────────
+
+export function tickShop(state: GameState): GameState {
+  const now = Date.now();
+  if (now - state.lastShopReset < SHOP_RESET_INTERVAL) return state;
+  return {
+    ...state,
+    shop:          generateShop(state.farmSize),
+    lastShopReset: now,
+  };
+}
+
+export function msUntilShopReset(state: GameState): number {
+  return Math.max(0, SHOP_RESET_INTERVAL - (Date.now() - state.lastShopReset));
 }
 
 // ── Growth calculation ─────────────────────────────────────────────────────
@@ -130,156 +319,6 @@ export function getMsUntilNextStage(plant: PlantedFlower, now: number): number {
   return Math.ceil(seedDone - elapsed);
 }
 
-// ── Shop helpers ───────────────────────────────────────────────────────────
-
-function generateShop(farmSize: number = 3): ShopSlot[] {
-  const tier        = getCurrentTier(farmSize);
-  const flowerSlots = tier.shopSlots; // scales with farm size: 3→4→5→6
-
-  const available   = FLOWERS.filter((f) => f.shopWeight > 0);
-  const totalWeight = available.reduce((s, f) => s + f.shopWeight, 0);
-
-  const chosen: ShopSlot[] = [];
-  const usedIds             = new Set<string>();
-  let   attempts            = 0;
-
-  while (chosen.length < flowerSlots && attempts < 1_000) {
-    let roll = Math.random() * totalWeight;
-    for (const f of available) {
-      roll -= f.shopWeight;
-      if (roll <= 0 && !usedIds.has(f.id)) {
-        chosen.push({
-          speciesId: f.id,
-          price:     Math.max(5, Math.floor(f.sellValue * 0.6)),
-          quantity:  Math.floor(Math.random() * 4) + 1,
-        });
-        usedIds.add(f.id);
-        break;
-      }
-    }
-    attempts++;
-  }
-
-  // Always add 2 fertilizer slots
-  chosen.push(
-    {
-      speciesId:     "fertilizer_basic",
-      isFertilizer:  true,
-      fertilizerType: "basic",
-      price:         FERTILIZERS.basic.shopPrice,
-      quantity:      3,
-    },
-    {
-      speciesId:     "fertilizer_premium",
-      isFertilizer:  true,
-      fertilizerType: "premium",
-      price:         FERTILIZERS.premium.shopPrice,
-      quantity:      2,
-    }
-  );
-
-  return chosen;
-}
-
-// ── Default state ──────────────────────────────────────────────────────────
-
-export function defaultState(): GameState {
-  const size = 3;
-  return {
-    coins:         100,
-    farmSize:      size,
-    grid:          makeGrid(size),
-    inventory:     [],
-    fertilizers:   [{ type: "basic", quantity: 3 }],
-    shop:          generateShop(size),
-    lastShopReset: Date.now(),
-    lastSaved:     Date.now(),
-  };
-}
-
-// ── Save / Load ────────────────────────────────────────────────────────────
-
-export function saveGame(state: GameState): void {
-  try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify({ ...state, lastSaved: Date.now() }));
-  } catch (e) {
-    // console.warn("Failed to save game:", e);
-  }
-}
-
-export function loadGame(): { state: GameState; summary: OfflineSummary } {
-  try {
-    const raw = localStorage.getItem(SAVE_KEY);
-    if (!raw) {
-      const state = defaultState();
-      return { state, summary: { minutesAway: 0, readyToHarvest: 0, shopRestocked: false } };
-    }
-    const parsed = JSON.parse(raw) as GameState;
-    return applyOfflineTick(parsed);
-  } catch (e) {
-    // console.warn("Failed to load save, starting fresh:", e);
-    const state = defaultState();
-    return { state, summary: { minutesAway: 0, readyToHarvest: 0, shopRestocked: false } };
-  }
-}
-
-export function resetGame(): GameState {
-  localStorage.removeItem(SAVE_KEY);
-  return defaultState();
-}
-
-// ── Offline tick ───────────────────────────────────────────────────────────
-
-export function applyOfflineTick(save: GameState): { state: GameState; summary: OfflineSummary } {
-  const now          = Date.now();
-  const minutesAway  = Math.floor((now - save.lastSaved) / 60_000);
-
-  // Rebuild grid if empty or wrong size (e.g. after SQL reset)
-  const expectedSize = save.farmSize ?? 3;
-  const needsRebuild =
-    !save.grid ||
-    save.grid.length === 0 ||
-    save.grid.length !== expectedSize;
-
-  let updated: GameState = {
-    ...save,
-    grid: needsRebuild ? makeGrid(expectedSize) : save.grid,
-  };
-
-  let shopRestocked = false;
-  const timeSinceReset = now - updated.lastShopReset;
-
-  if (timeSinceReset >= SHOP_RESET_INTERVAL) {
-    updated      = { ...updated, shop: generateShop(updated.farmSize), lastShopReset: now };
-    shopRestocked = true;
-  }
-
-  const readyToHarvest = updated.grid
-    .flat()
-    .filter((p) => p.plant && getCurrentStage(p.plant, now) === "bloom").length;
-
-  return {
-    state:   updated,
-    summary: { minutesAway, readyToHarvest, shopRestocked },
-  };
-}
-
-// ── Shop tick (called every second while app is open) ─────────────────────
-
-export function tickShop(state: GameState): GameState {
-  const now = Date.now();
-  if (now - state.lastShopReset < SHOP_RESET_INTERVAL) return state;
-  return {
-    ...state,
-    shop:          generateShop(state.farmSize), // scale slots to farm size
-    lastShopReset: now,
-  };
-}
-
-export function msUntilShopReset(state: GameState): number {
-  return Math.max(0, SHOP_RESET_INTERVAL - (Date.now() - state.lastShopReset));
-}
-
 // ── Game actions ───────────────────────────────────────────────────────────
 
 export function plantSeed(
@@ -291,7 +330,6 @@ export function plantSeed(
   const plot = state.grid[row]?.[col];
   if (!plot || plot.plant) return null;
 
-  // Only seeds can be planted — not harvested blooms
   const invItem = state.inventory.find(
     (i) => i.speciesId === speciesId && i.isSeed
   );
@@ -353,6 +391,7 @@ export function harvestPlant(
     })
   );
 
+  // Update inventory
   const existing = state.inventory.find(
     (i) => i.speciesId === speciesId && i.mutation === mutation && !i.isSeed
   );
@@ -364,8 +403,27 @@ export function harvestPlant(
       )
     : [...state.inventory, { speciesId, quantity: 1, mutation, isSeed: false }];
 
+  // Update codex — add base entry and mutation entry if new
+  const newDiscovered = [...state.discovered];
+  const baseKey = codexKey(speciesId);
+  if (!newDiscovered.includes(baseKey)) {
+    newDiscovered.push(baseKey);
+  }
+  if (mutation) {
+    const mutKey = codexKey(speciesId, mutation);
+    if (!newDiscovered.includes(mutKey)) {
+      newDiscovered.push(mutKey);
+    }
+  }
+
   return {
-    state: { ...state, coins: state.coins + bonusCoins, grid: newGrid, inventory: newInventory },
+    state: {
+      ...state,
+      coins:      state.coins + bonusCoins,
+      grid:       newGrid,
+      inventory:  newInventory,
+      discovered: newDiscovered,
+    },
     mutation,
   };
 }
@@ -409,7 +467,6 @@ export function buyFromShop(state: GameState, speciesId: string): GameState | nu
       : s
   );
 
-  // Mark as seed — cannot be sold directly
   const existing = state.inventory.find((i) => i.speciesId === speciesId && i.isSeed);
   const newInventory = existing
     ? state.inventory.map((i) =>
@@ -498,6 +555,6 @@ export function upgradeFarm(state: GameState): GameState | null {
     coins:    state.coins - next.cost,
     farmSize: newSize,
     grid:     resizeGrid(state.grid, newSize),
-    shop:     generateShop(newSize), // regenerate shop immediately with new slot count
+    shop:     generateShop(newSize),
   };
 }
