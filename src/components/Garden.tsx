@@ -15,12 +15,17 @@ export function Garden() {
   const nextUpgrade = getNextUpgrade(state.farmSize);
   const currentTier = getCurrentTier(state.farmSize);
 
+  // Smaller cells on mobile for larger farm sizes
+  const cellSize =
+    state.farmSize <= 4 ? "w-16 h-16" :
+    state.farmSize === 5 ? "w-15 h-15 sm:w-16 sm:h-16" :
+    "w-14 h-14 sm:w-16 sm:h-16"; // 6×6: 44px mobile, 64px desktop
+
   function handlePlotClick(row: number, col: number) {
     const plot = state.grid[row][col];
     if (!plot.plant) {
       setSelectedPlot({ row, col });
     }
-    // harvesting is handled inside PlotTile
   }
 
   function handleSeedSelect(speciesId: string) {
@@ -70,17 +75,17 @@ export function Garden() {
                 row={row}
                 col={col}
                 onEmptyClick={() => handlePlotClick(row, col)}
-                isSelected={
-                  selectedPlot?.row === row && selectedPlot?.col === col
-                }
+                isSelected={selectedPlot?.row === row && selectedPlot?.col === col}
+                cellSize={cellSize}
               />
             );
           })}
         </div>
 
-        {/* Seed picker — floats below the grid */}
+        {/* Seed picker modal */}
         {selectedPlot && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm"
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm"
             onClick={() => setSelectedPlot(null)}
           >
             <div onClick={(e) => e.stopPropagation()}>

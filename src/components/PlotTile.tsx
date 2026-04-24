@@ -17,14 +17,15 @@ interface Props {
   col: number;
   onEmptyClick: () => void;
   isSelected?: boolean;
+  cellSize?: string; // e.g. "w-11 h-11 sm:w-16 sm:h-16"
 }
 
-export function PlotTile({ plot, row, col, onEmptyClick, isSelected }: Props) {
+export function PlotTile({ plot, row, col, onEmptyClick, isSelected, cellSize = "w-16 h-16" }: Props) {
   const { state, update } = useGame();
-  const now     = Date.now();
-  const plant   = plot.plant;
-  const species = plant ? getFlower(plant.speciesId) : null;
-  const stage   = plant ? getCurrentStage(plant, now) : null;
+  const now           = Date.now();
+  const plant         = plot.plant;
+  const species       = plant ? getFlower(plant.speciesId) : null;
+  const stage         = plant ? getCurrentStage(plant, now) : null;
   const progress      = plant ? getStageProgress(plant, now) : 0;
   const rarity        = species ? RARITY_CONFIG[species.rarity] : null;
   const isBloomed     = stage === "bloom";
@@ -34,7 +35,6 @@ export function PlotTile({ plot, row, col, onEmptyClick, isSelected }: Props) {
   const [open, setOpen]   = useState(false);
   const tileRef           = useRef<HTMLDivElement>(null);
 
-  // Close tooltip when clicking outside the tile
   useEffect(() => {
     if (!open) return;
     function handleClickOutside(e: MouseEvent) {
@@ -46,7 +46,6 @@ export function PlotTile({ plot, row, col, onEmptyClick, isSelected }: Props) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
 
-  // Close tooltip if the plant gets removed (harvested / uprooted)
   useEffect(() => {
     if (!plant) setOpen(false);
   }, [plant]);
@@ -56,9 +55,7 @@ export function PlotTile({ plot, row, col, onEmptyClick, isSelected }: Props) {
       onEmptyClick();
       return;
     }
-
     if (isBloomed) {
-      // Harvest bloomed plant
       const result = harvestPlant(state, row, col);
       if (result) {
         update(result.state);
@@ -67,8 +64,6 @@ export function PlotTile({ plot, row, col, onEmptyClick, isSelected }: Props) {
       }
       return;
     }
-
-    // Toggle tooltip for growing plants
     setOpen((v) => !v);
   }
 
@@ -78,7 +73,7 @@ export function PlotTile({ plot, row, col, onEmptyClick, isSelected }: Props) {
       <button
         onClick={onEmptyClick}
         className={`
-          w-16 h-16 rounded-xl border-2 transition-all duration-200
+          ${cellSize} rounded-xl border-2 transition-all duration-200
           flex items-center justify-center
           ${isSelected
             ? "border-primary bg-primary/20 scale-105"
@@ -95,7 +90,6 @@ export function PlotTile({ plot, row, col, onEmptyClick, isSelected }: Props) {
   return (
     <div ref={tileRef} className="relative">
 
-      {/* Harvest popup */}
       {popup && (
         <HarvestPopup
           speciesId={popup.speciesId}
@@ -104,7 +98,6 @@ export function PlotTile({ plot, row, col, onEmptyClick, isSelected }: Props) {
         />
       )}
 
-      {/* Tooltip — shown on click for growing plants */}
       {open && plant && !isBloomed && (
         <PlotTooltip
           plant={plant}
@@ -117,7 +110,7 @@ export function PlotTile({ plot, row, col, onEmptyClick, isSelected }: Props) {
       <button
         onClick={handleClick}
         className={`
-          relative w-16 h-16 rounded-xl border-2 transition-all duration-200
+          relative ${cellSize} rounded-xl border-2 transition-all duration-200
           flex flex-col items-center justify-center gap-0.5
           ${isBloomed
             ? `border-primary/60 bg-primary/10 hover:scale-110 hover:bg-primary/20 cursor-pointer ${rarity?.glow}`
@@ -138,14 +131,12 @@ export function PlotTile({ plot, row, col, onEmptyClick, isSelected }: Props) {
           {species?.emoji[stage!] ?? "🌱"}
         </span>
 
-        {/* Fertilizer indicator */}
         {hasFertilizer && !isBloomed && (
           <span className="absolute top-0.5 left-0.5 text-[10px] leading-none">
             {FERTILIZERS[plant.fertilizer!].emoji}
           </span>
         )}
 
-        {/* Progress bar */}
         {!isBloomed && (
           <div className="absolute bottom-1 left-2 right-2 h-1 bg-border rounded-full overflow-hidden">
             <div
@@ -157,12 +148,10 @@ export function PlotTile({ plot, row, col, onEmptyClick, isSelected }: Props) {
           </div>
         )}
 
-        {/* Bloom pulse indicator */}
         {isBloomed && (
           <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full animate-pulse" />
         )}
 
-        {/* Open indicator */}
         {open && !isBloomed && (
           <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary/60 rounded-full" />
         )}
