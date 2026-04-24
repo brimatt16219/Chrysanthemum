@@ -295,7 +295,7 @@ export const FLOWERS: FlowerSpecies[] = [
     id: "mintleaf",
     name: "Mintleaf",
     description: "Technically a herb. Technically a flower. Delicious either way.",
-    emoji: { seed: "🌱", sprout: "🌿", bloom: "🫙" },
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🍵" },
     rarity: "uncommon",
     growthTime: { seed: 295_000, sprout: 590_000 },
     sellValue: 45,
