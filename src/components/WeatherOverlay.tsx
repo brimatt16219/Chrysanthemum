@@ -135,13 +135,13 @@ function PrismaticSkiesOverlay({ active }: { active: boolean }) {
   // Radii spaced exactly strokeWidth apart to eliminate gaps
   const SW = 7; // stroke width
   const bands = [
-    { color: "rgba(255,  0,  0, 0.22)", r: 130 }, // red
-    { color: "rgba(255,140,  0, 0.22)", r: 123 }, // orange
-    { color: "rgba(255,230,  0, 0.22)", r: 116 }, // yellow
-    { color: "rgba( 50,205, 50, 0.22)", r: 109 }, // green
-    { color: "rgba(  0,100,255, 0.22)", r: 102 }, // blue
-    { color: "rgba( 75,  0,200, 0.22)", r:  95 }, // indigo
-    { color: "rgba(148,  0,211, 0.22)", r:  88 }, // violet
+    { color: "rgba(255,  0,  0, 0.05)", r: 130 }, // red
+    { color: "rgba(255,140,  0, 0.05)", r: 123 }, // orange
+    { color: "rgba(255,230,  0, 0.05)", r: 116 }, // yellow
+    { color: "rgba( 50,205, 50, 0.05)", r: 109 }, // green
+    { color: "rgba(  0,100,255, 0.05)", r: 102 }, // blue
+    { color: "rgba( 75,  0,200, 0.05)", r:  95 }, // indigo
+    { color: "rgba(148,  0,211, 0.05)", r:  88 }, // violet
   ];
 
   return (

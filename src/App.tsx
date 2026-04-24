@@ -14,15 +14,17 @@ import { LeaderboardPage } from "./components/LeaderboardPage";
 import { FriendRequestNotification } from "./components/FriendRequestNotification";
 import { GiftNotification } from "./components/GiftNotification";
 import { Codex } from "./components/Codex";
+import { WeatherOverlay } from "./components/WeatherOverlay";
+import { WeatherBanner } from "./components/WeatherBanner";
+import { DayNightOverlay } from "./components/DayNightOverlay";
 import { useGame } from "./store/GameContext";
 import { useFriendRequests } from "./hooks/useFriendRequests";
 import { useGiftNotifications } from "./hooks/useGiftNotifications";
+import { useDayNight } from "./hooks/useDayNight";
 import { msUntilShopReset } from "./store/gameStore";
 import { getFlower } from "./data/flowers";
 import { useVersionCheck } from "./hooks/useVersionCheck";
 import { UpdateBanner } from "./components/UpdateBanner";
-import { WeatherOverlay } from "./components/WeatherOverlay";
-import { WeatherBanner } from "./components/WeatherBanner";
 
 type Tab = "garden" | "shop" | "inventory" | "social" | "codex";
 type SocialView = "search" | "friends" | "gifts" | "leaderboard";
@@ -60,6 +62,9 @@ export default function App() {
 
   const updateAvailable  = useVersionCheck();
   const [dismissedUpdate, setDismissedUpdate] = useState(false);
+
+  // Day/night cycle — client-side, based on local time
+  const dayPeriod = useDayNight();
 
   useEffect(() => {
     const id = setInterval(() => setCountdown(msUntilShopReset(state)), 1_000);
@@ -134,24 +139,29 @@ export default function App() {
         <UpdateBanner onDismiss={() => setDismissedUpdate(true)} />
       )}
 
-      {/* Weather overlay — renders behind HUD, above content */}
+      {/* Day/night ambient tint — z-10, below weather overlay */}
+      <DayNightOverlay period={dayPeriod} />
+
+      {/* Weather overlay — z-20, above day/night */}
       <WeatherOverlay weatherType={activeWeather} isActive={weatherIsActive} />
 
       {/* HUD */}
       <header className="sticky top-0 z-30 bg-card/80 backdrop-blur border-b border-border">
         <div className="w-full sm:max-w-2xl sm:mx-auto flex items-center justify-between px-3 sm:px-4 py-3">
           <h1
-            className="text-lg font-bold text-primary tracking-wide cursor-pointer flex items-center gap-1"
+            className="font-bold text-primary tracking-wide cursor-pointer flex items-center gap-1"
             onClick={() => handleTabChange("garden")}
           >
-            <span>🌸</span>
-            <span className="hidden sm:inline">Chrysanthemum</span>
+            <span className="text-lg">🌸</span>
+            <span className="hidden sm:block text-lg">Chrysanthemum</span>
           </h1>
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Combined day/night + weather banner */}
             <WeatherBanner
               weatherType={activeWeather}
               isActive={weatherIsActive}
               msLeft={weatherMsLeft}
+              period={dayPeriod}
             />
             <span className="text-sm font-mono">🟡 {state.coins.toLocaleString()}</span>
             <span className="text-xs text-muted-foreground font-mono hidden sm:block">
@@ -191,13 +201,14 @@ export default function App() {
 
       {/* Tabs */}
       <nav className="bg-card/40 border-b border-border">
-        <div className="w-full sm:max-w-2xl sm:mx-auto flex text-center">
+        <div className="w-full sm:max-w-2xl sm:mx-auto flex">
           {(["garden", "shop", "inventory", "codex", "social"] as Tab[]).map((t) => (
             <button
               key={t}
               onClick={() => handleTabChange(t)}
               className={`
                 flex-1 py-3 text-sm font-medium transition-colors border-b-2 relative
+                flex flex-col items-center justify-center
                 ${tab === t && !profileUsername
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground"
@@ -226,7 +237,7 @@ export default function App() {
         </div>
       </nav>
 
-      {/* Content — full width on mobile, capped on desktop */}
+      {/* Content */}
       <main className="flex-1 w-full sm:max-w-2xl sm:mx-auto px-3 sm:px-4 py-6 sm:py-8">
         {profileUsername ? (
           <ProfilePage

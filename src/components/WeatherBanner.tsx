@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
 import { WEATHER } from "../data/weather";
 import type { WeatherType } from "../data/weather";
+import type { DayPeriodDefinition } from "../data/dayNight";
 
 interface Props {
   weatherType: WeatherType;
   isActive: boolean;
   msLeft: number;
+  period: DayPeriodDefinition;
 }
 
-// Shortened names so the HUD doesn't get squished
 const SHORT_NAMES: Record<WeatherType, string> = {
   clear:           "Clear",
   rain:            "Rain",
@@ -27,7 +28,27 @@ function formatTimeLeft(ms: number): string {
   return `${s}s`;
 }
 
-export function WeatherBanner({ weatherType, isActive, msLeft }: Props) {
+const accentClass: Record<WeatherType, string> = {
+  clear:           "border-border text-muted-foreground",
+  rain:            "border-blue-400/40 text-blue-300",
+  golden_hour:     "border-yellow-400/40 text-yellow-300",
+  prismatic_skies: "border-pink-400/40 text-pink-300",
+  star_shower:     "border-indigo-400/40 text-indigo-300",
+  cold_front:      "border-cyan-400/40 text-cyan-300",
+  heatwave:        "border-orange-400/40 text-orange-300",
+};
+
+const bgClass: Record<WeatherType, string> = {
+  clear:           "bg-card/60",
+  rain:            "bg-blue-950/40",
+  golden_hour:     "bg-yellow-950/40",
+  prismatic_skies: "bg-pink-950/40",
+  star_shower:     "bg-indigo-950/40",
+  cold_front:      "bg-cyan-950/40",
+  heatwave:        "bg-orange-950/40",
+};
+
+export function WeatherBanner({ weatherType, isActive, msLeft, period }: Props) {
   const [timeLeft, setTimeLeft] = useState(msLeft);
 
   useEffect(() => {
@@ -40,48 +61,35 @@ export function WeatherBanner({ weatherType, isActive, msLeft }: Props) {
   }, [msLeft, isActive]);
 
   const def = WEATHER[weatherType];
-
-  if (!isActive || weatherType === "clear") {
-    return (
-      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card/60 border border-border text-xs text-muted-foreground font-mono">
-        <span>☀️</span>
-        <span className="hidden sm:inline">Clear</span>
-      </div>
-    );
-  }
-
-  const accentClass: Record<WeatherType, string> = {
-    clear:           "border-border text-muted-foreground",
-    rain:            "border-blue-400/40 text-blue-300",
-    golden_hour:     "border-yellow-400/40 text-yellow-300",
-    prismatic_skies: "border-pink-400/40 text-pink-300",
-    star_shower:     "border-indigo-400/40 text-indigo-300",
-    cold_front:      "border-cyan-400/40 text-cyan-300",
-    heatwave:        "border-orange-400/40 text-orange-300",
-  };
-
-  const bgClass: Record<WeatherType, string> = {
-    clear:           "bg-card/60",
-    rain:            "bg-blue-950/40",
-    golden_hour:     "bg-yellow-950/40",
-    prismatic_skies: "bg-pink-950/40",
-    star_shower:     "bg-indigo-950/40",
-    cold_front:      "bg-cyan-950/40",
-    heatwave:        "bg-orange-950/40",
-  };
+  const weatherActive = isActive && weatherType !== "clear";
 
   return (
     <div
       className={`
         flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-mono
         transition-all duration-500
-        ${bgClass[weatherType]} ${accentClass[weatherType]}
+        ${weatherActive ? bgClass[weatherType] : "bg-card/60 border-border text-muted-foreground"}
+        ${weatherActive ? accentClass[weatherType] : ""}
       `}
-      title={def.description}
+      title={weatherActive ? def.description : period.label}
     >
-      <span className="text-sm">{def.emoji}</span>
-      <span className="font-semibold hidden sm:inline">{SHORT_NAMES[weatherType]}</span>
-      <span className="opacity-70">{formatTimeLeft(timeLeft)}</span>
+      {/* Day/night period — always shown */}
+      <span className="text-sm">{period.emoji}</span>
+
+      {/* Separator + weather info — only when weather is active */}
+      {weatherActive && (
+        <>
+          <span className="opacity-40">·</span>
+          <span className="text-sm">{def.emoji}</span>
+          <span className="font-semibold hidden">{SHORT_NAMES[weatherType]}</span>
+          <span className="opacity-70">{formatTimeLeft(timeLeft)}</span>
+        </>
+      )}
+
+      {/* Period label — only on desktop when no weather active */}
+      {!weatherActive && (
+        <span className="hidden sm:inline">{period.label}</span>
+      )}
     </div>
   );
 }
