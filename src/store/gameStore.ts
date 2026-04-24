@@ -1,5 +1,7 @@
 import { FLOWERS, MUTATIONS, getFlower, type GrowthStage, type MutationType } from "../data/flowers";
 import { FERTILIZERS, getNextUpgrade, getCurrentTier, type FertilizerType } from "../data/upgrades";
+import type { WeatherType } from "../data/weather";
+import { WEATHER } from "../data/weather";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -288,13 +290,20 @@ export function msUntilShopReset(state: GameState): number {
 
 // ── Growth calculation ─────────────────────────────────────────────────────
 
-export function getCurrentStage(plant: PlantedFlower, now: number): GrowthStage {
+export function getCurrentStage(
+  plant: PlantedFlower,
+  now: number,
+  weatherType: WeatherType = "clear"
+): GrowthStage {
   const species = getFlower(plant.speciesId);
   if (!species) return "seed";
 
-  const multiplier = plant.fertilizer
+  const fertMultiplier = plant.fertilizer
     ? FERTILIZERS[plant.fertilizer].speedMultiplier
     : 1.0;
+
+  const weatherMultiplier = WEATHER[weatherType].growthMultiplier;
+  const multiplier = fertMultiplier * weatherMultiplier;
 
   const elapsed   = now - plant.timePlanted;
   const seedDone  = species.growthTime.seed   / multiplier;
@@ -305,13 +314,20 @@ export function getCurrentStage(plant: PlantedFlower, now: number): GrowthStage 
   return "seed";
 }
 
-export function getStageProgress(plant: PlantedFlower, now: number): number {
+export function getStageProgress(
+  plant: PlantedFlower,
+  now: number,
+  weatherType: WeatherType = "clear"
+): number {
   const species = getFlower(plant.speciesId);
   if (!species) return 0;
 
-  const multiplier = plant.fertilizer
+  const fertMultiplier = plant.fertilizer
     ? FERTILIZERS[plant.fertilizer].speedMultiplier
     : 1.0;
+
+  const weatherMultiplier = WEATHER[weatherType].growthMultiplier;
+  const multiplier = fertMultiplier * weatherMultiplier;
 
   const elapsed   = now - plant.timePlanted;
   const seedDone  = species.growthTime.seed   / multiplier;
@@ -323,13 +339,20 @@ export function getStageProgress(plant: PlantedFlower, now: number): number {
   return elapsed / seedDone;
 }
 
-export function getMsUntilNextStage(plant: PlantedFlower, now: number): number {
+export function getMsUntilNextStage(
+  plant: PlantedFlower,
+  now: number,
+  weatherType: WeatherType = "clear"
+): number {
   const species = getFlower(plant.speciesId);
   if (!species) return 0;
 
-  const multiplier = plant.fertilizer
+  const fertMultiplier = plant.fertilizer
     ? FERTILIZERS[plant.fertilizer].speedMultiplier
     : 1.0;
+
+  const weatherMultiplier = WEATHER[weatherType].growthMultiplier;
+  const multiplier = fertMultiplier * weatherMultiplier;
 
   const elapsed   = now - plant.timePlanted;
   const seedDone  = species.growthTime.seed   / multiplier;
@@ -375,13 +398,21 @@ export function plantSeed(
   return { ...state, grid: newGrid, inventory: newInventory };
 }
 
-function rollMutation(speciesId: string): MutationType | undefined {
+function rollMutation(
+  speciesId: string,
+  weatherType: WeatherType = "clear"
+): MutationType | undefined {
   const species = getFlower(speciesId);
   if (!species || species.possibleMutations.length === 0) return undefined;
 
+  const boost = WEATHER[weatherType].mutationBoost;
+
   for (const mutId of species.possibleMutations) {
     const mut = MUTATIONS[mutId];
-    if (Math.random() < mut.chance) return mutId;
+    const chance = boost?.mutation === mutId
+      ? mut.chance * boost.multiplier
+      : mut.chance;
+    if (Math.random() < chance) return mutId;
   }
   return undefined;
 }
@@ -389,16 +420,17 @@ function rollMutation(speciesId: string): MutationType | undefined {
 export function harvestPlant(
   state: GameState,
   row: number,
-  col: number
+  col: number,
+  weatherType: WeatherType = "clear"
 ): { state: GameState; mutation: MutationType | undefined } | null {
   const plot = state.grid[row]?.[col];
   if (!plot?.plant) return null;
 
-  const stage = getCurrentStage(plot.plant, Date.now());
+  const stage = getCurrentStage(plot.plant, Date.now(), weatherType);
   if (stage !== "bloom") return null;
 
   const { speciesId } = plot.plant;
-  const mutation      = rollMutation(speciesId);
+  const mutation      = rollMutation(speciesId, weatherType);
   const species       = getFlower(speciesId)!;
 
   const bonusCoins = mutation

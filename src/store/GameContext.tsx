@@ -17,6 +17,8 @@ import {
   type CloudProfile,
 } from "./cloudSave";
 import { supabase } from "../lib/supabase";
+import { useWeather } from "../hooks/useWeather";
+import type { WeatherType } from "../data/weather";
 
 interface GameContextValue {
   state: GameState;
@@ -35,6 +37,10 @@ interface GameContextValue {
   resolveMigration: (choice: "local" | "cloud") => Promise<void>;
   needsUsername: boolean;
   completeUsername: (username: string) => void;
+  // Weather
+  activeWeather: WeatherType;
+  weatherMsLeft: number;
+  weatherIsActive: boolean;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -58,34 +64,27 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     cloudSave: GameState;
   } | null>(null);
 
-  const saveEnabled        = useRef(false);
-  const isLoading          = useRef(false);
-  const loadedFor          = useRef<string | null>(null);
-  // Set to true once INITIAL_SESSION has fired.
-  // SIGNED_IN is ignored until this is true, because Supabase fires
-  // SIGNED_IN during _initialize before the client is ready to make requests.
+  const saveEnabled         = useRef(false);
+  const isLoading           = useRef(false);
+  const loadedFor           = useRef<string | null>(null);
   const initialSessionFired = useRef(false);
   const stateRef            = useRef(state);
+
+  // Weather — global, shared across all players via Supabase Realtime
+  const { activeType: activeWeather, isActive: weatherIsActive, msLeft: weatherMsLeft } = useWeather();
 
   useEffect(() => { stateRef.current = state; }, [state]);
 
   // ── Load session ──────────────────────────────────────────────────────────
   async function loadUserSession(u: User | null) {
-    // console.log("[load] called — isLoading:", isLoading.current, "loadedFor:", loadedFor.current, "u:", u?.id ?? "null");
-
-    if (isLoading.current) {
-      // console.log("[load] DROPPED — lock held");
-      return;
-    }
+    if (isLoading.current) return;
     if (u && loadedFor.current === u.id) {
-      // console.log("[load] DROPPED — same user already loaded");
       setAuthLoading(false);
       return;
     }
 
     isLoading.current   = true;
     saveEnabled.current = false;
-    // console.log("[load] ACQUIRED lock for", u?.id ?? "guest");
 
     if (!u) {
       const { state: localState, summary } = loadGame();
@@ -97,7 +96,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       saveEnabled.current = true;
       isLoading.current   = false;
       setAuthLoading(false);
-      // console.log("[load] guest loaded — coins:", localState.coins);
       return;
     }
 
@@ -105,9 +103,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setUser(u);
 
     try {
-      // console.log("[load] fetching profile...");
       const p = await getProfile(u.id);
-      // console.log("[load] profile:", p?.username ?? "null");
 
       if (!p) {
         setNeedsUsername(true);
@@ -118,10 +114,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
       setProfile(p);
 
-      // console.log("[load] fetching cloud save...");
       const cloudSave = await loadCloudSave(u.id);
-      // console.log("[load] cloudSave coins:", cloudSave?.coins ?? "null");
-
       const localRaw  = localStorage.getItem("chrysanthemum_save");
       const localSave = localRaw ? (JSON.parse(localRaw) as GameState) : null;
 
@@ -130,30 +123,23 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       if (!cloudSave) {
         const saveToUse = localSave ?? defaultState();
         const { state: ticked, summary } = applyOfflineTick(saveToUse);
-        // console.log("[load] no cloud save — coins:", ticked.coins);
         setState(ticked);
         setOfflineSummary(summary);
         await saveToCloud(u.id, ticked);
       } else if (localSave && localSave.lastSaved > cloudSave.lastSaved + 300_000) {
-        // console.log("[load] migration needed");
         setPendingMigration({ localSave, cloudSave });
         isLoading.current = false;
         setAuthLoading(false);
         return;
       } else {
         const { state: ticked, summary } = applyOfflineTick(cloudSave);
-        // console.log("[load] using cloud save — coins:", ticked.coins);
         setState(ticked);
         setOfflineSummary(summary);
       }
 
-      setTimeout(() => {
-        // console.log("[load] saves ENABLED — coins:", stateRef.current.coins);
-        saveEnabled.current = true;
-      }, 1_000);
+      setTimeout(() => { saveEnabled.current = true; }, 1_000);
 
     } catch (e) {
-      // console.error("[load] ERROR:", e);
       const { state: localState, summary } = loadGame();
       setState(localState);
       setOfflineSummary(summary);
@@ -162,30 +148,20 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
     isLoading.current = false;
     setAuthLoading(false);
-    // console.log("[load] DONE for", u.id);
   }
 
   // ── Auth listener ─────────────────────────────────────────────────────────
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        // console.log("[auth]", event, session?.user?.id ?? "none");
-
         if (event === "INITIAL_SESSION") {
-          // Supabase is now fully initialized — safe to make requests
           initialSessionFired.current = true;
           await loadUserSession(session?.user ?? null);
           return;
         }
 
         if (event === "SIGNED_IN") {
-          // Supabase fires SIGNED_IN during _initialize BEFORE the client
-          // is ready. We must wait for INITIAL_SESSION first.
-          if (!initialSessionFired.current) {
-            // console.log("[auth] SIGNED_IN ignored — waiting for INITIAL_SESSION");
-            return;
-          }
-          // After INITIAL_SESSION, SIGNED_IN means a genuine new OAuth login
+          if (!initialSessionFired.current) return;
           await loadUserSession(session?.user ?? null);
           return;
         }
@@ -318,6 +294,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       refreshProfile,
       pendingMigration, resolveMigration,
       needsUsername, completeUsername,
+      activeWeather,
+      weatherMsLeft,
+      weatherIsActive,
     }}>
       {children}
     </GameContext.Provider>

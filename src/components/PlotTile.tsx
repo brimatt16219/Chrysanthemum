@@ -17,16 +17,19 @@ interface Props {
   col: number;
   onEmptyClick: () => void;
   isSelected?: boolean;
-  cellSize?: string; // e.g. "w-11 h-11 sm:w-16 sm:h-16"
+  cellSize?: string;
 }
 
 export function PlotTile({ plot, row, col, onEmptyClick, isSelected, cellSize = "w-16 h-16" }: Props) {
-  const { state, update } = useGame();
+  const { state, update, activeWeather } = useGame();
   const now           = Date.now();
   const plant         = plot.plant;
   const species       = plant ? getFlower(plant.speciesId) : null;
-  const stage         = plant ? getCurrentStage(plant, now) : null;
-  const progress      = plant ? getStageProgress(plant, now) : 0;
+
+  // Pass activeWeather into growth calculations so Rain speeds up display
+  const stage         = plant ? getCurrentStage(plant, now, activeWeather) : null;
+  const progress      = plant ? getStageProgress(plant, now, activeWeather) : 0;
+
   const rarity        = species ? RARITY_CONFIG[species.rarity] : null;
   const isBloomed     = stage === "bloom";
   const hasFertilizer = !!plant?.fertilizer;
@@ -56,7 +59,8 @@ export function PlotTile({ plot, row, col, onEmptyClick, isSelected, cellSize = 
       return;
     }
     if (isBloomed) {
-      const result = harvestPlant(state, row, col);
+      // Pass activeWeather into harvestPlant for mutation boost
+      const result = harvestPlant(state, row, col, activeWeather);
       if (result) {
         update(result.state);
         setPopup({ speciesId: plant.speciesId, mutation: result.mutation });
