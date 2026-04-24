@@ -99,20 +99,6 @@ export async function saveToCloud(
   userId: string,
   state: GameState
 ): Promise<boolean> {
-  // Check current cloud save timestamp before writing
-  const { data: current } = await supabase
-    .from("game_saves")
-    .select("last_saved")
-    .eq("user_id", userId)
-    .single();
-
-  // If cloud is newer than what we're writing, skip the write
-  // This prevents an older session from overwriting a newer one
-  if (current?.last_saved && current.last_saved > state.lastSaved) {
-    // console.warn("[saveToCloud] skipping — cloud is newer", current.last_saved, "vs", state.lastSaved);
-    return false;
-  }
-
   const { error } = await supabase
     .from("game_saves")
     .upsert({
@@ -129,7 +115,7 @@ export async function saveToCloud(
     });
 
   if (error) {
-    // console.error("Failed to save to cloud:", error);
+    console.error("Failed to save to cloud:", error);
     return false;
   }
   return true;
