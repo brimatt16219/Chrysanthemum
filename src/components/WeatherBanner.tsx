@@ -8,6 +8,17 @@ interface Props {
   msLeft: number;
 }
 
+// Shortened names so the HUD doesn't get squished
+const SHORT_NAMES: Record<WeatherType, string> = {
+  clear:           "Clear",
+  rain:            "Rain",
+  golden_hour:     "Golden Hr",
+  prismatic_skies: "Prismatic",
+  star_shower:     "Stars",
+  cold_front:      "Cold Front",
+  heatwave:        "Heatwave",
+};
+
 function formatTimeLeft(ms: number): string {
   const totalSec = Math.max(0, Math.floor(ms / 1_000));
   const m = Math.floor(totalSec / 60);
@@ -19,7 +30,6 @@ function formatTimeLeft(ms: number): string {
 export function WeatherBanner({ weatherType, isActive, msLeft }: Props) {
   const [timeLeft, setTimeLeft] = useState(msLeft);
 
-  // Tick the countdown locally so it stays smooth between Realtime updates
   useEffect(() => {
     setTimeLeft(msLeft);
     if (!isActive) return;
@@ -31,17 +41,15 @@ export function WeatherBanner({ weatherType, isActive, msLeft }: Props) {
 
   const def = WEATHER[weatherType];
 
-  // Show a subtle "clear skies" pill even when no weather is active
   if (!isActive || weatherType === "clear") {
     return (
       <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card/60 border border-border text-xs text-muted-foreground font-mono">
         <span>☀️</span>
-        <span>Clear</span>
+        <span className="hidden sm:inline">Clear</span>
       </div>
     );
   }
 
-  // Color accent per weather type
   const accentClass: Record<WeatherType, string> = {
     clear:           "border-border text-muted-foreground",
     rain:            "border-blue-400/40 text-blue-300",
@@ -65,14 +73,14 @@ export function WeatherBanner({ weatherType, isActive, msLeft }: Props) {
   return (
     <div
       className={`
-        flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-mono
+        flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-mono
         transition-all duration-500
         ${bgClass[weatherType]} ${accentClass[weatherType]}
       `}
       title={def.description}
     >
       <span className="text-sm">{def.emoji}</span>
-      <span className="font-semibold hidden sm:inline">{def.name}</span>
+      <span className="font-semibold hidden sm:inline">{SHORT_NAMES[weatherType]}</span>
       <span className="opacity-70">{formatTimeLeft(timeLeft)}</span>
     </div>
   );

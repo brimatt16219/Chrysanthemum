@@ -8,11 +8,11 @@ interface Props {
 
 interface Particle {
   id: number;
-  x: number;      // % from left
-  y: number;      // % from top (starting position)
-  size: number;   // em
-  duration: number; // animation duration in seconds
-  delay: number;  // animation delay in seconds
+  x: number;
+  y: number;
+  size: number;
+  duration: number;
+  delay: number;
   opacity: number;
 }
 
@@ -28,7 +28,7 @@ function useParticles(count: number, active: boolean): Particle[] {
       Array.from({ length: count }, (_, i) => ({
         id:       i,
         x:        Math.random() * 100,
-        y:        Math.random() * -20,       // start above viewport
+        y:        Math.random() * -20,
         size:     0.8 + Math.random() * 0.8,
         duration: 2 + Math.random() * 3,
         delay:    Math.random() * 4,
@@ -51,10 +51,7 @@ function RainOverlay({ active }: { active: boolean }) {
         ${active ? "opacity-100" : "opacity-0"}
       `}
     >
-      {/* Blue tint */}
       <div className="absolute inset-0 bg-blue-900/10" />
-
-      {/* Rain drops */}
       {drops.map((d) => (
         <div
           key={d.id}
@@ -70,7 +67,6 @@ function RainOverlay({ active }: { active: boolean }) {
           |
         </div>
       ))}
-
       <style>{`
         @keyframes rainFall {
           0%   { transform: translateY(-10vh) rotate(15deg); opacity: 0; }
@@ -85,8 +81,6 @@ function RainOverlay({ active }: { active: boolean }) {
 
 // ── Golden Hour ───────────────────────────────────────────────────────────
 function GoldenHourOverlay({ active }: { active: boolean }) {
-  const sparkles = useParticles(14, active);
-
   return (
     <div
       className={`
@@ -94,36 +88,35 @@ function GoldenHourOverlay({ active }: { active: boolean }) {
         ${active ? "opacity-100" : "opacity-0"}
       `}
     >
-      {/* Warm golden tint */}
       <div className="absolute inset-0 bg-yellow-400/8" />
-
-      {/* Radial glow from top */}
-      <div className="absolute inset-x-0 -top-32 h-64 bg-gradient-to-b from-yellow-300/15 to-transparent" />
-
-      {/* Sparkle particles */}
-      {sparkles.map((d) => (
+      <div
+        className="absolute inset-x-0 -top-32 h-72"
+        style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(253,224,71,0.18) 0%, transparent 70%)" }}
+      />
+      {[
+        { x: 15, y: 25, w: 100, delay: 0   },
+        { x: 48, y: 45, w: 140, delay: 0.8 },
+        { x: 72, y: 30, w: 90,  delay: 1.5 },
+        { x: 88, y: 60, w: 120, delay: 2.2 },
+      ].map((o, i) => (
         <div
-          key={d.id}
-          className="absolute select-none"
+          key={i}
+          className="absolute rounded-full"
           style={{
-            left:      `${d.x}%`,
-            top:       `${d.y + 10}%`,
-            fontSize:  `${d.size}em`,
-            opacity:   d.opacity,
-            animation: `sparkleFloat ${d.duration + 1}s ${d.delay}s ease-in-out infinite`,
+            left:       `${o.x}%`,
+            top:        `${o.y}%`,
+            width:      `${o.w}px`,
+            height:     `${o.w}px`,
+            transform:  "translate(-50%, -50%)",
+            background: "radial-gradient(circle, rgba(253,224,71,0.10) 0%, transparent 70%)",
+            animation:  `goldenOrb ${3.5 + i * 0.6}s ${o.delay}s ease-in-out infinite`,
           }}
-        >
-          ✨
-        </div>
+        />
       ))}
-
       <style>{`
-        @keyframes sparkleFloat {
-          0%   { transform: translateY(0) scale(0.8); opacity: 0; }
-          20%  { opacity: 1; }
-          50%  { transform: translateY(-30px) scale(1.1); }
-          80%  { opacity: 0.6; }
-          100% { transform: translateY(-60px) scale(0.8); opacity: 0; }
+        @keyframes goldenOrb {
+          0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
+          50%       { opacity: 0.9; transform: translate(-50%, -50%) scale(1.2); }
         }
       `}</style>
     </div>
@@ -131,7 +124,26 @@ function GoldenHourOverlay({ active }: { active: boolean }) {
 }
 
 // ── Prismatic Skies ───────────────────────────────────────────────────────
+// Seven concentric circles centred below and outside the viewport.
+// cy=160 (well below the screen) + large radii = the arches appear high
+// up in the screen and never touch the bottom.
+// strokeWidth=7 with radii spaced 6 apart = bands butt up against each
+// other with no gap.
 function PrismaticSkiesOverlay({ active }: { active: boolean }) {
+  // Red outermost (largest r) → violet innermost (smallest r)
+  // Centre at cx=50, cy=160 so the arch peaks near the top of the viewport
+  // Radii spaced exactly strokeWidth apart to eliminate gaps
+  const SW = 7; // stroke width
+  const bands = [
+    { color: "rgba(255,  0,  0, 0.22)", r: 130 }, // red
+    { color: "rgba(255,140,  0, 0.22)", r: 123 }, // orange
+    { color: "rgba(255,230,  0, 0.22)", r: 116 }, // yellow
+    { color: "rgba( 50,205, 50, 0.22)", r: 109 }, // green
+    { color: "rgba(  0,100,255, 0.22)", r: 102 }, // blue
+    { color: "rgba( 75,  0,200, 0.22)", r:  95 }, // indigo
+    { color: "rgba(148,  0,211, 0.22)", r:  88 }, // violet
+  ];
+
   return (
     <div
       className={`
@@ -139,26 +151,26 @@ function PrismaticSkiesOverlay({ active }: { active: boolean }) {
         ${active ? "opacity-100" : "opacity-0"}
       `}
     >
-      {/* Soft pink tint */}
-      <div className="absolute inset-0 bg-pink-400/8" />
+      <div className="absolute inset-0 bg-pink-400/5" />
 
-      {/* Rainbow arc */}
-      <div
-        className="absolute"
-        style={{
-          top:    "-60px",
-          left:   "-20%",
-          width:  "140%",
-          height: "300px",
-          borderRadius: "50%",
-          border: "12px solid transparent",
-          borderTopColor: "transparent",
-          background:
-            "linear-gradient(180deg, transparent 60%, transparent 100%) padding-box, " +
-            "linear-gradient(90deg, rgba(255,0,0,0.15), rgba(255,165,0,0.15), rgba(255,255,0,0.15), rgba(0,255,0,0.15), rgba(0,0,255,0.15), rgba(238,130,238,0.15)) border-box",
-          animation: "rainbowPulse 4s ease-in-out infinite",
-        }}
-      />
+      <svg
+        className="absolute inset-0 w-full h-full"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        style={{ animation: "rainbowPulse 5s ease-in-out infinite" }}
+      >
+        {bands.map((b, i) => (
+          <circle
+            key={i}
+            cx="50"
+            cy="160"
+            r={b.r}
+            fill="none"
+            stroke={b.color}
+            strokeWidth={SW}
+          />
+        ))}
+      </svg>
 
       <style>{`
         @keyframes rainbowPulse {
@@ -181,10 +193,7 @@ function StarShowerOverlay({ active }: { active: boolean }) {
         ${active ? "opacity-100" : "opacity-0"}
       `}
     >
-      {/* Dark blue night tint */}
       <div className="absolute inset-0 bg-indigo-950/25" />
-
-      {/* Falling stars */}
       {stars.map((d) => (
         <div
           key={d.id}
@@ -200,7 +209,6 @@ function StarShowerOverlay({ active }: { active: boolean }) {
           {d.id % 3 === 0 ? "⭐" : d.id % 3 === 1 ? "✦" : "·"}
         </div>
       ))}
-
       <style>{`
         @keyframes starFall {
           0%   { transform: translateY(-5vh) translateX(0) scale(1); opacity: 0; }
@@ -224,35 +232,32 @@ function ColdFrontOverlay({ active }: { active: boolean }) {
         ${active ? "opacity-100" : "opacity-0"}
       `}
     >
-      {/* Cyan tint on edges */}
       <div className="absolute inset-0 bg-cyan-400/8" />
-      <div className="absolute inset-0"
+      <div
+        className="absolute inset-0"
         style={{ background: "radial-gradient(ellipse at center, transparent 40%, rgba(6,182,212,0.08) 100%)" }}
       />
-
-      {/* Snowflakes */}
       {flakes.map((d) => (
         <div
           key={d.id}
-          className="absolute select-none text-cyan-200"
+          className="absolute select-none"
           style={{
             left:      `${d.x}%`,
             top:       `${d.y}%`,
             fontSize:  `${d.size * 1.2}em`,
-            opacity:   d.opacity,
+            opacity:   d.opacity * 0.35,
             animation: `snowDrift ${d.duration + 2}s ${d.delay}s ease-in-out infinite`,
           }}
         >
           ❄️
         </div>
       ))}
-
       <style>{`
         @keyframes snowDrift {
           0%   { transform: translateY(-5vh) translateX(0) rotate(0deg); opacity: 0; }
-          10%  { opacity: 1; }
+          10%  { opacity: 0.35; }
           50%  { transform: translateY(50vh) translateX(15px) rotate(180deg); }
-          90%  { opacity: 0.8; }
+          90%  { opacity: 0.2; }
           100% { transform: translateY(105vh) translateX(-10px) rotate(360deg); opacity: 0; }
         }
       `}</style>
@@ -260,10 +265,8 @@ function ColdFrontOverlay({ active }: { active: boolean }) {
   );
 }
 
-// ── Heatwave ──────────────────────────────────────────────────────────────
+// ── Heatwave — tint and bottom glow only ─────────────────────────────────
 function HeatwaveOverlay({ active }: { active: boolean }) {
-  const embers = useParticles(14, active);
-
   return (
     <div
       className={`
@@ -271,53 +274,11 @@ function HeatwaveOverlay({ active }: { active: boolean }) {
         ${active ? "opacity-100" : "opacity-0"}
       `}
     >
-      {/* Orange tint on edges */}
       <div className="absolute inset-0 bg-orange-400/8" />
-      <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-orange-500/10 to-transparent" />
-
-      {/* Heat shimmer lines */}
       <div
-        className="absolute inset-0"
-        style={{ animation: "heatShimmer 3s ease-in-out infinite" }}
-      >
-        {[20, 45, 70, 85].map((x) => (
-          <div
-            key={x}
-            className="absolute top-0 bottom-0 w-px bg-orange-300/5"
-            style={{ left: `${x}%`, animation: `shimmerLine ${2 + x * 0.02}s ease-in-out infinite` }}
-          />
-        ))}
-      </div>
-
-      {/* Rising ember particles */}
-      {embers.map((d) => (
-        <div
-          key={d.id}
-          className="absolute select-none"
-          style={{
-            left:      `${d.x}%`,
-            bottom:    "0%",
-            fontSize:  `${d.size * 0.8}em`,
-            opacity:   d.opacity,
-            animation: `emberRise ${d.duration + 1}s ${d.delay}s ease-out infinite`,
-          }}
-        >
-          🔥
-        </div>
-      ))}
-
-      <style>{`
-        @keyframes emberRise {
-          0%   { transform: translateY(0) scale(0.5); opacity: 0; }
-          20%  { opacity: 1; }
-          80%  { opacity: 0.5; }
-          100% { transform: translateY(-60vh) scale(0.2) translateX(${Math.random() > 0.5 ? 20 : -20}px); opacity: 0; }
-        }
-        @keyframes shimmerLine {
-          0%, 100% { opacity: 0.03; transform: scaleX(1); }
-          50%       { opacity: 0.08; transform: scaleX(1.5); }
-        }
-      `}</style>
+        className="absolute inset-x-0 bottom-0 h-48"
+        style={{ background: "radial-gradient(ellipse at 50% 100%, rgba(251,146,60,0.18) 0%, transparent 70%)" }}
+      />
     </div>
   );
 }
@@ -328,12 +289,12 @@ export function WeatherOverlay({ weatherType, isActive }: Props) {
 
   return (
     <>
-      <RainOverlay          active={isActive && weatherType === "rain"} />
-      <GoldenHourOverlay    active={isActive && weatherType === "golden_hour"} />
+      <RainOverlay           active={isActive && weatherType === "rain"} />
+      <GoldenHourOverlay     active={isActive && weatherType === "golden_hour"} />
       <PrismaticSkiesOverlay active={isActive && weatherType === "prismatic_skies"} />
-      <StarShowerOverlay    active={isActive && weatherType === "star_shower"} />
-      <ColdFrontOverlay     active={isActive && weatherType === "cold_front"} />
-      <HeatwaveOverlay      active={isActive && weatherType === "heatwave"} />
+      <StarShowerOverlay     active={isActive && weatherType === "star_shower"} />
+      <ColdFrontOverlay      active={isActive && weatherType === "cold_front"} />
+      <HeatwaveOverlay       active={isActive && weatherType === "heatwave"} />
     </>
   );
 }
