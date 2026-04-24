@@ -21,6 +21,8 @@ import { msUntilShopReset } from "./store/gameStore";
 import { getFlower } from "./data/flowers";
 import { useVersionCheck } from "./hooks/useVersionCheck";
 import { UpdateBanner } from "./components/UpdateBanner";
+import { WeatherOverlay } from "./components/WeatherOverlay";
+import { WeatherBanner } from "./components/WeatherBanner";
 
 type Tab = "garden" | "shop" | "inventory" | "social" | "codex";
 type SocialView = "search" | "friends" | "gifts" | "leaderboard";
@@ -41,6 +43,7 @@ export default function App() {
     signInWithGoogle, signOut,
     pendingMigration, resolveMigration,
     needsUsername, completeUsername,
+    activeWeather, weatherMsLeft, weatherIsActive,
   } = useGame();
 
   const { pendingCount, newRequest, clearNewRequest } = useFriendRequests(user?.id ?? null);
@@ -131,6 +134,9 @@ export default function App() {
         <UpdateBanner onDismiss={() => setDismissedUpdate(true)} />
       )}
 
+      {/* Weather overlay — renders behind HUD, above content */}
+      <WeatherOverlay weatherType={activeWeather} isActive={weatherIsActive} />
+
       {/* HUD */}
       <header className="sticky top-0 z-30 bg-card/80 backdrop-blur border-b border-border">
         <div className="w-full sm:max-w-2xl sm:mx-auto flex items-center justify-between px-3 sm:px-4 py-3">
@@ -141,6 +147,11 @@ export default function App() {
             🌸 Chrysanthemum
           </h1>
           <div className="flex items-center gap-2 sm:gap-3">
+            <WeatherBanner
+              weatherType={activeWeather}
+              isActive={weatherIsActive}
+              msLeft={weatherMsLeft}
+            />
             <span className="text-sm font-mono">🟡 {state.coins.toLocaleString()}</span>
             <span className="text-xs text-muted-foreground font-mono hidden sm:block">
               Shop {formatCountdown(countdown)}
@@ -179,7 +190,7 @@ export default function App() {
 
       {/* Tabs */}
       <nav className="bg-card/40 border-b border-border">
-        <div className="w-full sm:max-w-2xl sm:mx-auto flex text-center">
+        <div className="w-full sm:max-w-2xl sm:mx-auto flex">
           {(["garden", "shop", "inventory", "codex", "social"] as Tab[]).map((t) => (
             <button
               key={t}

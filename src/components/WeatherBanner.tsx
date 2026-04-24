@@ -1,0 +1,79 @@
+import { useEffect, useState } from "react";
+import { WEATHER } from "../data/weather";
+import type { WeatherType } from "../data/weather";
+
+interface Props {
+  weatherType: WeatherType;
+  isActive: boolean;
+  msLeft: number;
+}
+
+function formatTimeLeft(ms: number): string {
+  const totalSec = Math.max(0, Math.floor(ms / 1_000));
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  if (m > 0) return `${m}m ${s.toString().padStart(2, "0")}s`;
+  return `${s}s`;
+}
+
+export function WeatherBanner({ weatherType, isActive, msLeft }: Props) {
+  const [timeLeft, setTimeLeft] = useState(msLeft);
+
+  // Tick the countdown locally so it stays smooth between Realtime updates
+  useEffect(() => {
+    setTimeLeft(msLeft);
+    if (!isActive) return;
+    const id = setInterval(() => {
+      setTimeLeft((prev) => Math.max(0, prev - 1_000));
+    }, 1_000);
+    return () => clearInterval(id);
+  }, [msLeft, isActive]);
+
+  const def = WEATHER[weatherType];
+
+  // Show a subtle "clear skies" pill even when no weather is active
+  if (!isActive || weatherType === "clear") {
+    return (
+      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card/60 border border-border text-xs text-muted-foreground font-mono">
+        <span>☀️</span>
+        <span>Clear</span>
+      </div>
+    );
+  }
+
+  // Color accent per weather type
+  const accentClass: Record<WeatherType, string> = {
+    clear:           "border-border text-muted-foreground",
+    rain:            "border-blue-400/40 text-blue-300",
+    golden_hour:     "border-yellow-400/40 text-yellow-300",
+    prismatic_skies: "border-pink-400/40 text-pink-300",
+    star_shower:     "border-indigo-400/40 text-indigo-300",
+    cold_front:      "border-cyan-400/40 text-cyan-300",
+    heatwave:        "border-orange-400/40 text-orange-300",
+  };
+
+  const bgClass: Record<WeatherType, string> = {
+    clear:           "bg-card/60",
+    rain:            "bg-blue-950/40",
+    golden_hour:     "bg-yellow-950/40",
+    prismatic_skies: "bg-pink-950/40",
+    star_shower:     "bg-indigo-950/40",
+    cold_front:      "bg-cyan-950/40",
+    heatwave:        "bg-orange-950/40",
+  };
+
+  return (
+    <div
+      className={`
+        flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-mono
+        transition-all duration-500
+        ${bgClass[weatherType]} ${accentClass[weatherType]}
+      `}
+      title={def.description}
+    >
+      <span className="text-sm">{def.emoji}</span>
+      <span className="font-semibold hidden sm:inline">{def.name}</span>
+      <span className="opacity-70">{formatTimeLeft(timeLeft)}</span>
+    </div>
+  );
+}
