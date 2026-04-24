@@ -93,11 +93,18 @@ export function ProfilePage({ username, onBack }: Props) {
 
       {/* Profile card */}
       <div className="bg-card/60 border border-border rounded-2xl p-5 flex items-center gap-5">
-        <div className={`
-          relative w-16 h-16 rounded-2xl border-2 flex items-center justify-center text-4xl flex-shrink-0
-          ${displayRarity?.glow ?? ""}
-          ${displayFlower ? "border-primary/40 bg-primary/10" : "border-border bg-card"}
-        `}>
+      <div className={`
+        relative w-16 h-16 rounded-2xl border-2 flex items-center justify-center text-4xl flex-shrink-0
+        ${displayRarity?.glow ?? ""}
+        ${displayFlower
+          ? displayFlower.rarity === "common"    ? "border-gray-400/60 bg-gray-400/10"
+          : displayFlower.rarity === "uncommon"  ? "border-green-400/60 bg-green-400/10"
+          : displayFlower.rarity === "rare"      ? "border-blue-400/60 bg-blue-400/10"
+          : displayFlower.rarity === "legendary" ? "border-yellow-400/60 bg-yellow-400/10"
+          : "border-pink-400/60 bg-pink-400/10"
+          : "border-border bg-card"
+        }
+      `}>
           {displayFlower?.emoji.bloom ?? "🌱"}
           {mutObj && (
             <span className="absolute -top-1 -right-1 text-lg">{mutObj.emoji}</span>
