@@ -144,7 +144,8 @@ export default function App() {
             className="text-lg font-bold text-primary tracking-wide cursor-pointer"
             onClick={() => handleTabChange("garden")}
           >
-            🌸 Chrysanthemum
+            <span>🌸</span>
+            <span className="hidden sm:block">Chrysanthemum</span>
           </h1>
           <div className="flex items-center gap-2 sm:gap-3">
             <WeatherBanner
@@ -190,7 +191,7 @@ export default function App() {
 
       {/* Tabs */}
       <nav className="bg-card/40 border-b border-border">
-        <div className="w-full sm:max-w-2xl sm:mx-auto flex">
+        <div className="w-full sm:max-w-2xl sm:mx-auto flex text-center">
           {(["garden", "shop", "inventory", "codex", "social"] as Tab[]).map((t) => (
             <button
               key={t}
