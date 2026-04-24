@@ -8,10 +8,10 @@ export interface FarmUpgrade {
 
 // ── ADD NEW TIERS HERE ─────────────────────────────────────────────────────
 export const FARM_UPGRADES: FarmUpgrade[] = [
-  { size: 3, cost: 0,       label: "Starter Plot",  description: "3×3 — where every garden begins.",      shopSlots: 3 },
-  { size: 4, cost: 1000,     label: "Small Farm",    description: "4×4 — room to experiment.",             shopSlots: 4 },
-  { size: 5, cost: 5_000,   label: "Garden",        description: "5×5 — a proper garden.",                shopSlots: 5 },
-  { size: 6, cost: 25_000,  label: "Grand Estate",  description: "6×6 — the pinnacle of horticulture.",   shopSlots: 6 },
+  { size: 3, cost: 0,       label: "Starter Plot",  description: "3×3 — where every garden begins.",      shopSlots: 4 },
+  { size: 4, cost: 1000,     label: "Small Farm",    description: "4×4 — room to experiment.",             shopSlots: 6 },
+  { size: 5, cost: 5_000,   label: "Garden",        description: "5×5 — a proper garden.",                shopSlots: 7 },
+  { size: 6, cost: 25_000,  label: "Grand Estate",  description: "6×6 — the pinnacle of horticulture.",   shopSlots: 8 },
 ];
 // ──────────────────────────────────────────────────────────────────────────
 
