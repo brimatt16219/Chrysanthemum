@@ -16,11 +16,12 @@ export function Shop() {
   const [countdown, setCountdown] = useState(() => msUntilShopReset(state));
 
   useEffect(() => {
-    const id = setInterval(() => {
-      setCountdown(msUntilShopReset(state));
-    }, 1_000);
+    const id = setInterval(() => setCountdown(msUntilShopReset(state)), 1_000);
     return () => clearInterval(id);
   }, [state.lastShopReset]);
+
+  const flowerSlots     = state.shop.filter((s) => !s.isFertilizer);
+  const fertilizerSlots = state.shop.filter((s) => s.isFertilizer);
 
   return (
     <div className="flex flex-col gap-6">
@@ -49,15 +50,36 @@ export function Shop() {
         </span>
       </div>
 
-      {/* Shop grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {state.shop.map((slot) => (
-          <ShopSlotCard key={slot.speciesId} slot={slot} />
-        ))}
-      </div>
+      {/* Flower seeds — 1 col mobile, 2 col desktop */}
+      {flowerSlots.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <h3 className="text-xs font-mono text-muted-foreground uppercase tracking-wide">
+            Seeds ({flowerSlots.length} available)
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {flowerSlots.map((slot) => (
+              <ShopSlotCard key={slot.speciesId} slot={slot} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Fertilizers — always 1 col since there are only 2 */}
+      {fertilizerSlots.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <h3 className="text-xs font-mono text-muted-foreground uppercase tracking-wide">
+            Fertilizers
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {fertilizerSlots.map((slot) => (
+              <ShopSlotCard key={slot.speciesId} slot={slot} />
+            ))}
+          </div>
+        </div>
+      )}
 
       <p className="text-xs text-muted-foreground text-center pb-4">
-        Shop stock is random every 5 minutes. Rarer flowers appear less often.
+        Shop stock is random every 10 minutes. Rarer flowers appear less often.
       </p>
     </div>
   );

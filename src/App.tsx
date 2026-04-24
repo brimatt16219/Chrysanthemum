@@ -51,12 +51,11 @@ export default function App() {
   const [countdown, setCountdown]   = useState(() => msUntilShopReset(state));
   const [showBanner, setShowBanner] = useState(true);
 
-  // Profile overlay — sits on top of any tab, back button returns to previous tab
-  const [profileUsername, setProfileUsername] = useState<string | null>(null);
-  const [profileReturnTab, setProfileReturnTab] = useState<Tab>("social");
+  const [profileUsername, setProfileUsername]     = useState<string | null>(null);
+  const [profileReturnTab, setProfileReturnTab]   = useState<Tab>("social");
   const [profileReturnView, setProfileReturnView] = useState<SocialView>("search");
 
-  const updateAvailable = useVersionCheck();
+  const updateAvailable  = useVersionCheck();
   const [dismissedUpdate, setDismissedUpdate] = useState(false);
 
   useEffect(() => {
@@ -67,7 +66,6 @@ export default function App() {
   const inventoryCount = state.inventory.reduce((s, i) => s + i.quantity, 0);
 
   function handleViewProfile(username: string) {
-    // Remember where we came from so back button returns there
     setProfileReturnTab(tab);
     setProfileReturnView(socialView);
     setProfileUsername(username);
@@ -81,7 +79,6 @@ export default function App() {
 
   function handleTabChange(t: Tab) {
     setTab(t);
-    // Clear profile overlay when switching tabs
     setProfileUsername(null);
   }
 
@@ -130,21 +127,20 @@ export default function App() {
           onChoose={resolveMigration}
         />
       )}
-
       {updateAvailable && !dismissedUpdate && (
         <UpdateBanner onDismiss={() => setDismissedUpdate(true)} />
       )}
 
       {/* HUD */}
-      <header className="sticky top-0 z-30 bg-card/80 backdrop-blur border-b border-border px-4 py-3">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
+      <header className="sticky top-0 z-30 bg-card/80 backdrop-blur border-b border-border">
+        <div className="w-full sm:max-w-2xl sm:mx-auto flex items-center justify-between px-3 sm:px-4 py-3">
           <h1
             className="text-lg font-bold text-primary tracking-wide cursor-pointer"
-            onClick={() => { handleTabChange("garden"); }}
+            onClick={() => handleTabChange("garden")}
           >
             🌸 Chrysanthemum
           </h1>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <span className="text-sm font-mono">🟡 {state.coins.toLocaleString()}</span>
             <span className="text-xs text-muted-foreground font-mono hidden sm:block">
               Shop {formatCountdown(countdown)}
@@ -163,7 +159,7 @@ export default function App() {
                   </button>
                   <button
                     onClick={signOut}
-                    className="text-xs px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
+                    className="text-xs px-2 sm:px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
                   >
                     Sign out
                   </button>
@@ -171,7 +167,7 @@ export default function App() {
               ) : (
                 <button
                   onClick={signInWithGoogle}
-                  className="text-xs px-3 py-1.5 rounded-lg bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
+                  className="text-xs px-2 sm:px-3 py-1.5 rounded-lg bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
                 >
                   Sign in
                 </button>
@@ -183,7 +179,7 @@ export default function App() {
 
       {/* Tabs */}
       <nav className="bg-card/40 border-b border-border">
-        <div className="max-w-2xl mx-auto flex text-center">
+        <div className="w-full sm:max-w-2xl sm:mx-auto flex">
           {(["garden", "shop", "inventory", "codex", "social"] as Tab[]).map((t) => (
             <button
               key={t}
@@ -196,11 +192,11 @@ export default function App() {
                 }
               `}
             >
-              {t === "garden"    ? "🌱"
-              : t === "shop"    ? "🛒"
-              : t === "inventory" ? "🎒"
-              : t === "codex"   ? "📖"
-              : "🌍"}
+              {t === "garden"      ? "🌱"
+               : t === "shop"      ? "🛒"
+               : t === "inventory" ? "🎒"
+               : t === "codex"     ? "📖"
+               : "🌍"}
               <span className="ml-1 hidden sm:inline capitalize">{t}</span>
 
               {t === "inventory" && inventoryCount > 0 && (
@@ -218,10 +214,8 @@ export default function App() {
         </div>
       </nav>
 
-      {/* Content */}
-      <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-8">
-
-        {/* Profile overlay — shown on top of any tab */}
+      {/* Content — full width on mobile, capped on desktop */}
+      <main className="flex-1 w-full sm:max-w-2xl sm:mx-auto px-3 sm:px-4 py-6 sm:py-8">
         {profileUsername ? (
           <ProfilePage
             username={profileUsername}
@@ -232,11 +226,10 @@ export default function App() {
             {tab === "garden"    && <Garden />}
             {tab === "shop"      && <Shop />}
             {tab === "inventory" && <Inventory />}
-            {tab === "codex" && <Codex />}
+            {tab === "codex"     && <Codex />}
             {tab === "social"    && (
               user ? (
                 <>
-                  {/* Social sub-nav */}
                   <div className="flex gap-2 mb-6 flex-wrap">
                     {(["search", "friends", "gifts", "leaderboard"] as SocialView[]).map((v) => (
                       <button
@@ -267,7 +260,6 @@ export default function App() {
                       </button>
                     ))}
                   </div>
-
                   {socialView === "search"      && <SearchPage onViewProfile={handleViewProfile} />}
                   {socialView === "friends"     && <FriendsPage onViewProfile={handleViewProfile} />}
                   {socialView === "gifts"       && <GiftsPage onViewProfile={handleViewProfile} />}

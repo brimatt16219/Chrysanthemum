@@ -26,8 +26,8 @@ export function ShopSlotCard({ slot }: Props) {
 
   // ── Fertilizer slot ──────────────────────────────────────────────────────
   if (slot.isFertilizer && slot.fertilizerType) {
-    const fert      = FERTILIZERS[slot.fertilizerType];
-    const canAfford = state.coins >= slot.price;
+    const fert       = FERTILIZERS[slot.fertilizerType];
+    const canAfford  = state.coins >= slot.price;
     const outOfStock = slot.quantity === 0;
 
     function handleBuyFert() {
@@ -82,9 +82,11 @@ export function ShopSlotCard({ slot }: Props) {
   const species = getFlower(slot.speciesId);
   if (!species) return null;
 
-  const rarity     = RARITY_CONFIG[species.rarity];
-  const canAfford  = state.coins >= slot.price;
-  const outOfStock = slot.quantity === 0;
+  const rarity      = RARITY_CONFIG[species.rarity];
+  const canAfford   = state.coins >= slot.price;
+  const outOfStock  = slot.quantity === 0;
+  // True if player has never harvested this species
+  const isNew       = !state.discovered.includes(species.id);
 
   function handleBuy() {
     const next = buyFromShop(state, slot.speciesId);
@@ -94,13 +96,24 @@ export function ShopSlotCard({ slot }: Props) {
   return (
     <div
       className={`
-        flex flex-col gap-3 bg-card/60 border rounded-xl p-4 transition-all duration-200
+        relative flex flex-col gap-3 bg-card/60 border rounded-xl p-4 transition-all duration-200
         ${outOfStock
           ? "border-border opacity-50"
+          : isNew
+          ? `border-primary/50 hover:border-primary ${rarity.glow}`
           : `border-border hover:border-primary/40 ${rarity.glow}`
         }
       `}
     >
+      {/* Undiscovered badge */}
+      {isNew && !outOfStock && (
+        <div className="absolute -top-2 -right-2 z-10">
+          <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md">
+            ✦ NEW
+          </span>
+        </div>
+      )}
+
       <div className="flex items-start justify-between">
         <span className="text-4xl">{species.emoji.bloom}</span>
         <span
