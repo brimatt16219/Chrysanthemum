@@ -3,6 +3,7 @@ import { FERTILIZERS } from "../data/upgrades";
 import { useGame } from "../store/GameContext";
 import { buyFromShop, buyFertilizer } from "../store/gameStore";
 import type { ShopSlot } from "../store/gameStore";
+import type { Rarity } from "../data/flowers";
 
 interface Props {
   slot: ShopSlot;
@@ -19,6 +20,16 @@ function formatDuration(ms: number): string {
   if (minutes > 0 && seconds > 0) return `${minutes}m ${seconds}s`;
   if (minutes > 0)              return `${minutes}m`;
   return `${seconds}s`;
+}
+
+function rarityBadgeClass(rarity: Rarity): string {
+  switch (rarity) {
+    case "common":    return "bg-gray-500 text-white";
+    case "uncommon":  return "bg-green-500 text-white";
+    case "rare":      return "bg-blue-500 text-white";
+    case "legendary": return "bg-yellow-500 text-black";
+    case "mythic":    return "bg-pink-500 text-white";
+  }
 }
 
 export function ShopSlotCard({ slot }: Props) {
@@ -82,11 +93,10 @@ export function ShopSlotCard({ slot }: Props) {
   const species = getFlower(slot.speciesId);
   if (!species) return null;
 
-  const rarity      = RARITY_CONFIG[species.rarity];
-  const canAfford   = state.coins >= slot.price;
-  const outOfStock  = slot.quantity === 0;
-  // True if player has never harvested this species
-  const isNew       = !state.discovered.includes(species.id);
+  const rarity     = RARITY_CONFIG[species.rarity];
+  const canAfford  = state.coins >= slot.price;
+  const outOfStock = slot.quantity === 0;
+  const isNew      = !state.discovered.includes(species.id);
 
   function handleBuy() {
     const next = buyFromShop(state, slot.speciesId);
@@ -99,16 +109,14 @@ export function ShopSlotCard({ slot }: Props) {
         relative flex flex-col gap-3 bg-card/60 border rounded-xl p-4 transition-all duration-200
         ${outOfStock
           ? "border-border opacity-50"
-          : isNew
-          ? `border-primary/50 hover:border-primary ${rarity.glow}`
           : `border-border hover:border-primary/40 ${rarity.glow}`
         }
       `}
     >
-      {/* Undiscovered badge */}
+      {/* Undiscovered badge — solid rarity color, no transparency */}
       {isNew && !outOfStock && (
-        <div className="absolute -top-2 -right-2 z-10">
-          <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md">
+        <div className="absolute -top-3 -right-2 z-10">
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md ${rarityBadgeClass(species.rarity)}`}>
             ✦ NEW
           </span>
         </div>
