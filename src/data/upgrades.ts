@@ -27,7 +27,7 @@ export const getCurrentTier = (rows: number, cols: number): FarmUpgrade =>
 // ── Shop slot upgrades ─────────────────────────────────────────────────────
 
 export const DEFAULT_SHOP_SLOTS = 4;
-export const MAX_SHOP_SLOTS     = 10;
+export const MAX_SHOP_SLOTS     = 12;
 
 export interface ShopSlotUpgrade {
   slots: number; // total slots after this upgrade
@@ -41,6 +41,8 @@ export const SHOP_SLOT_UPGRADES: ShopSlotUpgrade[] = [
   { slots: 8,  cost: 20_000  },
   { slots: 9,  cost: 50_000  },
   { slots: 10, cost: 100_000 },
+  { slots: 11, cost: 250_000 },
+  { slots: 12, cost: 500_000 },
 ];
 
 export const getNextShopSlotUpgrade = (currentSlots: number): ShopSlotUpgrade | null =>
