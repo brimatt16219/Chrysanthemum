@@ -23,6 +23,7 @@ export function Shop() {
 
   const flowerSlots     = state.shop.filter((s) => !s.isFertilizer);
   const fertilizerSlots = state.shop.filter((s) => s.isFertilizer);
+  const activeCount     = flowerSlots.filter((s) => !s.isEmpty).length;
 
   const nextSlotUpgrade = getNextShopSlotUpgrade(state.shopSlots);
   const canAffordSlot   = nextSlotUpgrade ? state.coins >= nextSlotUpgrade.cost : false;
@@ -64,7 +65,7 @@ export function Shop() {
       {flowerSlots.length > 0 && (
         <div className="flex flex-col gap-3">
           <h3 className="text-xs font-mono text-muted-foreground uppercase tracking-wide">
-            Seeds ({flowerSlots.length} available)
+            Seeds ({activeCount} available)
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {flowerSlots.map((slot) => (

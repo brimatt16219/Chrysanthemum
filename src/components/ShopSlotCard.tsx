@@ -30,11 +30,22 @@ function rarityBadgeClass(rarity: Rarity): string {
     case "rare":      return "bg-blue-500 text-white";
     case "legendary": return "bg-yellow-500 text-black";
     case "mythic":    return "bg-pink-500 text-white";
+    case "exalted":   return "bg-slate-700 text-slate-200";
   }
 }
 
 export function ShopSlotCard({ slot }: Props) {
   const { state, update } = useGame();
+
+  // ── Empty placeholder slot ───────────────────────────────────────────────
+  if (slot.isEmpty) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-2 bg-card/20 border border-dashed border-border/50 rounded-xl p-4 min-h-[160px] opacity-60">
+        <span className="text-2xl">🌱</span>
+        <p className="text-xs text-muted-foreground text-center">New slot — fills on next restock</p>
+      </div>
+    );
+  }
 
   // ── Fertilizer slot ──────────────────────────────────────────────────────
   if (slot.isFertilizer && slot.fertilizerType) {

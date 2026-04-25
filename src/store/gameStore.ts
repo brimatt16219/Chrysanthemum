@@ -34,6 +34,7 @@ export interface ShopSlot {
   quantity: number;
   isFertilizer?: boolean;
   fertilizerType?: FertilizerType;
+  isEmpty?: boolean;
 }
 
 export interface GameState {
@@ -603,11 +604,23 @@ export function upgradeShopSlots(state: GameState): GameState | null {
   if (!next) return null;
   if (state.coins < next.cost) return null;
 
-  // Keep the current shop as-is — the extra slot will fill on next restock
+  const newSlotCount = next.slots - state.shopSlots;
+  const emptySlots: ShopSlot[] = Array.from({ length: newSlotCount }, (_, i) => ({
+    speciesId: `empty_${Date.now()}_${i}`,
+    price:     0,
+    quantity:  0,
+    isEmpty:   true,
+  }));
+
+  // Insert empty placeholders after flower slots, before fertilizer slots
+  const flowerSlots = state.shop.filter((s) => !s.isFertilizer);
+  const fertSlots   = state.shop.filter((s) => s.isFertilizer);
+
   return {
     ...state,
     coins:     state.coins - next.cost,
     shopSlots: next.slots,
+    shop:      [...flowerSlots, ...emptySlots, ...fertSlots],
   };
 }
 
