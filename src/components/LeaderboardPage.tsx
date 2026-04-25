@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useGame } from "../store/GameContext";
 import {
   getLeaderboard,
@@ -7,12 +7,14 @@ import {
   type LeaderboardEntry,
 } from "../store/cloudSave";
 import { getFlower, RARITY_CONFIG } from "../data/flowers";
+import { getTotalCodexEntries } from "../store/gameStore";
 
 interface Props {
   onViewProfile: (username: string) => void;
 }
 
 type LeaderboardTab = "global" | "friends";
+type SortBy         = "coins" | "codex";
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -26,14 +28,16 @@ function timeAgo(dateStr: string): string {
 }
 
 const RANK_MEDALS: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" };
+const TOTAL_CODEX = getTotalCodexEntries();
 
 export function LeaderboardPage({ onViewProfile }: Props) {
   const { user, state } = useGame();
 
-  const [activeTab, setActiveTab]   = useState<LeaderboardTab>("global");
-  const [entries, setEntries]       = useState<LeaderboardEntry[]>([]);
-  const [myRank, setMyRank]         = useState<number | null>(null);
-  const [loading, setLoading]       = useState(true);
+  const [activeTab, setActiveTab]     = useState<LeaderboardTab>("global");
+  const [sortBy, setSortBy]           = useState<SortBy>("coins");
+  const [entries, setEntries]         = useState<LeaderboardEntry[]>([]);
+  const [myRank, setMyRank]           = useState<number | null>(null);
+  const [loading, setLoading]         = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
   const load = useCallback(async () => {
@@ -57,6 +61,18 @@ export function LeaderboardPage({ onViewProfile }: Props) {
 
   useEffect(() => { load(); }, [load]);
 
+  // Sort + re-rank client-side when switching sort mode
+  const sortedEntries = useMemo(() => {
+    if (sortBy === "coins") return entries; // already ranked by coins from DB
+    const sorted = [...entries].sort(
+      (a, b) => (b.discovered_count ?? 0) - (a.discovered_count ?? 0)
+    );
+    return sorted.map((e, i) => ({ ...e, rank: i + 1 }));
+  }, [entries, sortBy]);
+
+  const myEntry = sortedEntries.find((e) => e.id === user?.id);
+  const myCodexCount = state.discovered.length;
+
   return (
     <div className="flex flex-col gap-5">
 
@@ -77,50 +93,84 @@ export function LeaderboardPage({ onViewProfile }: Props) {
         </button>
       </div>
 
-      {/* Tab switcher */}
-      <div className="flex gap-2">
-        {(["global", "friends"] as LeaderboardTab[]).map((t) => (
+      {/* Tab + sort row */}
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        {/* Global / Friends tabs */}
+        <div className="flex gap-2">
+          {(["global", "friends"] as LeaderboardTab[]).map((t) => (
+            <button
+              key={t}
+              onClick={() => setActiveTab(t)}
+              className={`
+                px-4 py-2 rounded-xl text-xs font-semibold transition-all capitalize
+                ${activeTab === t
+                  ? "bg-primary/20 border border-primary/50 text-primary"
+                  : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
+                }
+              `}
+            >
+              {t === "global" ? "🌍 Global" : "👥 Friends"}
+            </button>
+          ))}
+        </div>
+
+        {/* Sort toggle */}
+        <div className="flex gap-1.5">
           <button
-            key={t}
-            onClick={() => setActiveTab(t)}
+            onClick={() => setSortBy("coins")}
             className={`
-              px-4 py-2 rounded-xl text-xs font-semibold transition-all capitalize
-              ${activeTab === t
+              px-3 py-1.5 rounded-lg text-xs font-semibold transition-all
+              ${sortBy === "coins"
                 ? "bg-primary/20 border border-primary/50 text-primary"
                 : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
               }
             `}
           >
-            {t === "global" ? "🌍 Global" : "👥 Friends"}
+            🟡 Coins
           </button>
-        ))}
+          <button
+            onClick={() => setSortBy("codex")}
+            className={`
+              px-3 py-1.5 rounded-lg text-xs font-semibold transition-all
+              ${sortBy === "codex"
+                ? "bg-primary/20 border border-primary/50 text-primary"
+                : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
+              }
+            `}
+          >
+            📖 Codex
+          </button>
+        </div>
       </div>
 
       {/* Your rank banner */}
       {user && (
         <div className="flex items-center gap-3 bg-primary/10 border border-primary/30 rounded-xl px-4 py-3">
           <span className="text-2xl">
-            {myRank && myRank <= 3 ? RANK_MEDALS[myRank] : "🌸"}
+            {myEntry && myEntry.rank <= 3 ? RANK_MEDALS[myEntry.rank] : "🌸"}
           </span>
           <div className="flex-1">
             <p className="text-xs text-muted-foreground font-mono">Your rank</p>
             <p className="text-sm font-bold">
-              {myRank ? `#${myRank}` : "Unranked"}{" "}
+              {myEntry ? `#${myEntry.rank}` : myRank ? `#${myRank}` : "Unranked"}{" "}
               <span className="text-muted-foreground font-normal">
-                · {state.coins.toLocaleString()} 🟡
+                {sortBy === "coins"
+                  ? `· ${state.coins.toLocaleString()} 🟡`
+                  : `· ${myCodexCount}/${TOTAL_CODEX} 📖`
+                }
               </span>
             </p>
           </div>
-          {activeTab === "friends" && entries.length > 0 && (
+          {activeTab === "friends" && sortedEntries.length > 0 && (
             <p className="text-xs text-muted-foreground">
-              Among {entries.length} players
+              Among {sortedEntries.length} players
             </p>
           )}
         </div>
       )}
 
       {/* No friends message */}
-      {activeTab === "friends" && !loading && entries.length <= 1 && (
+      {activeTab === "friends" && !loading && sortedEntries.length <= 1 && (
         <div className="text-center py-12 space-y-2">
           <p className="text-4xl">👥</p>
           <p className="text-muted-foreground text-sm font-medium">No friends to compare yet</p>
@@ -141,13 +191,16 @@ export function LeaderboardPage({ onViewProfile }: Props) {
       )}
 
       {/* Leaderboard list */}
-      {!loading && entries.length > 0 && (
+      {!loading && sortedEntries.length > 0 && (
         <div className="flex flex-col gap-2">
-          {entries.map((entry) => {
-            const flower   = getFlower(entry.display_flower);
-            const rarity   = flower ? RARITY_CONFIG[flower.rarity] : null;
-            const isMe     = entry.id === user?.id;
-            const medal    = RANK_MEDALS[entry.rank];
+          {sortedEntries.map((entry) => {
+            const flower = getFlower(entry.display_flower);
+            const rarity = flower ? RARITY_CONFIG[flower.rarity] : null;
+            const isMe   = entry.id === user?.id;
+            const medal  = RANK_MEDALS[entry.rank];
+            const codexPct = TOTAL_CODEX > 0
+              ? Math.round(((entry.discovered_count ?? 0) / TOTAL_CODEX) * 100)
+              : 0;
 
             return (
               <button
@@ -194,16 +247,28 @@ export function LeaderboardPage({ onViewProfile }: Props) {
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Farm size {entry.farm_size}×{entry.farm_size} · {timeAgo(entry.updated_at)}
+                    {timeAgo(entry.updated_at)}
                   </p>
                 </div>
 
-                {/* Coins */}
+                {/* Stat — coins or codex depending on sort */}
                 <div className="text-right flex-shrink-0">
-                  <p className="text-sm font-mono font-semibold">
-                    {entry.coins.toLocaleString()}
-                  </p>
-                  <p className="text-xs text-muted-foreground">🟡</p>
+                  {sortBy === "coins" ? (
+                    <>
+                      <p className="text-sm font-mono font-semibold">
+                        {entry.coins.toLocaleString()}
+                      </p>
+                      <p className="text-xs text-muted-foreground">🟡</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm font-mono font-semibold">
+                        {entry.discovered_count ?? 0}
+                        <span className="text-muted-foreground font-normal text-xs">/{TOTAL_CODEX}</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">{codexPct}% 📖</p>
+                    </>
+                  )}
                 </div>
               </button>
             );
@@ -223,10 +288,10 @@ export function LeaderboardPage({ onViewProfile }: Props) {
         </div>
       )}
 
-      {/* Global footer note */}
-      {activeTab === "global" && !loading && entries.length > 0 && (
+      {/* Footer note */}
+      {activeTab === "global" && !loading && sortedEntries.length > 0 && (
         <p className="text-xs text-muted-foreground text-center pb-4">
-          Top {entries.length} players by coins · Updates on refresh
+          Top {sortedEntries.length} players by {sortBy === "coins" ? "coins" : "codex completion"} · Updates on refresh
         </p>
       )}
     </div>

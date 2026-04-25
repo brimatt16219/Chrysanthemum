@@ -387,6 +387,7 @@ export interface LeaderboardEntry {
   display_flower: string;
   coins: number;
   farm_size: number;
+  discovered_count: number;
   updated_at: string;
   rank: number;
 }
