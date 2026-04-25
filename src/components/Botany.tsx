@@ -223,7 +223,7 @@ function SelectionScreen({
         onClick={() => onConvert(selections)}
         disabled={!isFull}
         className={`
-          w-full py-3 rounded-full text-sm font-semibold border transition-all duration-200
+          w-full py-3 rounded-full text-sm font-semibold border transition-all duration-200 text-center
           ${isFull
             ? "border-primary text-primary hover:bg-primary/10 hover:scale-[1.02]"
             : "border-border text-muted-foreground opacity-50 cursor-not-allowed"

@@ -3,11 +3,11 @@ import type { Rarity } from "./flowers";
 // ── How many completed flowers of each rarity are required for a conversion ─
 // Edit these values to balance the system
 export const BOTANY_REQUIREMENTS: Partial<Record<Rarity, number>> = {
-  common:    8,
-  uncommon:  6,
-  rare:      4,
-  legendary: 3,
-  mythic:    2,
+  common:    5,
+  uncommon:  5,
+  rare:      5,
+  legendary: 5,
+  mythic:    5,
 };
 
 // Conversion chain — exalted is terminal (cannot be converted)
