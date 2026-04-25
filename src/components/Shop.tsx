@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useGame } from "../store/GameContext";
-import { msUntilShopReset } from "../store/gameStore";
+import { msUntilShopReset, upgradeShopSlots } from "../store/gameStore";
+import { getNextShopSlotUpgrade, MAX_SHOP_SLOTS } from "../data/upgrades";
 import { ShopSlotCard } from "./ShopSlotCard";
 
 function formatCountdown(ms: number): string {
@@ -12,7 +13,7 @@ function formatCountdown(ms: number): string {
 }
 
 export function Shop() {
-  const { state } = useGame();
+  const { state, update } = useGame();
   const [countdown, setCountdown] = useState(() => msUntilShopReset(state));
 
   useEffect(() => {
@@ -22,6 +23,16 @@ export function Shop() {
 
   const flowerSlots     = state.shop.filter((s) => !s.isFertilizer);
   const fertilizerSlots = state.shop.filter((s) => s.isFertilizer);
+  const activeCount     = flowerSlots.filter((s) => !s.isEmpty).length;
+
+  const nextSlotUpgrade = getNextShopSlotUpgrade(state.shopSlots);
+  const canAffordSlot   = nextSlotUpgrade ? state.coins >= nextSlotUpgrade.cost : false;
+  const atMaxSlots      = state.shopSlots >= MAX_SHOP_SLOTS;
+
+  function handleUpgradeShopSlots() {
+    const next = upgradeShopSlots(state);
+    if (next) update(next);
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -50,11 +61,11 @@ export function Shop() {
         </span>
       </div>
 
-      {/* Flower seeds — 1 col mobile, 2 col desktop */}
+      {/* Flower seeds */}
       {flowerSlots.length > 0 && (
         <div className="flex flex-col gap-3">
           <h3 className="text-xs font-mono text-muted-foreground uppercase tracking-wide">
-            Seeds ({flowerSlots.length} available)
+            Seeds ({activeCount} available)
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {flowerSlots.map((slot) => (
@@ -64,7 +75,7 @@ export function Shop() {
         </div>
       )}
 
-      {/* Fertilizers — always 1 col since there are only 2 */}
+      {/* Fertilizers */}
       {fertilizerSlots.length > 0 && (
         <div className="flex flex-col gap-3">
           <h3 className="text-xs font-mono text-muted-foreground uppercase tracking-wide">
@@ -77,6 +88,31 @@ export function Shop() {
           </div>
         </div>
       )}
+
+      {/* Shop slot upgrade */}
+      <div className="border border-border rounded-xl p-4 flex items-center justify-between gap-4">
+        <div>
+          <p className="text-sm font-semibold">Expand Shop</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {atMaxSlots
+              ? `Maximum size reached (${MAX_SHOP_SLOTS} slots)`
+              : `${state.shopSlots} seed slots — upgrade to ${nextSlotUpgrade!.slots}`}
+          </p>
+        </div>
+        {!atMaxSlots && (
+          <button
+            onClick={handleUpgradeShopSlots}
+            disabled={!canAffordSlot}
+            className={`shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all
+              ${canAffordSlot
+                ? "bg-primary text-primary-foreground hover:opacity-90"
+                : "bg-card border border-border text-muted-foreground cursor-not-allowed opacity-50"
+              }`}
+          >
+            🟡 {nextSlotUpgrade!.cost.toLocaleString()}
+          </button>
+        )}
+      </div>
 
       <p className="text-xs text-muted-foreground text-center pb-4">
         Shop stock is random every 10 minutes. Rarer flowers appear less often.

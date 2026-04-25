@@ -82,8 +82,8 @@ export function Codex({ discoveredOverride, compact = false }: Props) {
       </div>
 
       {/* Rarity breakdown */}
-      <div className="grid grid-cols-5 gap-2">
-        {(["common", "uncommon", "rare", "legendary", "mythic"] as Rarity[]).map((r) => {
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+        {(["common", "uncommon", "rare", "legendary", "mythic", "exalted"] as Rarity[]).map((r) => {
           const rarityFlowers = FLOWERS.filter((f) => f.rarity === r);
           const rarityTotal   = rarityFlowers.reduce((s, f) => s + 1 + f.possibleMutations.length, 0);
           const rarityFound   = rarityFlowers.reduce((s, f) => {
@@ -117,7 +117,7 @@ export function Codex({ discoveredOverride, compact = false }: Props) {
 
         {/* Rarity filter */}
         <div className="flex gap-1.5 flex-wrap">
-          {(["all", "common", "uncommon", "rare", "legendary", "mythic"] as FilterRarity[]).map((r) => (
+          {(["all", "common", "uncommon", "rare", "legendary", "mythic", "exalted"] as FilterRarity[]).map((r) => (
             <button
               key={r}
               onClick={() => setFilterRarity(r)}

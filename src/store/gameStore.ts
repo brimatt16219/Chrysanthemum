@@ -1,7 +1,8 @@
 import { FLOWERS, MUTATIONS, getFlower, type GrowthStage, type MutationType } from "../data/flowers";
-import { FERTILIZERS, getNextUpgrade, getCurrentTier, type FertilizerType } from "../data/upgrades";
+import { FERTILIZERS, getNextUpgrade, getNextShopSlotUpgrade, DEFAULT_SHOP_SLOTS, type FertilizerType } from "../data/upgrades";
 import type { WeatherType } from "../data/weather";
 import { WEATHER } from "../data/weather";
+import { BOTANY_REQUIREMENTS, NEXT_RARITY } from "../data/botany";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -34,11 +35,14 @@ export interface ShopSlot {
   quantity: number;
   isFertilizer?: boolean;
   fertilizerType?: FertilizerType;
+  isEmpty?: boolean;
 }
 
 export interface GameState {
   coins: number;
-  farmSize: number;
+  farmSize: number; // column count (max 6)
+  farmRows: number; // row count (equals farmSize for square grids, can exceed for 7×6+)
+  shopSlots: number;
   grid: Plot[][];
   inventory: InventoryItem[];
   fertilizers: FertilizerItem[];
@@ -63,18 +67,18 @@ const SHOP_RESET_INTERVAL = 5 * 60 * 1_000; // 5 minutes
 
 // ── Grid helpers ───────────────────────────────────────────────────────────
 
-export function makeGrid(size: number): Plot[][] {
-  return Array.from({ length: size }, (_, row) =>
-    Array.from({ length: size }, (_, col) => ({
+export function makeGrid(rows: number, cols: number): Plot[][] {
+  return Array.from({ length: rows }, (_, row) =>
+    Array.from({ length: cols }, (_, col) => ({
       id: `${row}-${col}`,
       plant: null,
     }))
   );
 }
 
-export function resizeGrid(old: Plot[][], newSize: number): Plot[][] {
-  return Array.from({ length: newSize }, (_, row) =>
-    Array.from({ length: newSize }, (_, col) => {
+export function resizeGrid(old: Plot[][], newRows: number, newCols: number): Plot[][] {
+  return Array.from({ length: newRows }, (_, row) =>
+    Array.from({ length: newCols }, (_, col) => {
       const existing = old[row]?.[col];
       return existing ?? { id: `${row}-${col}`, plant: null };
     })
@@ -117,9 +121,8 @@ export function getSpeciesCompletion(discovered: string[], speciesId: string): {
 
 // ── Shop helpers ───────────────────────────────────────────────────────────
 
-function generateShop(farmSize: number = 3): ShopSlot[] {
-  const tier        = getCurrentTier(farmSize);
-  const flowerSlots = tier.shopSlots;
+function generateShop(shopSlots: number = DEFAULT_SHOP_SLOTS): ShopSlot[] {
+  const flowerSlots = shopSlots;
 
   const chosen: ShopSlot[] = [];
   const usedIds = new Set<string>();
@@ -193,10 +196,12 @@ export function defaultState(): GameState {
   return {
     coins:         100,
     farmSize:      size,
-    grid:          makeGrid(size),
+    farmRows:      size,
+    shopSlots:     DEFAULT_SHOP_SLOTS,
+    grid:          makeGrid(size, size),
     inventory:     [],
     fertilizers:   [{ type: "basic", quantity: 3 }],
-    shop:          generateShop(size),
+    shop:          generateShop(DEFAULT_SHOP_SLOTS),
     lastShopReset: Date.now(),
     lastSaved:     Date.now(),
     discovered:    [],
@@ -242,23 +247,27 @@ export function applyOfflineTick(save: GameState): { state: GameState; summary: 
   const now         = Date.now();
   const minutesAway = Math.floor((now - save.lastSaved) / 60_000);
 
-  const expectedSize = save.farmSize ?? 3;
+  const expectedCols = save.farmSize ?? 3;
+  const expectedRows = save.farmRows ?? expectedCols; // backfill: square for old saves
   const needsRebuild =
     !save.grid ||
     save.grid.length === 0 ||
-    save.grid.length !== expectedSize;
+    save.grid.length    !== expectedRows ||
+    save.grid[0]?.length !== expectedCols;
 
   let updated: GameState = {
     ...save,
-    grid:       needsRebuild ? makeGrid(expectedSize) : save.grid,
+    farmRows:   expectedRows,
+    grid:       needsRebuild ? makeGrid(expectedRows, expectedCols) : save.grid,
     discovered: save.discovered ?? [],
+    shopSlots:  save.shopSlots  ?? DEFAULT_SHOP_SLOTS,
   };
 
   let shopRestocked    = false;
   const timeSinceReset = now - updated.lastShopReset;
 
   if (timeSinceReset >= SHOP_RESET_INTERVAL) {
-    updated       = { ...updated, shop: generateShop(updated.farmSize), lastShopReset: now };
+    updated       = { ...updated, shop: generateShop(updated.shopSlots), lastShopReset: now };
     shopRestocked = true;
   }
 
@@ -279,7 +288,7 @@ export function tickShop(state: GameState): GameState {
   if (now - state.lastShopReset < SHOP_RESET_INTERVAL) return state;
   return {
     ...state,
-    shop:          generateShop(state.farmSize),
+    shop:          generateShop(state.shopSlots),
     lastShopReset: now,
   };
 }
@@ -596,18 +605,123 @@ export function applyFertilizer(
   return { ...state, grid: newGrid, fertilizers: newFertilizers };
 }
 
-export function upgradeFarm(state: GameState): GameState | null {
-  const next = getNextUpgrade(state.farmSize);
+export function upgradeShopSlots(state: GameState): GameState | null {
+  const next = getNextShopSlotUpgrade(state.shopSlots);
   if (!next) return null;
   if (state.coins < next.cost) return null;
 
-  const newSize = next.size;
+  const newSlotCount = next.slots - state.shopSlots;
+  const emptySlots: ShopSlot[] = Array.from({ length: newSlotCount }, (_, i) => ({
+    speciesId: `empty_${Date.now()}_${i}`,
+    price:     0,
+    quantity:  0,
+    isEmpty:   true,
+  }));
+
+  // Insert empty placeholders after flower slots, before fertilizer slots
+  const flowerSlots = state.shop.filter((s) => !s.isFertilizer);
+  const fertSlots   = state.shop.filter((s) => s.isFertilizer);
+
+  return {
+    ...state,
+    coins:     state.coins - next.cost,
+    shopSlots: next.slots,
+    shop:      [...flowerSlots, ...emptySlots, ...fertSlots],
+  };
+}
+
+export function botanyConvert(
+  state: GameState,
+  selections: { speciesId: string; mutation?: MutationType }[]
+): { state: GameState; outputSpeciesId: string } | null {
+  if (selections.length === 0) return null;
+
+  // Validate all selections share the same rarity
+  const firstSpecies = getFlower(selections[0].speciesId);
+  if (!firstSpecies) return null;
+  const rarity = firstSpecies.rarity;
+
+  const required = BOTANY_REQUIREMENTS[rarity];
+  if (!required) return null;
+  if (selections.length !== required) return null;
+
+  if (!selections.every((s) => getFlower(s.speciesId)?.rarity === rarity)) return null;
+
+  // Validate inventory quantities
+  const consumeCounts = new Map<string, number>();
+  for (const sel of selections) {
+    const key = `${sel.speciesId}||${sel.mutation ?? ""}`;
+    consumeCounts.set(key, (consumeCounts.get(key) ?? 0) + 1);
+  }
+
+  for (const [key, count] of consumeCounts) {
+    const [speciesId, mutStr] = key.split("||");
+    const mutation = mutStr ? (mutStr as MutationType) : undefined;
+    const invItem = state.inventory.find(
+      (i) => i.speciesId === speciesId && i.mutation === mutation && !i.isSeed
+    );
+    if (!invItem || invItem.quantity < count) return null;
+  }
+
+  // Determine output rarity
+  const nextRarity = NEXT_RARITY[rarity];
+  if (!nextRarity) return null;
+
+  // Pick output species — prefer ones not yet in codex, then random
+  const nextRarityFlowers = FLOWERS.filter((f) => f.rarity === nextRarity);
+  if (nextRarityFlowers.length === 0) return null;
+
+  const undiscovered = nextRarityFlowers.filter(
+    (f) => !isDiscovered(state.discovered, f.id)
+  );
+  const pool = undiscovered.length > 0 ? undiscovered : nextRarityFlowers;
+  const outputSpecies = pool[Math.floor(Math.random() * pool.length)];
+
+  // Remove consumed flowers
+  let newInventory = [...state.inventory];
+  for (const [key, count] of consumeCounts) {
+    const [speciesId, mutStr] = key.split("||");
+    const mutation = mutStr ? (mutStr as MutationType) : undefined;
+    newInventory = newInventory
+      .map((i) =>
+        i.speciesId === speciesId && i.mutation === mutation && !i.isSeed
+          ? { ...i, quantity: i.quantity - count }
+          : i
+      )
+      .filter((i) => i.quantity > 0);
+  }
+
+  // Add output seed
+  const existingSeed = newInventory.find(
+    (i) => i.speciesId === outputSpecies.id && i.isSeed
+  );
+  if (existingSeed) {
+    newInventory = newInventory.map((i) =>
+      i.speciesId === outputSpecies.id && i.isSeed
+        ? { ...i, quantity: i.quantity + 1 }
+        : i
+    );
+  } else {
+    newInventory.push({ speciesId: outputSpecies.id, quantity: 1, isSeed: true });
+  }
+
+  return {
+    state: { ...state, inventory: newInventory },
+    outputSpeciesId: outputSpecies.id,
+  };
+}
+
+export function upgradeFarm(state: GameState): GameState | null {
+  const next = getNextUpgrade(state.farmRows, state.farmSize);
+  if (!next) return null;
+  if (state.coins < next.cost) return null;
 
   return {
     ...state,
     coins:    state.coins - next.cost,
-    farmSize: newSize,
-    grid:     resizeGrid(state.grid, newSize),
-    shop:     generateShop(newSize),
+    farmSize: next.cols,
+    farmRows: next.rows,
+    grid:     resizeGrid(state.grid, next.rows, next.cols),
+    shop:     generateShop(state.shopSlots),
   };
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Garden } from "./components/Garden";
 import { Shop } from "./components/Shop";
 import { Inventory } from "./components/Inventory";
@@ -14,6 +14,7 @@ import { LeaderboardPage } from "./components/LeaderboardPage";
 import { FriendRequestNotification } from "./components/FriendRequestNotification";
 import { GiftNotification } from "./components/GiftNotification";
 import { Codex } from "./components/Codex";
+import { Botany } from "./components/Botany";
 import { WeatherOverlay } from "./components/WeatherOverlay";
 import { WeatherBanner } from "./components/WeatherBanner";
 import { DayNightOverlay } from "./components/DayNightOverlay";
@@ -21,22 +22,14 @@ import { useGame } from "./store/GameContext";
 import { useFriendRequests } from "./hooks/useFriendRequests";
 import { useGiftNotifications } from "./hooks/useGiftNotifications";
 import { useDayNight } from "./hooks/useDayNight";
-import { msUntilShopReset } from "./store/gameStore";
 import { getFlower } from "./data/flowers";
 import { useVersionCheck } from "./hooks/useVersionCheck";
 import { UpdateBanner } from "./components/UpdateBanner";
 import { CHANGELOGS, LATEST_CHANGELOG_VERSION, type ChangelogEntry } from "./data/changelog";
 
-type Tab = "garden" | "shop" | "inventory" | "social" | "codex";
+type Tab = "garden" | "shop" | "inventory" | "social" | "codex" | "botany";
 type SocialView = "search" | "friends" | "gifts" | "leaderboard";
 
-function formatCountdown(ms: number): string {
-  const totalSec = Math.max(0, Math.floor(ms / 1000));
-  const h = Math.floor(totalSec / 3600);
-  const m = Math.floor((totalSec % 3600) / 60).toString().padStart(2, "0");
-  const s = (totalSec % 60).toString().padStart(2, "0");
-  return h > 0 ? `${h}:${m}:${s}` : `${m}:${s}`;
-}
 
 export default function App() {
   const {
@@ -54,7 +47,6 @@ export default function App() {
 
   const [tab, setTab]               = useState<Tab>("garden");
   const [socialView, setSocialView] = useState<SocialView>("search");
-  const [countdown, setCountdown]   = useState(() => msUntilShopReset(state));
   const [showBanner, setShowBanner] = useState(true);
 
   const [profileUsername, setProfileUsername]     = useState<string | null>(null);
@@ -72,10 +64,6 @@ export default function App() {
   // Day/night cycle — client-side, based on local time
   const dayPeriod = useDayNight();
 
-  useEffect(() => {
-    const id = setInterval(() => setCountdown(msUntilShopReset(state)), 1_000);
-    return () => clearInterval(id);
-  }, [state.lastShopReset]);
 
   const inventoryCount = state.inventory.reduce((s, i) => s + i.quantity, 0);
 
@@ -179,9 +167,6 @@ export default function App() {
               period={dayPeriod}
             />
             <span className="text-sm font-mono">🟡 {state.coins.toLocaleString()}</span>
-            <span className="text-xs text-muted-foreground font-mono hidden sm:block">
-              Shop {formatCountdown(countdown)}
-            </span>
             {!authLoading && (
               user ? (
                 <div className="flex items-center gap-2">
@@ -217,7 +202,7 @@ export default function App() {
       {/* Tabs */}
       <nav className="bg-card/40 border-b border-border">
         <div className="w-full sm:max-w-2xl sm:mx-auto flex">
-          {(["garden", "shop", "inventory", "codex", "social"] as Tab[]).map((t) => (
+          {(["garden", "shop", "inventory", "botany", "codex", "social"] as Tab[]).map((t) => (
             <button
               key={t}
               onClick={() => handleTabChange(t)}
@@ -233,6 +218,7 @@ export default function App() {
               {t === "garden"      ? "🌱"
                : t === "shop"      ? "🛒"
                : t === "inventory" ? "🎒"
+               : t === "botany"    ? "🌿"
                : t === "codex"     ? "📖"
                : "🌍"}
               <span className="ml-1 hidden sm:inline capitalize">{t}</span>
@@ -264,6 +250,7 @@ export default function App() {
             {tab === "garden"    && <Garden />}
             {tab === "shop"      && <Shop />}
             {tab === "inventory" && <Inventory />}
+            {tab === "botany"    && <Botany />}
             {tab === "codex"     && <Codex />}
             {tab === "social"    && (
               user ? (

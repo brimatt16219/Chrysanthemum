@@ -1,3 +1,20 @@
+## [v1.2.0] — 2026-04-25 — The Botany Update
+
+### Added
+- **Botany Lab** — convert harvested blooms into a seed of the next rarity; undiscovered species are prioritised so botany helps complete the codex
+- **Exalted rarity** — 7 new flowers obtainable only through Botany (Umbral Bloom, Obsidian Rose, Graveweb, Nightwing, Voidfire, Duskmantle, Ashenveil)
+- **Purchasable shop slots** — buy up to 12 flower slots independently of farm size; empty placeholder slot appears immediately on purchase
+- **Rectangular farm expansion** — farm can now grow beyond 6×6 up to 9×6 via three new upgrade tiers (Sprawling Estate, Manor Garden, Grand Manor)
+- **20 new flowers** across all rarities — 6 common, 6 uncommon, 4 rare, 3 legendary, 2 mythic
+- **Exalted** added to Floral Codex with its own filter and breakdown column
+- **Codex sort on leaderboard** — toggle between ranking by coins or codex completion percentage
+
+### Changed
+- Shop countdown timer removed from HUD
+- Leaderboard entry now shows the active sort stat (coins or codex) per row
+
+---
+
 ## [v1.1.2] — 2026-04-25 — Weather Reliability
 
 ### Fixed
