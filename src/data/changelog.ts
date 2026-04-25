@@ -14,6 +14,17 @@ export interface ChangelogEntry {
 // Most recent version first — update this with every release
 export const CHANGELOGS: ChangelogEntry[] = [
   {
+    version: "1.2.1",
+    title:   "Bug Fixes & Balancing",
+    items: [
+      { type: "fixed",   text: "Progress no longer lost on page refresh — save recovered automatically if cloud write was in-flight" },
+      { type: "fixed",   text: "Signing in after a guest session no longer overwrites your cloud progress" },
+      { type: "fixed",   text: "Two devices on the same account now load the most recent save correctly" },
+      { type: "fixed",   text: "Removed stray flower previews from Botany Lab tier cards" },
+      { type: "changed", text: "Farm upgrade costs rebalanced" },
+    ],
+  },
+  {
     version: "1.2.0",
     title:   "The Botany Update",
     items: [

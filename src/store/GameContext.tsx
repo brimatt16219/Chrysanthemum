@@ -33,8 +33,6 @@ interface GameContextValue {
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
-  pendingMigration: { localSave: GameState; cloudSave: GameState } | null;
-  resolveMigration: (choice: "local" | "cloud") => Promise<void>;
   needsUsername: boolean;
   completeUsername: (username: string) => void;
   // Weather
@@ -59,10 +57,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile]                   = useState<CloudProfile | null>(null);
   const [authLoading, setAuthLoading]           = useState(true);
   const [needsUsername, setNeedsUsername]       = useState(false);
-  const [pendingMigration, setPendingMigration] = useState<{
-    localSave: GameState;
-    cloudSave: GameState;
-  } | null>(null);
 
   const saveEnabled         = useRef(false);
   const isLoading           = useRef(false);
@@ -116,25 +110,33 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
       const cloudSave = await loadCloudSave(u.id);
       const localRaw  = localStorage.getItem("chrysanthemum_save");
-      const localSave = localRaw ? (JSON.parse(localRaw) as GameState) : null;
+      const localParsed = localRaw ? (JSON.parse(localRaw) as GameState & { _userId?: string }) : null;
 
-      localStorage.removeItem("chrysanthemum_save");
+      // Only treat local as a backup if it was written by THIS signed-in user.
+      // A guest session has no _userId tag and must never override cloud progress.
+      const localSave = localParsed?._userId === u.id ? localParsed : null;
+
+      // Pick the newer save — local is kept as a rolling backup so a refresh
+      // or mid-flight cloud save never loses this user's progress.
+      let saveToUse: GameState;
+      let needsCloudSync = false;
 
       if (!cloudSave) {
-        const saveToUse = localSave ?? defaultState();
-        const { state: ticked, summary } = applyOfflineTick(saveToUse);
-        setState(ticked);
-        setOfflineSummary(summary);
-        await saveToCloud(u.id, ticked);
-      } else if (localSave && localSave.lastSaved > cloudSave.lastSaved + 300_000) {
-        setPendingMigration({ localSave, cloudSave });
-        isLoading.current = false;
-        setAuthLoading(false);
-        return;
+        saveToUse      = localSave ?? defaultState();
+        needsCloudSync = true;
+      } else if (localSave && localSave.lastSaved > cloudSave.lastSaved) {
+        saveToUse      = localSave;
+        needsCloudSync = true;
       } else {
-        const { state: ticked, summary } = applyOfflineTick(cloudSave);
-        setState(ticked);
-        setOfflineSummary(summary);
+        saveToUse = cloudSave;
+      }
+
+      const { state: ticked, summary } = applyOfflineTick(saveToUse);
+      setState(ticked);
+      setOfflineSummary(summary);
+
+      if (needsCloudSync) {
+        await saveToCloud(u.id, ticked);
       }
 
       setTimeout(() => { saveEnabled.current = true; }, 1_000);
@@ -179,7 +181,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           setUser(null);
           setProfile(null);
           setNeedsUsername(false);
-          setPendingMigration(null);
           localStorage.removeItem("chrysanthemum_save");
           setState(defaultState());
           setOfflineSummary(EMPTY_SUMMARY);
@@ -210,8 +211,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ── Auto-save ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!saveEnabled.current) return;
-    if (user && !pendingMigration && !needsUsername) {
+    if (user && !needsUsername) {
       saveToCloud(user.id, state);
+      // localStorage shadow tagged with userId — only recovered on next load
+      // if the same user is signing back in, preventing guest sessions from
+      // overriding cloud progress.
+      try {
+        localStorage.setItem(
+          "chrysanthemum_save",
+          JSON.stringify({ ...state, lastSaved: Date.now(), _userId: user.id })
+        );
+      } catch { /* storage full or unavailable */ }
     } else if (!user) {
       saveGame(state);
     }
@@ -241,20 +251,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
     const p = await getProfile(user.id);
     if (p) setProfile(p);
-  }
-
-  async function resolveMigration(choice: "local" | "cloud") {
-    if (!pendingMigration || !user) return;
-    localStorage.removeItem("chrysanthemum_save");
-    const saveToUse = choice === "local"
-      ? pendingMigration.localSave
-      : pendingMigration.cloudSave;
-    const { state: ticked, summary } = applyOfflineTick(saveToUse);
-    setState(ticked);
-    setOfflineSummary(summary);
-    await saveToCloud(user.id, ticked);
-    setPendingMigration(null);
-    setTimeout(() => { saveEnabled.current = true; }, 500);
   }
 
   function completeUsername(_username: string) {
@@ -292,7 +288,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       user, profile, authLoading,
       signInWithGoogle, signOut,
       refreshProfile,
-      pendingMigration, resolveMigration,
       needsUsername, completeUsername,
       activeWeather,
       weatherMsLeft,
