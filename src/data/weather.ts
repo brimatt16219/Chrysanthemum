@@ -47,7 +47,7 @@ export const WEATHER: Record<WeatherType, WeatherDefinition> = {
     name:            "Clear Skies",
     emoji:           "☀️",
     description:     "A beautiful day. No special effects.",
-    durationMs:      15 * 60_000,  // 15 minutes
+    durationMs:      15 * 60_000,   // 15 minutes
     chance:          40,           // Most common
     cooldownMs:      0,
     growthMultiplier: 1.0,
@@ -61,7 +61,7 @@ export const WEATHER: Record<WeatherType, WeatherDefinition> = {
     name:            "Rain",
     emoji:           "🌧️",
     description:     "Plants grow 2× faster while it rains.",
-    durationMs:      24 * 60_000,
+    durationMs:      20 * 60_000,   // 20 minutes
     chance:          20,
     cooldownMs:      30 * 60_000,
     growthMultiplier: 2.0,
@@ -77,7 +77,7 @@ export const WEATHER: Record<WeatherType, WeatherDefinition> = {
     name:            "Golden Hour",
     emoji:           "✨",
     description:     "Golden mutations are twice as likely on harvest.",
-    durationMs:      18 * 60_000,
+    durationMs:      15 * 60_000,   // 15 minutes
     chance:          10,
     cooldownMs:      45 * 60_000,
     growthMultiplier: 1.0,
@@ -94,7 +94,7 @@ export const WEATHER: Record<WeatherType, WeatherDefinition> = {
     name:            "Prismatic Skies",
     emoji:           "🌈",
     description:     "Rainbow mutations are twice as likely on harvest.",
-    durationMs:      18 * 60_000,
+    durationMs:      15 * 60_000,   // 15 minutes
     chance:          10,
     cooldownMs:      45 * 60_000,
     growthMultiplier: 1.0,
@@ -111,7 +111,7 @@ export const WEATHER: Record<WeatherType, WeatherDefinition> = {
     name:            "Star Shower",
     emoji:           "🌙",
     description:     "Moonlit mutations are twice as likely on harvest.",
-    durationMs:      21 * 60_000,
+    durationMs:      17.5 * 60_000, // 17.5 minutes
     chance:          10,
     cooldownMs:      45 * 60_000,
     growthMultiplier: 1.0,
@@ -128,7 +128,7 @@ export const WEATHER: Record<WeatherType, WeatherDefinition> = {
     name:            "Cold Front",
     emoji:           "❄️",
     description:     "Frozen mutations are twice as likely on harvest.",
-    durationMs:      18 * 60_000,
+    durationMs:      15 * 60_000,   // 15 minutes
     chance:          10,
     cooldownMs:      45 * 60_000,
     growthMultiplier: 1.0,
@@ -145,7 +145,7 @@ export const WEATHER: Record<WeatherType, WeatherDefinition> = {
     name:            "Heatwave",
     emoji:           "🔥",
     description:     "Scorched mutations are twice as likely on harvest.",
-    durationMs:      18 * 60_000,
+    durationMs:      15 * 60_000,   // 15 minutes
     chance:          10,
     cooldownMs:      45 * 60_000,
     growthMultiplier: 1.0,

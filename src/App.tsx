@@ -25,6 +25,7 @@ import { msUntilShopReset } from "./store/gameStore";
 import { getFlower } from "./data/flowers";
 import { useVersionCheck } from "./hooks/useVersionCheck";
 import { UpdateBanner } from "./components/UpdateBanner";
+import { CHANGELOGS, LATEST_CHANGELOG_VERSION, type ChangelogEntry } from "./data/changelog";
 
 type Tab = "garden" | "shop" | "inventory" | "social" | "codex";
 type SocialView = "search" | "friends" | "gifts" | "leaderboard";
@@ -63,6 +64,11 @@ export default function App() {
   const updateAvailable  = useVersionCheck();
   const [dismissedUpdate, setDismissedUpdate] = useState(false);
 
+  const [changelogEntry, setChangelogEntry] = useState<ChangelogEntry | null>(() => {
+    const seen = localStorage.getItem("changelogSeenVersion");
+    return seen !== LATEST_CHANGELOG_VERSION ? CHANGELOGS[0] : null;
+  });
+
   // Day/night cycle — client-side, based on local time
   const dayPeriod = useDayNight();
 
@@ -97,7 +103,16 @@ export default function App() {
       {showBanner && (
         <OfflineBanner
           summary={offlineSummary}
-          onDismiss={() => { setShowBanner(false); clearSummary(); }}
+          changelog={changelogEntry}
+          username={profile?.username ?? null}
+          onDismiss={() => {
+            setShowBanner(false);
+            clearSummary();
+            if (changelogEntry) {
+              localStorage.setItem("changelogSeenVersion", LATEST_CHANGELOG_VERSION);
+              setChangelogEntry(null);
+            }
+          }}
         />
       )}
       {shopJustRestocked && (

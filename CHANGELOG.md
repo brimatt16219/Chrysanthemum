@@ -1,4 +1,4 @@
-## [v1.1.1] — 2026-04-25 — Weather Tick Fix
+## [v1.1.2] — 2026-04-25 — Weather Tick Fix
 
 ### Fixed
 - Weather cron changed from every 5 minutes to every 15 minutes to improve reliability

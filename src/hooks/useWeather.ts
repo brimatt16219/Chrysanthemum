@@ -32,6 +32,16 @@ export function useWeather() {
             startedAt: data.started_at,
             endsAt:    data.ends_at,
           });
+
+          // Client-side fallback: if weather has already expired, advance it
+          // immediately rather than waiting for the next GitHub Actions tick.
+          // advance_weather() is idempotent — it returns early if weather is
+          // still active, so it's safe to call on every page load.
+          if (data.ends_at < Date.now()) {
+            supabase.rpc("advance_weather").then(() => {
+              // Realtime subscription will automatically pick up the new weather
+            });
+          }
         }
       });
 
