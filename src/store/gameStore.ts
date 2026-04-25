@@ -1,5 +1,5 @@
 import { FLOWERS, MUTATIONS, getFlower, type GrowthStage, type MutationType } from "../data/flowers";
-import { FERTILIZERS, getNextUpgrade, getCurrentTier, getNextShopSlotUpgrade, DEFAULT_SHOP_SLOTS, type FertilizerType } from "../data/upgrades";
+import { FERTILIZERS, getNextUpgrade, getNextShopSlotUpgrade, DEFAULT_SHOP_SLOTS, type FertilizerType } from "../data/upgrades";
 import type { WeatherType } from "../data/weather";
 import { WEATHER } from "../data/weather";
 import { BOTANY_REQUIREMENTS, NEXT_RARITY } from "../data/botany";

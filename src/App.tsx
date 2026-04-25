@@ -30,13 +30,6 @@ import { CHANGELOGS, LATEST_CHANGELOG_VERSION, type ChangelogEntry } from "./dat
 type Tab = "garden" | "shop" | "inventory" | "social" | "codex" | "botany";
 type SocialView = "search" | "friends" | "gifts" | "leaderboard";
 
-function formatCountdown(ms: number): string {
-  const totalSec = Math.max(0, Math.floor(ms / 1000));
-  const h = Math.floor(totalSec / 3600);
-  const m = Math.floor((totalSec % 3600) / 60).toString().padStart(2, "0");
-  const s = (totalSec % 60).toString().padStart(2, "0");
-  return h > 0 ? `${h}:${m}:${s}` : `${m}:${s}`;
-}
 
 export default function App() {
   const {

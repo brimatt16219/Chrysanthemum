@@ -72,27 +72,6 @@ function SelectionScreen({
     ).length;
   }
 
-  function handleToggle(speciesId: string, mutation?: MutationType) {
-    const already = countSelected(speciesId, mutation);
-    const invItem  = eligibleItems.find(
-      (i) => i.speciesId === speciesId && i.mutation === mutation
-    );
-    if (!invItem) return;
-
-    if (already > 0) {
-      // Remove one
-      const idx = selections.findIndex(
-        (s) => s.speciesId === speciesId && s.mutation === mutation
-      );
-      setSelections((prev) => prev.filter((_, i) => i !== idx));
-    } else {
-      // Add one, if not full yet and we have inventory
-      if (selections.length >= required) return;
-      if (already >= invItem.quantity) return;
-      setSelections((prev) => [...prev, { speciesId, mutation }]);
-    }
-  }
-
   function handleAddMore(speciesId: string, mutation?: MutationType) {
     const already = countSelected(speciesId, mutation);
     const invItem  = eligibleItems.find(
@@ -105,9 +84,13 @@ function SelectionScreen({
   }
 
   function handleRemoveOne(speciesId: string, mutation?: MutationType) {
-    const idx = selections.findLastIndex(
-      (s) => s.speciesId === speciesId && s.mutation === mutation
-    );
+    let idx = -1;
+    for (let i = selections.length - 1; i >= 0; i--) {
+      if (selections[i].speciesId === speciesId && selections[i].mutation === mutation) {
+        idx = i;
+        break;
+      }
+    }
     if (idx < 0) return;
     setSelections((prev) => prev.filter((_, i) => i !== idx));
   }
