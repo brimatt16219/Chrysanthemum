@@ -1,5 +1,5 @@
 import { FLOWERS, MUTATIONS, getFlower, type GrowthStage, type MutationType } from "../data/flowers";
-import { FERTILIZERS, getNextUpgrade, getCurrentTier, type FertilizerType } from "../data/upgrades";
+import { FERTILIZERS, getNextUpgrade, getNextShopSlotUpgrade, DEFAULT_SHOP_SLOTS, type FertilizerType } from "../data/upgrades";
 import type { WeatherType } from "../data/weather";
 import { WEATHER } from "../data/weather";
 
@@ -39,6 +39,7 @@ export interface ShopSlot {
 export interface GameState {
   coins: number;
   farmSize: number;
+  shopSlots: number;
   grid: Plot[][];
   inventory: InventoryItem[];
   fertilizers: FertilizerItem[];
@@ -117,9 +118,8 @@ export function getSpeciesCompletion(discovered: string[], speciesId: string): {
 
 // ── Shop helpers ───────────────────────────────────────────────────────────
 
-function generateShop(farmSize: number = 3): ShopSlot[] {
-  const tier        = getCurrentTier(farmSize);
-  const flowerSlots = tier.shopSlots;
+function generateShop(shopSlots: number = DEFAULT_SHOP_SLOTS): ShopSlot[] {
+  const flowerSlots = shopSlots;
 
   const chosen: ShopSlot[] = [];
   const usedIds = new Set<string>();
@@ -193,10 +193,11 @@ export function defaultState(): GameState {
   return {
     coins:         100,
     farmSize:      size,
+    shopSlots:     DEFAULT_SHOP_SLOTS,
     grid:          makeGrid(size),
     inventory:     [],
     fertilizers:   [{ type: "basic", quantity: 3 }],
-    shop:          generateShop(size),
+    shop:          generateShop(DEFAULT_SHOP_SLOTS),
     lastShopReset: Date.now(),
     lastSaved:     Date.now(),
     discovered:    [],
@@ -252,13 +253,14 @@ export function applyOfflineTick(save: GameState): { state: GameState; summary: 
     ...save,
     grid:       needsRebuild ? makeGrid(expectedSize) : save.grid,
     discovered: save.discovered ?? [],
+    shopSlots:  save.shopSlots  ?? DEFAULT_SHOP_SLOTS,
   };
 
   let shopRestocked    = false;
   const timeSinceReset = now - updated.lastShopReset;
 
   if (timeSinceReset >= SHOP_RESET_INTERVAL) {
-    updated       = { ...updated, shop: generateShop(updated.farmSize), lastShopReset: now };
+    updated       = { ...updated, shop: generateShop(updated.shopSlots), lastShopReset: now };
     shopRestocked = true;
   }
 
@@ -279,7 +281,7 @@ export function tickShop(state: GameState): GameState {
   if (now - state.lastShopReset < SHOP_RESET_INTERVAL) return state;
   return {
     ...state,
-    shop:          generateShop(state.farmSize),
+    shop:          generateShop(state.shopSlots),
     lastShopReset: now,
   };
 }
@@ -596,6 +598,19 @@ export function applyFertilizer(
   return { ...state, grid: newGrid, fertilizers: newFertilizers };
 }
 
+export function upgradeShopSlots(state: GameState): GameState | null {
+  const next = getNextShopSlotUpgrade(state.shopSlots);
+  if (!next) return null;
+  if (state.coins < next.cost) return null;
+
+  // Keep the current shop as-is — the extra slot will fill on next restock
+  return {
+    ...state,
+    coins:     state.coins - next.cost,
+    shopSlots: next.slots,
+  };
+}
+
 export function upgradeFarm(state: GameState): GameState | null {
   const next = getNextUpgrade(state.farmSize);
   if (!next) return null;
@@ -608,6 +623,6 @@ export function upgradeFarm(state: GameState): GameState | null {
     coins:    state.coins - next.cost,
     farmSize: newSize,
     grid:     resizeGrid(state.grid, newSize),
-    shop:     generateShop(newSize),
+    shop:     generateShop(state.shopSlots),
   };
 }

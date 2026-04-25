@@ -3,15 +3,14 @@ export interface FarmUpgrade {
   cost: number;
   label: string;
   description: string;
-  shopSlots: number; // number of flower slots in the shop at this tier
 }
 
 // ── ADD NEW TIERS HERE ─────────────────────────────────────────────────────
 export const FARM_UPGRADES: FarmUpgrade[] = [
-  { size: 3, cost: 0,       label: "Starter Plot",  description: "3×3 — where every garden begins.",      shopSlots: 4 },
-  { size: 4, cost: 1000,     label: "Small Farm",    description: "4×4 — room to experiment.",             shopSlots: 6 },
-  { size: 5, cost: 5_000,   label: "Garden",        description: "5×5 — a proper garden.",                shopSlots: 7 },
-  { size: 6, cost: 25_000,  label: "Grand Estate",  description: "6×6 — the pinnacle of horticulture.",   shopSlots: 8 },
+  { size: 3, cost: 0,       label: "Starter Plot",  description: "3×3 — where every garden begins."    },
+  { size: 4, cost: 1_000,   label: "Small Farm",    description: "4×4 — room to experiment."           },
+  { size: 5, cost: 5_000,   label: "Garden",        description: "5×5 — a proper garden."              },
+  { size: 6, cost: 25_000,  label: "Grand Estate",  description: "6×6 — the pinnacle of horticulture." },
 ];
 // ──────────────────────────────────────────────────────────────────────────
 
@@ -20,6 +19,28 @@ export const getNextUpgrade = (currentSize: number): FarmUpgrade | null =>
 
 export const getCurrentTier = (currentSize: number): FarmUpgrade =>
   [...FARM_UPGRADES].reverse().find((u) => u.size <= currentSize) ?? FARM_UPGRADES[0];
+
+// ── Shop slot upgrades ─────────────────────────────────────────────────────
+
+export const DEFAULT_SHOP_SLOTS = 4;
+export const MAX_SHOP_SLOTS     = 10;
+
+export interface ShopSlotUpgrade {
+  slots: number; // total slots after this upgrade
+  cost:  number;
+}
+
+export const SHOP_SLOT_UPGRADES: ShopSlotUpgrade[] = [
+  { slots: 5,  cost: 500     },
+  { slots: 6,  cost: 2_000   },
+  { slots: 7,  cost: 8_000   },
+  { slots: 8,  cost: 20_000  },
+  { slots: 9,  cost: 50_000  },
+  { slots: 10, cost: 100_000 },
+];
+
+export const getNextShopSlotUpgrade = (currentSlots: number): ShopSlotUpgrade | null =>
+  SHOP_SLOT_UPGRADES.find((u) => u.slots > currentSlots) ?? null;
 
 export type FertilizerType = "basic" | "advanced" | "premium" | "elite" | "miracle";
 
