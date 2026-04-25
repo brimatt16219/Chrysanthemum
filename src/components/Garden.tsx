@@ -9,7 +9,7 @@ import { getNextUpgrade, getCurrentTier } from "../data/upgrades";
 import type { MutationType } from "../data/flowers";
 
 export function Garden() {
-  const { state, update } = useGame();
+  const { state, update, activeWeather } = useGame();
   useGrowthTick(5_000);
 
   const [selectedPlot, setSelectedPlot]     = useState<{ row: number; col: number } | null>(null);
@@ -44,12 +44,12 @@ export function Garden() {
   }
 
   function handleCollectAll() {
-    update(harvestAll(state));
+    update(harvestAll(state, activeWeather ?? "clear"));
   }
 
   const bloomedCount = state.grid
     .flat()
-    .filter((p) => p.plant && getCurrentStage(p.plant, Date.now()) === "bloom").length;
+    .filter((p) => p.plant && getCurrentStage(p.plant, Date.now(), activeWeather) === "bloom").length;
 
   return (
     <div className="flex flex-col items-center gap-6">
