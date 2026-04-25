@@ -1,4 +1,4 @@
-export type Rarity = "common" | "uncommon" | "rare" | "legendary" | "mythic";
+export type Rarity = "common" | "uncommon" | "rare" | "legendary" | "mythic" | "exalted";
 
 export type GrowthStage = "seed" | "sprout" | "bloom";
 
@@ -968,6 +968,63 @@ export const FLOWERS: FlowerSpecies[] = [
     shopWeight: 1,
     possibleMutations: ["golden", "rainbow", "giant", "moonlit", "frozen", "scorched"],
   },
+
+  // ── EXALTED — obtainable only via Botany, shopWeight always 0 ───────────
+  {
+    id: "umbral_bloom",
+    name: "Umbral Bloom",
+    description: "Drinks in light and gives nothing back. Even its shadow has a shadow.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🌚" },
+    rarity: "exalted",
+    growthTime: { seed: 108_000_000, sprout: 216_000_000 },
+    sellValue: 150_000,
+    shopWeight: 0,
+    possibleMutations: ["moonlit", "frozen", "golden", "rainbow", "giant", "scorched"],
+  },
+  {
+    id: "obsidian_rose",
+    name: "Obsidian Rose",
+    description: "Cut from volcanic glass. Somehow, it blooms.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "⚫" },
+    rarity: "exalted",
+    growthTime: { seed: 129_600_000, sprout: 259_200_000 },
+    sellValue: 200_000,
+    shopWeight: 0,
+    possibleMutations: ["scorched", "frozen", "golden", "moonlit", "giant", "rainbow"],
+  },
+  {
+    id: "graveweb",
+    name: "Graveweb",
+    description: "Roots run through forgotten burial grounds. Feeds on memory.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🕸️" },
+    rarity: "exalted",
+    growthTime: { seed: 172_800_000, sprout: 345_600_000 },
+    sellValue: 280_000,
+    shopWeight: 0,
+    possibleMutations: ["moonlit", "frozen", "golden", "rainbow", "scorched", "giant"],
+  },
+  {
+    id: "nightwing",
+    name: "Nightwing",
+    description: "Unfolds like wings at midnight. Gone before dawn.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🦇" },
+    rarity: "exalted",
+    growthTime: { seed: 216_000_000, sprout: 432_000_000 },
+    sellValue: 380_000,
+    shopWeight: 0,
+    possibleMutations: ["moonlit", "golden", "frozen", "rainbow", "giant", "scorched"],
+  },
+  {
+    id: "voidfire",
+    name: "Voidfire",
+    description: "Burns cold. Scorches without heat. No one knows what fuels it.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🌋" },
+    rarity: "exalted",
+    growthTime: { seed: 259_200_000, sprout: 518_400_000 },
+    sellValue: 500_000,
+    shopWeight: 0,
+    possibleMutations: ["scorched", "golden", "frozen", "moonlit", "rainbow", "giant"],
+  },
 ];
 
 export const getFlower = (id: string): FlowerSpecies | undefined =>
@@ -979,4 +1036,5 @@ export const RARITY_CONFIG: Record<Rarity, { label: string; color: string; glow:
   rare:      { label: "Rare",      color: "text-blue-400",   glow: "shadow-[0_0_8px_rgba(96,165,250,0.5)]"  },
   legendary: { label: "Legendary", color: "text-yellow-400", glow: "shadow-[0_0_12px_rgba(250,204,21,0.6)]" },
   mythic:    { label: "Mythic",    color: "text-pink-400",   glow: "shadow-[0_0_16px_rgba(244,114,182,0.7)]"},
+  exalted:   { label: "Exalted",   color: "text-slate-200",  glow: "shadow-[0_0_24px_rgba(226,232,240,0.6)]" },
 };
