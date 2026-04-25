@@ -55,7 +55,7 @@ export const DAY_PERIODS: DayPeriodDefinition[] = [
     startHour:      11,
     endHour:        14,
     overlayColor:   "rgba(255, 240, 160, VAL)",  // bright warm yellow
-    overlayOpacity: 0.07,
+    overlayOpacity: 0.06,
   },
   {
     id:             "afternoon",
@@ -73,7 +73,7 @@ export const DAY_PERIODS: DayPeriodDefinition[] = [
     startHour:      17,
     endHour:        19,
     overlayColor:   "rgba(255, 100, 40, VAL)",   // deep orange-pink
-    overlayOpacity: 0.10,
+    overlayOpacity: 0.065,
   },
   {
     id:             "dusk",
