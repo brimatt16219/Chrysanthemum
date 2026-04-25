@@ -1,4 +1,16 @@
-## [v1.1.2] — 2026-04-25 — Weather Tick Fix
+## [v1.1.2] — 2026-04-25 — Weather Reliability
+
+### Fixed
+- Client-side fallback now advances weather immediately on page load if expired
+- Weather event durations synced between client and server
+
+### Added
+- Offline banner greets you by name with a time-of-day message
+- New update changelog shown once on first open after a new release
+
+---
+
+## [v1.1.1] — 2026-04-25 — Weather Tick Fix
 
 ### Fixed
 - Weather cron changed from every 5 minutes to every 15 minutes to improve reliability
