@@ -5,7 +5,6 @@ import { Inventory } from "./components/Inventory";
 import { OfflineBanner } from "./components/OfflineBanner";
 import { ShopRestockBanner } from "./components/ShopRestockBanner";
 import { UsernameModal } from "./components/UsernameModal";
-import { SaveMigrationModal } from "./components/SaveMigrationModal";
 import { SearchPage } from "./components/SearchPage";
 import { ProfilePage } from "./components/ProfilePage";
 import { FriendsPage } from "./components/FriendsPage";
@@ -37,7 +36,6 @@ export default function App() {
     shopJustRestocked, clearShopNotification,
     user, profile, authLoading,
     signInWithGoogle, signOut,
-    pendingMigration, resolveMigration,
     needsUsername, completeUsername,
     activeWeather, weatherMsLeft, weatherIsActive,
   } = useGame();
@@ -131,13 +129,7 @@ export default function App() {
       {needsUsername && user && (
         <UsernameModal user={user} onComplete={completeUsername} />
       )}
-      {pendingMigration && (
-        <SaveMigrationModal
-          localSave={pendingMigration.localSave}
-          cloudSave={pendingMigration.cloudSave}
-          onChoose={resolveMigration}
-        />
-      )}
+
       {updateAvailable && !dismissedUpdate && (
         <UpdateBanner onDismiss={() => setDismissedUpdate(true)} />
       )}
