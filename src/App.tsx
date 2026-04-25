@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Garden } from "./components/Garden";
 import { Shop } from "./components/Shop";
 import { Inventory } from "./components/Inventory";
@@ -22,7 +22,6 @@ import { useGame } from "./store/GameContext";
 import { useFriendRequests } from "./hooks/useFriendRequests";
 import { useGiftNotifications } from "./hooks/useGiftNotifications";
 import { useDayNight } from "./hooks/useDayNight";
-import { msUntilShopReset } from "./store/gameStore";
 import { getFlower } from "./data/flowers";
 import { useVersionCheck } from "./hooks/useVersionCheck";
 import { UpdateBanner } from "./components/UpdateBanner";
@@ -55,7 +54,6 @@ export default function App() {
 
   const [tab, setTab]               = useState<Tab>("garden");
   const [socialView, setSocialView] = useState<SocialView>("search");
-  const [countdown, setCountdown]   = useState(() => msUntilShopReset(state));
   const [showBanner, setShowBanner] = useState(true);
 
   const [profileUsername, setProfileUsername]     = useState<string | null>(null);
@@ -73,10 +71,6 @@ export default function App() {
   // Day/night cycle — client-side, based on local time
   const dayPeriod = useDayNight();
 
-  useEffect(() => {
-    const id = setInterval(() => setCountdown(msUntilShopReset(state)), 1_000);
-    return () => clearInterval(id);
-  }, [state.lastShopReset]);
 
   const inventoryCount = state.inventory.reduce((s, i) => s + i.quantity, 0);
 
@@ -180,9 +174,6 @@ export default function App() {
               period={dayPeriod}
             />
             <span className="text-sm font-mono">🟡 {state.coins.toLocaleString()}</span>
-            <span className="text-xs text-muted-foreground font-mono hidden sm:block">
-              Shop {formatCountdown(countdown)}
-            </span>
             {!authLoading && (
               user ? (
                 <div className="flex items-center gap-2">
