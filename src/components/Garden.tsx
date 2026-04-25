@@ -12,14 +12,14 @@ export function Garden() {
 
   const [selectedPlot, setSelectedPlot] = useState<{ row: number; col: number } | null>(null);
 
-  const nextUpgrade = getNextUpgrade(state.farmSize);
-  const currentTier = getCurrentTier(state.farmSize);
+  const nextUpgrade = getNextUpgrade(state.farmRows, state.farmSize);
+  const currentTier = getCurrentTier(state.farmRows, state.farmSize);
 
   // Smaller cells on mobile for larger farm sizes
   const cellSize =
     state.farmSize <= 4 ? "w-16 h-16" :
     state.farmSize === 5 ? "w-15 h-15 sm:w-16 sm:h-16" :
-    "w-14 h-14 sm:w-16 sm:h-16"; // 6×6: 44px mobile, 64px desktop
+    "w-11 h-11 sm:w-16 sm:h-16"; // 6+ cols: compact on mobile
 
   function handlePlotClick(row: number, col: number) {
     const plot = state.grid[row][col];
@@ -50,7 +50,7 @@ export function Garden() {
       {/* Farm tier label */}
       <div className="text-center">
         <p className="text-sm font-mono text-muted-foreground tracking-wide uppercase">
-          {currentTier.label} — {state.farmSize}×{state.farmSize}
+          {currentTier.label} — {state.farmRows}×{state.farmSize}
         </p>
         {bloomedCount > 0 && (
           <p className="text-xs text-primary animate-pulse mt-1">
@@ -66,7 +66,7 @@ export function Garden() {
           style={{ gridTemplateColumns: `repeat(${state.farmSize}, minmax(0, 1fr))` }}
         >
           {state.grid.flat().map((plot, i) => {
-            const row = Math.floor(i / state.farmSize);
+            const row = Math.floor(i / state.farmSize); // farmSize = cols
             const col = i % state.farmSize;
             return (
               <PlotTile

@@ -1,5 +1,6 @@
 export interface FarmUpgrade {
-  size: number;
+  rows: number;
+  cols: number;
   cost: number;
   label: string;
   description: string;
@@ -7,18 +8,21 @@ export interface FarmUpgrade {
 
 // ── ADD NEW TIERS HERE ─────────────────────────────────────────────────────
 export const FARM_UPGRADES: FarmUpgrade[] = [
-  { size: 3, cost: 0,       label: "Starter Plot",  description: "3×3 — where every garden begins."    },
-  { size: 4, cost: 1_000,   label: "Small Farm",    description: "4×4 — room to experiment."           },
-  { size: 5, cost: 5_000,   label: "Garden",        description: "5×5 — a proper garden."              },
-  { size: 6, cost: 25_000,  label: "Grand Estate",  description: "6×6 — the pinnacle of horticulture." },
+  { rows: 3, cols: 3, cost: 0,         label: "Starter Plot",    description: "3×3 — where every garden begins."          },
+  { rows: 4, cols: 4, cost: 1_000,     label: "Small Farm",      description: "4×4 — room to experiment."                 },
+  { rows: 5, cols: 5, cost: 5_000,     label: "Garden",          description: "5×5 — a proper garden."                    },
+  { rows: 6, cols: 6, cost: 25_000,    label: "Grand Estate",    description: "6×6 — the pinnacle of horticulture."        },
+  { rows: 7, cols: 6, cost: 75_000,    label: "Sprawling Estate",description: "7×6 — the garden grows downward."          },
+  { rows: 8, cols: 6, cost: 150_000,   label: "Manor Garden",    description: "8×6 — a garden fit for a manor."           },
+  { rows: 9, cols: 6, cost: 300_000,   label: "Grand Manor",     description: "9×6 — an empire of flowers."               },
 ];
 // ──────────────────────────────────────────────────────────────────────────
 
-export const getNextUpgrade = (currentSize: number): FarmUpgrade | null =>
-  FARM_UPGRADES.find((u) => u.size > currentSize) ?? null;
+export const getNextUpgrade = (rows: number, cols: number): FarmUpgrade | null =>
+  FARM_UPGRADES.find((u) => u.rows > rows || (u.rows === rows && u.cols > cols)) ?? null;
 
-export const getCurrentTier = (currentSize: number): FarmUpgrade =>
-  [...FARM_UPGRADES].reverse().find((u) => u.size <= currentSize) ?? FARM_UPGRADES[0];
+export const getCurrentTier = (rows: number, cols: number): FarmUpgrade =>
+  [...FARM_UPGRADES].reverse().find((u) => u.rows <= rows && u.cols <= cols) ?? FARM_UPGRADES[0];
 
 // ── Shop slot upgrades ─────────────────────────────────────────────────────
 

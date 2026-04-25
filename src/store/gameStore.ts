@@ -1,5 +1,5 @@
 import { FLOWERS, MUTATIONS, getFlower, type GrowthStage, type MutationType } from "../data/flowers";
-import { FERTILIZERS, getNextUpgrade, getNextShopSlotUpgrade, DEFAULT_SHOP_SLOTS, type FertilizerType } from "../data/upgrades";
+import { FERTILIZERS, getNextUpgrade, getCurrentTier, getNextShopSlotUpgrade, DEFAULT_SHOP_SLOTS, type FertilizerType } from "../data/upgrades";
 import type { WeatherType } from "../data/weather";
 import { WEATHER } from "../data/weather";
 
@@ -39,7 +39,8 @@ export interface ShopSlot {
 
 export interface GameState {
   coins: number;
-  farmSize: number;
+  farmSize: number; // column count (max 6)
+  farmRows: number; // row count (equals farmSize for square grids, can exceed for 7×6+)
   shopSlots: number;
   grid: Plot[][];
   inventory: InventoryItem[];
@@ -65,18 +66,18 @@ const SHOP_RESET_INTERVAL = 5 * 60 * 1_000; // 5 minutes
 
 // ── Grid helpers ───────────────────────────────────────────────────────────
 
-export function makeGrid(size: number): Plot[][] {
-  return Array.from({ length: size }, (_, row) =>
-    Array.from({ length: size }, (_, col) => ({
+export function makeGrid(rows: number, cols: number): Plot[][] {
+  return Array.from({ length: rows }, (_, row) =>
+    Array.from({ length: cols }, (_, col) => ({
       id: `${row}-${col}`,
       plant: null,
     }))
   );
 }
 
-export function resizeGrid(old: Plot[][], newSize: number): Plot[][] {
-  return Array.from({ length: newSize }, (_, row) =>
-    Array.from({ length: newSize }, (_, col) => {
+export function resizeGrid(old: Plot[][], newRows: number, newCols: number): Plot[][] {
+  return Array.from({ length: newRows }, (_, row) =>
+    Array.from({ length: newCols }, (_, col) => {
       const existing = old[row]?.[col];
       return existing ?? { id: `${row}-${col}`, plant: null };
     })
@@ -194,8 +195,9 @@ export function defaultState(): GameState {
   return {
     coins:         100,
     farmSize:      size,
+    farmRows:      size,
     shopSlots:     DEFAULT_SHOP_SLOTS,
-    grid:          makeGrid(size),
+    grid:          makeGrid(size, size),
     inventory:     [],
     fertilizers:   [{ type: "basic", quantity: 3 }],
     shop:          generateShop(DEFAULT_SHOP_SLOTS),
@@ -244,15 +246,18 @@ export function applyOfflineTick(save: GameState): { state: GameState; summary: 
   const now         = Date.now();
   const minutesAway = Math.floor((now - save.lastSaved) / 60_000);
 
-  const expectedSize = save.farmSize ?? 3;
+  const expectedCols = save.farmSize ?? 3;
+  const expectedRows = save.farmRows ?? expectedCols; // backfill: square for old saves
   const needsRebuild =
     !save.grid ||
     save.grid.length === 0 ||
-    save.grid.length !== expectedSize;
+    save.grid.length    !== expectedRows ||
+    save.grid[0]?.length !== expectedCols;
 
   let updated: GameState = {
     ...save,
-    grid:       needsRebuild ? makeGrid(expectedSize) : save.grid,
+    farmRows:   expectedRows,
+    grid:       needsRebuild ? makeGrid(expectedRows, expectedCols) : save.grid,
     discovered: save.discovered ?? [],
     shopSlots:  save.shopSlots  ?? DEFAULT_SHOP_SLOTS,
   };
@@ -625,17 +630,16 @@ export function upgradeShopSlots(state: GameState): GameState | null {
 }
 
 export function upgradeFarm(state: GameState): GameState | null {
-  const next = getNextUpgrade(state.farmSize);
+  const next = getNextUpgrade(state.farmRows, state.farmSize);
   if (!next) return null;
   if (state.coins < next.cost) return null;
-
-  const newSize = next.size;
 
   return {
     ...state,
     coins:    state.coins - next.cost,
-    farmSize: newSize,
-    grid:     resizeGrid(state.grid, newSize),
+    farmSize: next.cols,
+    farmRows: next.rows,
+    grid:     resizeGrid(state.grid, next.rows, next.cols),
     shop:     generateShop(state.shopSlots),
   };
 }

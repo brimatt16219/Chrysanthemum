@@ -75,6 +75,7 @@ export async function loadCloudSave(userId: string): Promise<GameState | null> {
     return {
       coins:         data.coins,
       farmSize:      data.farm_size,
+      farmRows:      data.farm_rows ?? data.farm_size, // backfill: square for old saves
       shopSlots:     data.shop_slots ?? 4,
       grid:          data.grid,
       inventory:     data.inventory,
@@ -99,6 +100,7 @@ export async function saveToCloud(
       user_id:         userId,
       coins:           state.coins,
       farm_size:       state.farmSize,
+      farm_rows:       state.farmRows,
       shop_slots:      state.shopSlots,
       grid:            state.grid,
       inventory:       state.inventory,
@@ -157,6 +159,7 @@ export async function getPublicSave(userId: string): Promise<GameState | null> {
   return {
     coins:         data.coins,
     farmSize:      data.farm_size,
+    farmRows:      data.farm_rows ?? data.farm_size,
     shopSlots:     data.shop_slots ?? 4,
     grid:          data.grid,
     inventory:     data.inventory,
