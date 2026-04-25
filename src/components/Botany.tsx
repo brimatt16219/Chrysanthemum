@@ -299,11 +299,6 @@ export function Botany() {
           const eligible   = getTotalEligible(rarity);
           const canOpen    = eligible >= 1;
 
-          // Sample up to 5 species of the next rarity to preview as output
-          const nextFlowers = nextRarity
-            ? FLOWERS.filter((f) => f.rarity === nextRarity).slice(0, 5)
-            : [];
-
           return (
             <button
               key={rarity}
@@ -335,21 +330,6 @@ export function Botany() {
 
                 {/* Right: inventory count + flower previews */}
                 <div className="flex items-center gap-2 shrink-0">
-                  {/* Output flower emoji previews */}
-                  {nextFlowers.length > 0 && (
-                    <div className="flex -space-x-1">
-                      {nextFlowers.map((f) => (
-                        <span
-                          key={f.id}
-                          className="text-base leading-none"
-                          title={f.name}
-                        >
-                          {f.emoji.bloom}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
                   {/* Progress pill */}
                   <span
                     className={`
