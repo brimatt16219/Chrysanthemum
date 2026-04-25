@@ -4,7 +4,7 @@ import { useGrowthTick } from "../hooks/useGrowthTick";
 import { PlotTile } from "./PlotTile";
 import { SeedPicker } from "./SeedPicker";
 import { HarvestPopup } from "./HarvestPopup";
-import { getCurrentStage, plantSeed, upgradeFarm } from "../store/gameStore";
+import { getCurrentStage, plantSeed, upgradeFarm, harvestAll } from "../store/gameStore";
 import { getNextUpgrade, getCurrentTier } from "../data/upgrades";
 import type { MutationType } from "../data/flowers";
 
@@ -43,6 +43,10 @@ export function Garden() {
     if (next) update(next);
   }
 
+  function handleCollectAll() {
+    update(harvestAll(state));
+  }
+
   const bloomedCount = state.grid
     .flat()
     .filter((p) => p.plant && getCurrentStage(p.plant, Date.now()) === "bloom").length;
@@ -56,9 +60,17 @@ export function Garden() {
           {currentTier.label} — {state.farmRows}×{state.farmSize}
         </p>
         {bloomedCount > 0 && (
-          <p className="text-xs text-primary animate-pulse mt-1">
-            {bloomedCount} flower{bloomedCount > 1 ? "s" : ""} ready to harvest!
-          </p>
+          <div className="flex items-center justify-center gap-3 mt-1">
+            <p className="text-xs text-primary animate-pulse">
+              {bloomedCount} flower{bloomedCount > 1 ? "s" : ""} ready to harvest!
+            </p>
+            <button
+              onClick={handleCollectAll}
+              className="px-3 py-1 rounded-full text-xs font-semibold bg-primary/20 border border-primary/50 text-primary hover:bg-primary/30 transition-all"
+            >
+              Collect All
+            </button>
+          </div>
         )}
       </div>
 

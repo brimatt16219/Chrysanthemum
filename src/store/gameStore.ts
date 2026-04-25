@@ -490,6 +490,20 @@ export function harvestPlant(
   };
 }
 
+export function harvestAll(
+  state: GameState,
+  weatherType: WeatherType = "clear"
+): GameState {
+  let current = state;
+  for (let row = 0; row < current.grid.length; row++) {
+    for (let col = 0; col < current.grid[row].length; col++) {
+      const result = harvestPlant(current, row, col, weatherType);
+      if (result) current = result.state;
+    }
+  }
+  return current;
+}
+
 export function sellFlower(
   state: GameState,
   speciesId: string,
