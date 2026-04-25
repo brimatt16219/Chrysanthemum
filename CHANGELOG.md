@@ -1,3 +1,16 @@
+## [v1.2.1] — 2026-04-25 — Bug Fixes & Balancing
+
+### Fixed
+- Cloud save no longer loses progress on page refresh — localStorage is kept as a shadow backup and recovered automatically if the cloud write was still in-flight
+- Signing in after a guest session no longer overwrites cloud progress with the default guest state
+- Two devices logged into the same account now correctly load the most recent save on login
+- Removed output flower emoji previews from Botany Lab tier cards
+
+### Changed
+- Farm upgrade costs rebalanced (Grand Estate 30k, Sprawling Estate 100k, Manor Garden 350k, Grand Manor 750k)
+
+---
+
 ## [v1.2.0] — 2026-04-25 — The Botany Update
 
 ### Added
