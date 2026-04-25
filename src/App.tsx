@@ -14,6 +14,7 @@ import { LeaderboardPage } from "./components/LeaderboardPage";
 import { FriendRequestNotification } from "./components/FriendRequestNotification";
 import { GiftNotification } from "./components/GiftNotification";
 import { Codex } from "./components/Codex";
+import { Botany } from "./components/Botany";
 import { WeatherOverlay } from "./components/WeatherOverlay";
 import { WeatherBanner } from "./components/WeatherBanner";
 import { DayNightOverlay } from "./components/DayNightOverlay";
@@ -27,7 +28,7 @@ import { useVersionCheck } from "./hooks/useVersionCheck";
 import { UpdateBanner } from "./components/UpdateBanner";
 import { CHANGELOGS, LATEST_CHANGELOG_VERSION, type ChangelogEntry } from "./data/changelog";
 
-type Tab = "garden" | "shop" | "inventory" | "social" | "codex";
+type Tab = "garden" | "shop" | "inventory" | "social" | "codex" | "botany";
 type SocialView = "search" | "friends" | "gifts" | "leaderboard";
 
 function formatCountdown(ms: number): string {
@@ -217,7 +218,7 @@ export default function App() {
       {/* Tabs */}
       <nav className="bg-card/40 border-b border-border">
         <div className="w-full sm:max-w-2xl sm:mx-auto flex">
-          {(["garden", "shop", "inventory", "codex", "social"] as Tab[]).map((t) => (
+          {(["garden", "shop", "inventory", "botany", "codex", "social"] as Tab[]).map((t) => (
             <button
               key={t}
               onClick={() => handleTabChange(t)}
@@ -233,6 +234,7 @@ export default function App() {
               {t === "garden"      ? "🌱"
                : t === "shop"      ? "🛒"
                : t === "inventory" ? "🎒"
+               : t === "botany"    ? "🌿"
                : t === "codex"     ? "📖"
                : "🌍"}
               <span className="ml-1 hidden sm:inline capitalize">{t}</span>
@@ -264,6 +266,7 @@ export default function App() {
             {tab === "garden"    && <Garden />}
             {tab === "shop"      && <Shop />}
             {tab === "inventory" && <Inventory />}
+            {tab === "botany"    && <Botany />}
             {tab === "codex"     && <Codex />}
             {tab === "social"    && (
               user ? (

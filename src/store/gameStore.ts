@@ -2,6 +2,7 @@ import { FLOWERS, MUTATIONS, getFlower, type GrowthStage, type MutationType } fr
 import { FERTILIZERS, getNextUpgrade, getCurrentTier, getNextShopSlotUpgrade, DEFAULT_SHOP_SLOTS, type FertilizerType } from "../data/upgrades";
 import type { WeatherType } from "../data/weather";
 import { WEATHER } from "../data/weather";
+import { BOTANY_REQUIREMENTS, NEXT_RARITY } from "../data/botany";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -626,6 +627,87 @@ export function upgradeShopSlots(state: GameState): GameState | null {
     coins:     state.coins - next.cost,
     shopSlots: next.slots,
     shop:      [...flowerSlots, ...emptySlots, ...fertSlots],
+  };
+}
+
+export function botanyConvert(
+  state: GameState,
+  selections: { speciesId: string; mutation?: MutationType }[]
+): { state: GameState; outputSpeciesId: string } | null {
+  if (selections.length === 0) return null;
+
+  // Validate all selections share the same rarity
+  const firstSpecies = getFlower(selections[0].speciesId);
+  if (!firstSpecies) return null;
+  const rarity = firstSpecies.rarity;
+
+  const required = BOTANY_REQUIREMENTS[rarity];
+  if (!required) return null;
+  if (selections.length !== required) return null;
+
+  if (!selections.every((s) => getFlower(s.speciesId)?.rarity === rarity)) return null;
+
+  // Validate inventory quantities
+  const consumeCounts = new Map<string, number>();
+  for (const sel of selections) {
+    const key = `${sel.speciesId}||${sel.mutation ?? ""}`;
+    consumeCounts.set(key, (consumeCounts.get(key) ?? 0) + 1);
+  }
+
+  for (const [key, count] of consumeCounts) {
+    const [speciesId, mutStr] = key.split("||");
+    const mutation = mutStr ? (mutStr as MutationType) : undefined;
+    const invItem = state.inventory.find(
+      (i) => i.speciesId === speciesId && i.mutation === mutation && !i.isSeed
+    );
+    if (!invItem || invItem.quantity < count) return null;
+  }
+
+  // Determine output rarity
+  const nextRarity = NEXT_RARITY[rarity];
+  if (!nextRarity) return null;
+
+  // Pick output species — prefer ones not yet in codex, then random
+  const nextRarityFlowers = FLOWERS.filter((f) => f.rarity === nextRarity);
+  if (nextRarityFlowers.length === 0) return null;
+
+  const undiscovered = nextRarityFlowers.filter(
+    (f) => !isDiscovered(state.discovered, f.id)
+  );
+  const pool = undiscovered.length > 0 ? undiscovered : nextRarityFlowers;
+  const outputSpecies = pool[Math.floor(Math.random() * pool.length)];
+
+  // Remove consumed flowers
+  let newInventory = [...state.inventory];
+  for (const [key, count] of consumeCounts) {
+    const [speciesId, mutStr] = key.split("||");
+    const mutation = mutStr ? (mutStr as MutationType) : undefined;
+    newInventory = newInventory
+      .map((i) =>
+        i.speciesId === speciesId && i.mutation === mutation && !i.isSeed
+          ? { ...i, quantity: i.quantity - count }
+          : i
+      )
+      .filter((i) => i.quantity > 0);
+  }
+
+  // Add output seed
+  const existingSeed = newInventory.find(
+    (i) => i.speciesId === outputSpecies.id && i.isSeed
+  );
+  if (existingSeed) {
+    newInventory = newInventory.map((i) =>
+      i.speciesId === outputSpecies.id && i.isSeed
+        ? { ...i, quantity: i.quantity + 1 }
+        : i
+    );
+  } else {
+    newInventory.push({ speciesId: outputSpecies.id, quantity: 1, isSeed: true });
+  }
+
+  return {
+    state: { ...state, inventory: newInventory },
+    outputSpeciesId: outputSpecies.id,
   };
 }
 
