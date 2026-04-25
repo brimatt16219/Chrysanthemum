@@ -1,3 +1,11 @@
+## [v1.1.1] — 2026-04-25 — Weather Tick Fix
+
+### Fixed
+- Weather cron changed from every 5 minutes to every 15 minutes to improve reliability
+- Weather event durations and cooldowns scaled to match the new 15-minute tick interval
+
+---
+
 ## [v1.1.0] — 2026-04-24 — Weather Update
 
 ### Added
