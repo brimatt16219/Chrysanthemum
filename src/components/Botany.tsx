@@ -338,7 +338,7 @@ export function Botany() {
 
                 {/* Left: rarity info */}
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="flex flex-col items-center gap-0.5 shrink-0">
+                  <div className="flex items-center gap-1 shrink-0">
                     <span className={`text-xs font-semibold ${cfg.color}`}>{cfg.label}</span>
                     <span className="text-[10px] text-muted-foreground">×{required}</span>
                   </div>

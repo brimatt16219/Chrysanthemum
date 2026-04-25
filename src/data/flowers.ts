@@ -1036,5 +1036,5 @@ export const RARITY_CONFIG: Record<Rarity, { label: string; color: string; glow:
   rare:      { label: "Rare",      color: "text-blue-400",   glow: "shadow-[0_0_8px_rgba(96,165,250,0.5)]"  },
   legendary: { label: "Legendary", color: "text-yellow-400", glow: "shadow-[0_0_12px_rgba(250,204,21,0.6)]" },
   mythic:    { label: "Mythic",    color: "text-pink-400",   glow: "shadow-[0_0_16px_rgba(244,114,182,0.7)]"},
-  exalted:   { label: "Exalted",   color: "text-slate-200",  glow: "shadow-[0_0_24px_rgba(226,232,240,0.6)]" },
+  exalted:   { label: "Exalted",   color: "text-black",      glow: "shadow-[0_0_24px_rgba(226,232,240,0.6)]" },
 };

@@ -101,7 +101,8 @@ export function ProfilePage({ username, onBack }: Props) {
           : displayFlower.rarity === "uncommon"  ? "border-green-400/60 bg-green-400/10"
           : displayFlower.rarity === "rare"      ? "border-blue-400/60 bg-blue-400/10"
           : displayFlower.rarity === "legendary" ? "border-yellow-400/60 bg-yellow-400/10"
-          : "border-pink-400/60 bg-pink-400/10"
+          : displayFlower.rarity === "mythic"    ? "border-pink-400/60 bg-pink-400/10"
+          : "border-black/60 bg-black/10"
           : "border-border bg-card"
         }
       `}>
