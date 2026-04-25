@@ -12,9 +12,9 @@ export const FARM_UPGRADES: FarmUpgrade[] = [
   { rows: 4, cols: 4, cost: 1_000,     label: "Small Farm",      description: "4×4 — room to experiment."                 },
   { rows: 5, cols: 5, cost: 5_000,     label: "Garden",          description: "5×5 — a proper garden."                    },
   { rows: 6, cols: 6, cost: 25_000,    label: "Grand Estate",    description: "6×6 — the pinnacle of horticulture."        },
-  { rows: 7, cols: 6, cost: 75_000,    label: "Sprawling Estate",description: "7×6 — the garden grows downward."          },
-  { rows: 8, cols: 6, cost: 150_000,   label: "Manor Garden",    description: "8×6 — a garden fit for a manor."           },
-  { rows: 9, cols: 6, cost: 300_000,   label: "Grand Manor",     description: "9×6 — an empire of flowers."               },
+  { rows: 7, cols: 6, cost: 85_000,    label: "Sprawling Estate",description: "7×6 — the garden grows downward."          },
+  { rows: 8, cols: 6, cost: 200_000,   label: "Manor Garden",    description: "8×6 — a garden fit for a manor."           },
+  { rows: 9, cols: 6, cost: 500_000,   label: "Grand Manor",     description: "9×6 — an empire of flowers."               },
 ];
 // ──────────────────────────────────────────────────────────────────────────
 
@@ -36,13 +36,13 @@ export interface ShopSlotUpgrade {
 
 export const SHOP_SLOT_UPGRADES: ShopSlotUpgrade[] = [
   { slots: 5,  cost: 500     },
-  { slots: 6,  cost: 2_000   },
+  { slots: 6,  cost: 3_000   },
   { slots: 7,  cost: 8_000   },
-  { slots: 8,  cost: 20_000  },
-  { slots: 9,  cost: 50_000  },
-  { slots: 10, cost: 100_000 },
-  { slots: 11, cost: 250_000 },
-  { slots: 12, cost: 500_000 },
+  { slots: 8,  cost: 25_000  },
+  { slots: 9,  cost: 75_000  },
+  { slots: 10, cost: 200_000 },
+  { slots: 11, cost: 450_000 },
+  { slots: 12, cost: 750_000 },
 ];
 
 export const getNextShopSlotUpgrade = (currentSlots: number): ShopSlotUpgrade | null =>
