@@ -14,6 +14,13 @@ export interface ChangelogEntry {
 // Most recent version first — update this with every release
 export const CHANGELOGS: ChangelogEntry[] = [
   {
+    version: "1.5.1",
+    title:   "Quick Fix",
+    items: [
+      { type: "fixed", text: "Changelog modal is now scrollable on mobile so the dismiss button is always reachable" },
+    ],
+  },
+  {
     version: "1.5.0",
     title:   "Weather & Mutations Update",
     items: [
