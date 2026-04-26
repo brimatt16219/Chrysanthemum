@@ -5,15 +5,17 @@ import { getFlower, RARITY_CONFIG } from "../data/flowers";
 interface Props {
   grid: Plot[][];
   farmSize: number;
+  farmRows?: number;
 }
 
-export function ReadOnlyGarden({ grid, farmSize }: Props) {
+export function ReadOnlyGarden({ grid, farmSize, farmRows }: Props) {
   const now = Date.now();
+  const rows = farmRows ?? farmSize; // fallback for old saves that only have farmSize
 
   return (
     <div className="flex flex-col items-center gap-3">
       <p className="text-xs font-mono text-muted-foreground tracking-wide uppercase">
-        {farmSize}×{farmSize} Garden
+        {rows}×{farmSize} Garden
       </p>
       <div
         className="grid gap-2"

@@ -202,7 +202,7 @@ export function ProfilePage({ username, onBack }: Props) {
       {save && save.grid.length > 0 && (
         <div className="bg-card/60 border border-border rounded-2xl p-5">
           <h3 className="text-sm font-semibold mb-4">Your Garden</h3>
-          <ReadOnlyGarden grid={save.grid} farmSize={save.farmSize} />
+          <ReadOnlyGarden grid={save.grid} farmSize={save.farmSize} farmRows={save.farmRows} />
         </div>
       )}
 
