@@ -15,6 +15,7 @@ import { GiftNotification } from "./components/GiftNotification";
 import { Codex } from "./components/Codex";
 import { Botany } from "./components/Botany";
 import { WeatherOverlay } from "./components/WeatherOverlay";
+import { DevWeatherPanel } from "./components/DevWeatherPanel";
 import { WeatherBanner } from "./components/WeatherBanner";
 import { WeatherForecastPanel } from "./components/WeatherForecastPanel";
 import { DayNightOverlay } from "./components/DayNightOverlay";
@@ -132,6 +133,9 @@ export default function App() {
       {updateAvailable && !dismissedUpdate && (
         <UpdateBanner onDismiss={() => setDismissedUpdate(true)} />
       )}
+
+      {/* Dev-only weather tester — never ships to production */}
+      {import.meta.env.DEV && <DevWeatherPanel />}
 
       {/* Weather forecast panel */}
       {showForecast && (

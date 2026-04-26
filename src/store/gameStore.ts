@@ -614,14 +614,28 @@ export function tickWeatherMutations(
       const stage = getCurrentStage(plot.plant, now, weatherType);
       if (stage !== "bloom") return plot;
 
-      // Thunderstorm combo: wet flowers are instantly upgraded to shocked
+      // Thunderstorm combo: wet flowers have a ~50% chance to become shocked
+      // over the full 20-min storm duration (p ≈ 0.000578 per tick)
       if (weatherType === "thunderstorm" && plot.plant.mutation === "wet") {
-        changed = true;
-        return { ...plot, plant: { ...plot.plant, mutation: "shocked" as MutationType } };
+        if (Math.random() < 0.000578) {
+          changed = true;
+          return { ...plot, plant: { ...plot.plant, mutation: "shocked" as MutationType } };
+        }
+        return plot;
       }
 
       // Skip if already has any other mutation (string); allow null and undefined
       if (typeof plot.plant.mutation === "string") return plot;
+
+      // Thunderstorm: unmutated (null) plants can also become wet — same rate as rain.
+      // Those wet plants can then upgrade to shocked via the combo roll on the next tick.
+      if (weatherType === "thunderstorm" && plot.plant.mutation === null) {
+        if (Math.random() < 0.00076) {
+          changed = true;
+          return { ...plot, plant: { ...plot.plant, mutation: "wet" as MutationType } };
+        }
+        // fall through to the direct shocked roll below
+      }
 
       // Roll weather mutation
       if (weatherMut && weatherChance > 0) {
