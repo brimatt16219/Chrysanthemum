@@ -14,6 +14,13 @@ export interface ChangelogEntry {
 // Most recent version first — update this with every release
 export const CHANGELOGS: ChangelogEntry[] = [
   {
+    version: "1.5.2",
+    title:   "Bug Fixes",
+    items: [
+      { type: "fixed", text: "Leaderboard filter buttons (Global, Friends, Coins, Codex) are now a single equal-width row on mobile" },
+    ],
+  },
+  {
     version: "1.5.1",
     title:   "Quick Fix",
     items: [

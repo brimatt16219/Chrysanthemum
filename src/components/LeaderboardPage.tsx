@@ -94,54 +94,40 @@ export function LeaderboardPage({ onViewProfile }: Props) {
         </button>
       </div>
 
-      {/* Tab + sort row */}
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        {/* Global / Friends tabs */}
-        <div className="flex gap-2">
-          {(["global", "friends"] as LeaderboardTab[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => setActiveTab(t)}
-              className={`
-                px-4 py-2 rounded-xl text-xs font-semibold transition-all capitalize
-                ${activeTab === t
-                  ? "bg-primary/20 border border-primary/50 text-primary"
-                  : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
-                }
-              `}
-            >
-              {t === "global" ? "🌍 Global" : "👥 Friends"}
-            </button>
-          ))}
-        </div>
-
-        {/* Sort toggle */}
-        <div className="flex gap-1.5">
+      {/* Tab + sort row — single flex row, equal-width buttons */}
+      <div className="flex gap-2">
+        {(["global", "friends"] as LeaderboardTab[]).map((t) => (
           <button
-            onClick={() => setSortBy("coins")}
+            key={t}
+            onClick={() => setActiveTab(t)}
             className={`
-              px-3 py-1.5 rounded-lg text-xs font-semibold transition-all
-              ${sortBy === "coins"
+              flex-1 py-2 rounded-xl text-xs font-semibold transition-all text-center
+              ${activeTab === t
                 ? "bg-primary/20 border border-primary/50 text-primary"
                 : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
               }
             `}
           >
-            🟡 Coins
+            {t === "global" ? "🌍" : "👥"}
+            <span className="hidden sm:inline ml-1 capitalize">{t}</span>
           </button>
+        ))}
+        {(["coins", "codex"] as SortBy[]).map((s) => (
           <button
-            onClick={() => setSortBy("codex")}
+            key={s}
+            onClick={() => setSortBy(s)}
             className={`
-              px-3 py-1.5 rounded-lg text-xs font-semibold transition-all
-              ${sortBy === "codex"
+              flex-1 py-2 rounded-xl text-xs font-semibold transition-all text-center
+              ${sortBy === s
                 ? "bg-primary/20 border border-primary/50 text-primary"
                 : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
               }
             `}
           >
-            📖 Codex
+            {s === "coins" ? "🟡" : "📖"}
+            <span className="hidden sm:inline ml-1 capitalize">{s}</span>
           </button>
-        </div>
+        ))}
       </div>
 
       {/* Your rank banner */}
