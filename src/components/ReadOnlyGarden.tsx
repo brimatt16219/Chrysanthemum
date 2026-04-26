@@ -1,19 +1,22 @@
 import { getCurrentStage, getStageProgress } from "../store/gameStore";
 import type { Plot } from "../store/gameStore";
-import { getFlower, RARITY_CONFIG } from "../data/flowers";
+import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
+import type { MutationType } from "../data/flowers";
 
 interface Props {
   grid: Plot[][];
   farmSize: number;
+  farmRows?: number;
 }
 
-export function ReadOnlyGarden({ grid, farmSize }: Props) {
+export function ReadOnlyGarden({ grid, farmSize, farmRows }: Props) {
   const now = Date.now();
+  const rows = farmRows ?? farmSize; // fallback for old saves that only have farmSize
 
   return (
     <div className="flex flex-col items-center gap-3">
       <p className="text-xs font-mono text-muted-foreground tracking-wide uppercase">
-        {farmSize}×{farmSize} Garden
+        {rows}×{farmSize} Garden
       </p>
       <div
         className="grid gap-2"
@@ -26,6 +29,9 @@ export function ReadOnlyGarden({ grid, farmSize }: Props) {
           const progress = plant ? getStageProgress(plant, now) : 0;
           const rarity  = species ? RARITY_CONFIG[species.rarity] : null;
           const isBloomed = stage === "bloom";
+          const mut = (isBloomed && plant?.mutation)
+            ? MUTATIONS[plant.mutation as MutationType]
+            : null;
 
           if (!plant) {
             return (
@@ -44,8 +50,8 @@ export function ReadOnlyGarden({ grid, farmSize }: Props) {
               className={`
                 relative w-14 h-14 rounded-xl border-2 flex flex-col items-center justify-center
                 ${isBloomed
-                  ? `border-primary/50 bg-primary/10 ${rarity?.glow}`
-                  : "border-border/60 bg-card/60"
+                  ? `${rarity?.borderBloom ?? "border-primary/50"} ${rarity?.bgBloom ?? "bg-primary/10"} ${rarity?.glow ?? ""}`
+                  : `${rarity?.borderGrowing ?? "border-border/60"} bg-card/60`
                 }
               `}
               title={`${species?.name} — ${stage}`}
@@ -63,6 +69,11 @@ export function ReadOnlyGarden({ grid, farmSize }: Props) {
               )}
               {isBloomed && (
                 <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full animate-pulse" />
+              )}
+              {mut && (
+                <span className="absolute -bottom-1 -right-1 text-sm leading-none">
+                  {mut.emoji}
+                </span>
               )}
             </div>
           );

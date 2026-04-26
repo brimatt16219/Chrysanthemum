@@ -62,6 +62,8 @@ export interface GameState {
   // Codex — tracks every species + mutation combo ever harvested
   // Format: "speciesId" for base, "speciesId:mutationId" for mutated
   discovered: string[];
+  // Weather forecast — number of upcoming slots the player has purchased (0 = not unlocked)
+  weatherForecastSlots: number;
 }
 
 export interface OfflineSummary {
@@ -206,17 +208,18 @@ function generateShop(shopSlots: number = DEFAULT_SHOP_SLOTS): ShopSlot[] {
 export function defaultState(): GameState {
   const size = 3;
   return {
-    coins:         100,
-    farmSize:      size,
-    farmRows:      size,
-    shopSlots:     DEFAULT_SHOP_SLOTS,
-    grid:          makeGrid(size, size),
-    inventory:     [],
-    fertilizers:   [{ type: "basic", quantity: 3 }],
-    shop:          generateShop(DEFAULT_SHOP_SLOTS),
-    lastShopReset: Date.now(),
-    lastSaved:     Date.now(),
-    discovered:    [],
+    coins:                100,
+    farmSize:             size,
+    farmRows:             size,
+    shopSlots:            DEFAULT_SHOP_SLOTS,
+    grid:                 makeGrid(size, size),
+    inventory:            [],
+    fertilizers:          [{ type: "basic", quantity: 3 }],
+    shop:                 generateShop(DEFAULT_SHOP_SLOTS),
+    lastShopReset:        Date.now(),
+    lastSaved:            Date.now(),
+    discovered:           [],
+    weatherForecastSlots: 0,
   };
 }
 
@@ -269,10 +272,11 @@ export function applyOfflineTick(save: GameState): { state: GameState; summary: 
 
   let updated: GameState = {
     ...save,
-    farmRows:   expectedRows,
-    grid:       needsRebuild ? makeGrid(expectedRows, expectedCols) : save.grid,
-    discovered: save.discovered ?? [],
-    shopSlots:  save.shopSlots  ?? DEFAULT_SHOP_SLOTS,
+    farmRows:             expectedRows,
+    grid:                 needsRebuild ? makeGrid(expectedRows, expectedCols) : save.grid,
+    discovered:           save.discovered           ?? [],
+    shopSlots:            save.shopSlots            ?? DEFAULT_SHOP_SLOTS,
+    weatherForecastSlots: save.weatherForecastSlots ?? 0,
   };
 
   let shopRestocked    = false;
@@ -290,6 +294,34 @@ export function applyOfflineTick(save: GameState): { state: GameState; summary: 
   return {
     state:   updated,
     summary: { minutesAway, readyToHarvest, shopRestocked },
+  };
+}
+
+// ── Weather forecast ────────────────────────────────────────────────────────
+
+export const FORECAST_SLOT_COSTS = [
+  500,      // → 1 slot
+  2_000,    // → 2 slots
+  5_000,    // → 3 slots
+  15_000,   // → 4 slots
+  35_000,   // → 5 slots
+  75_000,   // → 6 slots
+  150_000,  // → 7 slots
+  300_000,  // → 8 slots
+] as const;
+
+export const MAX_FORECAST_SLOTS = FORECAST_SLOT_COSTS.length;
+
+/** Purchase the next forecast slot tier. Returns null if already maxed or can't afford. */
+export function buyWeatherForecastSlot(state: GameState): GameState | null {
+  const current = state.weatherForecastSlots ?? 0;
+  if (current >= MAX_FORECAST_SLOTS) return null;
+  const cost = FORECAST_SLOT_COSTS[current];
+  if (state.coins < cost) return null;
+  return {
+    ...state,
+    coins:                state.coins - cost,
+    weatherForecastSlots: current + 1,
   };
 }
 
@@ -530,12 +562,14 @@ export function stampStageTransitions(
 // Prismatic       15 min  =  900 ticks → 20% over event
 // Golden Hour     15 min  =  900 ticks → 20% over event
 const WEATHER_MUTATION_CHANCE: Partial<Record<WeatherType, number>> = {
-  rain:            0.00076, // 60% over 20-min event
-  heatwave:        0.00057, // 40% over 15-min event
-  cold_front:      0.00057, // 40% over 15-min event
+  rain:            0.00076,  // 60% over 20-min event
+  heatwave:        0.00057,  // 40% over 15-min event
+  cold_front:      0.00057,  // 40% over 15-min event
   star_shower:     0.000213, // 20% over 17.5-min event
   prismatic_skies: 0.000248, // 20% over 15-min event
   golden_hour:     0.000248, // 20% over 15-min event
+  tornado:         1.0,      // 100% — instant on first tick, all bloomed flowers hit
+  thunderstorm:    0.00057,  // 40% over 20-min event (normal shocked roll for non-wet plants)
 };
 
 const WEATHER_MUTATION_TYPE: Partial<Record<WeatherType, MutationType>> = {
@@ -545,6 +579,8 @@ const WEATHER_MUTATION_TYPE: Partial<Record<WeatherType, MutationType>> = {
   star_shower:     "moonlit",
   prismatic_skies: "rainbow",
   golden_hour:     "golden",
+  tornado:         "windstruck",
+  thunderstorm:    "shocked",
 };
 
 const MOONLIT_NIGHT_CHANCE = 0.000019; // 50% over a 10-hour night (1 - 0.5^(1/36000))
@@ -572,12 +608,34 @@ export function tickWeatherMutations(
 
   const newGrid = state.grid.map((row) =>
     row.map((plot) => {
-      // Skip if already has a mutation (string); allow null (old saves) and undefined (fresh plants)
-      if (!plot.plant || typeof plot.plant.mutation === "string") return plot;
+      if (!plot.plant) return plot;
 
       // Weather mutations only apply at bloom — the plant must be at peak to be affected
       const stage = getCurrentStage(plot.plant, now, weatherType);
       if (stage !== "bloom") return plot;
+
+      // Thunderstorm combo: wet flowers have a ~50% chance to become shocked
+      // over the full 20-min storm duration (p ≈ 0.000578 per tick)
+      if (weatherType === "thunderstorm" && plot.plant.mutation === "wet") {
+        if (Math.random() < 0.000578) {
+          changed = true;
+          return { ...plot, plant: { ...plot.plant, mutation: "shocked" as MutationType } };
+        }
+        return plot;
+      }
+
+      // Skip if already has any other mutation (string); allow null and undefined
+      if (typeof plot.plant.mutation === "string") return plot;
+
+      // Thunderstorm: unmutated (null) plants can also become wet — same rate as rain.
+      // Those wet plants can then upgrade to shocked via the combo roll on the next tick.
+      if (weatherType === "thunderstorm" && plot.plant.mutation === null) {
+        if (Math.random() < 0.00076) {
+          changed = true;
+          return { ...plot, plant: { ...plot.plant, mutation: "wet" as MutationType } };
+        }
+        // fall through to the direct shocked roll below
+      }
 
       // Roll weather mutation
       if (weatherMut && weatherChance > 0) {

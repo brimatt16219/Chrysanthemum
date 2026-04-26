@@ -14,6 +14,26 @@ export interface ChangelogEntry {
 // Most recent version first — update this with every release
 export const CHANGELOGS: ChangelogEntry[] = [
   {
+    version: "1.5.0",
+    title:   "Weather & Mutations Update",
+    items: [
+      { type: "added",   text: "Weather Forecast — unlock up to 8 slots to preview upcoming weather events with estimated start times" },
+      { type: "added",   text: "⛈️ Thunderstorm — 2× growth speed; unmutated plants can become Wet or Shocked, Wet plants can upgrade to Shocked over the storm" },
+      { type: "added",   text: "🌪️ Tornado — instantly applies a random mutation to every bloomed flower in your garden" },
+      { type: "added",   text: "⚡ Shocked mutation — applied by thunderstorm, upgraded from Wet during a storm" },
+      { type: "added",   text: "💨 Windstruck mutation — applied instantly by tornado" },
+      { type: "added",   text: "Day/night ambient tint — screen shifts through dawn, morning, midday, afternoon, sunset, dusk, night, and midnight" },
+      { type: "added",   text: "Display flower mutation badge — your active mutation shows as a small icon on your profile flower in the HUD" },
+      { type: "fixed",   text: "Rarity borders and backgrounds now correctly display on other players' profile gardens" },
+      { type: "fixed",   text: "Fertilizers in plot tooltip are now sorted by effectiveness (weakest → strongest)" },
+      { type: "fixed",   text: "Social tab buttons are equal-width and emoji-only on mobile" },
+      { type: "fixed",   text: "Social tab no longer deselects in the navbar when viewing a profile" },
+      { type: "fixed",   text: "Weather forecast no longer shows '0m 0s' during clear skies" },
+      { type: "changed", text: "Profile page is now embedded inside the Social tab — the 5-button nav stays visible at all times" },
+      { type: "changed", text: "Wet → Shocked upgrade now applies gradually (~50% chance over the storm duration) instead of instantly" },
+    ],
+  },
+  {
     version: "1.4.0",
     title:   "Mutations Update",
     items: [

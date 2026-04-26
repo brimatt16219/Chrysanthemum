@@ -9,7 +9,9 @@ export type MutationType =
   | "moonlit"
   | "frozen"
   | "scorched"
-  | "wet";
+  | "wet"
+  | "windstruck"
+  | "shocked";
 
 export interface Mutation {
   id: MutationType;
@@ -28,7 +30,9 @@ export const MUTATIONS: Record<MutationType, Mutation> = {
   moonlit:  { id: "moonlit",  name: "Moonlit",  emoji: "🌙", description: "Glows faintly in the dark.",        valueMultiplier: 2.5, chance: 0.07, color: "text-blue-300"   },
   frozen:   { id: "frozen",   name: "Frozen",   emoji: "❄️", description: "Crystallized mid-bloom.",           valueMultiplier: 2.0, chance: 0.10, color: "text-cyan-400"   },
   scorched: { id: "scorched", name: "Scorched", emoji: "🔥", description: "Survived extreme heat.",            valueMultiplier: 2.0, chance: 0.10, color: "text-orange-400" },
-  wet:      { id: "wet",      name: "Wet",      emoji: "💧", description: "Soaked by the rain at peak bloom.", valueMultiplier: 1.5, chance: 0.10, color: "text-blue-400"  },
+  wet:        { id: "wet",        name: "Wet",        emoji: "💧", description: "Soaked by the rain at peak bloom.",          valueMultiplier: 1.5, chance: 0.10, color: "text-blue-400"    },
+  windstruck: { id: "windstruck", name: "Windstruck", emoji: "🌪️", description: "Tossed by a tornado at the moment of bloom.",           valueMultiplier: 1.1, chance: 1.0,  color: "text-stone-400"   },
+  shocked:    { id: "shocked",    name: "Shocked",    emoji: "⚡", description: "Struck by lightning — or upgraded from a wet bloom.", valueMultiplier: 2.5, chance: 0.10, color: "text-yellow-300"  },
 };
 
 export interface FlowerSpecies {
@@ -1173,11 +1177,21 @@ export const FLOWERS: FlowerSpecies[] = [
 export const getFlower = (id: string): FlowerSpecies | undefined =>
   FLOWERS.find((f) => f.id === id);
 
-export const RARITY_CONFIG: Record<Rarity, { label: string; color: string; glow: string }> = {
-  common:    { label: "Common",    color: "text-gray-400",   glow: "" },
-  uncommon:  { label: "Uncommon",  color: "text-green-400",  glow: "shadow-[0_0_8px_rgba(74,222,128,0.4)]"  },
-  rare:      { label: "Rare",      color: "text-blue-400",   glow: "shadow-[0_0_8px_rgba(96,165,250,0.5)]"  },
-  legendary: { label: "Legendary", color: "text-yellow-400", glow: "shadow-[0_0_12px_rgba(250,204,21,0.6)]" },
-  mythic:    { label: "Mythic",    color: "text-pink-400",   glow: "shadow-[0_0_16px_rgba(244,114,182,0.7)]"},
-  exalted:   { label: "Exalted",   color: "text-black",      glow: "shadow-[0_0_24px_rgba(226,232,240,0.6)]" },
+export const RARITY_CONFIG: Record<Rarity, {
+  label: string;
+  color: string;
+  glow: string;
+  /** Border color while the plant is still growing (seed / sprout) — muted */
+  borderGrowing: string;
+  /** Border color when the plant has fully bloomed — vivid */
+  borderBloom: string;
+  /** Background fill when the plant has fully bloomed */
+  bgBloom: string;
+}> = {
+  common:    { label: "Common",    color: "text-gray-400",   glow: "",                                         borderGrowing: "border-gray-400/20",   borderBloom: "border-gray-400/60",   bgBloom: "bg-gray-400/10"   },
+  uncommon:  { label: "Uncommon",  color: "text-green-400",  glow: "shadow-[0_0_8px_rgba(74,222,128,0.4)]",   borderGrowing: "border-green-400/25",  borderBloom: "border-green-400/70",  bgBloom: "bg-green-400/10"  },
+  rare:      { label: "Rare",      color: "text-blue-400",   glow: "shadow-[0_0_8px_rgba(96,165,250,0.5)]",   borderGrowing: "border-blue-400/25",   borderBloom: "border-blue-400/70",   bgBloom: "bg-blue-400/10"   },
+  legendary: { label: "Legendary", color: "text-yellow-400", glow: "shadow-[0_0_12px_rgba(250,204,21,0.6)]",  borderGrowing: "border-yellow-400/30", borderBloom: "border-yellow-400/80", bgBloom: "bg-yellow-400/10" },
+  mythic:    { label: "Mythic",    color: "text-pink-400",   glow: "shadow-[0_0_16px_rgba(244,114,182,0.7)]", borderGrowing: "border-pink-400/30",   borderBloom: "border-pink-400/80",   bgBloom: "bg-pink-400/10"   },
+  exalted:   { label: "Exalted",   color: "text-black",      glow: "shadow-[0_0_24px_rgba(226,232,240,0.6)]", borderGrowing: "border-slate-300/25",  borderBloom: "border-slate-300/70",  bgBloom: "bg-slate-300/10"  },
 };

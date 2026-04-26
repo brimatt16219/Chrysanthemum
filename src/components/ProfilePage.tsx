@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getProfileByUsername, getPublicSave, updateDisplayFlower, updateStatus } from "../store/cloudSave";
+import { getProfileByUsername, getPublicSave, updateDisplayFlower, updateStatus, updateUsername } from "../store/cloudSave";
 import type { CloudProfile } from "../store/cloudSave";
 import type { GameState } from "../store/gameStore";
 import { ReadOnlyGarden } from "./ReadOnlyGarden";
@@ -12,10 +12,9 @@ import { Codex } from "./Codex";
 
 interface Props {
   username: string;
-  onBack: () => void;
 }
 
-export function ProfilePage({ username, onBack }: Props) {
+export function ProfilePage({ username }: Props) {
   const { user, profile: myProfile, state, refreshProfile } = useGame();
 
   const [profile, setProfile]             = useState<CloudProfile | null>(null);
@@ -65,9 +64,6 @@ export function ProfilePage({ username, onBack }: Props) {
     <div className="flex flex-col items-center justify-center py-24 gap-3 text-center">
       <p className="text-4xl">🔍</p>
       <p className="font-medium text-muted-foreground">Player not found</p>
-      <button onClick={onBack} className="text-xs text-primary hover:underline">
-        ← Back
-      </button>
     </div>
   );
 
@@ -75,21 +71,11 @@ export function ProfilePage({ username, onBack }: Props) {
   const displayRarity   = displayFlower ? RARITY_CONFIG[displayFlower.rarity] : null;
   const totalItems      = save?.inventory.reduce((s, i) => s + i.quantity, 0) ?? 0;
   const uniqueSpecies   = new Set(save?.inventory.map((i) => i.speciesId) ?? []).size;
-  const displayMutation = save?.inventory.find(
-    (i) => i.speciesId === profile.display_flower && i.mutation
-  )?.mutation;
-  const mutObj = displayMutation ? MUTATIONS[displayMutation as MutationType] : null;
+  const displayMutation = profile.display_mutation as MutationType | null;
+  const mutObj          = displayMutation ? MUTATIONS[displayMutation] : null;
 
   return (
     <div className="flex flex-col gap-6">
-
-      {/* Back button */}
-      <button
-        onClick={onBack}
-        className="text-xs text-muted-foreground hover:text-foreground transition-colors self-start flex items-center gap-1"
-      >
-        ← Back
-      </button>
 
       {/* Profile card */}
       <div className="bg-card/60 border border-border rounded-2xl p-5 flex items-center gap-5">
@@ -186,6 +172,15 @@ export function ProfilePage({ username, onBack }: Props) {
         <DisplayFlowerPicker
           discovered={save?.discovered ?? state.discovered}
           currentFlower={profile.display_flower}
+          currentMutation={profile.display_mutation}
+          onUpdated={refreshProfile}
+        />
+      )}
+
+      {/* Username editor — own profile only */}
+      {isOwnProfile && (
+        <UsernameEditor
+          currentUsername={profile.username}
           onUpdated={refreshProfile}
         />
       )}
@@ -202,7 +197,7 @@ export function ProfilePage({ username, onBack }: Props) {
       {save && save.grid.length > 0 && (
         <div className="bg-card/60 border border-border rounded-2xl p-5">
           <h3 className="text-sm font-semibold mb-4">Your Garden</h3>
-          <ReadOnlyGarden grid={save.grid} farmSize={save.farmSize} />
+          <ReadOnlyGarden grid={save.grid} farmSize={save.farmSize} farmRows={save.farmRows} />
         </div>
       )}
 
@@ -254,6 +249,88 @@ export function ProfilePage({ username, onBack }: Props) {
             setTimeout(() => setGiftSent(false), 3_000);
           }}
         />
+      )}
+    </div>
+  );
+}
+
+// ── Status editor ─────────────────────────────────────────────────────────
+
+// ── Username editor ───────────────────────────────────────────────────────
+
+interface UsernameEditorProps {
+  currentUsername: string;
+  onUpdated: () => Promise<void>;
+}
+
+function UsernameEditor({ currentUsername, onUpdated }: UsernameEditorProps) {
+  const { user } = useGame();
+  const [editing, setEditing] = useState(false);
+  const [value, setValue]     = useState(currentUsername);
+  const [saving, setSaving]   = useState(false);
+  const [error, setError]     = useState<string | null>(null);
+
+  const MAX = 20;
+  const changed = value.trim() !== currentUsername;
+
+  async function handleSave() {
+    if (!user || !changed) return;
+    setSaving(true);
+    setError(null);
+    const result = await updateUsername(user.id, value);
+    if (!result.ok) {
+      setError(result.error ?? "Something went wrong");
+      setSaving(false);
+      return;
+    }
+    await onUpdated();
+    setSaving(false);
+    setEditing(false);
+  }
+
+  return (
+    <div className="bg-card/60 border border-border rounded-2xl p-5">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <h3 className="text-sm font-semibold">Username</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            3–20 characters · letters, numbers, _ and -
+          </p>
+        </div>
+        <button
+          onClick={() => { setEditing((v) => !v); setValue(currentUsername); setError(null); }}
+          className="text-xs text-primary hover:underline flex-shrink-0"
+        >
+          {editing ? "Cancel" : "Change"}
+        </button>
+      </div>
+
+      {!editing ? (
+        <p className="text-sm font-mono text-foreground">{currentUsername}</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <input
+            value={value}
+            onChange={(e) => { setValue(e.target.value.slice(0, MAX)); setError(null); }}
+            placeholder="New username"
+            className="w-full bg-background border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary transition-colors font-mono"
+          />
+          {error && (
+            <p className="text-xs text-red-400 font-mono">{error}</p>
+          )}
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground font-mono">
+              {value.trim().length}/{MAX}
+            </span>
+            <button
+              onClick={handleSave}
+              disabled={saving || !changed}
+              className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Save"}
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -336,25 +413,51 @@ function StatusEditor({ currentStatus, onUpdated }: StatusEditorProps) {
 // ── Display flower picker ─────────────────────────────────────────────────
 
 interface PickerProps {
-  discovered: string[];   // codex discovered array from game state
+  discovered: string[];
   currentFlower: string;
+  currentMutation: string | null | undefined;
   onUpdated: () => Promise<void>;
 }
 
-function DisplayFlowerPicker({ discovered, currentFlower, onUpdated }: PickerProps) {
+function DisplayFlowerPicker({ discovered, currentFlower, currentMutation, onUpdated }: PickerProps) {
   const { user } = useGame();
-  const [open, setOpen]     = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [open, setOpen]                   = useState(false);
+  const [saving, setSaving]               = useState(false);
+  // Step 1: species selection. null = not yet picked in this session
+  const [pendingSpecies, setPendingSpecies] = useState<string | null>(null);
 
-  // Any species the player has discovered (base entry = "speciesId" in discovered)
   const unlockedFlowers = FLOWERS.filter((f) => discovered.includes(f.id));
 
-  async function handlePick(speciesId: string) {
+  // Species shown in step 1
+  const activeSpecies = pendingSpecies ?? currentFlower;
+
+  // Mutations the player has discovered for the actively-selected species
+  const unlockedMutations = Object.values(MUTATIONS).filter((m) =>
+    discovered.includes(`${activeSpecies}:${m.id}`)
+  );
+
+  function handleOpen() {
+    setPendingSpecies(null);
+    setOpen(true);
+  }
+
+  function handleCancel() {
+    setPendingSpecies(null);
+    setOpen(false);
+  }
+
+  function handlePickSpecies(speciesId: string) {
+    // If changing species, clear pending mutation choice and move to step 2
+    setPendingSpecies(speciesId);
+  }
+
+  async function handlePickMutation(mutation: string | null) {
     if (!user) return;
     setSaving(true);
-    await updateDisplayFlower(user.id, speciesId);
+    await updateDisplayFlower(user.id, pendingSpecies ?? currentFlower, mutation);
     await onUpdated();
     setSaving(false);
+    setPendingSpecies(null);
     setOpen(false);
   }
 
@@ -372,7 +475,7 @@ function DisplayFlowerPicker({ discovered, currentFlower, onUpdated }: PickerPro
         </div>
         {unlockedFlowers.length > 0 && (
           <button
-            onClick={() => setOpen((v) => !v)}
+            onClick={open ? handleCancel : handleOpen}
             className="text-xs text-primary hover:underline flex-shrink-0"
           >
             {open ? "Cancel" : "Change"}
@@ -387,7 +490,71 @@ function DisplayFlowerPicker({ discovered, currentFlower, onUpdated }: PickerPro
             Harvest your first flower to unlock display options.
           </p>
         </div>
-      ) : !open ? null : (
+      ) : !open ? null : pendingSpecies ? (
+        /* ── Step 2: pick a mutation for the selected species ── */
+        <div className="mt-2 space-y-2">
+          <div className="flex items-center gap-2 mb-1">
+            <button
+              onClick={() => setPendingSpecies(null)}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              ← Back
+            </button>
+            <p className="text-xs text-muted-foreground">
+              Choose a mutation for <span className="text-foreground font-medium">{getFlower(pendingSpecies)?.name}</span>
+            </p>
+          </div>
+
+          {/* No mutation option */}
+          {(() => {
+            const isActiveMutation = pendingSpecies === currentFlower && !currentMutation;
+            return (
+              <button
+                onClick={() => handlePickMutation(null)}
+                disabled={saving}
+                className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl border transition-all text-left
+                  ${isActiveMutation ? "border-primary bg-primary/20" : "border-border hover:border-primary/50 bg-background"}`}
+              >
+                <span className="text-2xl leading-none w-9 text-center">
+                  {getFlower(pendingSpecies)?.emoji.bloom}
+                </span>
+                <div>
+                  <p className="text-sm font-medium">No mutation</p>
+                  <p className="text-xs text-muted-foreground font-mono">Base bloom</p>
+                </div>
+              </button>
+            );
+          })()}
+
+          {unlockedMutations.length === 0 ? (
+            <p className="text-xs text-muted-foreground px-1 pt-1">
+              No mutations discovered for this flower yet.
+            </p>
+          ) : (
+            unlockedMutations.map((mut) => {
+              const isActiveMutation = pendingSpecies === currentFlower && mut.id === currentMutation;
+              return (
+              <button
+                key={mut.id}
+                onClick={() => handlePickMutation(mut.id)}
+                disabled={saving}
+                className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl border transition-all text-left
+                  ${isActiveMutation ? "border-primary bg-primary/20" : "border-border hover:border-primary/50 bg-background"}`}
+              >
+                <div className="relative w-9 text-center flex-shrink-0">
+                  <span className="text-2xl leading-none">{getFlower(pendingSpecies)?.emoji.bloom}</span>
+                  <span className="absolute -top-1 -right-0 text-sm leading-none">{mut.emoji}</span>
+                </div>
+                <div>
+                  <p className={`text-sm font-medium ${mut.color}`}>{mut.name}</p>
+                  <p className="text-xs text-muted-foreground font-mono">×{mut.valueMultiplier} value</p>
+                </div>
+              </button>
+            );})
+          )}
+        </div>
+      ) : (
+        /* ── Step 1: pick a species ── */
         <div className="flex flex-col gap-1.5 mt-2 max-h-72 overflow-y-auto">
           {unlockedFlowers.map((flower) => {
             const rarity    = RARITY_CONFIG[flower.rarity];
@@ -396,7 +563,7 @@ function DisplayFlowerPicker({ discovered, currentFlower, onUpdated }: PickerPro
             return (
               <button
                 key={flower.id}
-                onClick={() => handlePick(flower.id)}
+                onClick={() => handlePickSpecies(flower.id)}
                 disabled={saving}
                 className={`
                   flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-left

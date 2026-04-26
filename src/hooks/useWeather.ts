@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 import type { WeatherType } from "../data/weather";
 
@@ -8,6 +8,10 @@ export interface WeatherState {
   endsAt: number;
 }
 
+export interface ForecastEntry {
+  type: WeatherType;
+}
+
 const DEFAULT: WeatherState = {
   type:      "clear",
   startedAt: 0,
@@ -15,54 +19,74 @@ const DEFAULT: WeatherState = {
 };
 
 export function useWeather() {
-  const [weather, setWeather] = useState<WeatherState>(DEFAULT);
-  const [, setTick] = useState(0); // force re-render tick
+  const [weather, setWeather]   = useState<WeatherState>(DEFAULT);
+  const [forecast, setForecast] = useState<ForecastEntry[]>([]);
+  const [, setTick]             = useState(0);
+
+  // Keep a ref so callbacks always see the latest weather without stale closures
+  const weatherRef = useRef(weather);
+  useEffect(() => { weatherRef.current = weather; }, [weather]);
+
+  function applyRow(data: Record<string, unknown>) {
+    const next: WeatherState = {
+      type:      data.type as WeatherType,
+      startedAt: data.started_at as number,
+      endsAt:    data.ends_at as number,
+    };
+    weatherRef.current = next;
+    setWeather(next);
+
+    const raw = data.forecast as unknown[] | null;
+    setForecast(
+      Array.isArray(raw)
+        ? raw.map((e) =>
+            typeof e === "string"
+              ? { type: e as WeatherType }
+              : { type: (e as { type: string }).type as WeatherType }
+          )
+        : []
+    );
+  }
+
+  async function fetchAndApply() {
+    const { data } = await supabase
+      .from("weather")
+      .select("*")
+      .eq("id", 1)
+      .single();
+    if (data) applyRow(data as Record<string, unknown>);
+  }
+
+  async function advanceAndRefresh() {
+    await supabase.rpc("advance_weather");
+    await fetchAndApply();
+  }
 
   useEffect(() => {
-    // Load current weather on mount
     supabase
       .from("weather")
       .select("*")
       .eq("id", 1)
       .single()
       .then(({ data }) => {
-        if (data) {
-          setWeather({
-            type:      data.type as WeatherType,
-            startedAt: data.started_at,
-            endsAt:    data.ends_at,
-          });
-
-          // Client-side fallback: if weather has already expired, advance it
-          // immediately rather than waiting for the next GitHub Actions tick.
-          // advance_weather() is idempotent — it returns early if weather is
-          // still active, so it's safe to call on every page load.
-          if (data.ends_at < Date.now()) {
-            supabase.rpc("advance_weather").then(() => {
-              // Realtime subscription will automatically pick up the new weather
-            });
-          }
+        if (!data) return;
+        applyRow(data as Record<string, unknown>);
+        if ((data.ends_at as number) < Date.now()) {
+          advanceAndRefresh();
         }
       });
 
-    // Subscribe to realtime changes
+    // Realtime — still subscribe as a fast-path when it works
     const channel = supabase
       .channel("weather-changes")
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "weather" },
-        (payload) => {
-          const d = payload.new;
-          setWeather({
-            type:      d.type as WeatherType,
-            startedAt: d.started_at,
-            endsAt:    d.ends_at,
-          });
-        }
+        (payload) => applyRow(payload.new as Record<string, unknown>)
       )
       .subscribe();
 
-    // Tick every second so isActive re-evaluates when weather expires
+    // Per-second tick for countdown display
     const ticker = setInterval(() => setTick((n) => n + 1), 1_000);
 
     return () => {
@@ -71,10 +95,39 @@ export function useWeather() {
     };
   }, []);
 
-  const now        = Date.now();
-  const isActive   = weather.endsAt > now && weather.type !== "clear";
-  const msLeft     = Math.max(0, weather.endsAt - now);
-  const activeType = isActive ? weather.type : "clear";
+  // When weather expires while the tab is open: advance immediately, then
+  // keep polling every 5 s until the row actually moves forward (guards
+  // against Realtime delays or a silent RPC failure).
+  useEffect(() => {
+    if (weather.endsAt <= 0) return;
 
-  return { weather, activeType, isActive, msLeft };
+    const msUntilExpiry = weather.endsAt - Date.now();
+
+    // Schedule the first advance call
+    const firstShot = setTimeout(async () => {
+      await advanceAndRefresh();
+
+      const retryId = setInterval(async () => {
+        if (weatherRef.current.endsAt > Date.now()) {
+          clearInterval(retryId);
+          return;
+        }
+        await advanceAndRefresh();
+      }, 5_000);
+
+      // Clean up retry loop after 2 min regardless
+      setTimeout(() => clearInterval(retryId), 2 * 60_000);
+    }, Math.max(0, msUntilExpiry) + 500);
+
+    return () => clearTimeout(firstShot);
+  }, [weather.endsAt]);
+
+  const now         = Date.now();
+  const isActive    = weather.endsAt > now && weather.type !== "clear";
+  const msLeft      = Math.max(0, weather.endsAt - now);
+  // msUntilNext counts down regardless of clear vs active — used for forecast timing
+  const msUntilNext = msLeft;
+  const activeType  = isActive ? weather.type : "clear";
+
+  return { weather, activeType, isActive, msLeft, msUntilNext, forecast };
 }

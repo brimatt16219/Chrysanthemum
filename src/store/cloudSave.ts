@@ -5,6 +5,7 @@ export interface CloudProfile {
   id: string;
   username: string;
   display_flower: string;
+  display_mutation: string | null;
   status: string | null;
   created_at: string;
 }
@@ -47,13 +48,38 @@ export async function createProfile(
 
 export async function updateDisplayFlower(
   userId: string,
-  speciesId: string
+  speciesId: string,
+  mutation: string | null = null
 ): Promise<boolean> {
   const { error } = await supabase
     .from("users")
-    .update({ display_flower: speciesId })
+    .update({ display_flower: speciesId, display_mutation: mutation })
     .eq("id", userId);
   return !error;
+}
+
+export async function updateUsername(
+  userId: string,
+  newUsername: string
+): Promise<{ ok: boolean; error?: string }> {
+  const trimmed = newUsername.trim();
+  if (trimmed.length < 3 || trimmed.length > 20) {
+    return { ok: false, error: "Username must be 3–20 characters" };
+  }
+  if (!/^[a-zA-Z0-9_-]+$/.test(trimmed)) {
+    return { ok: false, error: "Only letters, numbers, _ and - allowed" };
+  }
+
+  const { error } = await supabase
+    .from("users")
+    .update({ username: trimmed })
+    .eq("id", userId);
+
+  if (error) {
+    if (error.code === "23505") return { ok: false, error: "Username already taken" };
+    return { ok: false, error: "Failed to update username" };
+  }
+  return { ok: true };
 }
 
 export async function updateStatus(
@@ -85,17 +111,18 @@ export async function loadCloudSave(userId: string): Promise<GameState | null> {
     if (result.error || !result.data) return null;
     const data = result.data;
     return {
-      coins:         data.coins,
-      farmSize:      data.farm_size,
-      farmRows:      data.farm_rows ?? data.farm_size, // backfill: square for old saves
-      shopSlots:     data.shop_slots ?? 4,
-      grid:          data.grid,
-      inventory:     data.inventory,
-      fertilizers:   data.fertilizers,
-      shop:          data.shop,
-      lastShopReset: data.last_shop_reset,
-      lastSaved:     data.last_saved,
-      discovered:    (data.discovered as string[]) ?? [],
+      coins:                data.coins,
+      farmSize:             data.farm_size,
+      farmRows:             data.farm_rows ?? data.farm_size, // backfill: square for old saves
+      shopSlots:            data.shop_slots ?? 4,
+      grid:                 data.grid,
+      inventory:            data.inventory,
+      fertilizers:          data.fertilizers,
+      shop:                 data.shop,
+      lastShopReset:        data.last_shop_reset,
+      lastSaved:            data.last_saved,
+      discovered:           (data.discovered as string[]) ?? [],
+      weatherForecastSlots: (data.weather_forecast_slots as number) ?? 0,
     } as GameState;
   } catch {
     return null;
@@ -109,19 +136,20 @@ export async function saveToCloud(
   const { error } = await supabase
     .from("game_saves")
     .upsert({
-      user_id:         userId,
-      coins:           state.coins,
-      farm_size:       state.farmSize,
-      farm_rows:       state.farmRows,
-      shop_slots:      state.shopSlots,
-      grid:            state.grid,
-      inventory:       state.inventory,
-      fertilizers:     state.fertilizers,
-      shop:            state.shop,
-      last_shop_reset: state.lastShopReset,
-      last_saved:      Date.now(),
-      discovered:      state.discovered ?? [],
-      updated_at:      new Date().toISOString(),
+      user_id:                userId,
+      coins:                  state.coins,
+      farm_size:              state.farmSize,
+      farm_rows:              state.farmRows,
+      shop_slots:             state.shopSlots,
+      grid:                   state.grid,
+      inventory:              state.inventory,
+      fertilizers:            state.fertilizers,
+      shop:                   state.shop,
+      last_shop_reset:        state.lastShopReset,
+      last_saved:             Date.now(),
+      discovered:             state.discovered ?? [],
+      weather_forecast_slots: state.weatherForecastSlots ?? 0,
+      updated_at:             new Date().toISOString(),
     });
 
   if (error) {
@@ -169,17 +197,18 @@ export async function getPublicSave(userId: string): Promise<GameState | null> {
   if (error || !data) return null;
 
   return {
-    coins:         data.coins,
-    farmSize:      data.farm_size,
-    farmRows:      data.farm_rows ?? data.farm_size,
-    shopSlots:     data.shop_slots ?? 4,
-    grid:          data.grid,
-    inventory:     data.inventory,
-    fertilizers:   data.fertilizers,
-    shop:          data.shop,
-    lastShopReset: data.last_shop_reset,
-    lastSaved:     data.last_saved,
-    discovered:    (data.discovered as string[]) ?? [],
+    coins:                data.coins,
+    farmSize:             data.farm_size,
+    farmRows:             data.farm_rows ?? data.farm_size,
+    shopSlots:            data.shop_slots ?? 4,
+    grid:                 data.grid,
+    inventory:            data.inventory,
+    fertilizers:          data.fertilizers,
+    shop:                 data.shop,
+    lastShopReset:        data.last_shop_reset,
+    lastSaved:            data.last_saved,
+    discovered:           (data.discovered as string[]) ?? [],
+    weatherForecastSlots: (data.weather_forecast_slots as number) ?? 0,
   } as GameState;
 }
 
@@ -397,6 +426,7 @@ export interface LeaderboardEntry {
   id: string;
   username: string;
   display_flower: string;
+  display_mutation: string | null;
   coins: number;
   farm_size: number;
   discovered_count: number;

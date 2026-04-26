@@ -6,7 +6,8 @@ import {
   getMyRank,
   type LeaderboardEntry,
 } from "../store/cloudSave";
-import { getFlower, RARITY_CONFIG } from "../data/flowers";
+import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
+import type { MutationType } from "../data/flowers";
 import { getTotalCodexEntries } from "../store/gameStore";
 
 interface Props {
@@ -194,8 +195,9 @@ export function LeaderboardPage({ onViewProfile }: Props) {
       {!loading && sortedEntries.length > 0 && (
         <div className="flex flex-col gap-2">
           {sortedEntries.map((entry) => {
-            const flower = getFlower(entry.display_flower);
-            const rarity = flower ? RARITY_CONFIG[flower.rarity] : null;
+            const flower  = getFlower(entry.display_flower);
+            const rarity  = flower ? RARITY_CONFIG[flower.rarity] : null;
+            const mutObj  = entry.display_mutation ? MUTATIONS[entry.display_mutation as MutationType] : null;
             const isMe   = entry.id === user?.id;
             const medal  = RANK_MEDALS[entry.rank];
             const codexPct = TOTAL_CODEX > 0
@@ -227,11 +229,14 @@ export function LeaderboardPage({ onViewProfile }: Props) {
 
                 {/* Avatar */}
                 <div className={`
-                  w-10 h-10 rounded-xl border flex items-center justify-center
+                  relative w-10 h-10 rounded-xl border flex items-center justify-center
                   text-xl flex-shrink-0 border-border bg-background
                   ${rarity?.glow ?? ""}
                 `}>
                   {flower?.emoji.bloom ?? "🌱"}
+                  {mutObj && (
+                    <span className="absolute -top-1 -right-1 text-sm leading-none">{mutObj.emoji}</span>
+                  )}
                 </div>
 
                 {/* Info */}

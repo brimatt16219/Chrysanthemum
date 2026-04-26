@@ -137,6 +137,12 @@ export function ShopSlotCard({ slot }: Props) {
   const isNew      = !state.discovered.includes(species.id);
   const isComplete = getSpeciesCompletion(state.discovered, species.id).found ===
                    getSpeciesCompletion(state.discovered, species.id).total;
+  const ownedSeeds = state.inventory.find(
+    (i) => i.speciesId === species.id && i.isSeed
+  )?.quantity ?? 0;
+  const ownedBlooms = state.inventory.find(
+    (i) => i.speciesId === species.id && !i.isSeed
+  )?.quantity ?? 0;
 
   function handleBuy() {
     const next = buyFromShop(state, slot.speciesId);
@@ -197,6 +203,10 @@ export function ShopSlotCard({ slot }: Props) {
         <p>Seed → Sprout: {formatDuration(species.growthTime.seed)}</p>
         <p>Sprout → Bloom: {formatDuration(species.growthTime.sprout)}</p>
         <p className="text-foreground/60">Sells for: {species.sellValue} 🟡</p>
+        <p className={`mt-1 ${ownedSeeds > 0 || ownedBlooms > 0 ? "text-primary/70" : "text-muted-foreground/50"}`}>
+          You own: {ownedSeeds} seed{ownedSeeds !== 1 ? "s" : ""}
+          {ownedBlooms > 0 && ` · ${ownedBlooms} bloom${ownedBlooms !== 1 ? "s" : ""}`}
+        </p>
       </div>
 
       <div className="flex items-center justify-between mt-auto pt-1">

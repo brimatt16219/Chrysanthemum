@@ -146,7 +146,7 @@ export function SendGiftModal({ receiverId, receiverUsername, onClose, onSent }:
             <button
               onClick={handleSend}
               disabled={selectedIdx === null || sending}
-              className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-40"
+              className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-40 text-center"
             >
               {sending ? "Sending..." : selectedIdx !== null ? `Send ${getFlower(items[selectedIdx]?.speciesId)?.name ?? "flower"} 🎁` : "Select a flower to send"}
             </button>

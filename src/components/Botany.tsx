@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useGame } from "../store/GameContext";
 import { FLOWERS, RARITY_CONFIG, getFlower, type MutationType } from "../data/flowers";
 import { MUTATIONS } from "../data/flowers";
@@ -271,6 +271,29 @@ export function Botany() {
   const [activeRarity, setActiveRarity]         = useState<Rarity | null>(null);
   const [resultSpeciesId, setResultSpeciesId]   = useState<string | null>(null);
   const [convertAllResult, setConvertAllResult] = useState<string[] | null>(null);
+  const [autoConvert, setAutoConvert]           = useState<boolean>(() =>
+    localStorage.getItem("botany_auto_convert") === "true"
+  );
+
+  function toggleAutoConvert() {
+    setAutoConvert((v) => {
+      const next = !v;
+      localStorage.setItem("botany_auto_convert", String(next));
+      return next;
+    });
+  }
+
+  // When auto-convert is on, run conversions whenever inventory changes
+  useEffect(() => {
+    if (!autoConvert) return;
+    BOTANY_RARITY_ORDER.forEach((rarity) => {
+      const required = BOTANY_REQUIREMENTS[rarity] ?? 0;
+      if (getTotalEligible(rarity) >= required) {
+        handleConvertAll(rarity);
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoConvert, state.inventory]);
 
   function getEligibleItems(rarity: Rarity): InventoryItem[] {
     return state.inventory.filter((item) => {
@@ -329,6 +352,30 @@ export function Botany() {
           Combine harvested flowers to receive a rare seed of the next rarity.
           Undiscovered species are prioritised.
         </p>
+      </div>
+
+      {/* Auto-convert toggle */}
+      <div className="flex items-center justify-between bg-card/60 border border-border rounded-xl px-4 py-3">
+        <div>
+          <p className="text-xs font-semibold">Auto-Convert</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Automatically convert whenever you have enough flowers
+          </p>
+        </div>
+        <button
+          onClick={toggleAutoConvert}
+          className={`
+            relative w-10 h-5 rounded-full transition-colors duration-200 flex-shrink-0
+            ${autoConvert ? "bg-primary" : "bg-border"}
+          `}
+        >
+          <span
+            className={`
+              absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200
+              ${autoConvert ? "translate-x-5" : "translate-x-0.5"}
+            `}
+          />
+        </button>
       </div>
 
       {/* Result banners */}
