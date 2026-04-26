@@ -103,7 +103,7 @@ export function PlotTile({ plot, row, col, onEmptyClick, onHarvest, isSelected, 
               relative ${cellSize} rounded-xl border-2 transition-all duration-200
               flex flex-col items-center justify-center gap-0.5
               ${isBloomed
-                ? `${rarity?.borderBloom ?? "border-primary/60"} bg-primary/10 hover:scale-110 hover:bg-primary/20 cursor-pointer ${rarity?.glow}`
+                ? `${rarity?.borderBloom ?? "border-primary/60"} ${rarity?.bgBloom ?? "bg-primary/10"} hover:scale-110 hover:brightness-125 cursor-pointer ${rarity?.glow}`
                 : open
                 ? `${rarity?.borderGrowing ?? "border-border/60"} bg-card/80 scale-105`
                 : `${rarity?.borderGrowing ?? "border-border/60"} bg-card/60 hover:bg-card/80 cursor-pointer`
