@@ -18,6 +18,8 @@ import {
 } from "./cloudSave";
 import { supabase } from "../lib/supabase";
 import { useWeather } from "../hooks/useWeather";
+import { useTimeOfDay } from "../hooks/useTimeOfDay";
+import type { TimeOfDay } from "../hooks/useTimeOfDay";
 import type { WeatherType } from "../data/weather";
 
 interface GameContextValue {
@@ -39,6 +41,8 @@ interface GameContextValue {
   activeWeather: WeatherType;
   weatherMsLeft: number;
   weatherIsActive: boolean;
+  // Time of day (UTC-based, for weather gating)
+  timeOfDay: TimeOfDay;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -74,6 +78,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   // Weather — global, shared across all players via Supabase Realtime
   const { activeType: activeWeather, isActive: weatherIsActive, msLeft: weatherMsLeft } = useWeather();
+  // Time of day — UTC-based, drives weather gating
+  const timeOfDay = useTimeOfDay();
 
   useEffect(() => { stateRef.current = state; }, [state]);
 
@@ -304,6 +310,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       activeWeather,
       weatherMsLeft,
       weatherIsActive,
+      timeOfDay,
     }}>
       {children}
     </GameContext.Provider>
