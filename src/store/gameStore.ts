@@ -62,6 +62,8 @@ export interface GameState {
   // Codex — tracks every species + mutation combo ever harvested
   // Format: "speciesId" for base, "speciesId:mutationId" for mutated
   discovered: string[];
+  // Weather forecast — number of upcoming slots the player has purchased (0 = not unlocked)
+  weatherForecastSlots: number;
 }
 
 export interface OfflineSummary {
@@ -206,17 +208,18 @@ function generateShop(shopSlots: number = DEFAULT_SHOP_SLOTS): ShopSlot[] {
 export function defaultState(): GameState {
   const size = 3;
   return {
-    coins:         100,
-    farmSize:      size,
-    farmRows:      size,
-    shopSlots:     DEFAULT_SHOP_SLOTS,
-    grid:          makeGrid(size, size),
-    inventory:     [],
-    fertilizers:   [{ type: "basic", quantity: 3 }],
-    shop:          generateShop(DEFAULT_SHOP_SLOTS),
-    lastShopReset: Date.now(),
-    lastSaved:     Date.now(),
-    discovered:    [],
+    coins:                100,
+    farmSize:             size,
+    farmRows:             size,
+    shopSlots:            DEFAULT_SHOP_SLOTS,
+    grid:                 makeGrid(size, size),
+    inventory:            [],
+    fertilizers:          [{ type: "basic", quantity: 3 }],
+    shop:                 generateShop(DEFAULT_SHOP_SLOTS),
+    lastShopReset:        Date.now(),
+    lastSaved:            Date.now(),
+    discovered:           [],
+    weatherForecastSlots: 0,
   };
 }
 
@@ -269,10 +272,11 @@ export function applyOfflineTick(save: GameState): { state: GameState; summary: 
 
   let updated: GameState = {
     ...save,
-    farmRows:   expectedRows,
-    grid:       needsRebuild ? makeGrid(expectedRows, expectedCols) : save.grid,
-    discovered: save.discovered ?? [],
-    shopSlots:  save.shopSlots  ?? DEFAULT_SHOP_SLOTS,
+    farmRows:             expectedRows,
+    grid:                 needsRebuild ? makeGrid(expectedRows, expectedCols) : save.grid,
+    discovered:           save.discovered           ?? [],
+    shopSlots:            save.shopSlots            ?? DEFAULT_SHOP_SLOTS,
+    weatherForecastSlots: save.weatherForecastSlots ?? 0,
   };
 
   let shopRestocked    = false;
@@ -290,6 +294,23 @@ export function applyOfflineTick(save: GameState): { state: GameState; summary: 
   return {
     state:   updated,
     summary: { minutesAway, readyToHarvest, shopRestocked },
+  };
+}
+
+// ── Weather forecast ────────────────────────────────────────────────────────
+
+export const FORECAST_SLOT_COSTS = [500, 2_000, 5_000, 15_000] as const;
+
+/** Purchase the next forecast slot tier. Returns null if already maxed or can't afford. */
+export function buyWeatherForecastSlot(state: GameState): GameState | null {
+  const current = state.weatherForecastSlots ?? 0;
+  if (current >= 4) return null;
+  const cost = FORECAST_SLOT_COSTS[current];
+  if (state.coins < cost) return null;
+  return {
+    ...state,
+    coins:                state.coins - cost,
+    weatherForecastSlots: current + 1,
   };
 }
 

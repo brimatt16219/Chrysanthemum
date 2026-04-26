@@ -16,6 +16,7 @@ import { Codex } from "./components/Codex";
 import { Botany } from "./components/Botany";
 import { WeatherOverlay } from "./components/WeatherOverlay";
 import { WeatherBanner } from "./components/WeatherBanner";
+import { WeatherForecastPanel } from "./components/WeatherForecastPanel";
 import { DayNightOverlay } from "./components/DayNightOverlay";
 import { useGame } from "./store/GameContext";
 import { useFriendRequests } from "./hooks/useFriendRequests";
@@ -47,6 +48,7 @@ export default function App() {
   const [tab, setTab]               = useState<Tab>("garden");
   const [socialView, setSocialView] = useState<SocialView>("search");
   const [showBanner, setShowBanner] = useState(true);
+  const [showForecast, setShowForecast] = useState(false);
 
   const [profileUsername, setProfileUsername]     = useState<string | null>(null);
   const [profileReturnTab, setProfileReturnTab]   = useState<Tab>("social");
@@ -135,6 +137,11 @@ export default function App() {
         <UpdateBanner onDismiss={() => setDismissedUpdate(true)} />
       )}
 
+      {/* Weather forecast panel */}
+      {showForecast && (
+        <WeatherForecastPanel onClose={() => setShowForecast(false)} />
+      )}
+
       {/* Day/night ambient tint — z-10, below weather overlay */}
       <DayNightOverlay period={dayPeriod} />
 
@@ -152,13 +159,19 @@ export default function App() {
             <span className="hidden sm:block text-lg">Chrysanthemum</span>
           </h1>
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Combined day/night + weather banner */}
-            <WeatherBanner
-              weatherType={activeWeather}
-              isActive={weatherIsActive}
-              msLeft={weatherMsLeft}
-              period={dayPeriod}
-            />
+            {/* Combined day/night + weather banner — click to open forecast */}
+            <button
+              onClick={() => setShowForecast(true)}
+              className="focus:outline-none"
+              title="View weather forecast"
+            >
+              <WeatherBanner
+                weatherType={activeWeather}
+                isActive={weatherIsActive}
+                msLeft={weatherMsLeft}
+                period={dayPeriod}
+              />
+            </button>
             <span className="text-sm font-mono">🟡 {state.coins.toLocaleString()}</span>
             {!authLoading && (
               user ? (

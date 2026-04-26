@@ -8,6 +8,10 @@ export interface WeatherState {
   endsAt: number;
 }
 
+export interface ForecastEntry {
+  type: WeatherType;
+}
+
 const DEFAULT: WeatherState = {
   type:      "clear",
   startedAt: 0,
@@ -15,8 +19,31 @@ const DEFAULT: WeatherState = {
 };
 
 export function useWeather() {
-  const [weather, setWeather] = useState<WeatherState>(DEFAULT);
-  const [, setTick] = useState(0); // force re-render tick
+  const [weather, setWeather]   = useState<WeatherState>(DEFAULT);
+  const [forecast, setForecast] = useState<ForecastEntry[]>([]);
+  const [, setTick]             = useState(0); // force re-render tick
+
+  function applyRow(data: Record<string, unknown>) {
+    setWeather({
+      type:      data.type as WeatherType,
+      startedAt: data.started_at as number,
+      endsAt:    data.ends_at as number,
+    });
+
+    // forecast is a jsonb array — each entry is { type: string } or just a string
+    const raw = data.forecast as unknown[] | null;
+    if (Array.isArray(raw)) {
+      setForecast(
+        raw.map((entry) =>
+          typeof entry === "string"
+            ? { type: entry as WeatherType }
+            : { type: (entry as { type: string }).type as WeatherType }
+        )
+      );
+    } else {
+      setForecast([]);
+    }
+  }
 
   useEffect(() => {
     // Load current weather on mount
@@ -27,17 +54,13 @@ export function useWeather() {
       .single()
       .then(({ data }) => {
         if (data) {
-          setWeather({
-            type:      data.type as WeatherType,
-            startedAt: data.started_at,
-            endsAt:    data.ends_at,
-          });
+          applyRow(data as Record<string, unknown>);
 
           // Client-side fallback: if weather has already expired, advance it
           // immediately rather than waiting for the next GitHub Actions tick.
           // advance_weather() is idempotent — it returns early if weather is
           // still active, so it's safe to call on every page load.
-          if (data.ends_at < Date.now()) {
+          if ((data.ends_at as number) < Date.now()) {
             supabase.rpc("advance_weather").then(() => {
               // Realtime subscription will automatically pick up the new weather
             });
@@ -52,12 +75,7 @@ export function useWeather() {
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "weather" },
         (payload) => {
-          const d = payload.new;
-          setWeather({
-            type:      d.type as WeatherType,
-            startedAt: d.started_at,
-            endsAt:    d.ends_at,
-          });
+          applyRow(payload.new as Record<string, unknown>);
         }
       )
       .subscribe();
@@ -76,5 +94,5 @@ export function useWeather() {
   const msLeft     = Math.max(0, weather.endsAt - now);
   const activeType = isActive ? weather.type : "clear";
 
-  return { weather, activeType, isActive, msLeft };
+  return { weather, activeType, isActive, msLeft, forecast };
 }

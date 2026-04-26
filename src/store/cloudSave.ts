@@ -111,17 +111,18 @@ export async function loadCloudSave(userId: string): Promise<GameState | null> {
     if (result.error || !result.data) return null;
     const data = result.data;
     return {
-      coins:         data.coins,
-      farmSize:      data.farm_size,
-      farmRows:      data.farm_rows ?? data.farm_size, // backfill: square for old saves
-      shopSlots:     data.shop_slots ?? 4,
-      grid:          data.grid,
-      inventory:     data.inventory,
-      fertilizers:   data.fertilizers,
-      shop:          data.shop,
-      lastShopReset: data.last_shop_reset,
-      lastSaved:     data.last_saved,
-      discovered:    (data.discovered as string[]) ?? [],
+      coins:                data.coins,
+      farmSize:             data.farm_size,
+      farmRows:             data.farm_rows ?? data.farm_size, // backfill: square for old saves
+      shopSlots:            data.shop_slots ?? 4,
+      grid:                 data.grid,
+      inventory:            data.inventory,
+      fertilizers:          data.fertilizers,
+      shop:                 data.shop,
+      lastShopReset:        data.last_shop_reset,
+      lastSaved:            data.last_saved,
+      discovered:           (data.discovered as string[]) ?? [],
+      weatherForecastSlots: (data.weather_forecast_slots as number) ?? 0,
     } as GameState;
   } catch {
     return null;
@@ -135,19 +136,20 @@ export async function saveToCloud(
   const { error } = await supabase
     .from("game_saves")
     .upsert({
-      user_id:         userId,
-      coins:           state.coins,
-      farm_size:       state.farmSize,
-      farm_rows:       state.farmRows,
-      shop_slots:      state.shopSlots,
-      grid:            state.grid,
-      inventory:       state.inventory,
-      fertilizers:     state.fertilizers,
-      shop:            state.shop,
-      last_shop_reset: state.lastShopReset,
-      last_saved:      Date.now(),
-      discovered:      state.discovered ?? [],
-      updated_at:      new Date().toISOString(),
+      user_id:                userId,
+      coins:                  state.coins,
+      farm_size:              state.farmSize,
+      farm_rows:              state.farmRows,
+      shop_slots:             state.shopSlots,
+      grid:                   state.grid,
+      inventory:              state.inventory,
+      fertilizers:            state.fertilizers,
+      shop:                   state.shop,
+      last_shop_reset:        state.lastShopReset,
+      last_saved:             Date.now(),
+      discovered:             state.discovered ?? [],
+      weather_forecast_slots: state.weatherForecastSlots ?? 0,
+      updated_at:             new Date().toISOString(),
     });
 
   if (error) {
@@ -195,17 +197,18 @@ export async function getPublicSave(userId: string): Promise<GameState | null> {
   if (error || !data) return null;
 
   return {
-    coins:         data.coins,
-    farmSize:      data.farm_size,
-    farmRows:      data.farm_rows ?? data.farm_size,
-    shopSlots:     data.shop_slots ?? 4,
-    grid:          data.grid,
-    inventory:     data.inventory,
-    fertilizers:   data.fertilizers,
-    shop:          data.shop,
-    lastShopReset: data.last_shop_reset,
-    lastSaved:     data.last_saved,
-    discovered:    (data.discovered as string[]) ?? [],
+    coins:                data.coins,
+    farmSize:             data.farm_size,
+    farmRows:             data.farm_rows ?? data.farm_size,
+    shopSlots:            data.shop_slots ?? 4,
+    grid:                 data.grid,
+    inventory:            data.inventory,
+    fertilizers:          data.fertilizers,
+    shop:                 data.shop,
+    lastShopReset:        data.last_shop_reset,
+    lastSaved:            data.last_saved,
+    discovered:           (data.discovered as string[]) ?? [],
+    weatherForecastSlots: (data.weather_forecast_slots as number) ?? 0,
   } as GameState;
 }
 
