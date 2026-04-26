@@ -208,6 +208,35 @@ export function defaultState(): GameState {
   };
 }
 
+// ── Anti-tamper sanitization ───────────────────────────────────────────────
+// Clamp any client-controlled timestamp so a tampered save (e.g. user set
+// system clock forward, or directly edited localStorage) cannot grant offline
+// progress, instant-grow plants, or instant shop restocks.
+const MAX_OFFLINE_MS = 24 * 60 * 60 * 1_000; // cap offline catch-up at 24h
+
+export function sanitizeSave(save: GameState): GameState {
+  const now = Date.now();
+
+  // Clamp lastSaved/lastShopReset to <= now, and to no further in the past
+  // than MAX_OFFLINE_MS (prevents claiming weeks of offline growth).
+  const minStamp     = now - MAX_OFFLINE_MS;
+  const lastSaved    = Math.min(now, Math.max(minStamp, Number(save.lastSaved)    || now));
+  const lastShopReset = Math.min(now, Number(save.lastShopReset) || now);
+
+  // Clamp every plant's timePlanted to <= now (prevents future-dated plants).
+  const grid = (save.grid ?? []).map((row) =>
+    row.map((plot) => {
+      if (!plot?.plant) return plot;
+      const tp = Number(plot.plant.timePlanted) || now;
+      return tp > now
+        ? { ...plot, plant: { ...plot.plant, timePlanted: now } }
+        : plot;
+    })
+  );
+
+  return { ...save, grid, lastSaved, lastShopReset };
+}
+
 // ── Save / Load ────────────────────────────────────────────────────────────
 
 export function saveGame(state: GameState): void {
@@ -244,6 +273,8 @@ export function resetGame(): GameState {
 // ── Offline tick ───────────────────────────────────────────────────────────
 
 export function applyOfflineTick(save: GameState): { state: GameState; summary: OfflineSummary } {
+  // Strip any client-side tampering (future timestamps, etc.) before ticking.
+  save = sanitizeSave(save);
   const now         = Date.now();
   const minutesAway = Math.floor((now - save.lastSaved) / 60_000);
 
