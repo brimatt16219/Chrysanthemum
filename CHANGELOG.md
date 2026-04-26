@@ -1,3 +1,27 @@
+## [v1.5.0] — 2026-04-26 — Weather & Mutations Update
+
+### Added
+- **Weather Forecast** — unlock up to 8 slots to preview upcoming weather events with estimated start times; upgrade cost scales from 500 → 300,000 coins
+- **⛈️ Thunderstorm** — 2× growth speed; unmutated plants can become Wet or Shocked directly, and Wet plants can upgrade to Shocked over the course of the storm (~50% chance over 20 min)
+- **🌪️ Tornado** — instantly applies a random mutation to every bloomed flower in the garden
+- **⚡ Shocked mutation** — applied by thunderstorm; upgraded from Wet during a storm
+- **💨 Windstruck mutation** — applied instantly by tornado
+- **Day/night ambient tint** — screen shifts through dawn, morning, midday, afternoon, sunset, dusk, night, and midnight
+- **Display flower mutation badge** — your selected mutation shows as a small icon on your profile flower in the HUD and social tab
+
+### Changed
+- Profile page is now embedded inside the Social tab — the 5-button nav (Search, Friends, Gifts, Ranks, My Profile) stays visible at all times
+- Wet → Shocked upgrade now applies gradually (~50% chance over the storm duration) instead of instantly on first tick
+
+### Fixed
+- Rarity borders and backgrounds now correctly display on other players' profile gardens (#30)
+- Fertilizers in the plot tooltip are now sorted by effectiveness, weakest to strongest (#31)
+- Social tab buttons are equal-width and emoji-only on mobile (#29)
+- Social tab no longer deselects in the navbar when viewing a profile
+- Weather forecast no longer shows "0m 0s" during clear skies
+
+---
+
 ## [v1.4.0] — 2026-04-26 — Mutations Update
 
 ### Added
