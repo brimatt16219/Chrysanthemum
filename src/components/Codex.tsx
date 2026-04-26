@@ -196,7 +196,7 @@ export function Codex({ discoveredOverride, compact = false }: Props) {
                     </span>
                   </div>
                   {hasBase && (
-                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                    <p className={`text-xs text-muted-foreground mt-0.5 ${isExpanded ? "" : "truncate"}`}>
                       {f.description}
                     </p>
                   )}

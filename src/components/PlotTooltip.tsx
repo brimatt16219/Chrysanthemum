@@ -28,15 +28,15 @@ function formatMs(ms: number): string {
 }
 
 export function PlotTooltip({ plant, row, col, onClose }: Props) {
-  const { state, update } = useGame();
+  const { state, update, activeWeather } = useGame();
   const [showFertPicker, setShowFertPicker] = useState(false);
 
   const now     = Date.now();
   const species = getFlower(plant.speciesId);
   if (!species) return null;
 
-  const stage         = getCurrentStage(plant, now);
-  const msLeft        = getMsUntilNextStage(plant, now);
+  const stage         = getCurrentStage(plant, now, activeWeather);
+  const msLeft        = getMsUntilNextStage(plant, now, activeWeather);
   const rarity        = RARITY_CONFIG[species.rarity];
   const isBloomed     = stage === "bloom";
   const hasFertilizer = !!plant.fertilizer;

@@ -32,10 +32,9 @@ export function HarvestPopup({ speciesId, mutation, onDone }: Props) {
   return (
     <div
       className={`
-        pointer-events-none absolute -top-12 left-1/2 -translate-x-1/2
-        flex flex-col items-center gap-0.5 z-30
+        pointer-events-none flex flex-col items-center gap-0.5
         transition-all duration-300
-        ${visible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"}
+        ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}
       `}
     >
       {/* Mutation badge */}

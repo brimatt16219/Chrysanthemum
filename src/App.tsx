@@ -169,7 +169,7 @@ export default function App() {
                     <span className="text-base">
                       {getFlower(profile?.display_flower ?? "daisy")?.emoji.bloom ?? "🌸"}
                     </span>
-                    <span>{profile?.username ?? "..."}</span>
+                    <span className="hidden sm:inline">{profile?.username ?? "..."}</span>
                   </button>
                   <button
                     onClick={signOut}

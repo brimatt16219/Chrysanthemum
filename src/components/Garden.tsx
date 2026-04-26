@@ -3,14 +3,17 @@ import { useGame } from "../store/GameContext";
 import { useGrowthTick } from "../hooks/useGrowthTick";
 import { PlotTile } from "./PlotTile";
 import { SeedPicker } from "./SeedPicker";
+import { HarvestPopup } from "./HarvestPopup";
 import { getCurrentStage, plantSeed, upgradeFarm } from "../store/gameStore";
 import { getNextUpgrade, getCurrentTier } from "../data/upgrades";
+import type { MutationType } from "../data/flowers";
 
 export function Garden() {
   const { state, update } = useGame();
   useGrowthTick(5_000);
 
-  const [selectedPlot, setSelectedPlot] = useState<{ row: number; col: number } | null>(null);
+  const [selectedPlot, setSelectedPlot]     = useState<{ row: number; col: number } | null>(null);
+  const [harvestPopup, setHarvestPopup]     = useState<{ speciesId: string; mutation?: MutationType } | null>(null);
 
   const nextUpgrade = getNextUpgrade(state.farmRows, state.farmSize);
   const currentTier = getCurrentTier(state.farmRows, state.farmSize);
@@ -75,6 +78,7 @@ export function Garden() {
                 row={row}
                 col={col}
                 onEmptyClick={() => handlePlotClick(row, col)}
+                onHarvest={(speciesId, mutation) => setHarvestPopup({ speciesId, mutation })}
                 isSelected={selectedPlot?.row === row && selectedPlot?.col === col}
                 cellSize={cellSize}
               />
@@ -120,6 +124,20 @@ export function Garden() {
 
       {nextUpgrade === null && (
         <p className="text-xs text-yellow-400 font-mono">✦ Max farm size reached</p>
+      )}
+
+      {/* Harvest popup rendered here, outside the grid, so it's never
+          clipped by grid cell stacking contexts */}
+      {harvestPopup && (
+        <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center">
+          <div className="absolute bottom-24 left-1/2 -translate-x-1/2">
+            <HarvestPopup
+              speciesId={harvestPopup.speciesId}
+              mutation={harvestPopup.mutation}
+              onDone={() => setHarvestPopup(null)}
+            />
+          </div>
+        </div>
       )}
     </div>
   );

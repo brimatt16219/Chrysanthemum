@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { getFlower, RARITY_CONFIG } from "../data/flowers";
 import { FERTILIZERS } from "../data/upgrades";
 import { useGame } from "../store/GameContext";
@@ -36,6 +37,12 @@ function rarityBadgeClass(rarity: Rarity): string {
 
 export function ShopSlotCard({ slot }: Props) {
   const { state, update } = useGame();
+  const [justBought, setJustBought] = useState(false);
+
+  function flashBought() {
+    setJustBought(true);
+    setTimeout(() => setJustBought(false), 800);
+  }
 
   // ── Empty placeholder slot ───────────────────────────────────────────────
   if (slot.isEmpty) {
@@ -55,14 +62,16 @@ export function ShopSlotCard({ slot }: Props) {
 
     function handleBuyFert() {
       const next = buyFertilizer(state, slot.fertilizerType!);
-      if (next) update(next);
+      if (next) { update(next); flashBought(); }
     }
 
     return (
       <div
         className={`
           flex flex-col gap-3 bg-card/60 border rounded-xl p-4 transition-all duration-200
-          ${outOfStock ? "border-border opacity-50" : "border-border hover:border-primary/40"}
+          ${outOfStock ? "border-border opacity-50"
+            : justBought ? "border-green-400/70 bg-green-400/5"
+            : "border-border hover:border-primary/40"}
         `}
       >
         <div className="flex items-start justify-between">
@@ -88,13 +97,15 @@ export function ShopSlotCard({ slot }: Props) {
             disabled={!canAfford || outOfStock}
             className={`
               px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150
-              ${canAfford && !outOfStock
+              ${justBought
+                ? "bg-green-500 text-white scale-105"
+                : canAfford && !outOfStock
                 ? "bg-primary text-primary-foreground hover:scale-105"
                 : "bg-secondary text-muted-foreground cursor-not-allowed"
               }
             `}
           >
-            {slot.price} 🟡
+            {justBought ? "✓ Bought!" : `${slot.price} 🟡`}
           </button>
         </div>
       </div>
@@ -114,7 +125,7 @@ export function ShopSlotCard({ slot }: Props) {
 
   function handleBuy() {
     const next = buyFromShop(state, slot.speciesId);
-    if (next) update(next);
+    if (next) { update(next); flashBought(); }
   }
 
   return (
@@ -123,6 +134,8 @@ export function ShopSlotCard({ slot }: Props) {
         relative flex flex-col gap-3 bg-card/60 border rounded-xl p-4 transition-all duration-200
         ${outOfStock
           ? "border-border opacity-50"
+          : justBought
+          ? "border-green-400/70 bg-green-400/5"
           : `border-border hover:border-primary/40 ${rarity.glow}`
         }
       `}
@@ -175,13 +188,15 @@ export function ShopSlotCard({ slot }: Props) {
           disabled={!canAfford || outOfStock}
           className={`
             px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150
-            ${canAfford && !outOfStock
+            ${justBought
+              ? "bg-green-500 text-white scale-105"
+              : canAfford && !outOfStock
               ? "bg-primary text-primary-foreground hover:scale-105 hover:shadow-[0_0_10px_rgba(139,92,246,0.4)]"
               : "bg-secondary text-muted-foreground cursor-not-allowed"
             }
           `}
         >
-          {slot.price} 🟡
+          {justBought ? "✓ Bought!" : `${slot.price} 🟡`}
         </button>
       </div>
     </div>

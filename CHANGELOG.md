@@ -1,3 +1,15 @@
+## [v1.2.2] — 2026-04-26 — Polish & Fixes
+
+### Fixed
+- Harvest popup now appears immediately on harvest instead of on the next plant action
+- Shop cards flash green with "✓ Bought!" confirmation to prevent accidental double-purchases
+- Floral Codex descriptions no longer truncate on mobile — tap any entry to expand
+- Weather tooltip now correctly shows accelerated stage and countdown during rain
+- Username hidden on mobile HUD to reduce crowding — profile emoji remains tappable
+- Weather countdown on mobile now shows minutes only instead of minutes and seconds
+
+---
+
 ## [v1.2.1] — 2026-04-25 — Bug Fixes & Balancing
 
 ### Fixed

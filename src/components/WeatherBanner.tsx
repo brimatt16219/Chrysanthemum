@@ -28,6 +28,11 @@ function formatTimeLeft(ms: number): string {
   return `${s}s`;
 }
 
+function formatTimeLeftShort(ms: number): string {
+  const m = Math.max(0, Math.floor(ms / 60_000));
+  return `${m}m`;
+}
+
 const accentClass: Record<WeatherType, string> = {
   clear:           "border-border text-muted-foreground",
   rain:            "border-blue-400/40 text-blue-300",
@@ -82,7 +87,8 @@ export function WeatherBanner({ weatherType, isActive, msLeft, period }: Props) 
           <span className="opacity-40">·</span>
           <span className="text-sm">{def.emoji}</span>
           <span className="font-semibold hidden">{SHORT_NAMES[weatherType]}</span>
-          <span className="opacity-70">{formatTimeLeft(timeLeft)}</span>
+          <span className="opacity-70 sm:hidden">{formatTimeLeftShort(timeLeft)}</span>
+          <span className="opacity-70 hidden sm:inline">{formatTimeLeft(timeLeft)}</span>
         </>
       )}
 
