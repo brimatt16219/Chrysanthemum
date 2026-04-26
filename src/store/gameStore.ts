@@ -758,12 +758,13 @@ export function harvestPlant(
 }
 
 const RARITY_PRIORITY: Record<Rarity, number> = {
-  exalted:   0,
-  mythic:    1,
-  legendary: 2,
-  rare:      3,
-  uncommon:  4,
-  common:    5,
+  prismatic: 0,
+  exalted:   1,
+  mythic:    2,
+  legendary: 3,
+  rare:      4,
+  uncommon:  5,
+  common:    6,
 };
 
 export function plantAll(state: GameState): GameState {
