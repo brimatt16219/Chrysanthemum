@@ -94,40 +94,44 @@ export function LeaderboardPage({ onViewProfile }: Props) {
         </button>
       </div>
 
-      {/* Tab + sort row — single flex row, equal-width buttons */}
-      <div className="flex gap-2">
-        {(["global", "friends"] as LeaderboardTab[]).map((t) => (
-          <button
-            key={t}
-            onClick={() => setActiveTab(t)}
-            className={`
-              flex-1 py-2 rounded-xl text-xs font-semibold transition-all text-center
-              ${activeTab === t
-                ? "bg-primary/20 border border-primary/50 text-primary"
-                : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
-              }
-            `}
-          >
-            {t === "global" ? "🌍" : "👥"}
-            <span className="hidden sm:inline ml-1 capitalize">{t}</span>
-          </button>
-        ))}
-        {(["coins", "codex"] as SortBy[]).map((s) => (
-          <button
-            key={s}
-            onClick={() => setSortBy(s)}
-            className={`
-              flex-1 py-2 rounded-xl text-xs font-semibold transition-all text-center
-              ${sortBy === s
-                ? "bg-primary/20 border border-primary/50 text-primary"
-                : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
-              }
-            `}
-          >
-            {s === "coins" ? "🟡" : "📖"}
-            <span className="hidden sm:inline ml-1 capitalize">{s}</span>
-          </button>
-        ))}
+      {/* Tab + sort rows */}
+      <div className="flex flex-col gap-2">
+        {/* Row 1: Global / Friends */}
+        <div className="flex gap-2">
+          {(["global", "friends"] as LeaderboardTab[]).map((t) => (
+            <button
+              key={t}
+              onClick={() => setActiveTab(t)}
+              className={`
+                flex-1 py-2 rounded-xl text-xs font-semibold transition-all text-center
+                ${activeTab === t
+                  ? "bg-primary/20 border border-primary/50 text-primary"
+                  : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
+                }
+              `}
+            >
+              {t === "global" ? "🌍 Global" : "👥 Friends"}
+            </button>
+          ))}
+        </div>
+        {/* Row 2: Coins / Codex */}
+        <div className="flex gap-2">
+          {(["coins", "codex"] as SortBy[]).map((s) => (
+            <button
+              key={s}
+              onClick={() => setSortBy(s)}
+              className={`
+                flex-1 py-2 rounded-xl text-xs font-semibold transition-all text-center
+                ${sortBy === s
+                  ? "bg-primary/20 border border-primary/50 text-primary"
+                  : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
+                }
+              `}
+            >
+              {s === "coins" ? "🟡 Coins" : "📖 Codex"}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Your rank banner */}
