@@ -18,6 +18,8 @@ const SHORT_NAMES: Record<WeatherType, string> = {
   star_shower:     "Stars",
   cold_front:      "Cold Front",
   heatwave:        "Heatwave",
+  thunderstorm:    "Storm",
+  tornado:         "Tornado",
 };
 
 function formatTimeLeft(ms: number): string {
@@ -41,6 +43,8 @@ const accentClass: Record<WeatherType, string> = {
   star_shower:     "border-indigo-400/40 text-indigo-300",
   cold_front:      "border-cyan-400/40 text-cyan-300",
   heatwave:        "border-orange-400/40 text-orange-300",
+  thunderstorm:    "border-slate-400/40 text-slate-300",
+  tornado:         "border-stone-400/40 text-stone-300",
 };
 
 const bgClass: Record<WeatherType, string> = {
@@ -51,6 +55,8 @@ const bgClass: Record<WeatherType, string> = {
   star_shower:     "bg-indigo-950/40",
   cold_front:      "bg-cyan-950/40",
   heatwave:        "bg-orange-950/40",
+  thunderstorm:    "bg-slate-950/60",
+  tornado:         "bg-stone-950/50",
 };
 
 export function WeatherBanner({ weatherType, isActive, msLeft, period }: Props) {

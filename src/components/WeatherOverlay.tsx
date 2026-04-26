@@ -40,17 +40,29 @@ function useParticles(count: number, active: boolean): Particle[] {
   return particles;
 }
 
+// ── Shared wrapper ────────────────────────────────────────────────────────
+// Always mounted — opacity drives the fade-in/out so transitions are smooth
+// across all weather changes including back to clear.
+function OverlayWrapper({ active, children }: { active: boolean; children: React.ReactNode }) {
+  return (
+    <div
+      className={`
+        pointer-events-none fixed inset-0 z-20 overflow-hidden
+        transition-opacity duration-1500
+        ${active ? "opacity-100" : "opacity-0"}
+      `}
+    >
+      {children}
+    </div>
+  );
+}
+
 // ── Rain ──────────────────────────────────────────────────────────────────
 function RainOverlay({ active }: { active: boolean }) {
   const drops = useParticles(25, active);
 
   return (
-    <div
-      className={`
-        pointer-events-none fixed inset-0 z-20 overflow-hidden transition-opacity duration-1000
-        ${active ? "opacity-100" : "opacity-0"}
-      `}
-    >
+    <OverlayWrapper active={active}>
       <div className="absolute inset-0 bg-blue-900/10" />
       {drops.map((d) => (
         <div
@@ -75,19 +87,14 @@ function RainOverlay({ active }: { active: boolean }) {
           100% { transform: translateY(110vh) rotate(15deg); opacity: 0; }
         }
       `}</style>
-    </div>
+    </OverlayWrapper>
   );
 }
 
 // ── Golden Hour ───────────────────────────────────────────────────────────
 function GoldenHourOverlay({ active }: { active: boolean }) {
   return (
-    <div
-      className={`
-        pointer-events-none fixed inset-0 z-20 overflow-hidden transition-opacity duration-1000
-        ${active ? "opacity-100" : "opacity-0"}
-      `}
-    >
+    <OverlayWrapper active={active}>
       <div className="absolute inset-0 bg-yellow-400/8" />
       <div
         className="absolute inset-x-0 -top-32 h-72"
@@ -119,40 +126,26 @@ function GoldenHourOverlay({ active }: { active: boolean }) {
           50%       { opacity: 0.9; transform: translate(-50%, -50%) scale(1.2); }
         }
       `}</style>
-    </div>
+    </OverlayWrapper>
   );
 }
 
 // ── Prismatic Skies ───────────────────────────────────────────────────────
-// Seven concentric circles centred below and outside the viewport.
-// cy=160 (well below the screen) + large radii = the arches appear high
-// up in the screen and never touch the bottom.
-// strokeWidth=7 with radii spaced 6 apart = bands butt up against each
-// other with no gap.
 function PrismaticSkiesOverlay({ active }: { active: boolean }) {
-  // Red outermost (largest r) → violet innermost (smallest r)
-  // Centre at cx=50, cy=160 so the arch peaks near the top of the viewport
-  // Radii spaced exactly strokeWidth apart to eliminate gaps
-  const SW = 7; // stroke width
+  const SW = 7;
   const bands = [
-    { color: "rgba(255,  0,  0, 0.05)", r: 130 }, // red
-    { color: "rgba(255,140,  0, 0.05)", r: 123 }, // orange
-    { color: "rgba(255,230,  0, 0.05)", r: 116 }, // yellow
-    { color: "rgba( 50,205, 50, 0.05)", r: 109 }, // green
-    { color: "rgba(  0,100,255, 0.05)", r: 102 }, // blue
-    { color: "rgba( 75,  0,200, 0.05)", r:  95 }, // indigo
-    { color: "rgba(148,  0,211, 0.05)", r:  88 }, // violet
+    { color: "rgba(255,  0,  0, 0.05)", r: 130 },
+    { color: "rgba(255,140,  0, 0.05)", r: 123 },
+    { color: "rgba(255,230,  0, 0.05)", r: 116 },
+    { color: "rgba( 50,205, 50, 0.05)", r: 109 },
+    { color: "rgba(  0,100,255, 0.05)", r: 102 },
+    { color: "rgba( 75,  0,200, 0.05)", r:  95 },
+    { color: "rgba(148,  0,211, 0.05)", r:  88 },
   ];
 
   return (
-    <div
-      className={`
-        pointer-events-none fixed inset-0 z-20 overflow-hidden transition-opacity duration-1000
-        ${active ? "opacity-100" : "opacity-0"}
-      `}
-    >
+    <OverlayWrapper active={active}>
       <div className="absolute inset-0 bg-pink-400/5" />
-
       <svg
         className="absolute inset-0 w-full h-full"
         viewBox="0 0 100 100"
@@ -171,14 +164,13 @@ function PrismaticSkiesOverlay({ active }: { active: boolean }) {
           />
         ))}
       </svg>
-
       <style>{`
         @keyframes rainbowPulse {
           0%, 100% { opacity: 0.6; }
           50%       { opacity: 1; }
         }
       `}</style>
-    </div>
+    </OverlayWrapper>
   );
 }
 
@@ -187,12 +179,7 @@ function StarShowerOverlay({ active }: { active: boolean }) {
   const stars = useParticles(18, active);
 
   return (
-    <div
-      className={`
-        pointer-events-none fixed inset-0 z-20 overflow-hidden transition-opacity duration-1000
-        ${active ? "opacity-100" : "opacity-0"}
-      `}
-    >
+    <OverlayWrapper active={active}>
       <div className="absolute inset-0 bg-indigo-950/25" />
       {stars.map((d) => (
         <div
@@ -217,7 +204,7 @@ function StarShowerOverlay({ active }: { active: boolean }) {
           100% { transform: translateY(105vh) translateX(20px) scale(0.5); opacity: 0; }
         }
       `}</style>
-    </div>
+    </OverlayWrapper>
   );
 }
 
@@ -226,12 +213,7 @@ function ColdFrontOverlay({ active }: { active: boolean }) {
   const flakes = useParticles(18, active);
 
   return (
-    <div
-      className={`
-        pointer-events-none fixed inset-0 z-20 overflow-hidden transition-opacity duration-1000
-        ${active ? "opacity-100" : "opacity-0"}
-      `}
-    >
+    <OverlayWrapper active={active}>
       <div className="absolute inset-0 bg-cyan-400/8" />
       <div
         className="absolute inset-0"
@@ -261,32 +243,125 @@ function ColdFrontOverlay({ active }: { active: boolean }) {
           100% { transform: translateY(105vh) translateX(-10px) rotate(360deg); opacity: 0; }
         }
       `}</style>
-    </div>
+    </OverlayWrapper>
   );
 }
 
-// ── Heatwave — tint and bottom glow only ─────────────────────────────────
+// ── Heatwave ──────────────────────────────────────────────────────────────
 function HeatwaveOverlay({ active }: { active: boolean }) {
   return (
-    <div
-      className={`
-        pointer-events-none fixed inset-0 z-20 overflow-hidden transition-opacity duration-1000
-        ${active ? "opacity-100" : "opacity-0"}
-      `}
-    >
+    <OverlayWrapper active={active}>
       <div className="absolute inset-0 bg-orange-400/8" />
       <div
         className="absolute inset-x-0 bottom-0 h-48"
         style={{ background: "radial-gradient(ellipse at 50% 100%, rgba(251,146,60,0.18) 0%, transparent 70%)" }}
       />
-    </div>
+    </OverlayWrapper>
+  );
+}
+
+// ── Thunderstorm ──────────────────────────────────────────────────────────
+function ThunderstormOverlay({ active }: { active: boolean }) {
+  const drops = useParticles(35, active);
+
+  return (
+    <OverlayWrapper active={active}>
+      <div className="absolute inset-0 bg-slate-900/30" />
+      {/* Heavy rain */}
+      {drops.map((d) => (
+        <div
+          key={d.id}
+          className="absolute text-slate-400 select-none"
+          style={{
+            left:      `${d.x}%`,
+            top:       `${d.y}%`,
+            fontSize:  `${d.size}em`,
+            opacity:   d.opacity * 0.7,
+            animation: `heavyRain ${d.duration * 0.7}s ${d.delay}s linear infinite`,
+          }}
+        >
+          |
+        </div>
+      ))}
+      {/* Lightning flashes */}
+      {[{ delay: 2 }, { delay: 7 }, { delay: 13 }].map((l, i) => (
+        <div
+          key={i}
+          className="absolute inset-0 bg-white/5"
+          style={{ animation: `lightning 15s ${l.delay}s ease-out infinite` }}
+        />
+      ))}
+      <style>{`
+        @keyframes heavyRain {
+          0%   { transform: translateY(-10vh) rotate(20deg); opacity: 0; }
+          10%  { opacity: 1; }
+          90%  { opacity: 1; }
+          100% { transform: translateY(110vh) rotate(20deg); opacity: 0; }
+        }
+        @keyframes lightning {
+          0%, 4%, 8%, 100% { opacity: 0; }
+          2%               { opacity: 1; }
+          6%               { opacity: 0.6; }
+        }
+      `}</style>
+    </OverlayWrapper>
+  );
+}
+
+// ── Tornado ───────────────────────────────────────────────────────────────
+function TornadoOverlay({ active }: { active: boolean }) {
+  const debris = useParticles(12, active);
+
+  return (
+    <OverlayWrapper active={active}>
+      <div className="absolute inset-0 bg-stone-700/20" />
+      {/* Swirling debris */}
+      {debris.map((d) => (
+        <div
+          key={d.id}
+          className="absolute select-none"
+          style={{
+            left:      `${d.x}%`,
+            top:       `${d.y}%`,
+            fontSize:  `${d.size * 0.9}em`,
+            opacity:   d.opacity * 0.6,
+            animation: `tornadoSpin ${d.duration + 1}s ${d.delay}s linear infinite`,
+          }}
+        >
+          {d.id % 4 === 0 ? "🍂" : d.id % 4 === 1 ? "·" : d.id % 4 === 2 ? "∘" : "✦"}
+        </div>
+      ))}
+      {/* Central vortex glow */}
+      <div
+        className="absolute left-1/2 top-1/3 -translate-x-1/2 -translate-y-1/2 rounded-full"
+        style={{
+          width:      "200px",
+          height:     "400px",
+          background: "radial-gradient(ellipse at center, rgba(120,113,108,0.15) 0%, transparent 70%)",
+          animation:  "vortexPulse 3s ease-in-out infinite",
+        }}
+      />
+      <style>{`
+        @keyframes tornadoSpin {
+          0%   { transform: translateY(-5vh) rotate(0deg) translateX(0); opacity: 0; }
+          10%  { opacity: 0.6; }
+          50%  { transform: translateY(50vh) rotate(540deg) translateX(30px); }
+          90%  { opacity: 0.3; }
+          100% { transform: translateY(105vh) rotate(1080deg) translateX(-20px); opacity: 0; }
+        }
+        @keyframes vortexPulse {
+          0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scaleX(1); }
+          50%       { opacity: 1;   transform: translate(-50%, -50%) scaleX(1.3); }
+        }
+      `}</style>
+    </OverlayWrapper>
   );
 }
 
 // ── Main export ───────────────────────────────────────────────────────────
+// All overlays are always mounted — active prop drives opacity transitions.
+// This gives smooth cross-fades between any two weather types including clear.
 export function WeatherOverlay({ weatherType, isActive }: Props) {
-  if (!isActive || weatherType === "clear") return null;
-
   return (
     <>
       <RainOverlay           active={isActive && weatherType === "rain"} />
@@ -295,6 +370,8 @@ export function WeatherOverlay({ weatherType, isActive }: Props) {
       <StarShowerOverlay     active={isActive && weatherType === "star_shower"} />
       <ColdFrontOverlay      active={isActive && weatherType === "cold_front"} />
       <HeatwaveOverlay       active={isActive && weatherType === "heatwave"} />
+      <ThunderstormOverlay   active={isActive && weatherType === "thunderstorm"} />
+      <TornadoOverlay        active={isActive && weatherType === "tornado"} />
     </>
   );
 }
