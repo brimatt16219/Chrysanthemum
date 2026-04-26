@@ -14,6 +14,18 @@ export interface ChangelogEntry {
 // Most recent version first — update this with every release
 export const CHANGELOGS: ChangelogEntry[] = [
   {
+    version: "1.2.2",
+    title:   "Polish & Fixes",
+    items: [
+      { type: "fixed", text: "Harvest popup now appears immediately on harvest, not on the next plant action" },
+      { type: "fixed", text: "Shop cards show a green '✓ Bought!' flash to confirm purchases" },
+      { type: "fixed", text: "Codex descriptions no longer truncate on mobile — tap to expand" },
+      { type: "fixed", text: "Plant tooltip correctly shows accelerated stage and countdown during rain" },
+      { type: "fixed", text: "Username hidden on mobile HUD to reduce crowding" },
+      { type: "fixed", text: "Weather countdown on mobile shows minutes only" },
+    ],
+  },
+  {
     version: "1.2.1",
     title:   "Bug Fixes & Balancing",
     items: [
