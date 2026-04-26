@@ -5,6 +5,7 @@ export interface CloudProfile {
   id: string;
   username: string;
   display_flower: string;
+  display_mutation: string | null;
   status: string | null;
   created_at: string;
 }
@@ -47,11 +48,12 @@ export async function createProfile(
 
 export async function updateDisplayFlower(
   userId: string,
-  speciesId: string
+  speciesId: string,
+  mutation: string | null = null
 ): Promise<boolean> {
   const { error } = await supabase
     .from("users")
-    .update({ display_flower: speciesId })
+    .update({ display_flower: speciesId, display_mutation: mutation })
     .eq("id", userId);
   return !error;
 }
@@ -397,6 +399,7 @@ export interface LeaderboardEntry {
   id: string;
   username: string;
   display_flower: string;
+  display_mutation: string | null;
   coins: number;
   farm_size: number;
   discovered_count: number;
