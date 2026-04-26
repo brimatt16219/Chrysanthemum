@@ -276,6 +276,12 @@ export default function App() {
                         )}
                       </button>
                     ))}
+                    <button
+                      onClick={() => handleViewProfile(profile?.username ?? "")}
+                      className="px-4 py-2 rounded-xl text-xs font-semibold transition-all bg-card/60 border border-border text-muted-foreground hover:border-primary/30 ml-auto"
+                    >
+                      👤 My Profile
+                    </button>
                   </div>
                   {socialView === "search"      && <SearchPage onViewProfile={handleViewProfile} />}
                   {socialView === "friends"     && <FriendsPage onViewProfile={handleViewProfile} />}
