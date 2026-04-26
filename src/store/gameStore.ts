@@ -330,8 +330,10 @@ export function getCurrentStage(
   const weatherMultiplier = WEATHER[weatherType].growthMultiplier;
   const multiplier        = fertMultiplier * weatherMultiplier;
   const elapsed           = now - plant.timePlanted;
-  const seedDone          = species.growthTime.seed / multiplier;
-  if (elapsed >= seedDone) return "sprout";
+  const seedDone          = species.growthTime.seed   / multiplier;
+  const bloomDone         = seedDone + species.growthTime.sprout / multiplier;
+  if (elapsed >= bloomDone) return "bloom";
+  if (elapsed >= seedDone)  return "sprout";
   return "seed";
 }
 
@@ -343,20 +345,27 @@ export function getStageProgress(
   const species = getFlower(plant.speciesId);
   if (!species) return 0;
 
-  const fertMultiplier = plant.fertilizer
-    ? FERTILIZERS[plant.fertilizer].speedMultiplier
-    : 1.0;
+  // Permanently bloomed
+  if (plant.bloomedAt && now >= plant.bloomedAt) return 1;
 
+  const fertMultiplier    = plant.fertilizer ? FERTILIZERS[plant.fertilizer].speedMultiplier : 1.0;
   const weatherMultiplier = WEATHER[weatherType].growthMultiplier;
-  const multiplier = fertMultiplier * weatherMultiplier;
+  const multiplier        = fertMultiplier * weatherMultiplier;
 
+  // Sprouted — show progress within sprout stage
+  if (plant.sproutedAt && now >= plant.sproutedAt) {
+    const sproutDuration = species.growthTime.sprout / multiplier;
+    const elapsed        = now - plant.sproutedAt;
+    return Math.min(1, elapsed / sproutDuration);
+  }
+
+  // No stamps — calculate entirely from timePlanted
   const elapsed   = now - plant.timePlanted;
   const seedDone  = species.growthTime.seed   / multiplier;
   const bloomDone = seedDone + species.growthTime.sprout / multiplier;
 
   if (elapsed >= bloomDone) return 1;
-  if (elapsed >= seedDone)
-    return (elapsed - seedDone) / (species.growthTime.sprout / multiplier);
+  if (elapsed >= seedDone)  return (elapsed - seedDone) / (species.growthTime.sprout / multiplier);
   return elapsed / seedDone;
 }
 
@@ -368,13 +377,20 @@ export function getMsUntilNextStage(
   const species = getFlower(plant.speciesId);
   if (!species) return 0;
 
-  const fertMultiplier = plant.fertilizer
-    ? FERTILIZERS[plant.fertilizer].speedMultiplier
-    : 1.0;
+  // Already bloomed
+  if (plant.bloomedAt && now >= plant.bloomedAt) return 0;
 
+  const fertMultiplier    = plant.fertilizer ? FERTILIZERS[plant.fertilizer].speedMultiplier : 1.0;
   const weatherMultiplier = WEATHER[weatherType].growthMultiplier;
-  const multiplier = fertMultiplier * weatherMultiplier;
+  const multiplier        = fertMultiplier * weatherMultiplier;
 
+  // Sprouted — time until bloom from sproutedAt
+  if (plant.sproutedAt && now >= plant.sproutedAt) {
+    const bloomTime = plant.sproutedAt + species.growthTime.sprout / multiplier;
+    return Math.max(0, Math.ceil(bloomTime - now));
+  }
+
+  // No stamps — calculate from timePlanted
   const elapsed   = now - plant.timePlanted;
   const seedDone  = species.growthTime.seed   / multiplier;
   const bloomDone = seedDone + species.growthTime.sprout / multiplier;
@@ -419,6 +435,59 @@ export function plantSeed(
   return { ...state, grid: newGrid, inventory: newInventory };
 }
 
+/** Called every tick. Stamps sproutedAt / bloomedAt the moment a transition is detected.
+ *  Once stamped, these timestamps are permanent — weather changes can't revert a stage. */
+export function stampStageTransitions(
+  state: GameState,
+  now: number,
+  weatherType: WeatherType = "clear"
+): GameState {
+  let changed = false;
+
+  const newGrid = state.grid.map((row) =>
+    row.map((plot) => {
+      if (!plot.plant) return plot;
+
+      const plant   = plot.plant;
+      const species = getFlower(plant.speciesId);
+      if (!species) return plot;
+
+      const fertMultiplier    = plant.fertilizer ? FERTILIZERS[plant.fertilizer].speedMultiplier : 1.0;
+      const weatherMultiplier = WEATHER[weatherType].growthMultiplier;
+      const multiplier        = fertMultiplier * weatherMultiplier;
+
+      let updated     = plant;
+      let plantChanged = false;
+
+      // Stamp sproutedAt once the seed phase is done
+      if (!plant.sproutedAt) {
+        const sproutTime = plant.timePlanted + species.growthTime.seed / multiplier;
+        if (now >= sproutTime) {
+          updated      = { ...updated, sproutedAt: sproutTime };
+          plantChanged = true;
+        }
+      }
+
+      // Stamp bloomedAt the first moment we detect bloom (use now so it locks immediately)
+      if (!plant.bloomedAt) {
+        const stage = getCurrentStage(updated, now, weatherType);
+        if (stage === "bloom") {
+          updated      = { ...updated, bloomedAt: now };
+          plantChanged = true;
+        }
+      }
+
+      if (plantChanged) {
+        changed = true;
+        return { ...plot, plant: updated };
+      }
+      return plot;
+    })
+  );
+
+  return changed ? { ...state, grid: newGrid } : state;
+}
+
 // ── Mutation tick rates ────────────────────────────────────────────────────
 // Per-tick chances (tick = 5 s, weather event ≈ 15 min = 180 ticks)
 const WEATHER_MUTATION_CHANCE: Partial<Record<WeatherType, number>> = {
@@ -455,18 +524,15 @@ export function tickWeatherMutations(
   state: GameState,
   weatherType: WeatherType = "clear"
 ): GameState {
-  const now          = Date.now();
-  const weatherMut   = WEATHER_MUTATION_TYPE[weatherType];
+  const weatherMut    = WEATHER_MUTATION_TYPE[weatherType];
   const weatherChance = weatherMut ? (WEATHER_MUTATION_CHANCE[weatherType] ?? 0) : 0;
-  const night        = isNighttime();
-  let changed        = false;
+  const night         = isNighttime();
+  let changed         = false;
 
   const newGrid = state.grid.map((row) =>
     row.map((plot) => {
-      if (!plot.plant || plot.plant.mutation !== undefined) return plot;
-
-      const stage = getCurrentStage(plot.plant, now, weatherType);
-      if (stage === "seed" && !plot.plant) return plot; // type guard
+      // Skip if already has a mutation (string); allow null (old saves) and undefined (fresh plants)
+      if (!plot.plant || typeof plot.plant.mutation === "string") return plot;
 
       // Roll weather mutation
       if (weatherMut && weatherChance > 0) {
