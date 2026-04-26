@@ -8,6 +8,7 @@ import {
 import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
 import type { MutationType } from "../data/flowers";
 import type { InventoryItem } from "../store/gameStore";
+import { codexKey } from "../store/gameStore";
 
 interface Props {
   onViewProfile: (username: string) => void;
@@ -48,19 +49,31 @@ export function GiftsPage({ onViewProfile }: Props) {
 
     // Add flower to local inventory
     const mutation = gw.gift.mutation as MutationType | undefined;
+
+    // Match only harvested flowers (not seeds) to avoid merging into a seed stack,
+    // which would make the item invisible to botany (botanyConvert filters !isSeed)
     const existing = state.inventory.find(
-      (i) => i.speciesId === gw.gift.species_id && i.mutation === mutation
+      (i) => i.speciesId === gw.gift.species_id && i.mutation === mutation && !i.isSeed
     );
 
     const newInventory: InventoryItem[] = existing
       ? state.inventory.map((i) =>
-          i.speciesId === gw.gift.species_id && i.mutation === mutation
+          i.speciesId === gw.gift.species_id && i.mutation === mutation && !i.isSeed
             ? { ...i, quantity: i.quantity + 1 }
             : i
         )
-      : [...state.inventory, { speciesId: gw.gift.species_id, quantity: 1, mutation }];
+      : [...state.inventory, { speciesId: gw.gift.species_id, quantity: 1, mutation, isSeed: false }];
 
-    update({ ...state, inventory: newInventory });
+    // Register in codex — gifted flowers count as discovered
+    const newDiscovered = [...state.discovered];
+    const base = codexKey(gw.gift.species_id);
+    if (!newDiscovered.includes(base)) newDiscovered.push(base);
+    if (mutation) {
+      const mutKey = codexKey(gw.gift.species_id, mutation);
+      if (!newDiscovered.includes(mutKey)) newDiscovered.push(mutKey);
+    }
+
+    update({ ...state, inventory: newInventory, discovered: newDiscovered });
     setClaimed((prev) => [...prev, gw.gift.id]);
     setClaiming(null);
   }
