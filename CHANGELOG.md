@@ -1,3 +1,15 @@
+## [v1.3.0] — 2026-04-26 — Quality of Life
+
+### Added
+- **Collect All** — harvest every bloomed flower in the garden with one tap
+- **Plant All** — fills all empty plots automatically, prioritising your highest-rarity seeds first
+- **Buy All** — purchase the entire stock of any shop slot in one click
+- **Convert All** — runs as many Botany Lab conversions as possible at once for a given tier
+- **My Profile** button on the Social tab for instant access to your own profile page
+- **Profile status message** — set a short message (up to 80 characters) displayed on your profile
+
+---
+
 ## [v1.2.2] — 2026-04-26 — Polish & Fixes
 
 ### Fixed

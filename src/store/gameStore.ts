@@ -1,4 +1,4 @@
-import { FLOWERS, MUTATIONS, getFlower, type GrowthStage, type MutationType } from "../data/flowers";
+import { FLOWERS, MUTATIONS, getFlower, type GrowthStage, type MutationType, type Rarity } from "../data/flowers";
 import { FERTILIZERS, getNextUpgrade, getNextShopSlotUpgrade, DEFAULT_SHOP_SLOTS, type FertilizerType } from "../data/upgrades";
 import type { WeatherType } from "../data/weather";
 import { WEATHER } from "../data/weather";
@@ -490,6 +490,64 @@ export function harvestPlant(
   };
 }
 
+const RARITY_PRIORITY: Record<Rarity, number> = {
+  exalted:   0,
+  mythic:    1,
+  legendary: 2,
+  rare:      3,
+  uncommon:  4,
+  common:    5,
+};
+
+export function plantAll(state: GameState): GameState {
+  // Build sorted seed list: highest rarity first, then highest sell value
+  const seeds = state.inventory
+    .filter((i) => i.isSeed && i.quantity > 0)
+    .map((i) => ({ ...i, species: getFlower(i.speciesId) }))
+    .filter((i) => i.species)
+    .sort((a, b) => {
+      const rarityDiff = RARITY_PRIORITY[a.species!.rarity] - RARITY_PRIORITY[b.species!.rarity];
+      if (rarityDiff !== 0) return rarityDiff;
+      return b.species!.sellValue - a.species!.sellValue;
+    });
+
+  if (seeds.length === 0) return state;
+
+  let current = state;
+
+  for (let row = 0; row < current.grid.length; row++) {
+    for (let col = 0; col < current.grid[row].length; col++) {
+      if (current.grid[row][col].plant) continue;
+
+      // Find next available seed
+      const seedItem = seeds.find((s) => {
+        const inv = current.inventory.find((i) => i.speciesId === s.speciesId && i.isSeed);
+        return inv && inv.quantity > 0;
+      });
+      if (!seedItem) return current; // no seeds left
+
+      const next = plantSeed(current, row, col, seedItem.speciesId);
+      if (next) current = next;
+    }
+  }
+
+  return current;
+}
+
+export function harvestAll(
+  state: GameState,
+  weatherType: WeatherType = "clear"
+): GameState {
+  let current = state;
+  for (let row = 0; row < current.grid.length; row++) {
+    for (let col = 0; col < current.grid[row].length; col++) {
+      const result = harvestPlant(current, row, col, weatherType);
+      if (result) current = result.state;
+    }
+  }
+  return current;
+}
+
 export function sellFlower(
   state: GameState,
   speciesId: string,
@@ -541,6 +599,34 @@ export function buyFromShop(state: GameState, speciesId: string): GameState | nu
   return { ...state, coins: state.coins - slot.price, shop: newShop, inventory: newInventory };
 }
 
+export function buyAllFromShop(state: GameState, speciesId: string): GameState | null {
+  const slot = state.shop.find((s) => s.speciesId === speciesId && !s.isFertilizer);
+  if (!slot || slot.quantity < 1) return null;
+  if (state.coins < slot.price) return null;
+
+  // Buy as many as the player can afford, up to stock
+  const canAfford = Math.floor(state.coins / slot.price);
+  const qty       = Math.min(slot.quantity, canAfford);
+  if (qty < 1) return null;
+
+  const newShop = state.shop.map((s) =>
+    s.speciesId === speciesId && !s.isFertilizer
+      ? { ...s, quantity: s.quantity - qty }
+      : s
+  );
+
+  const existing = state.inventory.find((i) => i.speciesId === speciesId && i.isSeed);
+  const newInventory = existing
+    ? state.inventory.map((i) =>
+        i.speciesId === speciesId && i.isSeed
+          ? { ...i, quantity: i.quantity + qty }
+          : i
+      )
+    : [...state.inventory, { speciesId, quantity: qty, isSeed: true }];
+
+  return { ...state, coins: state.coins - slot.price * qty, shop: newShop, inventory: newInventory };
+}
+
 export function buyFertilizer(
   state: GameState,
   fertilizerType: FertilizerType
@@ -567,6 +653,41 @@ export function buyFertilizer(
   return {
     ...state,
     coins:       state.coins - slot.price,
+    shop:        newShop,
+    fertilizers: newFertilizers,
+  };
+}
+
+export function buyAllFertilizer(
+  state: GameState,
+  fertilizerType: FertilizerType
+): GameState | null {
+  const slot = state.shop.find(
+    (s) => s.isFertilizer && s.fertilizerType === fertilizerType
+  );
+  if (!slot || slot.quantity < 1) return null;
+  if (state.coins < slot.price) return null;
+
+  const canAfford = Math.floor(state.coins / slot.price);
+  const qty       = Math.min(slot.quantity, canAfford);
+  if (qty < 1) return null;
+
+  const newShop = state.shop.map((s) =>
+    s.isFertilizer && s.fertilizerType === fertilizerType
+      ? { ...s, quantity: s.quantity - qty }
+      : s
+  );
+
+  const existing = state.fertilizers.find((f) => f.type === fertilizerType);
+  const newFertilizers = existing
+    ? state.fertilizers.map((f) =>
+        f.type === fertilizerType ? { ...f, quantity: f.quantity + qty } : f
+      )
+    : [...state.fertilizers, { type: fertilizerType, quantity: qty }];
+
+  return {
+    ...state,
+    coins:       state.coins - slot.price * qty,
     shop:        newShop,
     fertilizers: newFertilizers,
   };
@@ -709,6 +830,56 @@ export function botanyConvert(
     state: { ...state, inventory: newInventory },
     outputSpeciesId: outputSpecies.id,
   };
+}
+
+export function botanyConvertAll(
+  state: GameState,
+  rarity: Rarity
+): { state: GameState; outputSpeciesIds: string[] } | null {
+  const required = BOTANY_REQUIREMENTS[rarity];
+  if (!required) return null;
+
+  let current = state;
+  const outputs: string[] = [];
+
+  while (true) {
+    // Get eligible inventory for this rarity
+    const eligible = current.inventory.filter((item) => {
+      if (item.isSeed) return false;
+      const species = getFlower(item.speciesId);
+      return species?.rarity === rarity && item.quantity > 0;
+    });
+
+    const totalEligible = eligible.reduce((sum, i) => sum + i.quantity, 0);
+    if (totalEligible < required) break;
+
+    // Build selections greedily from available inventory
+    const selections: { speciesId: string; mutation?: MutationType }[] = [];
+    const tempUsed = new Map<string, number>();
+
+    for (const item of eligible) {
+      const key      = `${item.speciesId}||${item.mutation ?? ""}`;
+      const used     = tempUsed.get(key) ?? 0;
+      const avail    = item.quantity - used;
+      const toTake   = Math.min(avail, required - selections.length);
+      for (let i = 0; i < toTake; i++) {
+        selections.push({ speciesId: item.speciesId, mutation: item.mutation });
+      }
+      if (toTake > 0) tempUsed.set(key, used + toTake);
+      if (selections.length === required) break;
+    }
+
+    if (selections.length < required) break;
+
+    const result = botanyConvert(current, selections);
+    if (!result) break;
+
+    current = result.state;
+    outputs.push(result.outputSpeciesId);
+  }
+
+  if (outputs.length === 0) return null;
+  return { state: current, outputSpeciesIds: outputs };
 }
 
 export function upgradeFarm(state: GameState): GameState | null {

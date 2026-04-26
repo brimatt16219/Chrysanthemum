@@ -3,7 +3,7 @@ import { useGame } from "../store/GameContext";
 import { FLOWERS, RARITY_CONFIG, getFlower, type MutationType } from "../data/flowers";
 import { MUTATIONS } from "../data/flowers";
 import { BOTANY_REQUIREMENTS, BOTANY_RARITY_ORDER, NEXT_RARITY } from "../data/botany";
-import { botanyConvert } from "../store/gameStore";
+import { botanyConvert, botanyConvertAll } from "../store/gameStore";
 import type { InventoryItem } from "../store/gameStore";
 import type { Rarity } from "../data/flowers";
 
@@ -34,6 +34,48 @@ function ConvertResult({
         <p className="text-xs text-muted-foreground text-center">
           You received 1 <span className={cfg.color}>{species.name}</span> seed.
           {!FLOWERS.filter((f) => f.rarity === species.rarity).every(() => true) && " New discovery!"}
+        </p>
+        <button
+          onClick={onClose}
+          className="mt-1 px-5 py-2 rounded-full text-xs font-semibold bg-primary/20 border border-primary/40 text-primary hover:bg-primary/30 transition-colors"
+        >
+          Continue
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Sub-component: convert-all result banner ─────────────────────────────
+
+function ConvertAllResult({
+  speciesIds,
+  onClose,
+}: {
+  speciesIds: string[];
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center pb-10 px-4 pointer-events-none">
+      <div className="pointer-events-auto w-full max-w-sm bg-card border border-border rounded-2xl shadow-2xl p-5 flex flex-col items-center gap-3 animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <p className="text-xs text-muted-foreground uppercase tracking-widest">
+          {speciesIds.length} Conversion{speciesIds.length > 1 ? "s" : ""} Complete
+        </p>
+        <div className="flex flex-wrap justify-center gap-2 max-h-32 overflow-y-auto">
+          {speciesIds.map((id, i) => {
+            const species = getFlower(id);
+            if (!species) return null;
+            const cfg = RARITY_CONFIG[species.rarity];
+            return (
+              <div key={i} className="flex flex-col items-center gap-0.5">
+                <span className={`text-3xl ${cfg.glow}`}>{species.emoji.bloom}</span>
+                <span className={`text-[10px] font-mono ${cfg.color}`}>{species.name}</span>
+              </div>
+            );
+          })}
+        </div>
+        <p className="text-xs text-muted-foreground text-center">
+          You received {speciesIds.length} seed{speciesIds.length > 1 ? "s" : ""}.
         </p>
         <button
           onClick={onClose}
@@ -226,8 +268,9 @@ function SelectionScreen({
 export function Botany() {
   const { state, update } = useGame();
 
-  const [activeRarity, setActiveRarity] = useState<Rarity | null>(null);
-  const [resultSpeciesId, setResultSpeciesId] = useState<string | null>(null);
+  const [activeRarity, setActiveRarity]         = useState<Rarity | null>(null);
+  const [resultSpeciesId, setResultSpeciesId]   = useState<string | null>(null);
+  const [convertAllResult, setConvertAllResult] = useState<string[] | null>(null);
 
   function getEligibleItems(rarity: Rarity): InventoryItem[] {
     return state.inventory.filter((item) => {
@@ -248,6 +291,13 @@ export function Botany() {
     update(res.state);
     setResultSpeciesId(res.outputSpeciesId);
     setActiveRarity(null);
+  }
+
+  function handleConvertAll(rarity: Rarity) {
+    const res = botanyConvertAll(state, rarity);
+    if (!res) return;
+    update(res.state);
+    setConvertAllResult(res.outputSpeciesIds);
   }
 
   if (activeRarity) {
@@ -281,11 +331,17 @@ export function Botany() {
         </p>
       </div>
 
-      {/* Result banner (shown while on main view after a conversion) */}
+      {/* Result banners */}
       {resultSpeciesId && (
         <ConvertResult
           speciesId={resultSpeciesId}
           onClose={() => setResultSpeciesId(null)}
+        />
+      )}
+      {convertAllResult && (
+        <ConvertAllResult
+          speciesIds={convertAllResult}
+          onClose={() => setConvertAllResult(null)}
         />
       )}
 
@@ -328,8 +384,16 @@ export function Botany() {
                   )}
                 </div>
 
-                {/* Right: inventory count + flower previews */}
+                {/* Right: convert-all + progress pill */}
                 <div className="flex items-center gap-2 shrink-0">
+                  {eligible >= required * 2 && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleConvertAll(rarity); }}
+                      className="text-[10px] font-semibold px-2 py-1 rounded-lg border border-primary/50 text-primary bg-primary/10 hover:bg-primary/20 transition-colors"
+                    >
+                      Convert All
+                    </button>
+                  )}
                   {/* Progress pill */}
                   <span
                     className={`

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { getFlower, RARITY_CONFIG } from "../data/flowers";
 import { FERTILIZERS } from "../data/upgrades";
 import { useGame } from "../store/GameContext";
-import { buyFromShop, buyFertilizer, getSpeciesCompletion } from "../store/gameStore";
+import { buyFromShop, buyFertilizer, buyAllFromShop, buyAllFertilizer, getSpeciesCompletion } from "../store/gameStore";
 import type { ShopSlot } from "../store/gameStore";
 import type { Rarity } from "../data/flowers";
 
@@ -65,6 +65,11 @@ export function ShopSlotCard({ slot }: Props) {
       if (next) { update(next); flashBought(); }
     }
 
+    function handleBuyAllFert() {
+      const next = buyAllFertilizer(state, slot.fertilizerType!);
+      if (next) { update(next); flashBought(); }
+    }
+
     return (
       <div
         className={`
@@ -92,21 +97,31 @@ export function ShopSlotCard({ slot }: Props) {
           <span className="text-xs text-muted-foreground">
             {outOfStock ? "Out of stock" : `${slot.quantity} left`}
           </span>
-          <button
-            onClick={handleBuyFert}
-            disabled={!canAfford || outOfStock}
-            className={`
-              px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150
-              ${justBought
-                ? "bg-green-500 text-white scale-105"
-                : canAfford && !outOfStock
-                ? "bg-primary text-primary-foreground hover:scale-105"
-                : "bg-secondary text-muted-foreground cursor-not-allowed"
-              }
-            `}
-          >
-            {justBought ? "✓ Bought!" : `${slot.price} 🟡`}
-          </button>
+          <div className="flex gap-1.5">
+            {!outOfStock && slot.quantity > 1 && canAfford && (
+              <button
+                onClick={handleBuyAllFert}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 bg-card border border-primary/50 text-primary hover:bg-primary/10"
+              >
+                Buy All
+              </button>
+            )}
+            <button
+              onClick={handleBuyFert}
+              disabled={!canAfford || outOfStock}
+              className={`
+                px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150
+                ${justBought
+                  ? "bg-green-500 text-white scale-105"
+                  : canAfford && !outOfStock
+                  ? "bg-primary text-primary-foreground hover:scale-105"
+                  : "bg-secondary text-muted-foreground cursor-not-allowed"
+                }
+              `}
+            >
+              {justBought ? "✓ Bought!" : `${slot.price} 🟡`}
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -125,6 +140,11 @@ export function ShopSlotCard({ slot }: Props) {
 
   function handleBuy() {
     const next = buyFromShop(state, slot.speciesId);
+    if (next) { update(next); flashBought(); }
+  }
+
+  function handleBuyAll() {
+    const next = buyAllFromShop(state, slot.speciesId);
     if (next) { update(next); flashBought(); }
   }
 
@@ -183,21 +203,31 @@ export function ShopSlotCard({ slot }: Props) {
         <span className="text-xs text-muted-foreground">
           {outOfStock ? "Out of stock" : `${slot.quantity} left`}
         </span>
-        <button
-          onClick={handleBuy}
-          disabled={!canAfford || outOfStock}
-          className={`
-            px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150
-            ${justBought
-              ? "bg-green-500 text-white scale-105"
-              : canAfford && !outOfStock
-              ? "bg-primary text-primary-foreground hover:scale-105 hover:shadow-[0_0_10px_rgba(139,92,246,0.4)]"
-              : "bg-secondary text-muted-foreground cursor-not-allowed"
-            }
-          `}
-        >
-          {justBought ? "✓ Bought!" : `${slot.price} 🟡`}
-        </button>
+        <div className="flex gap-1.5">
+          {!outOfStock && slot.quantity > 1 && canAfford && (
+            <button
+              onClick={handleBuyAll}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 bg-card border border-primary/50 text-primary hover:bg-primary/10"
+            >
+              Buy All
+            </button>
+          )}
+          <button
+            onClick={handleBuy}
+            disabled={!canAfford || outOfStock}
+            className={`
+              px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150
+              ${justBought
+                ? "bg-green-500 text-white scale-105"
+                : canAfford && !outOfStock
+                ? "bg-primary text-primary-foreground hover:scale-105 hover:shadow-[0_0_10px_rgba(139,92,246,0.4)]"
+                : "bg-secondary text-muted-foreground cursor-not-allowed"
+              }
+            `}
+          >
+            {justBought ? "✓ Bought!" : `${slot.price} 🟡`}
+          </button>
+        </div>
       </div>
     </div>
   );

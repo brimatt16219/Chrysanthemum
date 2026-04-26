@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getProfileByUsername, getPublicSave, updateDisplayFlower } from "../store/cloudSave";
+import { getProfileByUsername, getPublicSave, updateDisplayFlower, updateStatus } from "../store/cloudSave";
 import type { CloudProfile } from "../store/cloudSave";
 import type { GameState } from "../store/gameStore";
 import { ReadOnlyGarden } from "./ReadOnlyGarden";
@@ -132,6 +132,11 @@ export function ProfilePage({ username, onBack }: Props) {
               {" · "}{displayRarity?.label}
             </p>
           )}
+          {profile.status && (
+            <p className="text-xs text-muted-foreground mt-1 italic">
+              "{profile.status}"
+            </p>
+          )}
           <p className="text-xs text-muted-foreground mt-1">
             Joined {new Date(profile.created_at).toLocaleDateString(undefined, {
               month: "short", year: "numeric",
@@ -181,6 +186,14 @@ export function ProfilePage({ username, onBack }: Props) {
         <DisplayFlowerPicker
           discovered={save?.discovered ?? state.discovered}
           currentFlower={profile.display_flower}
+          onUpdated={refreshProfile}
+        />
+      )}
+
+      {/* Status editor — own profile only */}
+      {isOwnProfile && (
+        <StatusEditor
+          currentStatus={profile.status ?? ""}
           onUpdated={refreshProfile}
         />
       )}
@@ -241,6 +254,80 @@ export function ProfilePage({ username, onBack }: Props) {
             setTimeout(() => setGiftSent(false), 3_000);
           }}
         />
+      )}
+    </div>
+  );
+}
+
+// ── Status editor ─────────────────────────────────────────────────────────
+
+interface StatusEditorProps {
+  currentStatus: string;
+  onUpdated: () => Promise<void>;
+}
+
+function StatusEditor({ currentStatus, onUpdated }: StatusEditorProps) {
+  const { user } = useGame();
+  const [editing, setEditing] = useState(false);
+  const [value, setValue]     = useState(currentStatus);
+  const [saving, setSaving]   = useState(false);
+
+  const MAX = 80;
+
+  async function handleSave() {
+    if (!user) return;
+    setSaving(true);
+    await updateStatus(user.id, value);
+    await onUpdated();
+    setSaving(false);
+    setEditing(false);
+  }
+
+  return (
+    <div className="bg-card/60 border border-border rounded-2xl p-5">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <h3 className="text-sm font-semibold">Status</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            A short message shown on your profile
+          </p>
+        </div>
+        <button
+          onClick={() => { setEditing((v) => !v); setValue(currentStatus); }}
+          className="text-xs text-primary hover:underline flex-shrink-0"
+        >
+          {editing ? "Cancel" : currentStatus ? "Edit" : "Add"}
+        </button>
+      </div>
+
+      {!editing ? (
+        currentStatus ? (
+          <p className="text-sm text-muted-foreground italic">"{currentStatus}"</p>
+        ) : (
+          <p className="text-xs text-muted-foreground">No status set.</p>
+        )
+      ) : (
+        <div className="flex flex-col gap-2">
+          <textarea
+            value={value}
+            onChange={(e) => setValue(e.target.value.slice(0, MAX))}
+            placeholder="What's on your mind?"
+            rows={2}
+            className="w-full bg-background border border-border rounded-xl px-3 py-2 text-sm resize-none focus:outline-none focus:border-primary transition-colors"
+          />
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground font-mono">
+              {value.length}/{MAX}
+            </span>
+            <button
+              onClick={handleSave}
+              disabled={saving || value === currentStatus}
+              className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Save"}
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
