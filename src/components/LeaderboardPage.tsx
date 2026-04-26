@@ -94,16 +94,16 @@ export function LeaderboardPage({ onViewProfile }: Props) {
         </button>
       </div>
 
-      {/* Tab + sort row */}
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        {/* Global / Friends tabs */}
+      {/* Tab + sort rows */}
+      <div className="flex flex-col gap-2">
+        {/* Row 1: Global / Friends */}
         <div className="flex gap-2">
           {(["global", "friends"] as LeaderboardTab[]).map((t) => (
             <button
               key={t}
               onClick={() => setActiveTab(t)}
               className={`
-                px-4 py-2 rounded-xl text-xs font-semibold transition-all capitalize
+                flex-1 py-2 rounded-xl text-xs font-semibold transition-all text-center
                 ${activeTab === t
                   ? "bg-primary/20 border border-primary/50 text-primary"
                   : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
@@ -114,33 +114,23 @@ export function LeaderboardPage({ onViewProfile }: Props) {
             </button>
           ))}
         </div>
-
-        {/* Sort toggle */}
-        <div className="flex gap-1.5">
-          <button
-            onClick={() => setSortBy("coins")}
-            className={`
-              px-3 py-1.5 rounded-lg text-xs font-semibold transition-all
-              ${sortBy === "coins"
-                ? "bg-primary/20 border border-primary/50 text-primary"
-                : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
-              }
-            `}
-          >
-            🟡 Coins
-          </button>
-          <button
-            onClick={() => setSortBy("codex")}
-            className={`
-              px-3 py-1.5 rounded-lg text-xs font-semibold transition-all
-              ${sortBy === "codex"
-                ? "bg-primary/20 border border-primary/50 text-primary"
-                : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
-              }
-            `}
-          >
-            📖 Codex
-          </button>
+        {/* Row 2: Coins / Codex */}
+        <div className="flex gap-2">
+          {(["coins", "codex"] as SortBy[]).map((s) => (
+            <button
+              key={s}
+              onClick={() => setSortBy(s)}
+              className={`
+                flex-1 py-2 rounded-xl text-xs font-semibold transition-all text-center
+                ${sortBy === s
+                  ? "bg-primary/20 border border-primary/50 text-primary"
+                  : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
+                }
+              `}
+            >
+              {s === "coins" ? "🟡 Coins" : "📖 Codex"}
+            </button>
+          ))}
         </div>
       </div>
 

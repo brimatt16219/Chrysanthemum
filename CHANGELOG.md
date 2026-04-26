@@ -1,3 +1,10 @@
+## [v1.5.2] — 2026-04-26 — Bug Fixes
+
+### Fixed
+- Leaderboard filter buttons (Global, Friends, Coins, Codex) are now a single equal-width row on mobile
+
+---
+
 ## [v1.5.1] — 2026-04-26 — Quick Fix
 
 ### Fixed
