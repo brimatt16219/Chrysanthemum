@@ -3,11 +3,6 @@ import type { WeatherType } from "../data/weather";
 import { useGame } from "../store/GameContext";
 import { FORECAST_SLOT_COSTS, MAX_FORECAST_SLOTS } from "../store/gameStore";
 
-const TIER_LABELS = [
-  "1 slot", "2 slots", "3 slots", "4 slots",
-  "5 slots", "6 slots", "7 slots", "8 slots",
-] as const;
-
 const accentClass: Record<WeatherType, string> = {
   clear:           "border-border/40 text-muted-foreground",
   rain:            "border-blue-400/40 text-blue-300",
@@ -32,6 +27,18 @@ const bgClass: Record<WeatherType, string> = {
   tornado:         "bg-stone-950/40",
 };
 
+function formatRelative(ms: number): string {
+  const totalMin = Math.round(ms / 60_000);
+  if (totalMin < 60) return `in ~${totalMin}m`;
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return m > 0 ? `in ~${h}h ${m}m` : `in ~${h}h`;
+}
+
+function formatClock(epochMs: number): string {
+  return new Date(epochMs).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
 interface Props {
   onClose: () => void;
 }
@@ -44,19 +51,28 @@ export function WeatherForecastPanel({ onClose }: Props) {
   const nextCost   = canUpgrade ? FORECAST_SLOT_COSTS[slots] : null;
   const canAfford  = nextCost !== null && state.coins >= nextCost;
 
-  function handleBuy() {
-    buyForecastSlot();
+  // Current weather countdown
+  const msLeft    = Math.max(0, weatherMsLeft);
+  const minsLeft  = Math.floor(msLeft / 60_000);
+  const secsLeft  = Math.floor((msLeft % 60_000) / 1_000);
+  const timeStr   = minsLeft > 0 ? `${minsLeft}m ${secsLeft.toString().padStart(2, "0")}s` : `${secsLeft}s`;
+
+  // Pre-compute start times for each forecast slot
+  // Slot 0 starts when current weather ends; each subsequent slot starts when the previous ends
+  const now = Date.now();
+  const currentEndsAt = now + msLeft;
+
+  const slotStartTimes: number[] = [];
+  let cursor = currentEndsAt;
+  for (let i = 0; i < slots; i++) {
+    slotStartTimes.push(cursor);
+    const entry = weatherForecast[i];
+    if (entry) cursor += WEATHER[entry.type].durationMs;
   }
 
-  // Current weather info
   const currentDef = WEATHER[activeWeather];
-  const msLeft = Math.max(0, weatherMsLeft);
-  const minsLeft = Math.floor(msLeft / 60_000);
-  const secsLeft = Math.floor((msLeft % 60_000) / 1_000);
-  const timeStr = minsLeft > 0 ? `${minsLeft}m ${secsLeft.toString().padStart(2, "0")}s` : `${secsLeft}s`;
 
   return (
-    // Backdrop
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4"
       onClick={onClose}
@@ -80,22 +96,18 @@ export function WeatherForecastPanel({ onClose }: Props) {
         </div>
 
         {/* Current weather */}
-        <div
-          className={`flex items-center gap-3 rounded-xl border p-3 ${bgClass[activeWeather]} ${accentClass[activeWeather]}`}
-        >
+        <div className={`flex items-center gap-3 rounded-xl border p-3 ${bgClass[activeWeather]} ${accentClass[activeWeather]}`}>
           <span className="text-3xl">{currentDef.emoji}</span>
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm">{currentDef.name}</p>
-            <p className="text-xs text-muted-foreground">{currentDef.description}</p>
+            <p className="text-xs text-muted-foreground">Now</p>
           </div>
-          <div className="text-right shrink-0">
-            <p className="text-xs font-mono text-muted-foreground">
-              {weatherIsActive ? `ends in` : "active"}
-            </p>
-            <p className="text-sm font-mono font-semibold">
-              {weatherIsActive ? timeStr : "—"}
-            </p>
-          </div>
+          {weatherIsActive && (
+            <div className="text-right shrink-0">
+              <p className="text-xs font-mono text-muted-foreground">ends in</p>
+              <p className="text-sm font-mono font-semibold">{timeStr}</p>
+            </div>
+          )}
         </div>
 
         {/* Forecast queue */}
@@ -105,7 +117,6 @@ export function WeatherForecastPanel({ onClose }: Props) {
           </p>
 
           {slots === 0 ? (
-            // Not unlocked yet
             <div className="flex flex-col items-center gap-2 py-6 text-center">
               <span className="text-4xl">🌫️</span>
               <p className="text-sm text-muted-foreground">
@@ -115,7 +126,10 @@ export function WeatherForecastPanel({ onClose }: Props) {
           ) : (
             <div className="flex flex-col gap-2">
               {Array.from({ length: slots }, (_, i) => {
-                const entry = weatherForecast[i];
+                const entry      = weatherForecast[i];
+                const startsAt   = slotStartTimes[i] ?? currentEndsAt;
+                const msFromNow  = Math.max(0, startsAt - now);
+
                 if (!entry) {
                   return (
                     <div
@@ -124,8 +138,8 @@ export function WeatherForecastPanel({ onClose }: Props) {
                     >
                       <span className="text-2xl opacity-40">❓</span>
                       <div>
-                        <p className="text-sm font-medium text-muted-foreground">Slot {i + 1}</p>
-                        <p className="text-xs text-muted-foreground/60">Forecast pending…</p>
+                        <p className="text-sm font-medium text-muted-foreground">Pending…</p>
+                        <p className="text-xs text-muted-foreground/60">{formatRelative(msFromNow)} · {formatClock(startsAt)}</p>
                       </div>
                     </div>
                   );
@@ -137,19 +151,13 @@ export function WeatherForecastPanel({ onClose }: Props) {
                     key={i}
                     className={`flex items-center gap-3 rounded-xl border p-3 ${bgClass[entry.type]} ${accentClass[entry.type]}`}
                   >
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground/60 font-mono w-4 shrink-0 justify-center">
-                      {i + 1}
-                    </div>
-                    <span className="text-2xl">{def.emoji}</span>
+                    <span className="text-2xl shrink-0">{def.emoji}</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold">{def.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">{def.description}</p>
+                      <p className="text-xs text-muted-foreground/70 font-mono">
+                        {formatRelative(msFromNow)} · {formatClock(startsAt)}
+                      </p>
                     </div>
-                    {def.growthMultiplier > 1 && (
-                      <span className="text-xs font-mono text-green-400 shrink-0">
-                        {def.growthMultiplier}×
-                      </span>
-                    )}
                   </div>
                 );
               })}
@@ -157,35 +165,11 @@ export function WeatherForecastPanel({ onClose }: Props) {
           )}
         </div>
 
-        {/* Upgrade section */}
-        {canUpgrade && (
-          <div className="border-t border-border/40 pt-4">
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-3">
-              Upgrade Forecast
-            </p>
-
-            <div className="flex flex-col gap-2 mb-3">
-              {FORECAST_SLOT_COSTS.map((cost, i) => (
-                <div
-                  key={i}
-                  className={`flex items-center justify-between text-xs px-3 py-2 rounded-lg ${
-                    i < slots
-                      ? "bg-green-950/30 border border-green-500/20 text-green-400"
-                      : i === slots
-                      ? "bg-primary/10 border border-primary/30 text-foreground"
-                      : "bg-card/20 border border-border/20 text-muted-foreground/50"
-                  }`}
-                >
-                  <span className="font-medium">{TIER_LABELS[i]}</span>
-                  <span className="font-mono">
-                    {i < slots ? "✓ Owned" : `${cost.toLocaleString()} 🟡`}
-                  </span>
-                </div>
-              ))}
-            </div>
-
+        {/* Upgrade / max */}
+        {canUpgrade ? (
+          <div className="border-t border-border/40 pt-4 flex flex-col gap-2">
             <button
-              onClick={handleBuy}
+              onClick={buyForecastSlot}
               disabled={!canAfford}
               className={`
                 w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 text-center
@@ -196,23 +180,20 @@ export function WeatherForecastPanel({ onClose }: Props) {
               `}
             >
               {canAfford
-                ? `Unlock ${TIER_LABELS[slots]} — ${nextCost!.toLocaleString()} 🟡`
-                : `Need ${nextCost!.toLocaleString()} 🟡`
+                ? `Unlock slot ${slots + 1} — ${nextCost!.toLocaleString()} 🟡`
+                : `Unlock slot ${slots + 1} — ${nextCost!.toLocaleString()} 🟡`
               }
             </button>
-
-            {!canAfford && nextCost !== null && (
-              <p className="text-xs text-muted-foreground/60 text-center mt-1.5">
+            {!canAfford && (
+              <p className="text-xs text-muted-foreground/60 text-center">
                 You have {state.coins.toLocaleString()} 🟡
               </p>
             )}
           </div>
-        )}
-
-        {!canUpgrade && (
+        ) : (
           <div className="border-t border-border/40 pt-3">
             <p className="text-xs text-center text-green-400 font-medium">
-              ✓ Max forecast unlocked (4 slots)
+              ✓ Max forecast unlocked ({MAX_FORECAST_SLOTS} slots)
             </p>
           </div>
         )}
