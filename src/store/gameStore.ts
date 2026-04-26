@@ -522,13 +522,20 @@ export function stampStageTransitions(
 
 // ── Mutation tick rates ────────────────────────────────────────────────────
 // Per-tick chances (tick = 5 s, weather event ≈ 15 min = 180 ticks)
+// Per-tick rates (tick ≈ 1 s).  Formula: p = 1 − (1 − target)^(1/ticks)
+// Rain            20 min  = 1200 ticks → 60% over event
+// Heatwave        15 min  =  900 ticks → 40% over event
+// Cold Front      15 min  =  900 ticks → 40% over event
+// Star Shower   17.5 min  = 1050 ticks → 20% over event
+// Prismatic       15 min  =  900 ticks → 20% over event
+// Golden Hour     15 min  =  900 ticks → 20% over event
 const WEATHER_MUTATION_CHANCE: Partial<Record<WeatherType, number>> = {
-  rain:            0.0020, // ~30% over a full event
-  heatwave:        0.0016, // ~25%
-  cold_front:      0.0016, // ~25%
-  star_shower:     0.0009, // ~15% (part of the 20% moonlit aggregate)
-  prismatic_skies: 0.0009, // ~15%
-  golden_hour:     0.0007, // ~12%
+  rain:            0.00076, // 60% over 20-min event
+  heatwave:        0.00057, // 40% over 15-min event
+  cold_front:      0.00057, // 40% over 15-min event
+  star_shower:     0.000213, // 20% over 17.5-min event
+  prismatic_skies: 0.000248, // 20% over 15-min event
+  golden_hour:     0.000248, // 20% over 15-min event
 };
 
 const WEATHER_MUTATION_TYPE: Partial<Record<WeatherType, MutationType>> = {
@@ -540,7 +547,7 @@ const WEATHER_MUTATION_TYPE: Partial<Record<WeatherType, MutationType>> = {
   golden_hour:     "golden",
 };
 
-const MOONLIT_NIGHT_CHANCE = 0.0003; // ~5% over a long night session
+const MOONLIT_NIGHT_CHANCE = 0.000019; // 50% over a 10-hour night (1 - 0.5^(1/36000))
 const GIANT_BLOOM_CHANCE   = 0.08;   // 8% flat, only at bloom transition
 
 function isNighttime(): boolean {
