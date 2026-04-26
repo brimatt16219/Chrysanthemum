@@ -14,6 +14,20 @@ export interface ChangelogEntry {
 // Most recent version first — update this with every release
 export const CHANGELOGS: ChangelogEntry[] = [
   {
+    version: "1.4.0",
+    title:   "Mutations Update",
+    items: [
+      { type: "added",   text: "Flower mutations — bloomed flowers can carry a mutation that multiplies their sell value" },
+      { type: "added",   text: "8 mutation types: Giant, Wet, Scorched, Frosted, Stellar, Prismatic, Gilded, Moonlit" },
+      { type: "added",   text: "Mutations discovered via harvest or gift are registered in the Floral Codex" },
+      { type: "changed", text: "Weather mutations only roll on fully bloomed flowers" },
+      { type: "changed", text: "Growth bar now speeds up during rain and slows back down smoothly" },
+      { type: "fixed",   text: "Rarity glow border was being overwritten by mutation colour in inventory" },
+      { type: "fixed",   text: "Flowers received as gifts now appear in Botany Lab and Floral Codex" },
+      { type: "fixed",   text: "Manipulated local saves with future timestamps are rejected in favour of cloud save" },
+    ],
+  },
+  {
     version: "1.3.0",
     title:   "Quality of Life",
     items: [
