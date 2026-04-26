@@ -49,6 +49,14 @@ const EMPTY_SUMMARY: OfflineSummary = {
   shopRestocked: false,
 };
 
+// Reject local saves whose lastSaved is more than 30 s in the future.
+// This directly closes the exploit where a user sets lastSaved = Date.now() + 60_000
+// to force their manipulated localStorage to override the authoritative cloud save.
+const CLOCK_SKEW_TOLERANCE_MS = 30_000;
+function isTamperedTimestamp(lastSaved: number): boolean {
+  return lastSaved > Date.now() + CLOCK_SKEW_TOLERANCE_MS;
+}
+
 export function GameProvider({ children }: { children: React.ReactNode }) {
   const [state, setState]                       = useState<GameState>(() => defaultState());
   const [offlineSummary, setOfflineSummary]     = useState<OfflineSummary>(EMPTY_SUMMARY);
@@ -124,7 +132,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       if (!cloudSave) {
         saveToUse      = localSave ?? defaultState();
         needsCloudSync = true;
-      } else if (localSave && localSave.lastSaved > cloudSave.lastSaved) {
+      } else if (
+        localSave &&
+        localSave.lastSaved > cloudSave.lastSaved &&
+        !isTamperedTimestamp(localSave.lastSaved)
+      ) {
         saveToUse      = localSave;
         needsCloudSync = true;
       } else {
