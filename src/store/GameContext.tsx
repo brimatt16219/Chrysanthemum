@@ -109,26 +109,22 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       setProfile(p);
 
       const cloudSave = await loadCloudSave(u.id);
-      const localRaw  = localStorage.getItem("chrysanthemum_save");
-      const localParsed = localRaw ? (JSON.parse(localRaw) as GameState & { _userId?: string }) : null;
 
-      // Only treat local as a backup if it was written by THIS signed-in user.
-      // A guest session has no _userId tag and must never override cloud progress.
-      const localSave = localParsed?._userId === u.id ? localParsed : null;
-
-      // Pick the newer save — local is kept as a rolling backup so a refresh
-      // or mid-flight cloud save never loses this user's progress.
+      // SECURITY: Once a user is signed in, the cloud save is the single
+      // source of truth. We intentionally do NOT allow localStorage to
+      // override cloud — a tampered local save (edited coins, future
+      // timestamps, etc.) must not be promoted to authoritative state.
+      // Local is only used as a fallback when no cloud row exists yet.
       let saveToUse: GameState;
       let needsCloudSync = false;
 
-      if (!cloudSave) {
-        saveToUse      = localSave ?? defaultState();
-        needsCloudSync = true;
-      } else if (localSave && localSave.lastSaved > cloudSave.lastSaved) {
-        saveToUse      = localSave;
-        needsCloudSync = true;
-      } else {
+      if (cloudSave) {
         saveToUse = cloudSave;
+      } else {
+        // First-time sign-in: seed cloud from a fresh state, ignoring any
+        // pre-existing localStorage so guest cheats can't be uploaded.
+        saveToUse      = defaultState();
+        needsCloudSync = true;
       }
 
       const { state: ticked, summary } = applyOfflineTick(saveToUse);
