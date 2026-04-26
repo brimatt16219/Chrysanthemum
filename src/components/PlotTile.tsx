@@ -5,7 +5,7 @@ import {
   getStageProgress,
   harvestPlant,
 } from "../store/gameStore";
-import { getFlower, RARITY_CONFIG, type MutationType } from "../data/flowers";
+import { getFlower, RARITY_CONFIG, MUTATIONS, type MutationType } from "../data/flowers";
 import { FERTILIZERS } from "../data/upgrades";
 import { PlotTooltip } from "./PlotTooltip";
 import { useGame } from "../store/GameContext";
@@ -140,6 +140,12 @@ export function PlotTile({ plot, row, col, onEmptyClick, onHarvest, isSelected, 
 
             {isBloomed && (
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full animate-pulse" />
+            )}
+
+            {isBloomed && plant?.mutation && (
+              <span className="absolute -bottom-1 -right-1 text-sm leading-none">
+                {MUTATIONS[plant.mutation].emoji}
+              </span>
             )}
 
             {open && !isBloomed && (

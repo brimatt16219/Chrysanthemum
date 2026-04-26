@@ -10,6 +10,8 @@ export interface PlantedFlower {
   speciesId: string;
   timePlanted: number;
   fertilizer: FertilizerType | null;
+  /** undefined = not yet bloomed / not yet rolled; null = bloomed, no mutation; MutationType = has mutation */
+  mutation?: MutationType | null;
 }
 
 export interface Plot {
@@ -87,9 +89,11 @@ export function resizeGrid(old: Plot[][], newRows: number, newCols: number): Plo
 
 // ── Codex helpers ──────────────────────────────────────────────────────────
 
-// Total possible codex entries: 1 base + N mutations per species
+const ALL_MUTATIONS = Object.keys(MUTATIONS) as MutationType[];
+
+// Total possible codex entries: 1 base + all mutations per species
 export function getTotalCodexEntries(): number {
-  return FLOWERS.reduce((total, f) => total + 1 + f.possibleMutations.length, 0);
+  return FLOWERS.reduce((total) => total + 1 + ALL_MUTATIONS.length, 0);
 }
 
 // Build the codex key for a harvest
@@ -110,10 +114,10 @@ export function getSpeciesCompletion(discovered: string[], speciesId: string): {
   const species = getFlower(speciesId);
   if (!species) return { found: 0, total: 0 };
 
-  const total = 1 + species.possibleMutations.length;
+  const total = 1 + ALL_MUTATIONS.length;
   let found = 0;
   if (isDiscovered(discovered, speciesId)) found++;
-  for (const mut of species.possibleMutations) {
+  for (const mut of ALL_MUTATIONS) {
     if (isDiscovered(discovered, speciesId, mut)) found++;
   }
   return { found, total };
@@ -407,23 +411,74 @@ export function plantSeed(
   return { ...state, grid: newGrid, inventory: newInventory };
 }
 
-function rollMutation(
-  speciesId: string,
+// Weather → mutation mapping for bloom-time assignment
+const WEATHER_MUTATION: Partial<Record<WeatherType, MutationType>> = {
+  rain:           "wet",
+  golden_hour:    "golden",
+  prismatic_skies:"rainbow",
+  cold_front:     "frozen",
+  heatwave:       "scorched",
+  star_shower:    "moonlit",
+};
+
+const MOONLIT_NIGHT_CHANCE   = 0.03; // low rate at night outside star shower
+const MOONLIT_BOOST_CHANCE   = 0.07; // star shower rate (from MUTATIONS)
+
+function isNighttime(): boolean {
+  const h = new Date().getHours();
+  return h >= 20 || h < 6;
+}
+
+/** Roll a mutation at bloom-time based on active weather + time of day.
+ *  Order: weather-specific → giant (always) → moonlit-at-night.
+ *  First success wins; returns null for "no mutation". */
+function rollBloomMutation(
   weatherType: WeatherType = "clear"
-): MutationType | undefined {
-  const species = getFlower(speciesId);
-  if (!species || species.possibleMutations.length === 0) return undefined;
-
-  const boost = WEATHER[weatherType].mutationBoost;
-
-  for (const mutId of species.possibleMutations) {
-    const mut = MUTATIONS[mutId];
-    const chance = boost?.mutation === mutId
-      ? mut.chance * boost.multiplier
-      : mut.chance;
-    if (Math.random() < chance) return mutId;
+): MutationType | null {
+  // 1. Weather-specific mutation
+  const weatherMut = WEATHER_MUTATION[weatherType];
+  if (weatherMut) {
+    const chance = weatherMut === "moonlit"
+      ? MOONLIT_BOOST_CHANCE
+      : MUTATIONS[weatherMut].chance;
+    if (Math.random() < chance) return weatherMut;
   }
-  return undefined;
+
+  // 2. Giant — random on any bloom
+  if (Math.random() < MUTATIONS.giant.chance) return "giant";
+
+  // 3. Moonlit at night (if not already granted by star_shower above)
+  if (weatherType !== "star_shower" && isNighttime()) {
+    if (Math.random() < MOONLIT_NIGHT_CHANCE) return "moonlit";
+  }
+
+  return null;
+}
+
+/** Scan all bloomed plants whose mutation hasn't been rolled yet and assign one.
+ *  Call this on every growth tick from Garden. */
+export function assignBloomMutations(
+  state: GameState,
+  weatherType: WeatherType = "clear"
+): GameState {
+  const now = Date.now();
+  let changed = false;
+
+  const newGrid = state.grid.map((row) =>
+    row.map((plot) => {
+      if (!plot.plant) return plot;
+      if (plot.plant.mutation !== undefined) return plot; // already rolled
+      const stage = getCurrentStage(plot.plant, now, weatherType);
+      if (stage !== "bloom") return plot;
+
+      // Roll and stamp — null means "bloomed, no mutation"
+      const mutation = rollBloomMutation(weatherType);
+      changed = true;
+      return { ...plot, plant: { ...plot.plant, mutation } };
+    })
+  );
+
+  return changed ? { ...state, grid: newGrid } : state;
 }
 
 export function harvestPlant(
@@ -439,8 +494,9 @@ export function harvestPlant(
   if (stage !== "bloom") return null;
 
   const { speciesId } = plot.plant;
-  const mutation      = rollMutation(speciesId, weatherType);
-  const species       = getFlower(speciesId)!;
+  // Use pre-rolled mutation from bloom time; fall back to null if somehow missed
+  const mutation = plot.plant.mutation ?? undefined;
+  const species  = getFlower(speciesId)!;
 
   const bonusCoins = mutation
     ? Math.floor(species.sellValue * (MUTATIONS[mutation].valueMultiplier - 1))
