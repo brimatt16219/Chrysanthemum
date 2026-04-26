@@ -12,6 +12,9 @@ export interface PlantedFlower {
   fertilizer: FertilizerType | null;
   /** undefined = not yet bloomed / not yet rolled; null = bloomed, no mutation; MutationType = has mutation */
   mutation?: MutationType | null;
+  /** Stamped the moment the plant actually transitioned — locks stage regardless of future weather changes */
+  sproutedAt?: number;
+  bloomedAt?: number;
 }
 
 export interface Plot {
@@ -308,22 +311,27 @@ export function getCurrentStage(
   now: number,
   weatherType: WeatherType = "clear"
 ): GrowthStage {
+  // Stamped transitions are permanent — immune to weather changes
+  if (plant.bloomedAt  && now >= plant.bloomedAt)  return "bloom";
+  if (plant.sproutedAt && now >= plant.sproutedAt) {
+    // Sprouted; check if bloom threshold reached from sproutedAt
+    const species = getFlower(plant.speciesId);
+    if (!species) return "sprout";
+    const fertMultiplier    = plant.fertilizer ? FERTILIZERS[plant.fertilizer].speedMultiplier : 1.0;
+    const weatherMultiplier = WEATHER[weatherType].growthMultiplier;
+    const bloomTime = plant.sproutedAt + species.growthTime.sprout / (fertMultiplier * weatherMultiplier);
+    return now >= bloomTime ? "bloom" : "sprout";
+  }
+
+  // No stamps yet — calculate from timePlanted
   const species = getFlower(plant.speciesId);
   if (!species) return "seed";
-
-  const fertMultiplier = plant.fertilizer
-    ? FERTILIZERS[plant.fertilizer].speedMultiplier
-    : 1.0;
-
+  const fertMultiplier    = plant.fertilizer ? FERTILIZERS[plant.fertilizer].speedMultiplier : 1.0;
   const weatherMultiplier = WEATHER[weatherType].growthMultiplier;
-  const multiplier = fertMultiplier * weatherMultiplier;
-
-  const elapsed   = now - plant.timePlanted;
-  const seedDone  = species.growthTime.seed   / multiplier;
-  const bloomDone = seedDone + species.growthTime.sprout / multiplier;
-
-  if (elapsed >= bloomDone) return "bloom";
-  if (elapsed >= seedDone)  return "sprout";
+  const multiplier        = fertMultiplier * weatherMultiplier;
+  const elapsed           = now - plant.timePlanted;
+  const seedDone          = species.growthTime.seed / multiplier;
+  if (elapsed >= seedDone) return "sprout";
   return "seed";
 }
 
