@@ -299,12 +299,23 @@ export function applyOfflineTick(save: GameState): { state: GameState; summary: 
 
 // ── Weather forecast ────────────────────────────────────────────────────────
 
-export const FORECAST_SLOT_COSTS = [500, 2_000, 5_000, 15_000] as const;
+export const FORECAST_SLOT_COSTS = [
+  500,      // → 1 slot
+  2_000,    // → 2 slots
+  5_000,    // → 3 slots
+  15_000,   // → 4 slots
+  35_000,   // → 5 slots
+  75_000,   // → 6 slots
+  150_000,  // → 7 slots
+  300_000,  // → 8 slots
+] as const;
+
+export const MAX_FORECAST_SLOTS = FORECAST_SLOT_COSTS.length;
 
 /** Purchase the next forecast slot tier. Returns null if already maxed or can't afford. */
 export function buyWeatherForecastSlot(state: GameState): GameState | null {
   const current = state.weatherForecastSlots ?? 0;
-  if (current >= 4) return null;
+  if (current >= MAX_FORECAST_SLOTS) return null;
   const cost = FORECAST_SLOT_COSTS[current];
   if (state.coins < cost) return null;
   return {

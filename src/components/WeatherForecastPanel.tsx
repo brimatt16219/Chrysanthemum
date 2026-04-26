@@ -1,9 +1,12 @@
 import { WEATHER } from "../data/weather";
 import type { WeatherType } from "../data/weather";
 import { useGame } from "../store/GameContext";
-import { FORECAST_SLOT_COSTS } from "../store/gameStore";
+import { FORECAST_SLOT_COSTS, MAX_FORECAST_SLOTS } from "../store/gameStore";
 
-const TIER_LABELS = ["1 slot", "2 slots", "3 slots", "4 slots"] as const;
+const TIER_LABELS = [
+  "1 slot", "2 slots", "3 slots", "4 slots",
+  "5 slots", "6 slots", "7 slots", "8 slots",
+] as const;
 
 const accentClass: Record<WeatherType, string> = {
   clear:           "border-border/40 text-muted-foreground",
@@ -36,9 +39,8 @@ interface Props {
 export function WeatherForecastPanel({ onClose }: Props) {
   const { state, weatherForecast, buyForecastSlot, activeWeather, weatherMsLeft, weatherIsActive } = useGame();
 
-  const slots    = state.weatherForecastSlots ?? 0;
-  const maxSlots = 4;
-  const canUpgrade = slots < maxSlots;
+  const slots      = state.weatherForecastSlots ?? 0;
+  const canUpgrade = slots < MAX_FORECAST_SLOTS;
   const nextCost   = canUpgrade ? FORECAST_SLOT_COSTS[slots] : null;
   const canAfford  = nextCost !== null && state.coins >= nextCost;
 
