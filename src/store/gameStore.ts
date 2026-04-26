@@ -1,4 +1,4 @@
-import { FLOWERS, MUTATIONS, getFlower, type GrowthStage, type MutationType } from "../data/flowers";
+import { FLOWERS, MUTATIONS, getFlower, type GrowthStage, type MutationType, type Rarity } from "../data/flowers";
 import { FERTILIZERS, getNextUpgrade, getNextShopSlotUpgrade, DEFAULT_SHOP_SLOTS, type FertilizerType } from "../data/upgrades";
 import type { WeatherType } from "../data/weather";
 import { WEATHER } from "../data/weather";
@@ -786,6 +786,56 @@ export function botanyConvert(
     state: { ...state, inventory: newInventory },
     outputSpeciesId: outputSpecies.id,
   };
+}
+
+export function botanyConvertAll(
+  state: GameState,
+  rarity: Rarity
+): { state: GameState; outputSpeciesIds: string[] } | null {
+  const required = BOTANY_REQUIREMENTS[rarity];
+  if (!required) return null;
+
+  let current = state;
+  const outputs: string[] = [];
+
+  while (true) {
+    // Get eligible inventory for this rarity
+    const eligible = current.inventory.filter((item) => {
+      if (item.isSeed) return false;
+      const species = getFlower(item.speciesId);
+      return species?.rarity === rarity && item.quantity > 0;
+    });
+
+    const totalEligible = eligible.reduce((sum, i) => sum + i.quantity, 0);
+    if (totalEligible < required) break;
+
+    // Build selections greedily from available inventory
+    const selections: { speciesId: string; mutation?: MutationType }[] = [];
+    const tempUsed = new Map<string, number>();
+
+    for (const item of eligible) {
+      const key      = `${item.speciesId}||${item.mutation ?? ""}`;
+      const used     = tempUsed.get(key) ?? 0;
+      const avail    = item.quantity - used;
+      const toTake   = Math.min(avail, required - selections.length);
+      for (let i = 0; i < toTake; i++) {
+        selections.push({ speciesId: item.speciesId, mutation: item.mutation });
+      }
+      if (toTake > 0) tempUsed.set(key, used + toTake);
+      if (selections.length === required) break;
+    }
+
+    if (selections.length < required) break;
+
+    const result = botanyConvert(current, selections);
+    if (!result) break;
+
+    current = result.state;
+    outputs.push(result.outputSpeciesId);
+  }
+
+  if (outputs.length === 0) return null;
+  return { state: current, outputSpeciesIds: outputs };
 }
 
 export function upgradeFarm(state: GameState): GameState | null {
