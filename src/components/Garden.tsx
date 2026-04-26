@@ -4,7 +4,7 @@ import { useGrowthTick } from "../hooks/useGrowthTick";
 import { PlotTile } from "./PlotTile";
 import { SeedPicker } from "./SeedPicker";
 import { HarvestPopup } from "./HarvestPopup";
-import { getCurrentStage, plantSeed, upgradeFarm, harvestAll, plantAll, assignBloomMutations } from "../store/gameStore";
+import { getCurrentStage, plantSeed, upgradeFarm, harvestAll, plantAll, assignBloomMutations, tickWeatherMutations } from "../store/gameStore";
 import { getNextUpgrade, getCurrentTier } from "../data/upgrades";
 import type { MutationType } from "../data/flowers";
 
@@ -12,9 +12,12 @@ export function Garden() {
   const { state, update, activeWeather } = useGame();
   useGrowthTick(5_000);
 
-  // Assign mutations to newly bloomed plants on every tick
+  // Every render: roll weather mutations on all unassigned plants,
+  // then roll Giant on newly-bloomed plants with no mutation yet
   useEffect(() => {
-    const next = assignBloomMutations(state, activeWeather ?? "clear");
+    const weather = activeWeather ?? "clear";
+    let next = tickWeatherMutations(state, weather);
+    next = assignBloomMutations(next, weather);
     if (next !== state) update(next);
   });
 

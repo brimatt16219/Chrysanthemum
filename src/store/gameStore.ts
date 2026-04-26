@@ -411,52 +411,80 @@ export function plantSeed(
   return { ...state, grid: newGrid, inventory: newInventory };
 }
 
-// Weather → mutation mapping for bloom-time assignment
-const WEATHER_MUTATION: Partial<Record<WeatherType, MutationType>> = {
-  rain:           "wet",
-  golden_hour:    "golden",
-  prismatic_skies:"rainbow",
-  cold_front:     "frozen",
-  heatwave:       "scorched",
-  star_shower:    "moonlit",
+// ── Mutation tick rates ────────────────────────────────────────────────────
+// Per-tick chances (tick = 5 s, weather event ≈ 15 min = 180 ticks)
+const WEATHER_MUTATION_CHANCE: Partial<Record<WeatherType, number>> = {
+  rain:            0.0020, // ~30% over a full event
+  heatwave:        0.0016, // ~25%
+  cold_front:      0.0016, // ~25%
+  star_shower:     0.0009, // ~15% (part of the 20% moonlit aggregate)
+  prismatic_skies: 0.0009, // ~15%
+  golden_hour:     0.0007, // ~12%
 };
 
-const MOONLIT_NIGHT_CHANCE   = 0.03; // low rate at night outside star shower
-const MOONLIT_BOOST_CHANCE   = 0.07; // star shower rate (from MUTATIONS)
+const WEATHER_MUTATION_TYPE: Partial<Record<WeatherType, MutationType>> = {
+  rain:            "wet",
+  heatwave:        "scorched",
+  cold_front:      "frozen",
+  star_shower:     "moonlit",
+  prismatic_skies: "rainbow",
+  golden_hour:     "golden",
+};
+
+const MOONLIT_NIGHT_CHANCE = 0.0003; // ~5% over a long night session
+const GIANT_BLOOM_CHANCE   = 0.08;   // 8% flat, only at bloom transition
 
 function isNighttime(): boolean {
   const h = new Date().getHours();
   return h >= 20 || h < 6;
 }
 
-/** Roll a mutation at bloom-time based on active weather + time of day.
- *  Order: weather-specific → giant (always) → moonlit-at-night.
- *  First success wins; returns null for "no mutation". */
-function rollBloomMutation(
+/** Called every tick. Rolls weather-based mutations for all unassigned plants.
+ *  - Weather mutations apply at ANY growth stage (wet included, per user request)
+ *  - Moonlit also rolls at night at a lower rate
+ *  - Giant is NOT rolled here — see assignBloomMutations below */
+export function tickWeatherMutations(
+  state: GameState,
   weatherType: WeatherType = "clear"
-): MutationType | null {
-  // 1. Weather-specific mutation
-  const weatherMut = WEATHER_MUTATION[weatherType];
-  if (weatherMut) {
-    const chance = weatherMut === "moonlit"
-      ? MOONLIT_BOOST_CHANCE
-      : MUTATIONS[weatherMut].chance;
-    if (Math.random() < chance) return weatherMut;
-  }
+): GameState {
+  const now          = Date.now();
+  const weatherMut   = WEATHER_MUTATION_TYPE[weatherType];
+  const weatherChance = weatherMut ? (WEATHER_MUTATION_CHANCE[weatherType] ?? 0) : 0;
+  const night        = isNighttime();
+  let changed        = false;
 
-  // 2. Giant — random on any bloom
-  if (Math.random() < MUTATIONS.giant.chance) return "giant";
+  const newGrid = state.grid.map((row) =>
+    row.map((plot) => {
+      if (!plot.plant || plot.plant.mutation !== undefined) return plot;
 
-  // 3. Moonlit at night (if not already granted by star_shower above)
-  if (weatherType !== "star_shower" && isNighttime()) {
-    if (Math.random() < MOONLIT_NIGHT_CHANCE) return "moonlit";
-  }
+      const stage = getCurrentStage(plot.plant, now, weatherType);
+      if (stage === "seed" && !plot.plant) return plot; // type guard
 
-  return null;
+      // Roll weather mutation
+      if (weatherMut && weatherChance > 0) {
+        if (Math.random() < weatherChance) {
+          changed = true;
+          return { ...plot, plant: { ...plot.plant, mutation: weatherMut } };
+        }
+      }
+
+      // Moonlit at night (outside star_shower — that's already covered above)
+      if (night && weatherType !== "star_shower") {
+        if (Math.random() < MOONLIT_NIGHT_CHANCE) {
+          changed = true;
+          return { ...plot, plant: { ...plot.plant, mutation: "moonlit" as MutationType } };
+        }
+      }
+
+      return plot;
+    })
+  );
+
+  return changed ? { ...state, grid: newGrid } : state;
 }
 
-/** Scan all bloomed plants whose mutation hasn't been rolled yet and assign one.
- *  Call this on every growth tick from Garden. */
+/** Called every tick. Assigns Giant to newly-bloomed plants that have no mutation yet.
+ *  Giant is weather-independent — it's a flat chance at the moment of bloom. */
 export function assignBloomMutations(
   state: GameState,
   weatherType: WeatherType = "clear"
@@ -466,15 +494,20 @@ export function assignBloomMutations(
 
   const newGrid = state.grid.map((row) =>
     row.map((plot) => {
-      if (!plot.plant) return plot;
-      if (plot.plant.mutation !== undefined) return plot; // already rolled
+      if (!plot.plant || plot.plant.mutation !== undefined) return plot;
       const stage = getCurrentStage(plot.plant, now, weatherType);
       if (stage !== "bloom") return plot;
 
-      // Roll and stamp — null means "bloomed, no mutation"
-      const mutation = rollBloomMutation(weatherType);
-      changed = true;
-      return { ...plot, plant: { ...plot.plant, mutation } };
+      // Giant: flat chance at bloom, weather-independent
+      const mutation = Math.random() < GIANT_BLOOM_CHANCE
+        ? ("giant" as MutationType)
+        : undefined; // stays undefined — weather tick may still assign later
+
+      if (mutation) {
+        changed = true;
+        return { ...plot, plant: { ...plot.plant, mutation } };
+      }
+      return plot;
     })
   );
 
