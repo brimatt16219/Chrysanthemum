@@ -22,12 +22,12 @@ export interface Mutation {
 }
 
 export const MUTATIONS: Record<MutationType, Mutation> = {
-  golden:   { id: "golden",   name: "Golden",   emoji: "✨", description: "Shimmers with golden light.",       valueMultiplier: 3.0, chance: 0.05, color: "text-yellow-400" },
-  rainbow:  { id: "rainbow",  name: "Rainbow",  emoji: "🌈", description: "Every color at once.",              valueMultiplier: 2.5, chance: 0.06, color: "text-pink-400"   },
+  golden:   { id: "golden",   name: "Golden",   emoji: "✨", description: "Shimmers with golden light.",       valueMultiplier: 4.0, chance: 0.05, color: "text-yellow-400" },
+  rainbow:  { id: "rainbow",  name: "Rainbow",  emoji: "🌈", description: "Every color at once.",              valueMultiplier: 3.5, chance: 0.06, color: "text-pink-400"   },
   giant:    { id: "giant",    name: "Giant",    emoji: "⬆️", description: "Twice the size of a normal bloom.", valueMultiplier: 2.0, chance: 0.08, color: "text-green-400"  },
-  moonlit:  { id: "moonlit",  name: "Moonlit",  emoji: "🌙", description: "Glows faintly in the dark.",        valueMultiplier: 2.0, chance: 0.07, color: "text-blue-300"   },
-  frozen:   { id: "frozen",   name: "Frozen",   emoji: "❄️", description: "Crystallized mid-bloom.",           valueMultiplier: 1.5, chance: 0.10, color: "text-cyan-400"   },
-  scorched: { id: "scorched", name: "Scorched", emoji: "🔥", description: "Survived extreme heat.",            valueMultiplier: 1.5, chance: 0.10, color: "text-orange-400" },
+  moonlit:  { id: "moonlit",  name: "Moonlit",  emoji: "🌙", description: "Glows faintly in the dark.",        valueMultiplier: 3.0, chance: 0.07, color: "text-blue-300"   },
+  frozen:   { id: "frozen",   name: "Frozen",   emoji: "❄️", description: "Crystallized mid-bloom.",           valueMultiplier: 2.5, chance: 0.10, color: "text-cyan-400"   },
+  scorched: { id: "scorched", name: "Scorched", emoji: "🔥", description: "Survived extreme heat.",            valueMultiplier: 2.5, chance: 0.10, color: "text-orange-400" },
   wet:      { id: "wet",      name: "Wet",      emoji: "💧", description: "Soaked by the rain at peak bloom.", valueMultiplier: 1.75, chance: 0.10, color: "text-blue-400"  },
 };
 
