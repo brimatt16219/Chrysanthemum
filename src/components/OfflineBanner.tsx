@@ -40,7 +40,7 @@ export function OfflineBanner({ summary, onDismiss, changelog, username }: Props
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm px-4">
-      <div className="bg-card border border-primary/30 rounded-2xl p-6 max-w-sm w-full shadow-2xl shadow-primary/10 space-y-4">
+      <div className="bg-card border border-primary/30 rounded-2xl p-6 max-w-sm w-full shadow-2xl shadow-primary/10 space-y-4 max-h-[90vh] flex flex-col">
 
         {/* Header */}
         <div className="text-center space-y-1">
@@ -85,14 +85,14 @@ export function OfflineBanner({ summary, onDismiss, changelog, username }: Props
 
         {/* Changelog section */}
         {changelog && (
-          <div className="border border-primary/20 rounded-xl overflow-hidden">
-            <div className="bg-primary/10 px-4 py-2 flex items-center gap-2">
+          <div className="border border-primary/20 rounded-xl overflow-hidden flex flex-col min-h-0 flex-1">
+            <div className="bg-primary/10 px-4 py-2 flex items-center gap-2 shrink-0">
               <span className="text-sm">📋</span>
               <p className="text-xs font-semibold text-primary">
                 What's new in v{changelog.version} — {changelog.title}
               </p>
             </div>
-            <ul className="px-4 py-3 space-y-1.5">
+            <ul className="px-4 py-3 space-y-1.5 overflow-y-auto">
               {changelog.items.map((item, i) => (
                 <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
                   <span className="mt-0.5 shrink-0">{CHANGELOG_ITEM_ICONS[item.type]}</span>
@@ -105,7 +105,7 @@ export function OfflineBanner({ summary, onDismiss, changelog, username }: Props
 
         <button
           onClick={onDismiss}
-          className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity text-center"
+          className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity text-center shrink-0"
         >
           Let's go! 🌱
         </button>

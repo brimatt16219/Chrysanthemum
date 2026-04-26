@@ -1,3 +1,10 @@
+## [v1.5.1] — 2026-04-26 — Quick Fix
+
+### Fixed
+- Changelog modal is now scrollable on mobile so the dismiss button is always reachable
+
+---
+
 ## [v1.5.0] — 2026-04-26 — Weather & Mutations Update
 
 ### Added
