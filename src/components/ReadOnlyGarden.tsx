@@ -1,6 +1,7 @@
 import { getCurrentStage, getStageProgress } from "../store/gameStore";
 import type { Plot } from "../store/gameStore";
-import { getFlower, RARITY_CONFIG } from "../data/flowers";
+import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
+import type { MutationType } from "../data/flowers";
 
 interface Props {
   grid: Plot[][];
@@ -28,6 +29,9 @@ export function ReadOnlyGarden({ grid, farmSize, farmRows }: Props) {
           const progress = plant ? getStageProgress(plant, now) : 0;
           const rarity  = species ? RARITY_CONFIG[species.rarity] : null;
           const isBloomed = stage === "bloom";
+          const mut = (isBloomed && plant?.mutation)
+            ? MUTATIONS[plant.mutation as MutationType]
+            : null;
 
           if (!plant) {
             return (
@@ -65,6 +69,11 @@ export function ReadOnlyGarden({ grid, farmSize, farmRows }: Props) {
               )}
               {isBloomed && (
                 <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full animate-pulse" />
+              )}
+              {mut && (
+                <span className="absolute -bottom-1 -right-1 text-sm leading-none">
+                  {mut.emoji}
+                </span>
               )}
             </div>
           );
