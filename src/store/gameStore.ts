@@ -561,10 +561,16 @@ export function tickWeatherMutations(
   const night         = isNighttime();
   let changed         = false;
 
+  const now = Date.now();
+
   const newGrid = state.grid.map((row) =>
     row.map((plot) => {
       // Skip if already has a mutation (string); allow null (old saves) and undefined (fresh plants)
       if (!plot.plant || typeof plot.plant.mutation === "string") return plot;
+
+      // Weather mutations only apply at bloom — the plant must be at peak to be affected
+      const stage = getCurrentStage(plot.plant, now, weatherType);
+      if (stage !== "bloom") return plot;
 
       // Roll weather mutation
       if (weatherMut && weatherChance > 0) {
