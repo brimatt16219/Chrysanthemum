@@ -50,8 +50,8 @@ export function ReadOnlyGarden({ grid, farmSize, farmRows }: Props) {
               className={`
                 relative w-14 h-14 rounded-xl border-2 flex flex-col items-center justify-center
                 ${isBloomed
-                  ? `border-primary/50 bg-primary/10 ${rarity?.glow}`
-                  : "border-border/60 bg-card/60"
+                  ? `${rarity?.borderBloom ?? "border-primary/50"} ${rarity?.bgBloom ?? "bg-primary/10"} ${rarity?.glow ?? ""}`
+                  : `${rarity?.borderGrowing ?? "border-border/60"} bg-card/60`
                 }
               `}
               title={`${species?.name} — ${stage}`}
