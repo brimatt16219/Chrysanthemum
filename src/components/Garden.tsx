@@ -4,7 +4,7 @@ import { useGrowthTick } from "../hooks/useGrowthTick";
 import { PlotTile } from "./PlotTile";
 import { SeedPicker } from "./SeedPicker";
 import { HarvestPopup } from "./HarvestPopup";
-import { getCurrentStage, plantSeed, upgradeFarm, harvestAll } from "../store/gameStore";
+import { getCurrentStage, plantSeed, upgradeFarm, harvestAll, plantAll } from "../store/gameStore";
 import { getNextUpgrade, getCurrentTier } from "../data/upgrades";
 import type { MutationType } from "../data/flowers";
 
@@ -47,9 +47,16 @@ export function Garden() {
     update(harvestAll(state, activeWeather ?? "clear"));
   }
 
+  function handlePlantAll() {
+    update(plantAll(state));
+  }
+
   const bloomedCount = state.grid
     .flat()
     .filter((p) => p.plant && getCurrentStage(p.plant, Date.now(), activeWeather) === "bloom").length;
+
+  const emptyPlotCount  = state.grid.flat().filter((p) => !p.plant).length;
+  const availSeedCount  = state.inventory.filter((i) => i.isSeed && i.quantity > 0).length;
 
   return (
     <div className="flex flex-col items-center gap-6">
@@ -59,17 +66,29 @@ export function Garden() {
         <p className="text-sm font-mono text-muted-foreground tracking-wide uppercase">
           {currentTier.label} — {state.farmRows}×{state.farmSize}
         </p>
-        {bloomedCount > 0 && (
-          <div className="flex items-center justify-center gap-3 mt-1">
-            <p className="text-xs text-primary animate-pulse">
-              {bloomedCount} flower{bloomedCount > 1 ? "s" : ""} ready to harvest!
-            </p>
-            <button
-              onClick={handleCollectAll}
-              className="px-3 py-1 rounded-full text-xs font-semibold bg-primary/20 border border-primary/50 text-primary hover:bg-primary/30 transition-all"
-            >
-              Collect All
-            </button>
+        {(bloomedCount > 0 || (emptyPlotCount > 0 && availSeedCount > 0)) && (
+          <div className="flex items-center justify-center gap-2 mt-1 flex-wrap">
+            {bloomedCount > 0 && (
+              <>
+                <p className="text-xs text-primary animate-pulse">
+                  {bloomedCount} flower{bloomedCount > 1 ? "s" : ""} ready!
+                </p>
+                <button
+                  onClick={handleCollectAll}
+                  className="px-3 py-1 rounded-full text-xs font-semibold bg-primary/20 border border-primary/50 text-primary hover:bg-primary/30 transition-all"
+                >
+                  Collect All
+                </button>
+              </>
+            )}
+            {emptyPlotCount > 0 && availSeedCount > 0 && (
+              <button
+                onClick={handlePlantAll}
+                className="px-3 py-1 rounded-full text-xs font-semibold bg-card border border-border text-muted-foreground hover:border-primary/50 hover:text-primary transition-all"
+              >
+                🌱 Plant All
+              </button>
+            )}
           </div>
         )}
       </div>

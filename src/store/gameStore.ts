@@ -490,6 +490,50 @@ export function harvestPlant(
   };
 }
 
+const RARITY_PRIORITY: Record<Rarity, number> = {
+  exalted:   0,
+  mythic:    1,
+  legendary: 2,
+  rare:      3,
+  uncommon:  4,
+  common:    5,
+};
+
+export function plantAll(state: GameState): GameState {
+  // Build sorted seed list: highest rarity first, then highest sell value
+  const seeds = state.inventory
+    .filter((i) => i.isSeed && i.quantity > 0)
+    .map((i) => ({ ...i, species: getFlower(i.speciesId) }))
+    .filter((i) => i.species)
+    .sort((a, b) => {
+      const rarityDiff = RARITY_PRIORITY[a.species!.rarity] - RARITY_PRIORITY[b.species!.rarity];
+      if (rarityDiff !== 0) return rarityDiff;
+      return b.species!.sellValue - a.species!.sellValue;
+    });
+
+  if (seeds.length === 0) return state;
+
+  let current = state;
+
+  for (let row = 0; row < current.grid.length; row++) {
+    for (let col = 0; col < current.grid[row].length; col++) {
+      if (current.grid[row][col].plant) continue;
+
+      // Find next available seed
+      const seedItem = seeds.find((s) => {
+        const inv = current.inventory.find((i) => i.speciesId === s.speciesId && i.isSeed);
+        return inv && inv.quantity > 0;
+      });
+      if (!seedItem) return current; // no seeds left
+
+      const next = plantSeed(current, row, col, seedItem.speciesId);
+      if (next) current = next;
+    }
+  }
+
+  return current;
+}
+
 export function harvestAll(
   state: GameState,
   weatherType: WeatherType = "clear"

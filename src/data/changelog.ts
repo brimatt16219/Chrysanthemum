@@ -14,6 +14,18 @@ export interface ChangelogEntry {
 // Most recent version first — update this with every release
 export const CHANGELOGS: ChangelogEntry[] = [
   {
+    version: "1.3.0",
+    title:   "Quality of Life",
+    items: [
+      { type: "added",   text: "Collect All button — harvest every bloomed flower in one tap" },
+      { type: "added",   text: "Plant All button — fills empty plots with your highest-rarity seeds automatically" },
+      { type: "added",   text: "Buy All button on shop slots — purchase the entire stock in one click" },
+      { type: "added",   text: "Convert All button in Botany Lab — runs as many conversions as possible at once" },
+      { type: "added",   text: "My Profile button on the Social tab for quick access to your own profile" },
+      { type: "added",   text: "Profile status message — set a short message displayed on your profile" },
+    ],
+  },
+  {
     version: "1.2.2",
     title:   "Polish & Fixes",
     items: [
