@@ -5,6 +5,7 @@ export interface CloudProfile {
   id: string;
   username: string;
   display_flower: string;
+  status: string | null;
   created_at: string;
 }
 
@@ -51,6 +52,17 @@ export async function updateDisplayFlower(
   const { error } = await supabase
     .from("users")
     .update({ display_flower: speciesId })
+    .eq("id", userId);
+  return !error;
+}
+
+export async function updateStatus(
+  userId: string,
+  status: string
+): Promise<boolean> {
+  const { error } = await supabase
+    .from("users")
+    .update({ status: status.trim() || null })
     .eq("id", userId);
   return !error;
 }
