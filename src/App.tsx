@@ -50,9 +50,7 @@ export default function App() {
   const [showBanner, setShowBanner] = useState(true);
   const [showForecast, setShowForecast] = useState(false);
 
-  const [profileUsername, setProfileUsername]     = useState<string | null>(null);
-  const [profileReturnTab, setProfileReturnTab]   = useState<Tab>("social");
-  const [profileReturnView, setProfileReturnView] = useState<SocialView>("search");
+  const [profileUsername, setProfileUsername] = useState<string | null>(null);
 
   const updateAvailable  = useVersionCheck();
   const [dismissedUpdate, setDismissedUpdate] = useState(false);
@@ -69,19 +67,17 @@ export default function App() {
   const inventoryCount = state.inventory.reduce((s, i) => s + i.quantity, 0);
 
   function handleViewProfile(username: string) {
-    setProfileReturnTab(tab);
-    setProfileReturnView(socialView);
+    setTab("social");
     setProfileUsername(username);
-  }
-
-  function handleBackFromProfile() {
-    setProfileUsername(null);
-    setTab(profileReturnTab);
-    setSocialView(profileReturnView);
   }
 
   function handleTabChange(t: Tab) {
     setTab(t);
+    setProfileUsername(null);
+  }
+
+  function handleSocialViewChange(v: SocialView) {
+    setSocialView(v);
     setProfileUsername(null);
   }
 
@@ -220,7 +216,7 @@ export default function App() {
               className={`
                 flex-1 py-3 text-sm font-medium transition-colors border-b-2 relative
                 flex flex-col items-center justify-center
-                ${tab === t && !profileUsername
+                ${tab === t
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground"
                 }
@@ -251,68 +247,77 @@ export default function App() {
 
       {/* Content */}
       <main className="flex-1 w-full sm:max-w-2xl sm:mx-auto px-3 sm:px-4 py-6 sm:py-8">
-        {profileUsername ? (
-          <ProfilePage
-            username={profileUsername}
-            onBack={handleBackFromProfile}
-          />
-        ) : (
-          <>
-            {tab === "garden"    && <Garden />}
-            {tab === "shop"      && <Shop />}
-            {tab === "inventory" && <Inventory />}
-            {tab === "botany"    && <Botany />}
-            {tab === "codex"     && <Codex />}
-            {tab === "social"    && (
-              user ? (
-                <>
-                  <div className="flex gap-2 mb-6 flex-wrap">
-                    {(["search", "friends", "gifts", "leaderboard"] as SocialView[]).map((v) => (
-                      <button
-                        key={v}
-                        onClick={() => setSocialView(v)}
-                        className={`
-                          px-4 py-2 rounded-xl text-xs font-semibold transition-all relative
-                          ${socialView === v
-                            ? "bg-primary/20 border border-primary/50 text-primary"
-                            : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
-                          }
-                        `}
-                      >
-                        {v === "search"      ? "🔍 Search"
-                         : v === "friends"   ? "👥 Friends"
-                         : v === "gifts"     ? "🎁 Gifts"
-                         : "🏆 Ranks"}
-                        {v === "friends" && pendingCount > 0 && (
-                          <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
-                            {pendingCount}
-                          </span>
-                        )}
-                        {v === "gifts" && giftCount > 0 && (
-                          <span className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
-                            {giftCount}
-                          </span>
-                        )}
-                      </button>
-                    ))}
+        <>
+          {tab === "garden"    && <Garden />}
+          {tab === "shop"      && <Shop />}
+          {tab === "inventory" && <Inventory />}
+          {tab === "botany"    && <Botany />}
+          {tab === "codex"     && <Codex />}
+          {tab === "social"    && (
+            user ? (
+              <>
+                {/* Social nav — always visible, clicking clears any open profile */}
+                <div className="flex gap-2 mb-6">
+                  {(["search", "friends", "gifts", "leaderboard"] as SocialView[]).map((v) => (
                     <button
-                      onClick={() => handleViewProfile(profile?.username ?? "")}
-                      className="px-4 py-2 rounded-xl text-xs font-semibold transition-all bg-card/60 border border-border text-muted-foreground hover:border-primary/30 ml-auto"
+                      key={v}
+                      onClick={() => handleSocialViewChange(v)}
+                      className={`
+                        flex-1 py-2 rounded-xl text-xs font-semibold transition-all relative text-center
+                        ${socialView === v && !profileUsername
+                          ? "bg-primary/20 border border-primary/50 text-primary"
+                          : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
+                        }
+                      `}
                     >
-                      👤 My Profile
+                      <span>{v === "search" ? "🔍" : v === "friends" ? "👥" : v === "gifts" ? "🎁" : "🏆"}</span>
+                      <span className="hidden sm:inline ml-1">
+                        {v === "search" ? "Search" : v === "friends" ? "Friends" : v === "gifts" ? "Gifts" : "Ranks"}
+                      </span>
+                      {v === "friends" && pendingCount > 0 && (
+                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
+                          {pendingCount}
+                        </span>
+                      )}
+                      {v === "gifts" && giftCount > 0 && (
+                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
+                          {giftCount}
+                        </span>
+                      )}
                     </button>
-                  </div>
-                  {socialView === "search"      && <SearchPage onViewProfile={handleViewProfile} />}
-                  {socialView === "friends"     && <FriendsPage onViewProfile={handleViewProfile} />}
-                  {socialView === "gifts"       && <GiftsPage onViewProfile={handleViewProfile} />}
-                  {socialView === "leaderboard" && <LeaderboardPage onViewProfile={handleViewProfile} />}
-                </>
-              ) : (
-                <GuestSocialPrompt onSignIn={signInWithGoogle} />
-              )
-            )}
-          </>
-        )}
+                  ))}
+                  <button
+                    onClick={() => handleViewProfile(profile?.username ?? "")}
+                    className={`
+                      flex-1 py-2 rounded-xl text-xs font-semibold transition-all text-center
+                      ${profileUsername === profile?.username
+                        ? "bg-primary/20 border border-primary/50 text-primary"
+                        : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
+                      }
+                    `}
+                  >
+                    <span>👤</span>
+                    <span className="hidden sm:inline ml-1">My Profile</span>
+                  </button>
+                </div>
+
+                {/* Content: profile view or social view */}
+                {profileUsername ? (
+                  <ProfilePage username={profileUsername} />
+                ) : (
+                  <>
+                    {socialView === "search"      && <SearchPage onViewProfile={handleViewProfile} />}
+                    {socialView === "friends"     && <FriendsPage onViewProfile={handleViewProfile} />}
+                    {socialView === "gifts"       && <GiftsPage onViewProfile={handleViewProfile} />}
+                    {socialView === "leaderboard" && <LeaderboardPage onViewProfile={handleViewProfile} />}
+                  </>
+                )}
+              </>
+            ) : (
+              <GuestSocialPrompt onSignIn={signInWithGoogle} />
+            )
+          )}
+        </>
       </main>
     </div>
   );

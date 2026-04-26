@@ -12,10 +12,9 @@ import { Codex } from "./Codex";
 
 interface Props {
   username: string;
-  onBack: () => void;
 }
 
-export function ProfilePage({ username, onBack }: Props) {
+export function ProfilePage({ username }: Props) {
   const { user, profile: myProfile, state, refreshProfile } = useGame();
 
   const [profile, setProfile]             = useState<CloudProfile | null>(null);
@@ -65,9 +64,6 @@ export function ProfilePage({ username, onBack }: Props) {
     <div className="flex flex-col items-center justify-center py-24 gap-3 text-center">
       <p className="text-4xl">🔍</p>
       <p className="font-medium text-muted-foreground">Player not found</p>
-      <button onClick={onBack} className="text-xs text-primary hover:underline">
-        ← Back
-      </button>
     </div>
   );
 
@@ -80,14 +76,6 @@ export function ProfilePage({ username, onBack }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
-
-      {/* Back button */}
-      <button
-        onClick={onBack}
-        className="text-xs text-muted-foreground hover:text-foreground transition-colors self-start flex items-center gap-1"
-      >
-        ← Back
-      </button>
 
       {/* Profile card */}
       <div className="bg-card/60 border border-border rounded-2xl p-5 flex items-center gap-5">

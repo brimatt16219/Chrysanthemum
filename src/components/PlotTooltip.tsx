@@ -40,7 +40,9 @@ export function PlotTooltip({ plant, row, col, onClose }: Props) {
   const rarity        = RARITY_CONFIG[species.rarity];
   const isBloomed     = stage === "bloom";
   const hasFertilizer = !!plant.fertilizer;
-  const availableFerts = state.fertilizers.filter((f) => f.quantity > 0);
+  const availableFerts = state.fertilizers
+    .filter((f) => f.quantity > 0)
+    .sort((a, b) => FERTILIZERS[a.type].speedMultiplier - FERTILIZERS[b.type].speedMultiplier);
 
   function handleApplyFertilizer(type: FertilizerType) {
     const next = applyFertilizer(state, row, col, type);
