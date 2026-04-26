@@ -103,10 +103,10 @@ export function PlotTile({ plot, row, col, onEmptyClick, onHarvest, isSelected, 
               relative ${cellSize} rounded-xl border-2 transition-all duration-200
               flex flex-col items-center justify-center gap-0.5
               ${isBloomed
-                ? `border-primary/60 bg-primary/10 hover:scale-110 hover:bg-primary/20 cursor-pointer ${rarity?.glow}`
+                ? `${rarity?.borderBloom ?? "border-primary/60"} bg-primary/10 hover:scale-110 hover:bg-primary/20 cursor-pointer ${rarity?.glow}`
                 : open
-                ? "border-primary/60 bg-card/80 scale-105"
-                : "border-border/60 bg-card/60 hover:border-primary/40 hover:bg-card/80 cursor-pointer"
+                ? `${rarity?.borderGrowing ?? "border-border/60"} bg-card/80 scale-105`
+                : `${rarity?.borderGrowing ?? "border-border/60"} bg-card/60 hover:bg-card/80 cursor-pointer`
               }
             `}
             title={

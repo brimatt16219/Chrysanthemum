@@ -1177,11 +1177,19 @@ export const FLOWERS: FlowerSpecies[] = [
 export const getFlower = (id: string): FlowerSpecies | undefined =>
   FLOWERS.find((f) => f.id === id);
 
-export const RARITY_CONFIG: Record<Rarity, { label: string; color: string; glow: string }> = {
-  common:    { label: "Common",    color: "text-gray-400",   glow: "" },
-  uncommon:  { label: "Uncommon",  color: "text-green-400",  glow: "shadow-[0_0_8px_rgba(74,222,128,0.4)]"  },
-  rare:      { label: "Rare",      color: "text-blue-400",   glow: "shadow-[0_0_8px_rgba(96,165,250,0.5)]"  },
-  legendary: { label: "Legendary", color: "text-yellow-400", glow: "shadow-[0_0_12px_rgba(250,204,21,0.6)]" },
-  mythic:    { label: "Mythic",    color: "text-pink-400",   glow: "shadow-[0_0_16px_rgba(244,114,182,0.7)]"},
-  exalted:   { label: "Exalted",   color: "text-black",      glow: "shadow-[0_0_24px_rgba(226,232,240,0.6)]" },
+export const RARITY_CONFIG: Record<Rarity, {
+  label: string;
+  color: string;
+  glow: string;
+  /** Border color while the plant is still growing (seed / sprout) — muted */
+  borderGrowing: string;
+  /** Border color when the plant has fully bloomed — vivid */
+  borderBloom: string;
+}> = {
+  common:    { label: "Common",    color: "text-gray-400",   glow: "",                                         borderGrowing: "border-gray-400/20",   borderBloom: "border-gray-400/60"   },
+  uncommon:  { label: "Uncommon",  color: "text-green-400",  glow: "shadow-[0_0_8px_rgba(74,222,128,0.4)]",   borderGrowing: "border-green-400/25",  borderBloom: "border-green-400/70"  },
+  rare:      { label: "Rare",      color: "text-blue-400",   glow: "shadow-[0_0_8px_rgba(96,165,250,0.5)]",   borderGrowing: "border-blue-400/25",   borderBloom: "border-blue-400/70"   },
+  legendary: { label: "Legendary", color: "text-yellow-400", glow: "shadow-[0_0_12px_rgba(250,204,21,0.6)]",  borderGrowing: "border-yellow-400/30", borderBloom: "border-yellow-400/80" },
+  mythic:    { label: "Mythic",    color: "text-pink-400",   glow: "shadow-[0_0_16px_rgba(244,114,182,0.7)]", borderGrowing: "border-pink-400/30",   borderBloom: "border-pink-400/80"   },
+  exalted:   { label: "Exalted",   color: "text-black",      glow: "shadow-[0_0_24px_rgba(226,232,240,0.6)]", borderGrowing: "border-slate-300/25",  borderBloom: "border-slate-300/70"  },
 };
