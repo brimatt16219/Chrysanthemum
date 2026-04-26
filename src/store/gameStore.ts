@@ -555,6 +555,34 @@ export function buyFromShop(state: GameState, speciesId: string): GameState | nu
   return { ...state, coins: state.coins - slot.price, shop: newShop, inventory: newInventory };
 }
 
+export function buyAllFromShop(state: GameState, speciesId: string): GameState | null {
+  const slot = state.shop.find((s) => s.speciesId === speciesId && !s.isFertilizer);
+  if (!slot || slot.quantity < 1) return null;
+  if (state.coins < slot.price) return null;
+
+  // Buy as many as the player can afford, up to stock
+  const canAfford = Math.floor(state.coins / slot.price);
+  const qty       = Math.min(slot.quantity, canAfford);
+  if (qty < 1) return null;
+
+  const newShop = state.shop.map((s) =>
+    s.speciesId === speciesId && !s.isFertilizer
+      ? { ...s, quantity: s.quantity - qty }
+      : s
+  );
+
+  const existing = state.inventory.find((i) => i.speciesId === speciesId && i.isSeed);
+  const newInventory = existing
+    ? state.inventory.map((i) =>
+        i.speciesId === speciesId && i.isSeed
+          ? { ...i, quantity: i.quantity + qty }
+          : i
+      )
+    : [...state.inventory, { speciesId, quantity: qty, isSeed: true }];
+
+  return { ...state, coins: state.coins - slot.price * qty, shop: newShop, inventory: newInventory };
+}
+
 export function buyFertilizer(
   state: GameState,
   fertilizerType: FertilizerType
@@ -581,6 +609,41 @@ export function buyFertilizer(
   return {
     ...state,
     coins:       state.coins - slot.price,
+    shop:        newShop,
+    fertilizers: newFertilizers,
+  };
+}
+
+export function buyAllFertilizer(
+  state: GameState,
+  fertilizerType: FertilizerType
+): GameState | null {
+  const slot = state.shop.find(
+    (s) => s.isFertilizer && s.fertilizerType === fertilizerType
+  );
+  if (!slot || slot.quantity < 1) return null;
+  if (state.coins < slot.price) return null;
+
+  const canAfford = Math.floor(state.coins / slot.price);
+  const qty       = Math.min(slot.quantity, canAfford);
+  if (qty < 1) return null;
+
+  const newShop = state.shop.map((s) =>
+    s.isFertilizer && s.fertilizerType === fertilizerType
+      ? { ...s, quantity: s.quantity - qty }
+      : s
+  );
+
+  const existing = state.fertilizers.find((f) => f.type === fertilizerType);
+  const newFertilizers = existing
+    ? state.fertilizers.map((f) =>
+        f.type === fertilizerType ? { ...f, quantity: f.quantity + qty } : f
+      )
+    : [...state.fertilizers, { type: fertilizerType, quantity: qty }];
+
+  return {
+    ...state,
+    coins:       state.coins - slot.price * qty,
     shop:        newShop,
     fertilizers: newFertilizers,
   };
