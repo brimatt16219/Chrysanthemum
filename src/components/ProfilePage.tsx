@@ -518,31 +518,40 @@ function DisplayFlowerPicker({ discovered, currentFlower, currentMutation, onUpd
           </div>
 
           {/* No mutation option */}
-          <button
-            onClick={() => handlePickMutation(null)}
-            disabled={saving}
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl border border-border hover:border-primary/50 bg-background transition-all text-left"
-          >
-            <span className="text-2xl leading-none w-9 text-center">
-              {getFlower(pendingSpecies)?.emoji.bloom}
-            </span>
-            <div>
-              <p className="text-sm font-medium">No mutation</p>
-              <p className="text-xs text-muted-foreground font-mono">Base bloom</p>
-            </div>
-          </button>
+          {(() => {
+            const isActiveMutation = pendingSpecies === currentFlower && !currentMutation;
+            return (
+              <button
+                onClick={() => handlePickMutation(null)}
+                disabled={saving}
+                className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl border transition-all text-left
+                  ${isActiveMutation ? "border-primary bg-primary/20" : "border-border hover:border-primary/50 bg-background"}`}
+              >
+                <span className="text-2xl leading-none w-9 text-center">
+                  {getFlower(pendingSpecies)?.emoji.bloom}
+                </span>
+                <div>
+                  <p className="text-sm font-medium">No mutation</p>
+                  <p className="text-xs text-muted-foreground font-mono">Base bloom</p>
+                </div>
+              </button>
+            );
+          })()}
 
           {unlockedMutations.length === 0 ? (
             <p className="text-xs text-muted-foreground px-1 pt-1">
               No mutations discovered for this flower yet.
             </p>
           ) : (
-            unlockedMutations.map((mut) => (
+            unlockedMutations.map((mut) => {
+              const isActiveMutation = pendingSpecies === currentFlower && mut.id === currentMutation;
+              return (
               <button
                 key={mut.id}
                 onClick={() => handlePickMutation(mut.id)}
                 disabled={saving}
-                className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl border border-border hover:border-primary/50 bg-background transition-all text-left"
+                className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl border transition-all text-left
+                  ${isActiveMutation ? "border-primary bg-primary/20" : "border-border hover:border-primary/50 bg-background"}`}
               >
                 <div className="relative w-9 text-center flex-shrink-0">
                   <span className="text-2xl leading-none">{getFlower(pendingSpecies)?.emoji.bloom}</span>
@@ -553,7 +562,7 @@ function DisplayFlowerPicker({ discovered, currentFlower, currentMutation, onUpd
                   <p className="text-xs text-muted-foreground font-mono">×{mut.valueMultiplier} value</p>
                 </div>
               </button>
-            ))
+            );})
           )}
         </div>
       ) : (
