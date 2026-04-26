@@ -28,11 +28,10 @@ const bgClass: Record<WeatherType, string> = {
 };
 
 function formatRelative(ms: number): string {
-  const totalMin = Math.round(ms / 60_000);
-  if (totalMin < 60) return `in ~${totalMin}m`;
-  const h = Math.floor(totalMin / 60);
-  const m = totalMin % 60;
-  return m > 0 ? `in ~${h}h ${m}m` : `in ~${h}h`;
+  const totalSec = Math.max(0, Math.floor(ms / 1_000));
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return `in ${m}m ${s.toString().padStart(2, "0")}s`;
 }
 
 function formatClock(epochMs: number): string {
@@ -44,7 +43,7 @@ interface Props {
 }
 
 export function WeatherForecastPanel({ onClose }: Props) {
-  const { state, weatherForecast, buyForecastSlot, activeWeather, weatherMsLeft, weatherIsActive } = useGame();
+  const { state, weatherForecast, buyForecastSlot, activeWeather, weatherMsLeft, weatherMsUntilNext, weatherIsActive } = useGame();
 
   const slots      = state.weatherForecastSlots ?? 0;
   const canUpgrade = slots < MAX_FORECAST_SLOTS;
@@ -57,10 +56,11 @@ export function WeatherForecastPanel({ onClose }: Props) {
   const secsLeft  = Math.floor((msLeft % 60_000) / 1_000);
   const timeStr   = minsLeft > 0 ? `${minsLeft}m ${secsLeft.toString().padStart(2, "0")}s` : `${secsLeft}s`;
 
-  // Pre-compute start times for each forecast slot
-  // Slot 0 starts when current weather ends; each subsequent slot starts when the previous ends
+  // Pre-compute start times for each forecast slot.
+  // Use weatherMsUntilNext so clear-skies periods (which aren't "active" for gameplay
+  // but still have a real endsAt) don't collapse all times to 0.
   const now = Date.now();
-  const currentEndsAt = now + msLeft;
+  const currentEndsAt = now + weatherMsUntilNext;
 
   const slotStartTimes: number[] = [];
   let cursor = currentEndsAt;
