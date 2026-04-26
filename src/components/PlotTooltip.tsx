@@ -5,7 +5,7 @@ import {
   getMsUntilNextStage,
   applyFertilizer,
 } from "../store/gameStore";
-import { getFlower, RARITY_CONFIG } from "../data/flowers";
+import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
 import { FERTILIZERS, type FertilizerType } from "../data/upgrades";
 import { useGame } from "../store/GameContext";
 
@@ -85,6 +85,17 @@ export function PlotTooltip({ plant, row, col, onClose }: Props) {
           )}
           {isBloomed && (
             <p className="text-primary font-semibold">Ready to harvest!</p>
+          )}
+          {isBloomed && plant.mutation && (() => {
+            const mut = MUTATIONS[plant.mutation];
+            return (
+              <p className={`text-[10px] font-mono ${mut.color}`}>
+                {mut.emoji} {mut.name} · ×{mut.valueMultiplier} value
+              </p>
+            );
+          })()}
+          {isBloomed && plant.mutation === null && (
+            <p className="text-[10px] text-muted-foreground font-mono">No mutation</p>
           )}
         </div>
 

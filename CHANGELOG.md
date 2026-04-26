@@ -1,3 +1,22 @@
+## [v1.4.0] — 2026-04-26 — Mutations Update
+
+### Added
+- **Flower mutations** — bloomed flowers can now carry a mutation that changes their appearance and multiplies their sell value
+- **8 mutation types** — Giant (8% flat chance on bloom), Wet (Rain), Scorched (Heatwave), Frosted (Cold Front), Stellar (Star Shower), Prismatic (Prismatic Skies), Gilded (Golden Hour), Moonlit (Moonlit Night)
+- Mutation badge displayed on flowers in the inventory, gift inbox, and garden tooltip
+- Mutations discovered via gifts or harvests are registered in the Floral Codex
+
+### Changed
+- Weather mutations only roll on fully bloomed flowers — seeds and sprouts are unaffected
+- Growth progress bar now accumulates correctly so it speeds up during rain and slows back down smoothly without snapping
+
+### Fixed
+- Rarity glow border on mutated flowers in the inventory was being replaced by the mutation colour — both now display together (#22)
+- Flowers received as gifts now appear in the Botany Lab and Floral Codex (#20, #21)
+- localStorage exploit: local saves with a `lastSaved` timestamp more than 30 s in the future are now rejected in favour of the authoritative cloud save (#26, #27)
+
+---
+
 ## [v1.3.0] — 2026-04-26 — Quality of Life
 
 ### Added

@@ -8,7 +8,8 @@ export type MutationType =
   | "giant"
   | "moonlit"
   | "frozen"
-  | "scorched";
+  | "scorched"
+  | "wet";
 
 export interface Mutation {
   id: MutationType;
@@ -21,12 +22,13 @@ export interface Mutation {
 }
 
 export const MUTATIONS: Record<MutationType, Mutation> = {
-  golden:   { id: "golden",   name: "Golden",   emoji: "✨", description: "Shimmers with golden light.",       valueMultiplier: 3.0, chance: 0.05, color: "text-yellow-400" },
-  rainbow:  { id: "rainbow",  name: "Rainbow",  emoji: "🌈", description: "Every color at once.",              valueMultiplier: 2.5, chance: 0.06, color: "text-pink-400"   },
+  golden:   { id: "golden",   name: "Golden",   emoji: "✨", description: "Shimmers with golden light.",       valueMultiplier: 4.0, chance: 0.05, color: "text-yellow-400" },
+  rainbow:  { id: "rainbow",  name: "Rainbow",  emoji: "🌈", description: "Every color at once.",              valueMultiplier: 3.0, chance: 0.06, color: "text-pink-400"   },
   giant:    { id: "giant",    name: "Giant",    emoji: "⬆️", description: "Twice the size of a normal bloom.", valueMultiplier: 2.0, chance: 0.08, color: "text-green-400"  },
-  moonlit:  { id: "moonlit",  name: "Moonlit",  emoji: "🌙", description: "Glows faintly in the dark.",        valueMultiplier: 2.0, chance: 0.07, color: "text-blue-300"   },
-  frozen:   { id: "frozen",   name: "Frozen",   emoji: "❄️", description: "Crystallized mid-bloom.",           valueMultiplier: 1.5, chance: 0.10, color: "text-cyan-400"   },
-  scorched: { id: "scorched", name: "Scorched", emoji: "🔥", description: "Survived extreme heat.",            valueMultiplier: 1.5, chance: 0.10, color: "text-orange-400" },
+  moonlit:  { id: "moonlit",  name: "Moonlit",  emoji: "🌙", description: "Glows faintly in the dark.",        valueMultiplier: 2.5, chance: 0.07, color: "text-blue-300"   },
+  frozen:   { id: "frozen",   name: "Frozen",   emoji: "❄️", description: "Crystallized mid-bloom.",           valueMultiplier: 2.0, chance: 0.10, color: "text-cyan-400"   },
+  scorched: { id: "scorched", name: "Scorched", emoji: "🔥", description: "Survived extreme heat.",            valueMultiplier: 2.0, chance: 0.10, color: "text-orange-400" },
+  wet:      { id: "wet",      name: "Wet",      emoji: "💧", description: "Soaked by the rain at peak bloom.", valueMultiplier: 1.5, chance: 0.10, color: "text-blue-400"  },
 };
 
 export interface FlowerSpecies {
@@ -41,7 +43,6 @@ export interface FlowerSpecies {
   };
   sellValue: number;
   shopWeight: number;
-  possibleMutations: MutationType[];
 }
 
 export const FLOWERS: FlowerSpecies[] = [
@@ -56,7 +57,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 40_000, sprout: 80_000 },
     sellValue: 5,
     shopWeight: 70,
-    possibleMutations: ["giant", "scorched"],
   },
   {
     id: "dustweed",
@@ -67,7 +67,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 45_000, sprout: 90_000 },
     sellValue: 6,
     shopWeight: 68,
-    possibleMutations: ["frozen", "giant"],
   },
   {
     id: "sprig",
@@ -78,7 +77,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 60_000, sprout: 120_000 },
     sellValue: 7,
     shopWeight: 68,
-    possibleMutations: ["giant", "frozen"],
   },
   {
     id: "dewdrop",
@@ -89,7 +87,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 65_000, sprout: 130_000 },
     sellValue: 9,
     shopWeight: 63,
-    possibleMutations: ["frozen", "moonlit"],
   },
   {
     id: "pebblebloom",
@@ -100,7 +97,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 68_000, sprout: 136_000 },
     sellValue: 9,
     shopWeight: 62,
-    possibleMutations: ["giant", "scorched"],
   },
   {
     id: "ember_moss",
@@ -111,7 +107,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 70_000, sprout: 140_000 },
     sellValue: 10,
     shopWeight: 60,
-    possibleMutations: ["scorched", "giant"],
   },
   {
     id: "dandelion",
@@ -122,7 +117,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 75_000, sprout: 150_000 },
     sellValue: 8,
     shopWeight: 65,
-    possibleMutations: ["giant", "frozen"],
   },
   {
     id: "clover",
@@ -133,7 +127,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 80_000, sprout: 160_000 },
     sellValue: 10,
     shopWeight: 58,
-    possibleMutations: ["giant", "frozen"],
   },
   {
     id: "violet",
@@ -144,7 +137,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 85_000, sprout: 170_000 },
     sellValue: 11,
     shopWeight: 56,
-    possibleMutations: ["frozen", "moonlit"],
   },
   {
     id: "lemongrass",
@@ -155,7 +147,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 88_000, sprout: 176_000 },
     sellValue: 11,
     shopWeight: 55,
-    possibleMutations: ["golden", "scorched"],
   },
   {
     id: "daisy",
@@ -166,7 +157,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 90_000, sprout: 180_000 },
     sellValue: 12,
     shopWeight: 60,
-    possibleMutations: ["giant", "frozen", "scorched"],
   },
   {
     id: "honeywort",
@@ -177,7 +167,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 92_000, sprout: 184_000 },
     sellValue: 14,
     shopWeight: 53,
-    possibleMutations: ["golden", "giant"],
   },
   {
     id: "buttercup",
@@ -188,7 +177,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 95_000, sprout: 190_000 },
     sellValue: 13,
     shopWeight: 54,
-    possibleMutations: ["golden", "giant"],
   },
   {
     id: "dawnpetal",
@@ -199,7 +187,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 97_000, sprout: 194_000 },
     sellValue: 13,
     shopWeight: 52,
-    possibleMutations: ["moonlit", "frozen"],
   },
   {
     id: "poppy",
@@ -210,7 +197,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 100_000, sprout: 200_000 },
     sellValue: 14,
     shopWeight: 55,
-    possibleMutations: ["scorched", "giant"],
   },
   {
     id: "chamomile",
@@ -221,7 +207,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 105_000, sprout: 210_000 },
     sellValue: 15,
     shopWeight: 53,
-    possibleMutations: ["giant", "golden"],
   },
   {
     id: "marigold",
@@ -232,7 +217,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 110_000, sprout: 220_000 },
     sellValue: 16,
     shopWeight: 52,
-    possibleMutations: ["golden", "scorched"],
   },
   {
     id: "sunflower",
@@ -243,7 +227,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 120_000, sprout: 240_000 },
     sellValue: 18,
     shopWeight: 50,
-    possibleMutations: ["golden", "giant", "scorched"],
   },
   {
     id: "coppercup",
@@ -254,7 +237,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 125_000, sprout: 250_000 },
     sellValue: 16,
     shopWeight: 50,
-    possibleMutations: ["golden", "scorched"],
   },
   {
     id: "ivybell",
@@ -265,7 +247,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 130_000, sprout: 260_000 },
     sellValue: 16,
     shopWeight: 49,
-    possibleMutations: ["frozen", "moonlit"],
   },
   {
     id: "thornberry",
@@ -276,7 +257,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 140_000, sprout: 280_000 },
     sellValue: 17,
     shopWeight: 48,
-    possibleMutations: ["scorched", "giant"],
   },
   {
     id: "saltmoss",
@@ -287,7 +267,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 148_000, sprout: 296_000 },
     sellValue: 18,
     shopWeight: 47,
-    possibleMutations: ["frozen", "giant"],
   },
   {
     id: "ashpetal",
@@ -298,7 +277,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 155_000, sprout: 310_000 },
     sellValue: 20,
     shopWeight: 46,
-    possibleMutations: ["scorched", "frozen"],
   },
   {
     id: "snowdrift",
@@ -309,7 +287,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 163_000, sprout: 326_000 },
     sellValue: 21,
     shopWeight: 44,
-    possibleMutations: ["frozen", "moonlit"],
   },
 
   // ── UNCOMMON — sorted fastest to slowest ────────────────────────────────
@@ -322,7 +299,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 240_000, sprout: 480_000 },
     sellValue: 38,
     shopWeight: 32,
-    possibleMutations: ["giant", "golden"],
   },
   {
     id: "shortcress",
@@ -333,7 +309,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 255_000, sprout: 510_000 },
     sellValue: 40,
     shopWeight: 31,
-    possibleMutations: ["rainbow", "frozen"],
   },
   {
     id: "thornwhistle",
@@ -344,7 +319,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 280_000, sprout: 560_000 },
     sellValue: 43,
     shopWeight: 31,
-    possibleMutations: ["scorched", "giant"],
   },
   {
     id: "starwort",
@@ -355,7 +329,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 290_000, sprout: 580_000 },
     sellValue: 44,
     shopWeight: 30,
-    possibleMutations: ["moonlit", "golden"],
   },
   {
     id: "mintleaf",
@@ -366,7 +339,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 295_000, sprout: 590_000 },
     sellValue: 45,
     shopWeight: 30,
-    possibleMutations: ["frozen", "giant"],
   },
   {
     id: "tulip",
@@ -377,7 +349,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 300_000, sprout: 600_000 },
     sellValue: 45,
     shopWeight: 30,
-    possibleMutations: ["rainbow", "frozen", "giant"],
   },
   {
     id: "inkbloom",
@@ -388,7 +359,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 310_000, sprout: 620_000 },
     sellValue: 47,
     shopWeight: 29,
-    possibleMutations: ["moonlit", "rainbow"],
   },
   {
     id: "snapdragon",
@@ -399,7 +369,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 330_000, sprout: 660_000 },
     sellValue: 50,
     shopWeight: 29,
-    possibleMutations: ["scorched", "golden"],
   },
   {
     id: "beebalm",
@@ -410,7 +379,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 345_000, sprout: 690_000 },
     sellValue: 53,
     shopWeight: 26,
-    possibleMutations: ["golden", "scorched"],
   },
   {
     id: "candleflower",
@@ -421,7 +389,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 350_000, sprout: 700_000 },
     sellValue: 52,
     shopWeight: 26,
-    possibleMutations: ["scorched", "moonlit"],
   },
   {
     id: "carnation",
@@ -432,7 +399,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 360_000, sprout: 720_000 },
     sellValue: 55,
     shopWeight: 27,
-    possibleMutations: ["rainbow", "frozen"],
   },
   {
     id: "ribbonweed",
@@ -443,7 +409,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 370_000, sprout: 740_000 },
     sellValue: 57,
     shopWeight: 25,
-    possibleMutations: ["rainbow", "giant"],
   },
   {
     id: "hibiscus",
@@ -454,7 +419,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 380_000, sprout: 760_000 },
     sellValue: 58,
     shopWeight: 26,
-    possibleMutations: ["scorched", "rainbow"],
   },
   {
     id: "frostbell",
@@ -465,7 +429,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 390_000, sprout: 780_000 },
     sellValue: 60,
     shopWeight: 24,
-    possibleMutations: ["frozen", "moonlit"],
   },
   {
     id: "bluebell",
@@ -476,7 +439,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 400_000, sprout: 800_000 },
     sellValue: 62,
     shopWeight: 24,
-    possibleMutations: ["frozen", "moonlit"],
   },
   {
     id: "cherry_blossom",
@@ -487,7 +449,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 410_000, sprout: 820_000 },
     sellValue: 68,
     shopWeight: 23,
-    possibleMutations: ["moonlit", "rainbow"],
   },
   {
     id: "peacockflower",
@@ -498,7 +459,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 430_000, sprout: 860_000 },
     sellValue: 70,
     shopWeight: 22,
-    possibleMutations: ["rainbow", "golden", "giant"],
   },
   {
     id: "bamboo_bloom",
@@ -509,7 +469,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 440_000, sprout: 880_000 },
     sellValue: 72,
     shopWeight: 21,
-    possibleMutations: ["giant", "frozen"],
   },
   {
     id: "rose",
@@ -520,7 +479,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 420_000, sprout: 840_000 },
     sellValue: 65,
     shopWeight: 25,
-    possibleMutations: ["golden", "rainbow", "moonlit"],
   },
   {
     id: "hummingbloom",
@@ -531,7 +489,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 440_000, sprout: 880_000 },
     sellValue: 68,
     shopWeight: 5,
-    possibleMutations: ["golden", "rainbow", "scorched"],
   },
   {
     id: "lanternflower",
@@ -542,7 +499,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 460_000, sprout: 920_000 },
     sellValue: 72,
     shopWeight: 4,
-    possibleMutations: ["golden", "scorched", "moonlit"],
   },
   {
     id: "dovebloom",
@@ -553,7 +509,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 480_000, sprout: 960_000 },
     sellValue: 76,
     shopWeight: 4,
-    possibleMutations: ["moonlit", "frozen", "rainbow"],
   },
   {
     id: "coral_bells",
@@ -564,7 +519,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 500_000, sprout: 1_000_000 },
     sellValue: 80,
     shopWeight: 4,
-    possibleMutations: ["frozen", "rainbow", "moonlit"],
   },
   {
     id: "sundew",
@@ -575,7 +529,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 520_000, sprout: 1_040_000 },
     sellValue: 82,
     shopWeight: 3,
-    possibleMutations: ["golden", "giant", "scorched"],
   },
   {
     id: "bubblebloom",
@@ -586,7 +539,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 540_000, sprout: 1_080_000 },
     sellValue: 85,
     shopWeight: 3,
-    possibleMutations: ["rainbow", "frozen", "moonlit"],
   },
 
   // ── RARE — sorted fastest to slowest ────────────────────────────────────
@@ -599,7 +551,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 900_000, sprout: 1_800_000 },
     sellValue: 170,
     shopWeight: 13,
-    possibleMutations: ["scorched", "golden", "giant"],
   },
   {
     id: "rushwillow",
@@ -610,7 +561,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 960_000, sprout: 1_920_000 },
     sellValue: 185,
     shopWeight: 12,
-    possibleMutations: ["moonlit", "frozen", "rainbow"],
   },
   {
     id: "glassbell",
@@ -621,7 +571,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 1_100_000, sprout: 2_200_000 },
     sellValue: 200,
     shopWeight: 12,
-    possibleMutations: ["frozen", "moonlit"],
   },
   {
     id: "stormcaller",
@@ -632,7 +581,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 1_140_000, sprout: 2_280_000 },
     sellValue: 210,
     shopWeight: 11,
-    possibleMutations: ["frozen", "scorched", "giant"],
   },
   {
     id: "lavender",
@@ -643,7 +591,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 1_200_000, sprout: 2_400_000 },
     sellValue: 220,
     shopWeight: 11,
-    possibleMutations: ["moonlit", "frozen", "rainbow"],
   },
   {
     id: "amber_crown",
@@ -654,7 +601,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 1_200_000, sprout: 2_400_000 },
     sellValue: 225,
     shopWeight: 11,
-    possibleMutations: ["golden", "scorched"],
   },
   {
     id: "foxglove",
@@ -665,7 +611,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 1_320_000, sprout: 2_640_000 },
     sellValue: 250,
     shopWeight: 10,
-    possibleMutations: ["moonlit", "frozen"],
   },
   {
     id: "butterbloom",
@@ -676,7 +621,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 1_380_000, sprout: 2_760_000 },
     sellValue: 265,
     shopWeight: 9,
-    possibleMutations: ["rainbow", "giant", "moonlit"],
   },
   {
     id: "peony",
@@ -687,7 +631,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 1_440_000, sprout: 2_880_000 },
     sellValue: 280,
     shopWeight: 9,
-    possibleMutations: ["rainbow", "golden"],
   },
   {
     id: "tidebloom",
@@ -698,7 +641,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 1_500_000, sprout: 3_000_000 },
     sellValue: 290,
     shopWeight: 8,
-    possibleMutations: ["frozen", "moonlit", "rainbow"],
   },
   {
     id: "wisteria",
@@ -709,7 +651,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 1_560_000, sprout: 3_120_000 },
     sellValue: 310,
     shopWeight: 8,
-    possibleMutations: ["moonlit", "rainbow"],
   },
   {
     id: "dreamcup",
@@ -720,7 +661,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 1_560_000, sprout: 3_120_000 },
     sellValue: 305,
     shopWeight: 8,
-    possibleMutations: ["moonlit", "rainbow", "frozen"],
   },
   {
     id: "coralbell",
@@ -731,7 +671,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 1_620_000, sprout: 3_240_000 },
     sellValue: 320,
     shopWeight: 8,
-    possibleMutations: ["frozen", "rainbow", "moonlit"],
   },
   {
     id: "foxfire",
@@ -742,7 +681,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 1_650_000, sprout: 3_300_000 },
     sellValue: 335,
     shopWeight: 8,
-    possibleMutations: ["scorched", "golden", "moonlit"],
   },
   {
     id: "bird_of_paradise",
@@ -753,7 +691,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 1_680_000, sprout: 3_360_000 },
     sellValue: 340,
     shopWeight: 8,
-    possibleMutations: ["golden", "scorched"],
   },
   {
     id: "moonpetal",
@@ -764,7 +701,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 1_740_000, sprout: 3_480_000 },
     sellValue: 360,
     shopWeight: 7,
-    possibleMutations: ["moonlit", "frozen", "golden"],
   },
   {
     id: "orchid",
@@ -775,7 +711,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 1_800_000, sprout: 3_600_000 },
     sellValue: 380,
     shopWeight: 7,
-    possibleMutations: ["golden", "moonlit", "rainbow"],
   },
   {
     id: "duskrose",
@@ -786,7 +721,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 1_860_000, sprout: 3_720_000 },
     sellValue: 400,
     shopWeight: 6,
-    possibleMutations: ["moonlit", "frozen", "rainbow"],
   },
   {
     id: "passionflower",
@@ -797,7 +731,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 1_920_000, sprout: 3_840_000 },
     sellValue: 420,
     shopWeight: 6,
-    possibleMutations: ["rainbow", "moonlit", "golden"],
   },
   {
     id: "glasswing",
@@ -808,7 +741,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 2_000_000, sprout: 4_000_000 },
     sellValue: 440,
     shopWeight: 5,
-    possibleMutations: ["rainbow", "frozen", "moonlit"],
   },
   {
     id: "stargazer_lily",
@@ -819,7 +751,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 2_160_000, sprout: 4_320_000 },
     sellValue: 460,
     shopWeight: 4,
-    possibleMutations: ["golden", "moonlit", "rainbow"],
   },
   {
     id: "prism_lily",
@@ -830,7 +761,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 2_280_000, sprout: 4_560_000 },
     sellValue: 480,
     shopWeight: 3,
-    possibleMutations: ["rainbow", "golden", "giant"],
   },
   {
     id: "dusk_orchid",
@@ -841,7 +771,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 2_400_000, sprout: 4_800_000 },
     sellValue: 500,
     shopWeight: 3,
-    possibleMutations: ["golden", "scorched", "moonlit"],
   },
 
   // ── LEGENDARY — sorted fastest to slowest ───────────────────────────────
@@ -854,7 +783,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 5_400_000, sprout: 10_800_000 },
     sellValue: 1_800,
     shopWeight: 5,
-    possibleMutations: ["golden", "giant", "rainbow"],
   },
   {
     id: "haste_lily",
@@ -865,7 +793,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 5_800_000, sprout: 11_600_000 },
     sellValue: 1_950,
     shopWeight: 5,
-    possibleMutations: ["scorched", "golden", "moonlit"],
   },
   {
     id: "verdant_crown",
@@ -876,7 +803,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 6_600_000, sprout: 13_200_000 },
     sellValue: 2_100,
     shopWeight: 4,
-    possibleMutations: ["golden", "rainbow", "giant"],
   },
   {
     id: "ironwood_bloom",
@@ -887,7 +813,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 6_800_000, sprout: 13_600_000 },
     sellValue: 2_150,
     shopWeight: 4,
-    possibleMutations: ["giant", "scorched", "frozen"],
   },
   {
     id: "sundial",
@@ -898,7 +823,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 7_000_000, sprout: 14_000_000 },
     sellValue: 2_200,
     shopWeight: 4,
-    possibleMutations: ["golden", "scorched", "moonlit"],
   },
   {
     id: "lotus",
@@ -909,7 +833,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 7_200_000, sprout: 14_400_000 },
     sellValue: 2_200,
     shopWeight: 4,
-    possibleMutations: ["golden", "rainbow", "moonlit"],
   },
   {
     id: "candy_blossom",
@@ -920,7 +843,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 7_500_000, sprout: 15_000_000 },
     sellValue: 2_400,
     shopWeight: 4,
-    possibleMutations: ["rainbow", "golden", "frozen"],
   },
   {
     id: "dolphinia",
@@ -931,7 +853,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 7_800_000, sprout: 15_600_000 },
     sellValue: 2_700,
     shopWeight: 4,
-    possibleMutations: ["frozen", "rainbow", "giant"],
   },
   {
     id: "ghost_orchid",
@@ -942,7 +863,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 7_800_000, sprout: 15_600_000 },
     sellValue: 2_600,
     shopWeight: 4,
-    possibleMutations: ["frozen", "moonlit", "rainbow"],
   },
   {
     id: "nestbloom",
@@ -953,7 +873,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 8_100_000, sprout: 16_200_000 },
     sellValue: 2_800,
     shopWeight: 4,
-    possibleMutations: ["giant", "moonlit", "golden"],
   },
   {
     id: "black_rose",
@@ -964,7 +883,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 8_400_000, sprout: 16_800_000 },
     sellValue: 3_000,
     shopWeight: 4,
-    possibleMutations: ["moonlit", "golden"],
   },
   {
     id: "pumpkin_blossom",
@@ -975,7 +893,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 8_400_000, sprout: 16_800_000 },
     sellValue: 2_900,
     shopWeight: 4,
-    possibleMutations: ["scorched", "giant", "golden"],
   },
   {
     id: "sporebloom",
@@ -986,7 +903,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 8_700_000, sprout: 17_400_000 },
     sellValue: 3_200,
     shopWeight: 4,
-    possibleMutations: ["scorched", "rainbow", "giant"],
   },
   {
     id: "fire_lily",
@@ -997,7 +913,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 9_000_000, sprout: 18_000_000 },
     sellValue: 3_800,
     shopWeight: 3,
-    possibleMutations: ["scorched", "golden"],
   },
   {
     id: "stargazer",
@@ -1008,7 +923,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 9_300_000, sprout: 18_600_000 },
     sellValue: 4_100,
     shopWeight: 3,
-    possibleMutations: ["golden", "moonlit", "rainbow"],
   },
   {
     id: "ice_crown",
@@ -1019,7 +933,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 9_600_000, sprout: 19_200_000 },
     sellValue: 4_500,
     shopWeight: 3,
-    possibleMutations: ["frozen", "moonlit"],
   },
   {
     id: "diamond_bloom",
@@ -1030,7 +943,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 10_200_000, sprout: 20_400_000 },
     sellValue: 5_500,
     shopWeight: 4,
-    possibleMutations: ["golden", "frozen", "moonlit"],
   },
   {
     id: "oracle_eye",
@@ -1041,7 +953,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 10_800_000, sprout: 21_600_000 },
     sellValue: 6_000,
     shopWeight: 4,
-    possibleMutations: ["moonlit", "rainbow", "golden"],
   },
   {
     id: "aurora_bloom",
@@ -1052,7 +963,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 11_500_000, sprout: 23_000_000 },
     sellValue: 6_500,
     shopWeight: 3,
-    possibleMutations: ["rainbow", "golden", "moonlit"],
   },
   {
     id: "mirrorpetal",
@@ -1063,7 +973,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 12_000_000, sprout: 24_000_000 },
     sellValue: 6_800,
     shopWeight: 3,
-    possibleMutations: ["golden", "rainbow", "frozen"],
   },
   {
     id: "emberspark",
@@ -1074,7 +983,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 12_600_000, sprout: 25_200_000 },
     sellValue: 7_200,
     shopWeight: 3,
-    possibleMutations: ["scorched", "golden", "giant"],
   },
 
   // ── MYTHIC — sorted fastest to slowest ──────────────────────────────────
@@ -1087,7 +995,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 18_000_000, sprout: 36_000_000 },
     sellValue: 9_000,
     shopWeight: 1,
-    possibleMutations: ["moonlit", "golden", "frozen", "rainbow"],
   },
   {
     id: "dawnfire",
@@ -1098,7 +1005,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 21_600_000, sprout: 43_200_000 },
     sellValue: 11_000,
     shopWeight: 1,
-    possibleMutations: ["scorched", "golden", "rainbow", "giant"],
   },
   {
     id: "moonflower",
@@ -1109,7 +1015,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 28_800_000, sprout: 57_600_000 },
     sellValue: 12_000,
     shopWeight: 2,
-    possibleMutations: ["golden", "rainbow", "moonlit", "frozen"],
   },
   {
     id: "celestial_bloom",
@@ -1120,7 +1025,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 36_000_000, sprout: 72_000_000 },
     sellValue: 20_000,
     shopWeight: 2,
-    possibleMutations: ["golden", "moonlit", "rainbow"],
   },
   {
     id: "void_blossom",
@@ -1131,7 +1035,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 43_200_000, sprout: 86_400_000 },
     sellValue: 32_000,
     shopWeight: 2,
-    possibleMutations: ["moonlit", "frozen", "golden"],
   },
   {
     id: "solar_rose",
@@ -1142,7 +1045,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 57_600_000, sprout: 115_200_000 },
     sellValue: 60_000,
     shopWeight: 1,
-    possibleMutations: ["golden", "scorched", "rainbow"],
   },
   {
     id: "nebula_drift",
@@ -1153,7 +1055,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 64_800_000, sprout: 129_600_000 },
     sellValue: 80_000,
     shopWeight: 1,
-    possibleMutations: ["rainbow", "moonlit", "golden", "frozen"],
   },
   {
     id: "superbloom",
@@ -1164,7 +1065,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 72_000_000, sprout: 144_000_000 },
     sellValue: 90_000,
     shopWeight: 1,
-    possibleMutations: ["rainbow", "golden", "scorched", "giant"],
   },
   {
     id: "seraph_wing",
@@ -1175,7 +1075,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 54_000_000, sprout: 108_000_000 },
     sellValue: 35_000,
     shopWeight: 1,
-    possibleMutations: ["golden", "moonlit", "rainbow", "frozen"],
   },
   {
     id: "wanderbloom",
@@ -1186,7 +1085,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 72_000_000, sprout: 144_000_000 },
     sellValue: 60_000,
     shopWeight: 1,
-    possibleMutations: ["rainbow", "moonlit", "golden", "giant"],
   },
   {
     id: "chrysanthemum",
@@ -1197,7 +1095,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 86_400_000, sprout: 172_800_000 },
     sellValue: 100_000,
     shopWeight: 1,
-    possibleMutations: ["golden", "rainbow", "giant", "moonlit", "frozen", "scorched"],
   },
 
   // ── EXALTED — obtainable only via Botany, shopWeight always 0 ───────────
@@ -1210,7 +1107,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 108_000_000, sprout: 216_000_000 },
     sellValue: 150_000,
     shopWeight: 0,
-    possibleMutations: ["moonlit", "frozen", "golden", "rainbow", "giant", "scorched"],
   },
   {
     id: "obsidian_rose",
@@ -1221,7 +1117,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 129_600_000, sprout: 259_200_000 },
     sellValue: 200_000,
     shopWeight: 0,
-    possibleMutations: ["scorched", "frozen", "golden", "moonlit", "giant", "rainbow"],
   },
   {
     id: "duskmantle",
@@ -1232,7 +1127,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 144_000_000, sprout: 288_000_000 },
     sellValue: 230_000,
     shopWeight: 0,
-    possibleMutations: ["moonlit", "frozen", "golden"],
   },
   {
     id: "graveweb",
@@ -1243,7 +1137,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 172_800_000, sprout: 345_600_000 },
     sellValue: 280_000,
     shopWeight: 0,
-    possibleMutations: ["moonlit", "frozen", "golden", "rainbow", "scorched", "giant"],
   },
   {
     id: "nightwing",
@@ -1254,7 +1147,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 216_000_000, sprout: 432_000_000 },
     sellValue: 380_000,
     shopWeight: 0,
-    possibleMutations: ["moonlit", "golden", "frozen", "rainbow", "giant", "scorched"],
   },
   {
     id: "ashenveil",
@@ -1265,7 +1157,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 237_600_000, sprout: 475_200_000 },
     sellValue: 430_000,
     shopWeight: 0,
-    possibleMutations: ["scorched", "frozen", "giant", "moonlit"],
   },
   {
     id: "voidfire",
@@ -1276,7 +1167,6 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 259_200_000, sprout: 518_400_000 },
     sellValue: 500_000,
     shopWeight: 0,
-    possibleMutations: ["scorched", "golden", "frozen", "moonlit", "rainbow", "giant"],
   },
 ];
 

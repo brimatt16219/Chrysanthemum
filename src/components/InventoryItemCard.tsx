@@ -32,7 +32,7 @@ export function InventoryItemCard({ item }: Props) {
       className={`
         flex items-center gap-4 bg-card/60 border border-border rounded-xl px-4 py-3
         hover:border-primary/30 transition-all duration-200
-        ${mut ? `${MUTATIONS[item.mutation!].color.replace("text-", "shadow-").replace("400", "400/20")}` : rarity.glow}
+        ${rarity.glow}
       `}
     >
       {/* Emoji */}

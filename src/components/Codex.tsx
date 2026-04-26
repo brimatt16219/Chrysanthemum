@@ -85,7 +85,8 @@ export function Codex({ discoveredOverride, compact = false }: Props) {
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
         {(["common", "uncommon", "rare", "legendary", "mythic", "exalted"] as Rarity[]).map((r) => {
           const rarityFlowers = FLOWERS.filter((f) => f.rarity === r);
-          const rarityTotal   = rarityFlowers.reduce((s, f) => s + 1 + f.possibleMutations.length, 0);
+          const mutationCount = Object.keys(MUTATIONS).length;
+          const rarityTotal   = rarityFlowers.reduce((s) => s + 1 + mutationCount, 0);
           const rarityFound   = rarityFlowers.reduce((s, f) => {
             return s + getSpeciesCompletion(discovered, f.id).found;
           }, 0);
@@ -236,9 +237,9 @@ export function Codex({ discoveredOverride, compact = false }: Props) {
                   </div>
 
                   {/* Mutation entries */}
-                  {f.possibleMutations.map((mutId) => {
+                  {(Object.keys(MUTATIONS) as MutationType[]).map((mutId) => {
                     const found  = isDiscovered(discovered, f.id, mutId);
-                    const mut    = MUTATIONS[mutId as MutationType];
+                    const mut    = MUTATIONS[mutId];
                     return (
                       <div key={mutId} className="flex items-center gap-2">
                         <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] flex-shrink-0 ${

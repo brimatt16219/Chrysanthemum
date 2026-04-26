@@ -10,6 +10,16 @@ export interface PlantedFlower {
   speciesId: string;
   timePlanted: number;
   fertilizer: FertilizerType | null;
+  /** undefined = not yet rolled; null = Giant tried + failed (weather can still assign); MutationType = has mutation */
+  mutation?: MutationType | null;
+  /** Stamped the moment the plant actually transitioned — locks stage permanently */
+  sproutedAt?: number;
+  bloomedAt?: number;
+  /** Accumulated effective milliseconds of growth (fertilizer + weather multipliers applied).
+   *  Incremented each tick — never recalculated from weather, so the progress bar never snaps. */
+  growthMs?: number;
+  /** Wall-clock time when growthMs was last saved */
+  lastTickAt?: number;
 }
 
 export interface Plot {
@@ -87,9 +97,11 @@ export function resizeGrid(old: Plot[][], newRows: number, newCols: number): Plo
 
 // ── Codex helpers ──────────────────────────────────────────────────────────
 
-// Total possible codex entries: 1 base + N mutations per species
+const ALL_MUTATIONS = Object.keys(MUTATIONS) as MutationType[];
+
+// Total possible codex entries: 1 base + all mutations per species
 export function getTotalCodexEntries(): number {
-  return FLOWERS.reduce((total, f) => total + 1 + f.possibleMutations.length, 0);
+  return FLOWERS.reduce((total) => total + 1 + ALL_MUTATIONS.length, 0);
 }
 
 // Build the codex key for a harvest
@@ -110,10 +122,10 @@ export function getSpeciesCompletion(discovered: string[], speciesId: string): {
   const species = getFlower(speciesId);
   if (!species) return { found: 0, total: 0 };
 
-  const total = 1 + species.possibleMutations.length;
+  const total = 1 + ALL_MUTATIONS.length;
   let found = 0;
   if (isDiscovered(discovered, speciesId)) found++;
-  for (const mut of species.possibleMutations) {
+  for (const mut of ALL_MUTATIONS) {
     if (isDiscovered(discovered, speciesId, mut)) found++;
   }
   return { found, total };
@@ -299,27 +311,57 @@ export function msUntilShopReset(state: GameState): number {
 
 // ── Growth calculation ─────────────────────────────────────────────────────
 
+/**
+ * Returns the accumulated effective growth in milliseconds for a plant.
+ * If `growthMs` is stored on the plant, extrapolates from that checkpoint
+ * using the CURRENT multiplier for the delta since lastTickAt.
+ * This means the progress bar can never snap by more than ~1 tick of error
+ * (as long as stampStageTransitions runs every ~1 s to refresh checkpoints).
+ */
+function computeGrowthMs(
+  plant: PlantedFlower,
+  now: number,
+  weatherType: WeatherType
+): number {
+  const species = getFlower(plant.speciesId);
+  if (!species) return 0;
+
+  if (plant.bloomedAt) {
+    return species.growthTime.seed + species.growthTime.sprout; // fully grown
+  }
+
+  const fertMultiplier    = plant.fertilizer ? FERTILIZERS[plant.fertilizer].speedMultiplier : 1.0;
+  const weatherMultiplier = WEATHER[weatherType].growthMultiplier;
+  const multiplier        = fertMultiplier * weatherMultiplier;
+
+  if (plant.growthMs !== undefined && plant.lastTickAt !== undefined) {
+    // Extrapolate from last saved checkpoint (delta is always small — updated every ~1 s)
+    const delta = Math.max(0, now - plant.lastTickAt);
+    return plant.growthMs + delta * multiplier;
+  }
+
+  // No checkpoint yet — backfill using known timestamps
+  if (plant.sproutedAt !== undefined) {
+    return species.growthTime.seed + Math.max(0, now - plant.sproutedAt) * multiplier;
+  }
+  return Math.max(0, now - plant.timePlanted) * multiplier;
+}
+
 export function getCurrentStage(
   plant: PlantedFlower,
   now: number,
   weatherType: WeatherType = "clear"
 ): GrowthStage {
+  if (plant.bloomedAt && now >= plant.bloomedAt) return "bloom";
+
   const species = getFlower(plant.speciesId);
   if (!species) return "seed";
 
-  const fertMultiplier = plant.fertilizer
-    ? FERTILIZERS[plant.fertilizer].speedMultiplier
-    : 1.0;
+  const gMs    = computeGrowthMs(plant, now, weatherType);
+  const seedMs = species.growthTime.seed;
 
-  const weatherMultiplier = WEATHER[weatherType].growthMultiplier;
-  const multiplier = fertMultiplier * weatherMultiplier;
-
-  const elapsed   = now - plant.timePlanted;
-  const seedDone  = species.growthTime.seed   / multiplier;
-  const bloomDone = seedDone + species.growthTime.sprout / multiplier;
-
-  if (elapsed >= bloomDone) return "bloom";
-  if (elapsed >= seedDone)  return "sprout";
+  if (gMs >= seedMs + species.growthTime.sprout) return "bloom";
+  if (gMs >= seedMs)                              return "sprout";
   return "seed";
 }
 
@@ -328,24 +370,18 @@ export function getStageProgress(
   now: number,
   weatherType: WeatherType = "clear"
 ): number {
+  if (plant.bloomedAt && now >= plant.bloomedAt) return 1;
+
   const species = getFlower(plant.speciesId);
   if (!species) return 0;
 
-  const fertMultiplier = plant.fertilizer
-    ? FERTILIZERS[plant.fertilizer].speedMultiplier
-    : 1.0;
+  const gMs     = computeGrowthMs(plant, now, weatherType);
+  const seedMs  = species.growthTime.seed;
+  const sproutMs = species.growthTime.sprout;
 
-  const weatherMultiplier = WEATHER[weatherType].growthMultiplier;
-  const multiplier = fertMultiplier * weatherMultiplier;
-
-  const elapsed   = now - plant.timePlanted;
-  const seedDone  = species.growthTime.seed   / multiplier;
-  const bloomDone = seedDone + species.growthTime.sprout / multiplier;
-
-  if (elapsed >= bloomDone) return 1;
-  if (elapsed >= seedDone)
-    return (elapsed - seedDone) / (species.growthTime.sprout / multiplier);
-  return elapsed / seedDone;
+  if (gMs >= seedMs + sproutMs) return 1;
+  if (gMs >= seedMs) return Math.min(1, (gMs - seedMs) / sproutMs);
+  return Math.min(1, gMs / seedMs);
 }
 
 export function getMsUntilNextStage(
@@ -353,23 +389,28 @@ export function getMsUntilNextStage(
   now: number,
   weatherType: WeatherType = "clear"
 ): number {
+  if (plant.bloomedAt && now >= plant.bloomedAt) return 0;
+
   const species = getFlower(plant.speciesId);
   if (!species) return 0;
 
-  const fertMultiplier = plant.fertilizer
-    ? FERTILIZERS[plant.fertilizer].speedMultiplier
-    : 1.0;
-
+  const fertMultiplier    = plant.fertilizer ? FERTILIZERS[plant.fertilizer].speedMultiplier : 1.0;
   const weatherMultiplier = WEATHER[weatherType].growthMultiplier;
-  const multiplier = fertMultiplier * weatherMultiplier;
+  const multiplier        = fertMultiplier * weatherMultiplier;
 
-  const elapsed   = now - plant.timePlanted;
-  const seedDone  = species.growthTime.seed   / multiplier;
-  const bloomDone = seedDone + species.growthTime.sprout / multiplier;
+  const gMs     = computeGrowthMs(plant, now, weatherType);
+  const seedMs  = species.growthTime.seed;
+  const sproutMs = species.growthTime.sprout;
 
-  if (elapsed >= bloomDone) return 0;
-  if (elapsed >= seedDone)  return Math.ceil(bloomDone - elapsed);
-  return Math.ceil(seedDone - elapsed);
+  if (gMs >= seedMs + sproutMs) return 0;
+  if (gMs >= seedMs) {
+    // In sprout — remaining base ms converted to real ms at current speed
+    const remainingBase = (seedMs + sproutMs) - gMs;
+    return Math.max(0, Math.ceil(remainingBase / multiplier));
+  }
+  // In seed
+  const remainingBase = seedMs - gMs;
+  return Math.max(0, Math.ceil(remainingBase / multiplier));
 }
 
 // ── Game actions ───────────────────────────────────────────────────────────
@@ -407,23 +448,190 @@ export function plantSeed(
   return { ...state, grid: newGrid, inventory: newInventory };
 }
 
-function rollMutation(
-  speciesId: string,
+/** Called every tick. Two jobs:
+ *  1. Accumulate growthMs (effective ms of growth) so the progress bar is
+ *     weather-change-proof — it only adds, never recalculates from scratch.
+ *  2. Stamp sproutedAt / bloomedAt when thresholds are crossed so stage
+ *     transitions are permanent regardless of future weather changes.
+ *
+ *  A 100 ms guard prevents the no-deps useEffect from triggering an
+ *  infinite re-render loop on near-zero deltas. */
+export function stampStageTransitions(
+  state: GameState,
+  now: number,
   weatherType: WeatherType = "clear"
-): MutationType | undefined {
-  const species = getFlower(speciesId);
-  if (!species || species.possibleMutations.length === 0) return undefined;
+): GameState {
+  const MIN_TICK_MS = 100; // don't save growthMs for sub-100 ms deltas (prevents render loops)
+  let changed = false;
 
-  const boost = WEATHER[weatherType].mutationBoost;
+  const newGrid = state.grid.map((row) =>
+    row.map((plot) => {
+      if (!plot.plant || plot.plant.bloomedAt) return plot; // fully grown — nothing to do
 
-  for (const mutId of species.possibleMutations) {
-    const mut = MUTATIONS[mutId];
-    const chance = boost?.mutation === mutId
-      ? mut.chance * boost.multiplier
-      : mut.chance;
-    if (Math.random() < chance) return mutId;
-  }
-  return undefined;
+      const plant   = plot.plant;
+      const species = getFlower(plant.speciesId);
+      if (!species) return plot;
+
+      const fertMultiplier    = plant.fertilizer ? FERTILIZERS[plant.fertilizer].speedMultiplier : 1.0;
+      const weatherMultiplier = WEATHER[weatherType].growthMultiplier;
+      const multiplier        = fertMultiplier * weatherMultiplier;
+
+      const seedMs   = species.growthTime.seed;
+      const sproutMs = species.growthTime.sprout;
+
+      // ── Step 1: compute new growthMs ──────────────────────────────────────
+      let newGrowthMs: number;
+      let newLastTickAt = now;
+
+      if (plant.growthMs !== undefined && plant.lastTickAt !== undefined) {
+        const delta = Math.max(0, now - plant.lastTickAt);
+        if (delta < MIN_TICK_MS) return plot; // too soon — skip to prevent render loop
+        newGrowthMs = plant.growthMs + delta * multiplier;
+      } else {
+        // First encounter — backfill from known timestamps (use current multiplier as best guess)
+        if (plant.sproutedAt !== undefined) {
+          newGrowthMs = seedMs + Math.max(0, now - plant.sproutedAt) * multiplier;
+        } else {
+          newGrowthMs = Math.max(0, now - plant.timePlanted) * multiplier;
+        }
+      }
+
+      let updated      = { ...plant, growthMs: newGrowthMs, lastTickAt: newLastTickAt };
+      let plantChanged = true; // growthMs always changes after MIN_TICK_MS guard
+
+      // ── Step 2: stamp sproutedAt on first sprout transition ───────────────
+      if (!plant.sproutedAt && newGrowthMs >= seedMs) {
+        updated = { ...updated, sproutedAt: now };
+      }
+
+      // ── Step 3: stamp bloomedAt on first bloom transition ─────────────────
+      if (!plant.bloomedAt && newGrowthMs >= seedMs + sproutMs) {
+        updated = { ...updated, bloomedAt: now };
+      }
+
+      if (plantChanged) {
+        changed = true;
+        return { ...plot, plant: updated };
+      }
+      return plot;
+    })
+  );
+
+  return changed ? { ...state, grid: newGrid } : state;
+}
+
+// ── Mutation tick rates ────────────────────────────────────────────────────
+// Per-tick chances (tick = 5 s, weather event ≈ 15 min = 180 ticks)
+// Per-tick rates (tick ≈ 1 s).  Formula: p = 1 − (1 − target)^(1/ticks)
+// Rain            20 min  = 1200 ticks → 60% over event
+// Heatwave        15 min  =  900 ticks → 40% over event
+// Cold Front      15 min  =  900 ticks → 40% over event
+// Star Shower   17.5 min  = 1050 ticks → 20% over event
+// Prismatic       15 min  =  900 ticks → 20% over event
+// Golden Hour     15 min  =  900 ticks → 20% over event
+const WEATHER_MUTATION_CHANCE: Partial<Record<WeatherType, number>> = {
+  rain:            0.00076, // 60% over 20-min event
+  heatwave:        0.00057, // 40% over 15-min event
+  cold_front:      0.00057, // 40% over 15-min event
+  star_shower:     0.000213, // 20% over 17.5-min event
+  prismatic_skies: 0.000248, // 20% over 15-min event
+  golden_hour:     0.000248, // 20% over 15-min event
+};
+
+const WEATHER_MUTATION_TYPE: Partial<Record<WeatherType, MutationType>> = {
+  rain:            "wet",
+  heatwave:        "scorched",
+  cold_front:      "frozen",
+  star_shower:     "moonlit",
+  prismatic_skies: "rainbow",
+  golden_hour:     "golden",
+};
+
+const MOONLIT_NIGHT_CHANCE = 0.000019; // 50% over a 10-hour night (1 - 0.5^(1/36000))
+const GIANT_BLOOM_CHANCE   = 0.08;   // 8% flat, only at bloom transition
+
+function isNighttime(): boolean {
+  const h = new Date().getHours();
+  return h >= 20 || h < 6;
+}
+
+/** Called every tick. Rolls weather-based mutations for all unassigned plants.
+ *  - Weather mutations apply at ANY growth stage (wet included, per user request)
+ *  - Moonlit also rolls at night at a lower rate
+ *  - Giant is NOT rolled here — see assignBloomMutations below */
+export function tickWeatherMutations(
+  state: GameState,
+  weatherType: WeatherType = "clear"
+): GameState {
+  const weatherMut    = WEATHER_MUTATION_TYPE[weatherType];
+  const weatherChance = weatherMut ? (WEATHER_MUTATION_CHANCE[weatherType] ?? 0) : 0;
+  const night         = isNighttime();
+  let changed         = false;
+
+  const now = Date.now();
+
+  const newGrid = state.grid.map((row) =>
+    row.map((plot) => {
+      // Skip if already has a mutation (string); allow null (old saves) and undefined (fresh plants)
+      if (!plot.plant || typeof plot.plant.mutation === "string") return plot;
+
+      // Weather mutations only apply at bloom — the plant must be at peak to be affected
+      const stage = getCurrentStage(plot.plant, now, weatherType);
+      if (stage !== "bloom") return plot;
+
+      // Roll weather mutation
+      if (weatherMut && weatherChance > 0) {
+        if (Math.random() < weatherChance) {
+          changed = true;
+          return { ...plot, plant: { ...plot.plant, mutation: weatherMut } };
+        }
+      }
+
+      // Moonlit at night (outside star_shower — that's already covered above)
+      if (night && weatherType !== "star_shower") {
+        if (Math.random() < MOONLIT_NIGHT_CHANCE) {
+          changed = true;
+          return { ...plot, plant: { ...plot.plant, mutation: "moonlit" as MutationType } };
+        }
+      }
+
+      return plot;
+    })
+  );
+
+  return changed ? { ...state, grid: newGrid } : state;
+}
+
+/** Called every tick. Assigns Giant to newly-bloomed plants that have no mutation yet.
+ *  Giant is weather-independent — it's a flat chance at the moment of bloom. */
+export function assignBloomMutations(
+  state: GameState,
+  weatherType: WeatherType = "clear"
+): GameState {
+  const now = Date.now();
+  let changed = false;
+
+  const newGrid = state.grid.map((row) =>
+    row.map((plot) => {
+      // Only process undefined plants (never been checked for Giant)
+      // null means Giant was already tried and failed — skip to avoid repeated rolls
+      if (!plot.plant || plot.plant.mutation !== undefined) return plot;
+      const stage = getCurrentStage(plot.plant, now, weatherType);
+      if (stage !== "bloom") return plot;
+
+      // Giant: flat 8% at the moment of bloom — tried exactly once per plant
+      // On failure, set null so this block is never entered again for this plant
+      // (weather mutations in tickWeatherMutations still apply to null plants)
+      const mutation: MutationType | null = Math.random() < GIANT_BLOOM_CHANCE
+        ? "giant"
+        : null;
+
+      changed = true;
+      return { ...plot, plant: { ...plot.plant, mutation } };
+    })
+  );
+
+  return changed ? { ...state, grid: newGrid } : state;
 }
 
 export function harvestPlant(
@@ -439,8 +647,9 @@ export function harvestPlant(
   if (stage !== "bloom") return null;
 
   const { speciesId } = plot.plant;
-  const mutation      = rollMutation(speciesId, weatherType);
-  const species       = getFlower(speciesId)!;
+  // Use pre-rolled mutation from bloom time; fall back to null if somehow missed
+  const mutation = plot.plant.mutation ?? undefined;
+  const species  = getFlower(speciesId)!;
 
   const bonusCoins = mutation
     ? Math.floor(species.sellValue * (MUTATIONS[mutation].valueMultiplier - 1))
