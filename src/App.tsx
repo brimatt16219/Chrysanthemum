@@ -21,7 +21,8 @@ import { useGame } from "./store/GameContext";
 import { useFriendRequests } from "./hooks/useFriendRequests";
 import { useGiftNotifications } from "./hooks/useGiftNotifications";
 import { useDayNight } from "./hooks/useDayNight";
-import { getFlower } from "./data/flowers";
+import { getFlower, MUTATIONS } from "./data/flowers";
+import type { MutationType } from "./data/flowers";
 import { useVersionCheck } from "./hooks/useVersionCheck";
 import { UpdateBanner } from "./components/UpdateBanner";
 import { CHANGELOGS, LATEST_CHANGELOG_VERSION, type ChangelogEntry } from "./data/changelog";
@@ -166,8 +167,13 @@ export default function App() {
                     onClick={() => handleViewProfile(profile?.username ?? "")}
                     className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5"
                   >
-                    <span className="text-base">
+                    <span className="relative text-base leading-none">
                       {getFlower(profile?.display_flower ?? "daisy")?.emoji.bloom ?? "🌸"}
+                      {profile?.display_mutation && (
+                        <span className="absolute -top-1 -right-1 text-xs leading-none">
+                          {MUTATIONS[profile.display_mutation as MutationType]?.emoji}
+                        </span>
+                      )}
                     </span>
                     <span className="hidden sm:inline">{profile?.username ?? "..."}</span>
                   </button>
