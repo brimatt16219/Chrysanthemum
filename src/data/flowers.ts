@@ -10,7 +10,8 @@ export type MutationType =
   | "frozen"
   | "scorched"
   | "wet"
-  | "windstruck";
+  | "windstruck"
+  | "shocked";
 
 export interface Mutation {
   id: MutationType;
@@ -30,7 +31,8 @@ export const MUTATIONS: Record<MutationType, Mutation> = {
   frozen:   { id: "frozen",   name: "Frozen",   emoji: "❄️", description: "Crystallized mid-bloom.",           valueMultiplier: 2.0, chance: 0.10, color: "text-cyan-400"   },
   scorched: { id: "scorched", name: "Scorched", emoji: "🔥", description: "Survived extreme heat.",            valueMultiplier: 2.0, chance: 0.10, color: "text-orange-400" },
   wet:        { id: "wet",        name: "Wet",        emoji: "💧", description: "Soaked by the rain at peak bloom.",          valueMultiplier: 1.5, chance: 0.10, color: "text-blue-400"    },
-  windstruck: { id: "windstruck", name: "Windstruck", emoji: "🌪️", description: "Tossed by a tornado at the moment of bloom.", valueMultiplier: 1.1, chance: 1.0,  color: "text-stone-400"  },
+  windstruck: { id: "windstruck", name: "Windstruck", emoji: "🌪️", description: "Tossed by a tornado at the moment of bloom.",           valueMultiplier: 1.1, chance: 1.0,  color: "text-stone-400"   },
+  shocked:    { id: "shocked",    name: "Shocked",    emoji: "⚡", description: "Struck by lightning — or upgraded from a wet bloom.", valueMultiplier: 2.5, chance: 0.10, color: "text-yellow-300"  },
 };
 
 export interface FlowerSpecies {

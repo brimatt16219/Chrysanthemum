@@ -530,13 +530,14 @@ export function stampStageTransitions(
 // Prismatic       15 min  =  900 ticks → 20% over event
 // Golden Hour     15 min  =  900 ticks → 20% over event
 const WEATHER_MUTATION_CHANCE: Partial<Record<WeatherType, number>> = {
-  rain:            0.00076, // 60% over 20-min event
-  heatwave:        0.00057, // 40% over 15-min event
-  cold_front:      0.00057, // 40% over 15-min event
+  rain:            0.00076,  // 60% over 20-min event
+  heatwave:        0.00057,  // 40% over 15-min event
+  cold_front:      0.00057,  // 40% over 15-min event
   star_shower:     0.000213, // 20% over 17.5-min event
   prismatic_skies: 0.000248, // 20% over 15-min event
   golden_hour:     0.000248, // 20% over 15-min event
   tornado:         1.0,      // 100% — instant on first tick, all bloomed flowers hit
+  thunderstorm:    0.00057,  // 40% over 20-min event (normal shocked roll for non-wet plants)
 };
 
 const WEATHER_MUTATION_TYPE: Partial<Record<WeatherType, MutationType>> = {
@@ -547,6 +548,7 @@ const WEATHER_MUTATION_TYPE: Partial<Record<WeatherType, MutationType>> = {
   prismatic_skies: "rainbow",
   golden_hour:     "golden",
   tornado:         "windstruck",
+  thunderstorm:    "shocked",
 };
 
 const MOONLIT_NIGHT_CHANCE = 0.000019; // 50% over a 10-hour night (1 - 0.5^(1/36000))
@@ -574,12 +576,20 @@ export function tickWeatherMutations(
 
   const newGrid = state.grid.map((row) =>
     row.map((plot) => {
-      // Skip if already has a mutation (string); allow null (old saves) and undefined (fresh plants)
-      if (!plot.plant || typeof plot.plant.mutation === "string") return plot;
+      if (!plot.plant) return plot;
 
       // Weather mutations only apply at bloom — the plant must be at peak to be affected
       const stage = getCurrentStage(plot.plant, now, weatherType);
       if (stage !== "bloom") return plot;
+
+      // Thunderstorm combo: wet flowers are instantly upgraded to shocked
+      if (weatherType === "thunderstorm" && plot.plant.mutation === "wet") {
+        changed = true;
+        return { ...plot, plant: { ...plot.plant, mutation: "shocked" as MutationType } };
+      }
+
+      // Skip if already has any other mutation (string); allow null and undefined
+      if (typeof plot.plant.mutation === "string") return plot;
 
       // Roll weather mutation
       if (weatherMut && weatherChance > 0) {
