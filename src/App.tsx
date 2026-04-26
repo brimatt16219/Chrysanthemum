@@ -162,7 +162,7 @@ export default function App() {
             {/* Combined day/night + weather banner — click to open forecast */}
             <button
               onClick={() => setShowForecast(true)}
-              className="flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity rounded-full focus:outline-none"
+              className="cursor-pointer hover:opacity-80 transition-opacity rounded-full focus:outline-none"
               title="View weather forecast"
             >
               <WeatherBanner
@@ -171,7 +171,6 @@ export default function App() {
                 msLeft={weatherMsLeft}
                 period={dayPeriod}
               />
-              <span className="text-sm opacity-50" title="Weather forecast">🔭</span>
             </button>
             <span className="text-sm font-mono">🟡 {state.coins.toLocaleString()}</span>
             {!authLoading && (

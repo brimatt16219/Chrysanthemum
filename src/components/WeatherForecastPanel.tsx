@@ -186,7 +186,7 @@ export function WeatherForecastPanel({ onClose }: Props) {
               onClick={handleBuy}
               disabled={!canAfford}
               className={`
-                w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-150
+                w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 text-center
                 ${canAfford
                   ? "bg-primary text-primary-foreground hover:opacity-90 hover:scale-[1.02]"
                   : "bg-secondary text-muted-foreground cursor-not-allowed"
