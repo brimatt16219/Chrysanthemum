@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getProfileByUsername, getPublicSave, updateDisplayFlower, updateStatus } from "../store/cloudSave";
+import { getProfileByUsername, getPublicSave, updateDisplayFlower, updateStatus, updateUsername } from "../store/cloudSave";
 import type { CloudProfile } from "../store/cloudSave";
 import type { GameState } from "../store/gameStore";
 import { ReadOnlyGarden } from "./ReadOnlyGarden";
@@ -189,6 +189,14 @@ export function ProfilePage({ username, onBack }: Props) {
         />
       )}
 
+      {/* Username editor — own profile only */}
+      {isOwnProfile && (
+        <UsernameEditor
+          currentUsername={profile.username}
+          onUpdated={refreshProfile}
+        />
+      )}
+
       {/* Status editor — own profile only */}
       {isOwnProfile && (
         <StatusEditor
@@ -253,6 +261,88 @@ export function ProfilePage({ username, onBack }: Props) {
             setTimeout(() => setGiftSent(false), 3_000);
           }}
         />
+      )}
+    </div>
+  );
+}
+
+// ── Status editor ─────────────────────────────────────────────────────────
+
+// ── Username editor ───────────────────────────────────────────────────────
+
+interface UsernameEditorProps {
+  currentUsername: string;
+  onUpdated: () => Promise<void>;
+}
+
+function UsernameEditor({ currentUsername, onUpdated }: UsernameEditorProps) {
+  const { user } = useGame();
+  const [editing, setEditing] = useState(false);
+  const [value, setValue]     = useState(currentUsername);
+  const [saving, setSaving]   = useState(false);
+  const [error, setError]     = useState<string | null>(null);
+
+  const MAX = 20;
+  const changed = value.trim() !== currentUsername;
+
+  async function handleSave() {
+    if (!user || !changed) return;
+    setSaving(true);
+    setError(null);
+    const result = await updateUsername(user.id, value);
+    if (!result.ok) {
+      setError(result.error ?? "Something went wrong");
+      setSaving(false);
+      return;
+    }
+    await onUpdated();
+    setSaving(false);
+    setEditing(false);
+  }
+
+  return (
+    <div className="bg-card/60 border border-border rounded-2xl p-5">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <h3 className="text-sm font-semibold">Username</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            3–20 characters · letters, numbers, _ and -
+          </p>
+        </div>
+        <button
+          onClick={() => { setEditing((v) => !v); setValue(currentUsername); setError(null); }}
+          className="text-xs text-primary hover:underline flex-shrink-0"
+        >
+          {editing ? "Cancel" : "Change"}
+        </button>
+      </div>
+
+      {!editing ? (
+        <p className="text-sm font-mono text-foreground">{currentUsername}</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <input
+            value={value}
+            onChange={(e) => { setValue(e.target.value.slice(0, MAX)); setError(null); }}
+            placeholder="New username"
+            className="w-full bg-background border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary transition-colors font-mono"
+          />
+          {error && (
+            <p className="text-xs text-red-400 font-mono">{error}</p>
+          )}
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground font-mono">
+              {value.trim().length}/{MAX}
+            </span>
+            <button
+              onClick={handleSave}
+              disabled={saving || !changed}
+              className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Save"}
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

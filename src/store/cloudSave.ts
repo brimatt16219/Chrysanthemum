@@ -58,6 +58,30 @@ export async function updateDisplayFlower(
   return !error;
 }
 
+export async function updateUsername(
+  userId: string,
+  newUsername: string
+): Promise<{ ok: boolean; error?: string }> {
+  const trimmed = newUsername.trim();
+  if (trimmed.length < 3 || trimmed.length > 20) {
+    return { ok: false, error: "Username must be 3–20 characters" };
+  }
+  if (!/^[a-zA-Z0-9_-]+$/.test(trimmed)) {
+    return { ok: false, error: "Only letters, numbers, _ and - allowed" };
+  }
+
+  const { error } = await supabase
+    .from("users")
+    .update({ username: trimmed })
+    .eq("id", userId);
+
+  if (error) {
+    if (error.code === "23505") return { ok: false, error: "Username already taken" };
+    return { ok: false, error: "Failed to update username" };
+  }
+  return { ok: true };
+}
+
 export async function updateStatus(
   userId: string,
   status: string
