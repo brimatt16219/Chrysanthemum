@@ -536,6 +536,7 @@ const WEATHER_MUTATION_CHANCE: Partial<Record<WeatherType, number>> = {
   star_shower:     0.000213, // 20% over 17.5-min event
   prismatic_skies: 0.000248, // 20% over 15-min event
   golden_hour:     0.000248, // 20% over 15-min event
+  tornado:         1.0,      // 100% — instant on first tick, all bloomed flowers hit
 };
 
 const WEATHER_MUTATION_TYPE: Partial<Record<WeatherType, MutationType>> = {
@@ -545,6 +546,7 @@ const WEATHER_MUTATION_TYPE: Partial<Record<WeatherType, MutationType>> = {
   star_shower:     "moonlit",
   prismatic_skies: "rainbow",
   golden_hour:     "golden",
+  tornado:         "windstruck",
 };
 
 const MOONLIT_NIGHT_CHANCE = 0.000019; // 50% over a 10-hour night (1 - 0.5^(1/36000))
