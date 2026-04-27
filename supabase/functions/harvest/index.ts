@@ -5,6 +5,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// base64url → base64 with proper padding for Deno's strict atob()
+function b64url(s: string): string {
+  const t = s.replace(/-/g, "+").replace(/_/g, "/");
+  return t + "=".repeat((4 - t.length % 4) % 4);
+}
+
 // ── Local JWT verification — no network round trip ────────────────────────────
 async function verifyJWT(token: string): Promise<string | null> {
   try {
@@ -21,7 +27,7 @@ async function verifyJWT(token: string): Promise<string | null> {
     );
 
     const sig = Uint8Array.from(
-      atob(sigB64.replace(/-/g, "+").replace(/_/g, "/")),
+      atob(b64url(sigB64)),
       (c) => c.charCodeAt(0)
     );
     const valid = await crypto.subtle.verify(
@@ -30,7 +36,7 @@ async function verifyJWT(token: string): Promise<string | null> {
     );
     if (!valid) return null;
 
-    const payload = JSON.parse(atob(payloadB64.replace(/-/g, "+").replace(/_/g, "/")));
+    const payload = JSON.parse(atob(b64url(payloadB64)));
     if (payload.exp && payload.exp < Date.now() / 1000) return null;
     return payload.sub as string;
   } catch {
@@ -177,7 +183,7 @@ Deno.serve(async (req: Request) => {
     // Decode without verification to get userId for parallel DB load
     let userId: string;
     try {
-      const p = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+      const p = JSON.parse(atob(b64url(token.split(".")[1])));
       userId = p.sub;
     } catch {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
