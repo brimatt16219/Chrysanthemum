@@ -18,6 +18,7 @@ import {
   type CloudProfile,
 } from "./cloudSave";
 import { supabase } from "../lib/supabase";
+import { edgeSyncShop } from "../lib/edgeFunctions";
 import { useWeather } from "../hooks/useWeather";
 import type { ForecastEntry } from "../hooks/useWeather";
 import { useTimeOfDay } from "../hooks/useTimeOfDay";
@@ -265,7 +266,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         const msLeft = msUntilShopReset(prev);
         if (msLeft === 0) {
           const next = tickShop(prev);
-          if (next !== prev) setShopJustRestocked(true);
+          if (next !== prev) {
+            setShopJustRestocked(true);
+            // Sync new shop to DB — signed-in users don't auto-save, so without
+            // this the server rejects buys with "Flower not in stock".
+            edgeSyncShop(next.shop, next.lastShopReset).catch(() => {});
+          }
           return next;
         }
         return prev;

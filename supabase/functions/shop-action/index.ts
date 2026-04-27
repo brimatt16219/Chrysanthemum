@@ -55,7 +55,7 @@ const FLOWER_SELL_VALUES: Record<string, number> = {
   eternal_heart: 1_550_000, nova_bloom: 1_800_000, princess_blossom: 2_000_000,
 };
 
-type Action = "buy" | "buy_all" | "sell";
+type Action = "buy" | "buy_all" | "sell" | "sync";
 interface ShopSlot { speciesId: string; price: number; quantity: number; isFertilizer?: boolean; fertilizerType?: string; isEmpty?: boolean; }
 interface InventoryItem { speciesId: string; quantity: number; mutation?: string; isSeed?: boolean; }
 interface FertilizerItem { type: string; quantity: number; }
@@ -87,9 +87,10 @@ Deno.serve(async (req: Request) => {
 
     const body = await req.json() as {
       action: Action; speciesId?: string; fertType?: string; quantity?: number; mutation?: string;
+      shop?: ShopSlot[]; lastShopReset?: number;
     };
 
-    if (!["buy", "buy_all", "sell"].includes(body.action)) {
+    if (!["buy", "buy_all", "sell", "sync"].includes(body.action)) {
       return new Response(JSON.stringify({ error: "Invalid action" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -99,6 +100,33 @@ Deno.serve(async (req: Request) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    // ── sync: write restocked shop to DB, no save read needed ────────────────
+    if (body.action === "sync") {
+      const authResult = await supabaseAdmin.auth.getUser(token);
+      if (authResult.error || !authResult.data.user || authResult.data.user.id !== userId) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (!body.shop || typeof body.lastShopReset !== "number") {
+        return new Response(JSON.stringify({ error: "shop and lastShopReset required for sync" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { error: syncError } = await supabaseAdmin
+        .from("game_saves")
+        .update({ shop: body.shop, last_shop_reset: body.lastShopReset, updated_at: new Date().toISOString() })
+        .eq("user_id", userId);
+      if (syncError) {
+        return new Response(JSON.stringify({ error: "Failed to sync shop" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // ── Verify JWT + load save in parallel ────────────────────────────────────
     const [authResult, saveResult] = await Promise.all([

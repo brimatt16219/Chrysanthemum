@@ -61,7 +61,7 @@ export function PlotTile({ plot, row, col, onEmptyClick, onHarvest, isSelected, 
     if (isBloomed) {
       const optimistic = harvestPlant(state, row, col, activeWeather);
       if (optimistic) {
-        perform(optimistic.state, () => edgeHarvest(row, col), () => {
+        perform(optimistic.state, () => edgeHarvest(row, col, optimistic.mutation), () => {
           onHarvest(plant.speciesId, optimistic.mutation);
         });
         setOpen(false);

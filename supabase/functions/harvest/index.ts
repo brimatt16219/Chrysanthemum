@@ -158,7 +158,7 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const { row, col } = await req.json() as { row: number; col: number };
+    const { row, col, clientMutation } = await req.json() as { row: number; col: number; clientMutation?: string };
     if (typeof row !== "number" || typeof col !== "number") {
       return new Response(JSON.stringify({ error: "Invalid input: row and col required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -230,11 +230,17 @@ Deno.serve(async (req: Request) => {
 
     // ── Compute changes ───────────────────────────────────────────────────────
     const { speciesId } = plant;
-    const mutation      = (plant.mutation as string | null | undefined) ?? undefined;
+    // Prefer DB mutation; fall back to client-reported mutation (mutations are
+    // assigned client-side by the growth tick and never written to the DB).
+    const dbMutation    = (plant.mutation as string | null | undefined) ?? undefined;
+    const mutation      = dbMutation ?? (clientMutation && MUTATION_MULTIPLIERS[clientMutation] ? clientMutation : undefined);
     const sellValue     = FLOWER_SELL_VALUES[speciesId] ?? 0;
     const mutMultiplier = mutation ? (MUTATION_MULTIPLIERS[mutation] ?? 1) : 1;
     const bonusCoins    = mutation ? Math.floor(sellValue * (mutMultiplier - 1)) : 0;
 
+    // Clear only the harvested plot — do NOT return the full grid to the client.
+    // Mutations on other plants live only in client state; overwriting with the
+    // DB grid would erase all of them.
     const newGrid = grid.map((r, ri) =>
       r.map((p, ci) => ri === row && ci === col ? { ...p, plant: null } : p)
     );
@@ -278,8 +284,9 @@ Deno.serve(async (req: Request) => {
       result:  { bonusCoins, newCoins },
     });
 
+    // Return coins/inventory/discovered only — NOT grid (see comment above).
     return new Response(
-      JSON.stringify({ ok: true, coins: newCoins, grid: newGrid, inventory: newInventory, discovered: newDiscovered, mutation, bonusCoins }),
+      JSON.stringify({ ok: true, coins: newCoins, inventory: newInventory, discovered: newDiscovered, mutation, bonusCoins }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
