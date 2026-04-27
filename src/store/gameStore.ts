@@ -20,6 +20,8 @@ export interface PlantedFlower {
   growthMs?: number;
   /** Wall-clock time when growthMs was last saved */
   lastTickAt?: number;
+  /** 1.25 if this species was fully mastered in the codex at plant time (20% faster growth), otherwise undefined */
+  masteredBonus?: number;
 }
 
 export interface Plot {
@@ -131,6 +133,12 @@ export function getSpeciesCompletion(discovered: string[], speciesId: string): {
     if (isDiscovered(discovered, speciesId, mut)) found++;
   }
   return { found, total };
+}
+
+// Returns true when all 10 codex entries (base + 9 mutations) are filled for a species
+export function isSpeciesMastered(discovered: string[], speciesId: string): boolean {
+  const { found, total } = getSpeciesCompletion(discovered, speciesId);
+  return total > 0 && found === total;
 }
 
 // ── Shop helpers ───────────────────────────────────────────────────────────
@@ -388,7 +396,8 @@ function computeGrowthMs(
 
   const fertMultiplier    = plant.fertilizer ? FERTILIZERS[plant.fertilizer].speedMultiplier : 1.0;
   const weatherMultiplier = WEATHER[weatherType].growthMultiplier;
-  const multiplier        = fertMultiplier * weatherMultiplier;
+  const masteredMultiplier = plant.masteredBonus ?? 1.0;
+  const multiplier        = fertMultiplier * weatherMultiplier * masteredMultiplier;
 
   if (plant.growthMs !== undefined && plant.lastTickAt !== undefined) {
     // Extrapolate from last saved checkpoint (delta is always small — updated every ~1 s)
@@ -452,7 +461,8 @@ export function getMsUntilNextStage(
 
   const fertMultiplier    = plant.fertilizer ? FERTILIZERS[plant.fertilizer].speedMultiplier : 1.0;
   const weatherMultiplier = WEATHER[weatherType].growthMultiplier;
-  const multiplier        = fertMultiplier * weatherMultiplier;
+  const masteredMultiplier = plant.masteredBonus ?? 1.0;
+  const multiplier        = fertMultiplier * weatherMultiplier * masteredMultiplier;
 
   const gMs     = computeGrowthMs(plant, now, weatherType);
   const seedMs  = species.growthTime.seed;
@@ -485,10 +495,20 @@ export function plantSeed(
   );
   if (!invItem || invItem.quantity < 1) return null;
 
+  const mastered = isSpeciesMastered(state.discovered, speciesId);
+
   const newGrid = state.grid.map((r, ri) =>
     r.map((p, ci) => {
       if (ri === row && ci === col)
-        return { ...p, plant: { speciesId, timePlanted: Date.now(), fertilizer: null } };
+        return {
+          ...p,
+          plant: {
+            speciesId,
+            timePlanted: Date.now(),
+            fertilizer: null,
+            ...(mastered ? { masteredBonus: 1.25 } : {}),
+          },
+        };
       return p;
     })
   );
@@ -530,7 +550,8 @@ export function stampStageTransitions(
 
       const fertMultiplier    = plant.fertilizer ? FERTILIZERS[plant.fertilizer].speedMultiplier : 1.0;
       const weatherMultiplier = WEATHER[weatherType].growthMultiplier;
-      const multiplier        = fertMultiplier * weatherMultiplier;
+      const masteredMultiplier = plant.masteredBonus ?? 1.0;
+      const multiplier        = fertMultiplier * weatherMultiplier * masteredMultiplier;
 
       const seedMs   = species.growthTime.seed;
       const sproutMs = species.growthTime.sprout;
