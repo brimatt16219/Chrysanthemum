@@ -35,8 +35,9 @@ export function PlotTile({ plot, row, col, onEmptyClick, onHarvest, isSelected, 
   const isBloomed     = stage === "bloom";
   const hasFertilizer = !!plant?.fertilizer;
 
-  const [open, setOpen] = useState(false);
-  const tileRef         = useRef<HTMLDivElement>(null);
+  const [open, setOpen]   = useState(false);
+  const tileRef           = useRef<HTMLDivElement>(null);
+  const harvestingRef     = useRef(false); // guard against double-fire
 
   useEffect(() => {
     if (!open) return;
@@ -59,11 +60,21 @@ export function PlotTile({ plot, row, col, onEmptyClick, onHarvest, isSelected, 
       return;
     }
     if (isBloomed) {
+      if (harvestingRef.current) return; // already in-flight — ignore rapid clicks
       const optimistic = harvestPlant(state, row, col, activeWeather);
       if (optimistic) {
-        perform(optimistic.state, () => edgeHarvest(row, col, optimistic.mutation), () => {
-          onHarvest(plant.speciesId, optimistic.mutation);
-        });
+        harvestingRef.current = true;
+        perform(
+          optimistic.state,
+          async () => {
+            try {
+              return await edgeHarvest(row, col, optimistic.mutation);
+            } finally {
+              harvestingRef.current = false; // clear on success OR failure
+            }
+          },
+          () => { onHarvest(plant.speciesId, optimistic.mutation); }
+        );
         setOpen(false);
       }
       return;
