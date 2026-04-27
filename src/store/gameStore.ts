@@ -135,37 +135,61 @@ export function getSpeciesCompletion(discovered: string[], speciesId: string): {
 
 // ── Shop helpers ───────────────────────────────────────────────────────────
 
-function generateShop(shopSlots: number = DEFAULT_SHOP_SLOTS): ShopSlot[] {
-  const flowerSlots = shopSlots;
+/**
+ * Rarity weights for shop slot generation.
+ * A rarity is rolled first, then a random flower from that rarity is picked.
+ * Rarities omitted here (exalted, prismatic) never appear in the shop by default.
+ */
+export const SHOP_RARITY_WEIGHTS: Partial<Record<Rarity, number>> = {
+  common:    50,
+  uncommon:  30,
+  rare:      15,
+  legendary: 4,
+  mythic:    1,
+};
 
+function generateShop(shopSlots: number = DEFAULT_SHOP_SLOTS): ShopSlot[] {
   const chosen: ShopSlot[] = [];
   const usedIds = new Set<string>();
 
-  // ── FLOWERS ─────────────────────────────
-  const available   = FLOWERS.filter((f) => f.shopWeight > 0);
-  const totalWeight = available.reduce((s, f) => s + f.shopWeight, 0);
-
+  // ── FLOWERS — roll rarity first, then pick a random flower from that tier ─
   let attempts = 0;
 
-  while (chosen.length < flowerSlots && attempts < 1000) {
+  while (chosen.length < shopSlots && attempts < 1000) {
+    attempts++;
+
+    // Build eligible rarities: has weight > 0 AND has at least one unused flower
+    const eligibleRarities = (Object.entries(SHOP_RARITY_WEIGHTS) as [Rarity, number][])
+      .filter(([rarity, weight]) =>
+        weight > 0 &&
+        FLOWERS.some((f) => f.rarity === rarity && f.shopWeight > 0 && !usedIds.has(f.id))
+      );
+
+    if (eligibleRarities.length === 0) break;
+
+    // Roll a rarity by weight
+    const totalWeight = eligibleRarities.reduce((s, [, w]) => s + w, 0);
     let roll = Math.random() * totalWeight;
+    let chosenRarity: Rarity = eligibleRarities[eligibleRarities.length - 1][0];
 
-    for (const f of available) {
-      roll -= f.shopWeight;
-
-      if (roll <= 0 && !usedIds.has(f.id)) {
-        chosen.push({
-          speciesId: f.id,
-          price: Math.max(5, Math.floor(f.sellValue * 0.6)),
-          quantity: Math.floor(Math.random() * 4) + 1,
-        });
-
-        usedIds.add(f.id);
-        break;
-      }
+    for (const [rarity, weight] of eligibleRarities) {
+      roll -= weight;
+      if (roll <= 0) { chosenRarity = rarity; break; }
     }
 
-    attempts++;
+    // Pick a random unused flower from that rarity
+    const pool = FLOWERS.filter(
+      (f) => f.rarity === chosenRarity && f.shopWeight > 0 && !usedIds.has(f.id)
+    );
+    if (pool.length === 0) continue;
+
+    const flower = pool[Math.floor(Math.random() * pool.length)];
+    usedIds.add(flower.id);
+    chosen.push({
+      speciesId: flower.id,
+      price:     Math.max(5, Math.floor(flower.sellValue * 0.6)),
+      quantity:  Math.floor(Math.random() * 4) + 1,
+    });
   }
 
   // ── FERTILIZERS (weighted, 2 picks) ─────
