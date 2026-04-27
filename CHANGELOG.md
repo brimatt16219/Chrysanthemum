@@ -1,3 +1,12 @@
+## [v2.0.3] — 2026-04-27 — UI Bug Fixes
+
+### Fixed
+- Claim Gift button text is now properly centered
+- Codex rarity breakdown and filter now include Prismatic
+- Codex rarity labels now show the full name instead of a 3-letter abbreviation
+
+---
+
 ## [v2.0.2] — 2026-04-27 — Concurrency & Race Condition Fixes
 
 ### Fixed

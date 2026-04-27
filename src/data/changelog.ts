@@ -14,6 +14,15 @@ export interface ChangelogEntry {
 // Most recent version first — update this with every release
 export const CHANGELOGS: ChangelogEntry[] = [
   {
+    version: "2.0.3",
+    title:   "UI Bug Fixes",
+    items: [
+      { type: "fixed", text: "Claim Gift button text is now properly centered" },
+      { type: "fixed", text: "Codex rarity breakdown and filter now include Prismatic" },
+      { type: "fixed", text: "Codex rarity labels now show the full name instead of a 3-letter abbreviation" },
+    ],
+  },
+  {
     version: "2.0.2",
     title:   "Concurrency & Race Condition Fixes",
     items: [
