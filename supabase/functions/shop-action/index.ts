@@ -215,9 +215,12 @@ Deno.serve(async (req: Request) => {
       const qty  = body.quantity ?? 1;
       const item = newInventory.find((i) => i.speciesId === body.speciesId && i.mutation === body.mutation && !i.isSeed);
       if (!item || item.quantity < qty) {
-        return new Response(JSON.stringify({ error: "Item not in inventory or insufficient quantity" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        // Idempotent: item already sold or race-depleted — return current state as
+        // a no-op success so the client doesn't roll back and re-queue the same sell.
+        return new Response(
+          JSON.stringify({ ok: true, coins, shop: newShop, inventory: newInventory, fertilizers: newFertilizers }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
       const earned = Math.floor((FLOWER_SELL_VALUES[body.speciesId] ?? 0) * (body.mutation ? (MUTATION_MULTIPLIERS[body.mutation] ?? 1) : 1)) * qty;
       coins += earned;

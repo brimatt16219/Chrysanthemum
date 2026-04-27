@@ -199,9 +199,20 @@ Deno.serve(async (req: Request) => {
       });
     }
     if (!plot.plant) {
-      return new Response(JSON.stringify({ error: "No plant in this plot" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      // Already harvested — return idempotent success so the client doesn't
+      // roll back its optimistic state. A rolled-back "plant re-appears" causes
+      // the same harvest to get re-queued, creating an infinite error cascade.
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          coins: save.coins as number,
+          inventory: save.inventory ?? [],
+          discovered: save.discovered ?? [],
+          mutation: undefined,
+          bonusCoins: 0,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const plant = plot.plant as {

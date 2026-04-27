@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { getFlower, RARITY_CONFIG } from "../data/flowers";
 import { FERTILIZERS } from "../data/upgrades";
 import { useGame } from "../store/GameContext";
@@ -38,8 +38,11 @@ function rarityBadgeClass(rarity: Rarity): string {
 }
 
 export function ShopSlotCard({ slot }: Props) {
-  const { state, perform } = useGame();
+  const { state, getState, perform } = useGame();
   const [justBought, setJustBought] = useState(false);
+  // Absolute per-card gate: blocks any buy while a server call is in-flight,
+  // even if stateRef or queuing somehow lets a second request slip through.
+  const buyingRef = useRef(false);
 
   function flashBought() {
     setJustBought(true);
@@ -63,13 +66,43 @@ export function ShopSlotCard({ slot }: Props) {
     const outOfStock = slot.quantity === 0;
 
     function handleBuyFert() {
-      const optimistic = buyFertilizer(state, slot.fertilizerType!);
-      if (optimistic) { perform(optimistic, () => edgeBuyFertilizer(slot.fertilizerType!)); flashBought(); }
+      if (buyingRef.current) return;
+      const cur = getState();
+      const optimistic = buyFertilizer(cur, slot.fertilizerType!);
+      if (!optimistic) return;
+      buyingRef.current = true;
+      const savedCoins       = cur.coins;
+      const savedShop        = cur.shop;
+      const savedFertilizers = cur.fertilizers;
+      perform(
+        optimistic,
+        async () => { try { return await edgeBuyFertilizer(slot.fertilizerType!); } finally { buyingRef.current = false; } },
+        () => flashBought(),
+        {
+          serialize: true,
+          rollback: (c) => ({ ...c, coins: savedCoins, shop: savedShop, fertilizers: savedFertilizers }),
+        }
+      );
     }
 
     function handleBuyAllFert() {
-      const optimistic = buyAllFertilizer(state, slot.fertilizerType!);
-      if (optimistic) { perform(optimistic, () => edgeBuyFertilizer(slot.fertilizerType!, true)); flashBought(); }
+      if (buyingRef.current) return;
+      const cur = getState();
+      const optimistic = buyAllFertilizer(cur, slot.fertilizerType!);
+      if (!optimistic) return;
+      buyingRef.current = true;
+      const savedCoins       = cur.coins;
+      const savedShop        = cur.shop;
+      const savedFertilizers = cur.fertilizers;
+      perform(
+        optimistic,
+        async () => { try { return await edgeBuyFertilizer(slot.fertilizerType!, true); } finally { buyingRef.current = false; } },
+        () => flashBought(),
+        {
+          serialize: true,
+          rollback: (c) => ({ ...c, coins: savedCoins, shop: savedShop, fertilizers: savedFertilizers }),
+        }
+      );
     }
 
     return (
@@ -147,13 +180,43 @@ export function ShopSlotCard({ slot }: Props) {
   )?.quantity ?? 0;
 
   function handleBuy() {
-    const optimistic = buyFromShop(state, slot.speciesId);
-    if (optimistic) { perform(optimistic, () => edgeBuyFlower(slot.speciesId)); flashBought(); }
+    if (buyingRef.current) return;
+    const cur = getState();
+    const optimistic = buyFromShop(cur, slot.speciesId);
+    if (!optimistic) return;
+    buyingRef.current = true;
+    const savedCoins     = cur.coins;
+    const savedShop      = cur.shop;
+    const savedInventory = cur.inventory;
+    perform(
+      optimistic,
+      async () => { try { return await edgeBuyFlower(slot.speciesId); } finally { buyingRef.current = false; } },
+      () => flashBought(),
+      {
+        serialize: true,
+        rollback: (c) => ({ ...c, coins: savedCoins, shop: savedShop, inventory: savedInventory }),
+      }
+    );
   }
 
   function handleBuyAll() {
-    const optimistic = buyAllFromShop(state, slot.speciesId);
-    if (optimistic) { perform(optimistic, () => edgeBuyFlower(slot.speciesId, true)); flashBought(); }
+    if (buyingRef.current) return;
+    const cur = getState();
+    const optimistic = buyAllFromShop(cur, slot.speciesId);
+    if (!optimistic) return;
+    buyingRef.current = true;
+    const savedCoins     = cur.coins;
+    const savedShop      = cur.shop;
+    const savedInventory = cur.inventory;
+    perform(
+      optimistic,
+      async () => { try { return await edgeBuyFlower(slot.speciesId, true); } finally { buyingRef.current = false; } },
+      () => flashBought(),
+      {
+        serialize: true,
+        rollback: (c) => ({ ...c, coins: savedCoins, shop: savedShop, inventory: savedInventory }),
+      }
+    );
   }
 
   return (

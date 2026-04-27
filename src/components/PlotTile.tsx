@@ -17,12 +17,16 @@ interface Props {
   col: number;
   onEmptyClick: () => void;
   onHarvest: (speciesId: string, mutation?: MutationType) => void;
+  onHarvestStart?: () => void;
+  onHarvestEnd?: () => void;
+  /** Called at click time to check if this plot is already queued by Collect All. */
+  harvestPending?: () => boolean;
   isSelected?: boolean;
   cellSize?: string;
 }
 
-export function PlotTile({ plot, row, col, onEmptyClick, onHarvest, isSelected, cellSize = "w-16 h-16" }: Props) {
-  const { state, perform, activeWeather } = useGame();
+export function PlotTile({ plot, row, col, onEmptyClick, onHarvest, onHarvestStart, onHarvestEnd, harvestPending, isSelected, cellSize = "w-16 h-16" }: Props) {
+  const { state, perform, getState, activeWeather } = useGame();
   const now           = Date.now();
   const plant         = plot.plant;
   const species       = plant ? getFlower(plant.speciesId) : null;
@@ -61,9 +65,17 @@ export function PlotTile({ plot, row, col, onEmptyClick, onHarvest, isSelected, 
     }
     if (isBloomed) {
       if (harvestingRef.current) return; // already in-flight — ignore rapid clicks
-      const optimistic = harvestPlant(state, row, col, activeWeather);
+      if (harvestPending?.()) return;    // plot already queued by Collect All
+      // Use getState() so rapid harvests on different plots each see the previous
+      // plot's optimistic clear instead of the stale render-closure snapshot.
+      const currentState = getState();
+      const optimistic = harvestPlant(currentState, row, col, activeWeather);
       if (optimistic) {
+        // Capture the original cell so we can do a surgical rollback if the
+        // server call fails — restoring only THIS plot, not the whole grid.
+        const savedCell = currentState.grid[row][col];
         harvestingRef.current = true;
+        onHarvestStart?.();
         perform(
           optimistic.state,
           async () => {
@@ -71,9 +83,23 @@ export function PlotTile({ plot, row, col, onEmptyClick, onHarvest, isSelected, 
               return await edgeHarvest(row, col, optimistic.mutation);
             } finally {
               harvestingRef.current = false; // clear on success OR failure
+              onHarvestEnd?.();
             }
           },
-          () => { onHarvest(plant.speciesId, optimistic.mutation); }
+          () => { onHarvest(plant.speciesId, optimistic.mutation); },
+          {
+            // Serialize: prevents concurrent harvests from overwriting each
+            // other's grid changes in the DB (non-atomic read-modify-write).
+            serialize: true,
+            // Surgical rollback: only restore this plot — don't clobber other
+            // plots that may have been successfully cleared concurrently.
+            rollback: (cur) => ({
+              ...cur,
+              grid: cur.grid.map((r, ri) =>
+                r.map((p, ci) => ri === row && ci === col ? savedCell : p)
+              ),
+            }),
+          }
         );
         setOpen(false);
       }
