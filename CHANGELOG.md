@@ -1,3 +1,28 @@
+## [v2.0.2] — 2026-04-27 — Concurrency & Race Condition Fixes
+
+### Fixed
+- **Harvest race conditions** — rapid harvesting (individual clicks, "Collect All", or both simultaneously) no longer produces "No plant in this plot" errors or spurious rollbacks
+  - All harvest server calls are serialized through a client-side queue so concurrent DB grid writes can never overwrite each other
+  - `getState()` (backed by a synchronous ref) replaces stale render-closure `state` in all action handlers so each rapid click chains off the previous optimistic result
+  - Surgical rollback on failure restores only the affected plot cell, leaving other concurrently-harvested plots intact
+  - `harvestingPlots` ref blocks the seed picker from opening on plots whose harvest is still in-flight
+  - `harvestingRef` per tile prevents double-clicking the same bloom tile
+  - `harvestPending` prop lets each PlotTile check whether Collect All already queued it, preventing double-queue when both paths fire for the same plot
+- **Sell race conditions** — rapidly clicking "Sell 1" or "Sell All" no longer produces "Item not in inventory" errors
+  - `sellingRef` per inventory card blocks any sell while the current server call is in-flight
+  - Sell handler reads live quantity from `getState()` instead of the stale render prop
+  - Serialized sell queue prevents concurrent DB inventory writes from racing each other
+- **Buy race conditions** — rapidly clicking "Buy" or "Buy All" in the shop no longer produces "Flower not in stock" / "Fertilizer not in stock" errors
+  - `buyingRef` per shop card blocks any buy while the current server call is in-flight
+  - Buy handlers read live shop quantity from `getState()` to short-circuit when stock is already depleted optimistically
+  - Serialized buy queue prevents concurrent shop writes from racing
+- **Harvest → plant race** — "Collect All" now awaits all queued harvests before "Plant All" fires, preventing plant-seed from racing a harvest that hasn't hit the DB yet
+- **Collect All double-queue** — clicking "Collect All" while individual tile harvests are in-flight no longer double-queues the same plot
+- **Idempotent harvest edge function** — server now returns 200 (no-op) when a plot is already empty instead of 400, stopping the rollback → re-queue cascade that previously multiplied errors
+- **Idempotent sell edge function** — server now returns 200 (no-op) when an item is already sold/depleted instead of 400, for the same reason
+
+---
+
 ## [v2.0.1] — 2026-04-26 — Edge Function Hotfix
 
 ### Fixed

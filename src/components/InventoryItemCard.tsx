@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
 import { useGame } from "../store/GameContext";
 import { sellFlower } from "../store/gameStore";
@@ -9,7 +10,10 @@ interface Props {
 }
 
 export function InventoryItemCard({ item }: Props) {
-  const { state, perform } = useGame();
+  const { getState, perform } = useGame();
+  // Per-card gate: blocks any sell while a server call is in-flight for this card,
+  // preventing rapid clicks from queuing duplicate sells that the server will reject.
+  const sellingRef = useRef(false);
   const species = getFlower(item.speciesId);
   if (!species) return null;
 
@@ -19,13 +23,46 @@ export function InventoryItemCard({ item }: Props) {
   const totalValue = valuePerItem * item.quantity;
 
   function handleSellOne() {
-    const optimistic = sellFlower(state, item.speciesId, 1, item.mutation);
-    if (optimistic) perform(optimistic, () => edgeSellFlower(item.speciesId, item.mutation, 1));
+    if (sellingRef.current) return;
+    const cur = getState();
+    const optimistic = sellFlower(cur, item.speciesId, 1, item.mutation);
+    if (!optimistic) return;
+    sellingRef.current = true;
+    const savedCoins     = cur.coins;
+    const savedInventory = cur.inventory;
+    perform(
+      optimistic,
+      async () => { try { return await edgeSellFlower(item.speciesId, item.mutation, 1); } finally { sellingRef.current = false; } },
+      undefined,
+      {
+        serialize: true,
+        rollback: (c) => ({ ...c, coins: savedCoins, inventory: savedInventory }),
+      }
+    );
   }
 
   function handleSellAll() {
-    const optimistic = sellFlower(state, item.speciesId, item.quantity, item.mutation);
-    if (optimistic) perform(optimistic, () => edgeSellFlower(item.speciesId, item.mutation, item.quantity));
+    if (sellingRef.current) return;
+    const cur = getState();
+    // Use live quantity from stateRef so rapid clicks don't re-send a stale qty
+    const liveQty = cur.inventory.find(
+      (i) => i.speciesId === item.speciesId && i.mutation === item.mutation && !i.isSeed
+    )?.quantity ?? 0;
+    if (liveQty === 0) return;
+    const optimistic = sellFlower(cur, item.speciesId, liveQty, item.mutation);
+    if (!optimistic) return;
+    sellingRef.current = true;
+    const savedCoins     = cur.coins;
+    const savedInventory = cur.inventory;
+    perform(
+      optimistic,
+      async () => { try { return await edgeSellFlower(item.speciesId, item.mutation, liveQty); } finally { sellingRef.current = false; } },
+      undefined,
+      {
+        serialize: true,
+        rollback: (c) => ({ ...c, coins: savedCoins, inventory: savedInventory }),
+      }
+    );
   }
 
   return (

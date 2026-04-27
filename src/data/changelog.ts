@@ -14,6 +14,18 @@ export interface ChangelogEntry {
 // Most recent version first — update this with every release
 export const CHANGELOGS: ChangelogEntry[] = [
   {
+    version: "2.0.2",
+    title:   "Concurrency & Race Condition Fixes",
+    items: [
+      { type: "fixed", text: "Rapidly harvesting multiple plots no longer produces errors or ghost plants — all harvest calls are serialized so DB writes never race each other" },
+      { type: "fixed", text: "\"Collect All\" and individual tile harvests no longer double-queue the same plot when both fire at the same time" },
+      { type: "fixed", text: "\"Plant All\" no longer races a harvest that hasn't committed to the DB yet — it waits for all in-flight harvests to finish first" },
+      { type: "fixed", text: "Rapidly clicking \"Sell 1\" or \"Sell All\" no longer causes inventory errors or refunded items" },
+      { type: "fixed", text: "Rapidly clicking \"Buy\" or \"Buy All\" in the shop no longer causes stock errors or lost coins" },
+      { type: "fixed", text: "Rollback from a failed action now only restores the specific changed field — other concurrent successful actions are no longer undone" },
+    ],
+  },
+  {
     version: "2.0.1",
     title:   "Edge Function Hotfix",
     items: [

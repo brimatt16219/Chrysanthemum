@@ -18,6 +18,7 @@ import {
   type CloudProfile,
 } from "./cloudSave";
 import { supabase } from "../lib/supabase";
+import { edgeSyncShop } from "../lib/edgeFunctions";
 import { useWeather } from "../hooks/useWeather";
 import type { ForecastEntry } from "../hooks/useWeather";
 import { useTimeOfDay } from "../hooks/useTimeOfDay";
@@ -27,12 +28,23 @@ import type { WeatherType } from "../data/weather";
 interface GameContextValue {
   state: GameState;
   update: (newState: GameState) => void;
+  /** Returns the latest state synchronously — safe to call mid-event before React re-renders. */
+  getState: () => GameState;
   /** Optimistic action: applies newState immediately, calls serverFn, merges delta on success, rolls back on failure. */
   perform: <T extends Partial<GameState>>(
     optimisticState: GameState,
     serverFn: () => Promise<T>,
-    onSuccess?: (result: T) => void
+    onSuccess?: (result: T) => void,
+    options?: {
+      /** Queue the server call behind previous serialized operations — prevents concurrent DB writes overwriting each other. */
+      serialize?: boolean;
+      /** Surgical rollback: called with the *current* state on failure; return the corrected state.
+       *  If omitted, falls back to restoring the full pre-action snapshot. */
+      rollback?: (cur: GameState) => GameState;
+    }
   ) => Promise<void>;
+  /** Returns a promise that resolves once all currently-queued serialized harvests have completed. */
+  awaitHarvests: () => Promise<unknown>;
   offlineSummary: OfflineSummary;
   clearSummary: () => void;
   shopJustRestocked: boolean;
@@ -265,7 +277,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         const msLeft = msUntilShopReset(prev);
         if (msLeft === 0) {
           const next = tickShop(prev);
-          if (next !== prev) setShopJustRestocked(true);
+          if (next !== prev) {
+            setShopJustRestocked(true);
+            // Sync new shop to DB — signed-in users don't auto-save, so without
+            // this the server rejects buys with "Flower not in stock".
+            edgeSyncShop(next.shop, next.lastShopReset).catch(() => {});
+          }
           return next;
         }
         return prev;
@@ -275,24 +292,65 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // ── Actions ───────────────────────────────────────────────────────────────
-  const update = useCallback((newState: GameState) => setState(newState), []);
+  // update() is used for authoritative full-state writes (offline tick, growth
+  // effects, etc.). It keeps stateRef in sync so getState() always reflects
+  // the latest value even before React re-renders.
+  const update = useCallback((newState: GameState) => {
+    stateRef.current = newState;
+    setState(newState);
+  }, []);
+
+  const getState = useCallback(() => stateRef.current, []);
+
+  // Global queue for harvest server calls — ensures they execute one at a time
+  // so concurrent DB reads/writes don't overwrite each other's grid changes.
+  const harvestQueue = useRef<Promise<unknown>>(Promise.resolve());
+  const awaitHarvests = useCallback(() => harvestQueue.current, []);
 
   const perform = useCallback(async <T extends Partial<GameState>>(
     optimisticState: GameState,
     serverFn: () => Promise<T>,
-    onSuccess?: (result: T) => void
+    onSuccess?: (result: T) => void,
+    options?: {
+      serialize?: boolean;
+      rollback?: (cur: GameState) => GameState;
+    }
   ) => {
     const prev = stateRef.current;
-    setState(optimisticState); // apply immediately
-    try {
-      const result = await serverFn();
-      // Merge server delta into whatever state is current at reconcile time
-      // (avoids stomping growth ticks that fired during the network round-trip)
-      setState((cur) => ({ ...cur, ...result, ok: undefined }));
-      onSuccess?.(result);
-    } catch (err) {
-      console.error("Action failed, rolling back:", err);
-      setState(prev); // rollback to pre-action state
+    // Update stateRef synchronously so a second rapid perform() call sees
+    // the correct "post-first-optimistic" state when it computes its own
+    // optimistic delta — prevents two rapid harvests from undoing each other.
+    stateRef.current = optimisticState;
+    setState(optimisticState); // apply immediately to React tree
+
+    const doServer = async () => {
+      try {
+        const result = await serverFn();
+        // Merge server delta into whatever state is current at reconcile time
+        // (avoids stomping growth ticks that fired during the network round-trip)
+        setState((cur) => ({ ...cur, ...result, ok: undefined }));
+        onSuccess?.(result);
+      } catch (err) {
+        console.error("Action failed, rolling back:", err);
+        if (options?.rollback) {
+          // Surgical rollback: only undo this specific action's change in the
+          // *current* state — avoids clobbering other concurrent actions that
+          // may have already succeeded.
+          const rolled = options.rollback(stateRef.current);
+          stateRef.current = rolled;
+          setState(rolled);
+        } else {
+          stateRef.current = prev;
+          setState(prev);
+        }
+      }
+    };
+
+    if (options?.serialize) {
+      // Queue the server call — doServer resolves even on error (handled internally)
+      harvestQueue.current = harvestQueue.current.then(doServer).catch(() => {});
+    } else {
+      await doServer();
     }
   }, []);
 
@@ -338,7 +396,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <GameContext.Provider value={{
-      state, update, perform,
+      state, update, getState, perform, awaitHarvests,
       offlineSummary, clearSummary: () => setOfflineSummary(EMPTY_SUMMARY),
       shopJustRestocked, clearShopNotification: () => setShopJustRestocked(false),
       user, profile, authLoading,

@@ -406,14 +406,16 @@ export function Botany() {
           const canOpen    = eligible >= 1;
 
           return (
-            <button
+            <div
               key={rarity}
               onClick={() => canOpen && setActiveRarity(rarity)}
-              disabled={!canOpen}
+              role="button"
+              tabIndex={canOpen ? 0 : -1}
+              onKeyDown={(e) => e.key === "Enter" && canOpen && setActiveRarity(rarity)}
               className={`
                 w-full text-left rounded-2xl border p-4 transition-all duration-200
                 ${canOpen
-                  ? "border-border bg-card/60 hover:border-primary/40 hover:bg-card/80 hover:scale-[1.01]"
+                  ? "border-border bg-card/60 hover:border-primary/40 hover:bg-card/80 hover:scale-[1.01] cursor-pointer"
                   : "border-border/40 bg-card/30 opacity-50 cursor-not-allowed"
                 }
               `}
@@ -468,7 +470,7 @@ export function Botany() {
                   style={{ width: `${Math.min(100, (eligible / required) * 100)}%` }}
                 />
               </div>
-            </button>
+            </div>
           );
         })}
       </div>

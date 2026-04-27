@@ -30,7 +30,8 @@ async function callEdge<T>(name: string, body: unknown): Promise<T> {
 export interface HarvestResult {
   ok:         true;
   coins:      number;
-  grid:       GameState["grid"];
+  // grid intentionally omitted — client optimistic state owns the grid.
+  // Mutations are assigned client-side and must not be overwritten by the DB grid.
   inventory:  GameState["inventory"];
   discovered: GameState["discovered"];
   mutation:   string | undefined;
@@ -77,8 +78,12 @@ export interface BotanyResult {
 
 // ── Typed callers ─────────────────────────────────────────────────────────────
 
-export function edgeHarvest(row: number, col: number) {
-  return callEdge<HarvestResult>("harvest", { row, col });
+export function edgeHarvest(row: number, col: number, clientMutation?: string) {
+  return callEdge<HarvestResult>("harvest", { row, col, clientMutation });
+}
+
+export function edgeSyncShop(shop: GameState["shop"], lastShopReset: number) {
+  return callEdge<{ ok: true }>("shop-action", { action: "sync", shop, lastShopReset });
 }
 
 export function edgePlantSeed(row: number, col: number, speciesId: string) {
