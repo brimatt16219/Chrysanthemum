@@ -436,7 +436,6 @@ export function Botany() {
 
                 {/* Right: convert-all + progress pill */}
                 <div className="flex items-center gap-2 shrink-0">
-<<<<<<< Updated upstream
                   {eligible >= required * 2 && (
                     <button
                       onClick={(e) => { e.stopPropagation(); handleConvertAll(rarity); }}
@@ -445,8 +444,6 @@ export function Botany() {
                       Convert All
                     </button>
                   )}
-=======
->>>>>>> Stashed changes
                   {/* Progress pill */}
                   <span
                     className={`
