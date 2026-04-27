@@ -173,7 +173,7 @@ export function GiftsPage({ onViewProfile }: Props) {
                 <button
                   onClick={() => handleClaim(gw)}
                   disabled={isClaiming}
-                  className="w-full py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+                  className="w-full py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold text-center hover:opacity-90 transition-opacity disabled:opacity-50"
                 >
                   {isClaiming ? "Claiming..." : "Claim Gift 🎁"}
                 </button>
