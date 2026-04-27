@@ -239,13 +239,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // ── Auto-save ─────────────────────────────────────────────────────────────
+  // Signed-in users: writes are now owned by Edge Functions (server-authoritative).
+  // We keep a localStorage shadow only so the correct save can be recovered if a
+  // cloud write was in-flight when the page was refreshed.
+  // Guest users: still write to localStorage as before.
   useEffect(() => {
     if (!saveEnabled.current) return;
     if (user && !needsUsername) {
-      saveToCloud(user.id, state);
-      // localStorage shadow tagged with userId — only recovered on next load
-      // if the same user is signing back in, preventing guest sessions from
-      // overriding cloud progress.
       try {
         localStorage.setItem(
           "chrysanthemum_save",
