@@ -1,6 +1,7 @@
 import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
 import { useGame } from "../store/GameContext";
 import { sellFlower } from "../store/gameStore";
+import { edgeSellFlower } from "../lib/edgeFunctions";
 import type { InventoryItem } from "../store/gameStore";
 
 interface Props {
@@ -8,7 +9,7 @@ interface Props {
 }
 
 export function InventoryItemCard({ item }: Props) {
-  const { state, update } = useGame();
+  const { state, perform } = useGame();
   const species = getFlower(item.speciesId);
   if (!species) return null;
 
@@ -18,13 +19,13 @@ export function InventoryItemCard({ item }: Props) {
   const totalValue = valuePerItem * item.quantity;
 
   function handleSellOne() {
-    const next = sellFlower(state, item.speciesId, 1, item.mutation);
-    if (next) update(next);
+    const optimistic = sellFlower(state, item.speciesId, 1, item.mutation);
+    if (optimistic) perform(optimistic, () => edgeSellFlower(item.speciesId, item.mutation, 1));
   }
 
   function handleSellAll() {
-    const next = sellFlower(state, item.speciesId, item.quantity, item.mutation);
-    if (next) update(next);
+    const optimistic = sellFlower(state, item.speciesId, item.quantity, item.mutation);
+    if (optimistic) perform(optimistic, () => edgeSellFlower(item.speciesId, item.mutation, item.quantity));
   }
 
   return (

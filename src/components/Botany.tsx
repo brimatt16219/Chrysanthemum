@@ -4,6 +4,7 @@ import { FLOWERS, RARITY_CONFIG, getFlower, type MutationType } from "../data/fl
 import { MUTATIONS } from "../data/flowers";
 import { BOTANY_REQUIREMENTS, BOTANY_RARITY_ORDER, NEXT_RARITY } from "../data/botany";
 import { botanyConvert, botanyConvertAll } from "../store/gameStore";
+import { edgeBotanyConvert, edgeBotanyConvertAll } from "../lib/edgeFunctions";
 import type { InventoryItem } from "../store/gameStore";
 import type { Rarity } from "../data/flowers";
 
@@ -266,7 +267,7 @@ function SelectionScreen({
 // ── Main Botany component ─────────────────────────────────────────────────
 
 export function Botany() {
-  const { state, update } = useGame();
+  const { state, perform } = useGame();
 
   const [activeRarity, setActiveRarity]         = useState<Rarity | null>(null);
   const [resultSpeciesId, setResultSpeciesId]   = useState<string | null>(null);
@@ -311,16 +312,18 @@ export function Botany() {
     if (!activeRarity) return;
     const res = botanyConvert(state, selections);
     if (!res) return;
-    update(res.state);
-    setResultSpeciesId(res.outputSpeciesId);
+    perform(res.state, () => edgeBotanyConvert(selections), (result) => {
+      setResultSpeciesId(result.outputSpeciesIds[0]);
+    });
     setActiveRarity(null);
   }
 
   function handleConvertAll(rarity: Rarity) {
     const res = botanyConvertAll(state, rarity);
     if (!res) return;
-    update(res.state);
-    setConvertAllResult(res.outputSpeciesIds);
+    perform(res.state, () => edgeBotanyConvertAll(rarity), (result) => {
+      setConvertAllResult(result.outputSpeciesIds);
+    });
   }
 
   if (activeRarity) {

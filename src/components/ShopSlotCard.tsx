@@ -3,6 +3,7 @@ import { getFlower, RARITY_CONFIG } from "../data/flowers";
 import { FERTILIZERS } from "../data/upgrades";
 import { useGame } from "../store/GameContext";
 import { buyFromShop, buyFertilizer, buyAllFromShop, buyAllFertilizer, getSpeciesCompletion } from "../store/gameStore";
+import { edgeBuyFlower, edgeBuyFertilizer } from "../lib/edgeFunctions";
 import type { ShopSlot } from "../store/gameStore";
 import type { Rarity } from "../data/flowers";
 
@@ -37,7 +38,7 @@ function rarityBadgeClass(rarity: Rarity): string {
 }
 
 export function ShopSlotCard({ slot }: Props) {
-  const { state, update } = useGame();
+  const { state, perform } = useGame();
   const [justBought, setJustBought] = useState(false);
 
   function flashBought() {
@@ -62,13 +63,13 @@ export function ShopSlotCard({ slot }: Props) {
     const outOfStock = slot.quantity === 0;
 
     function handleBuyFert() {
-      const next = buyFertilizer(state, slot.fertilizerType!);
-      if (next) { update(next); flashBought(); }
+      const optimistic = buyFertilizer(state, slot.fertilizerType!);
+      if (optimistic) { perform(optimistic, () => edgeBuyFertilizer(slot.fertilizerType!)); flashBought(); }
     }
 
     function handleBuyAllFert() {
-      const next = buyAllFertilizer(state, slot.fertilizerType!);
-      if (next) { update(next); flashBought(); }
+      const optimistic = buyAllFertilizer(state, slot.fertilizerType!);
+      if (optimistic) { perform(optimistic, () => edgeBuyFertilizer(slot.fertilizerType!, true)); flashBought(); }
     }
 
     return (
@@ -146,13 +147,13 @@ export function ShopSlotCard({ slot }: Props) {
   )?.quantity ?? 0;
 
   function handleBuy() {
-    const next = buyFromShop(state, slot.speciesId);
-    if (next) { update(next); flashBought(); }
+    const optimistic = buyFromShop(state, slot.speciesId);
+    if (optimistic) { perform(optimistic, () => edgeBuyFlower(slot.speciesId)); flashBought(); }
   }
 
   function handleBuyAll() {
-    const next = buyAllFromShop(state, slot.speciesId);
-    if (next) { update(next); flashBought(); }
+    const optimistic = buyAllFromShop(state, slot.speciesId);
+    if (optimistic) { perform(optimistic, () => edgeBuyFlower(slot.speciesId, true)); flashBought(); }
   }
 
   return (

@@ -27,6 +27,12 @@ import type { WeatherType } from "../data/weather";
 interface GameContextValue {
   state: GameState;
   update: (newState: GameState) => void;
+  /** Optimistic action: applies newState immediately, calls serverFn, merges delta on success, rolls back on failure. */
+  perform: <T extends Partial<GameState>>(
+    optimisticState: GameState,
+    serverFn: () => Promise<T>,
+    onSuccess?: (result: T) => void
+  ) => Promise<void>;
   offlineSummary: OfflineSummary;
   clearSummary: () => void;
   shopJustRestocked: boolean;
@@ -271,6 +277,25 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ── Actions ───────────────────────────────────────────────────────────────
   const update = useCallback((newState: GameState) => setState(newState), []);
 
+  const perform = useCallback(async <T extends Partial<GameState>>(
+    optimisticState: GameState,
+    serverFn: () => Promise<T>,
+    onSuccess?: (result: T) => void
+  ) => {
+    const prev = stateRef.current;
+    setState(optimisticState); // apply immediately
+    try {
+      const result = await serverFn();
+      // Merge server delta into whatever state is current at reconcile time
+      // (avoids stomping growth ticks that fired during the network round-trip)
+      setState((cur) => ({ ...cur, ...result, ok: undefined }));
+      onSuccess?.(result);
+    } catch (err) {
+      console.error("Action failed, rolling back:", err);
+      setState(prev); // rollback to pre-action state
+    }
+  }, []);
+
   function buyForecastSlot() {
     setState((prev) => {
       const next = buyWeatherForecastSlot(prev);
@@ -313,7 +338,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <GameContext.Provider value={{
-      state, update,
+      state, update, perform,
       offlineSummary, clearSummary: () => setOfflineSummary(EMPTY_SUMMARY),
       shopJustRestocked, clearShopNotification: () => setShopJustRestocked(false),
       user, profile, authLoading,

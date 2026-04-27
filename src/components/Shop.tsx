@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useGame } from "../store/GameContext";
 import { msUntilShopReset, upgradeShopSlots } from "../store/gameStore";
+import { edgeUpgradeShopSlots } from "../lib/edgeFunctions";
 import { getNextShopSlotUpgrade, MAX_SHOP_SLOTS } from "../data/upgrades";
 import { ShopSlotCard } from "./ShopSlotCard";
 
@@ -13,7 +14,7 @@ function formatCountdown(ms: number): string {
 }
 
 export function Shop() {
-  const { state, update } = useGame();
+  const { state, perform } = useGame();
   const [countdown, setCountdown] = useState(() => msUntilShopReset(state));
 
   useEffect(() => {
@@ -30,8 +31,8 @@ export function Shop() {
   const atMaxSlots      = state.shopSlots >= MAX_SHOP_SLOTS;
 
   function handleUpgradeShopSlots() {
-    const next = upgradeShopSlots(state);
-    if (next) update(next);
+    const optimistic = upgradeShopSlots(state);
+    if (optimistic) perform(optimistic, () => edgeUpgradeShopSlots());
   }
 
   return (
