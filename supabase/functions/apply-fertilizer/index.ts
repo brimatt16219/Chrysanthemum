@@ -12,39 +12,6 @@ function b64url(s: string): string {
   return t + "=".repeat((4 - t.length % 4) % 4);
 }
 
-// ── Local JWT verification — no network round trip ────────────────────────────
-async function verifyJWT(token: string): Promise<string | null> {
-  try {
-    const parts = token.split(".");
-    if (parts.length !== 3) return null;
-    const [headerB64, payloadB64, sigB64] = parts;
-
-    const key = await crypto.subtle.importKey(
-      "raw",
-      new TextEncoder().encode(Deno.env.get("SUPABASE_JWT_SECRET")!),
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["verify"]
-    );
-
-    const sig = Uint8Array.from(
-      atob(b64url(sigB64)),
-      (c) => c.charCodeAt(0)
-    );
-    const valid = await crypto.subtle.verify(
-      "HMAC", key, sig,
-      new TextEncoder().encode(`${headerB64}.${payloadB64}`)
-    );
-    if (!valid) return null;
-
-    const payload = JSON.parse(atob(b64url(payloadB64)));
-    if (payload.exp && payload.exp < Date.now() / 1000) return null;
-    return payload.sub as string;
-  } catch {
-    return null;
-  }
-}
-
 const VALID_FERTILIZER_TYPES = ["basic", "advanced", "premium", "elite", "miracle"];
 
 interface FertilizerItem { type: string; quantity: number; }
@@ -96,12 +63,12 @@ Deno.serve(async (req: Request) => {
     );
 
     // ── Verify JWT + load save in parallel ────────────────────────────────────
-    const [verifiedId, saveResult] = await Promise.all([
-      verifyJWT(token),
+    const [authResult, saveResult] = await Promise.all([
+      supabaseAdmin.auth.getUser(token),
       supabaseAdmin.from("game_saves").select("grid, fertilizers").eq("user_id", userId).single(),
     ]);
 
-    if (!verifiedId || verifiedId !== userId) {
+    if (authResult.error || !authResult.data.user || authResult.data.user.id !== userId) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
