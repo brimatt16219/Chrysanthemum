@@ -6,6 +6,12 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+// base64url → base64 with proper padding for Deno's strict atob()
+function b64url(s: string): string {
+  const t = s.replace(/-/g, "+").replace(/_/g, "/");
+  return t + "=".repeat((4 - t.length % 4) % 4);
+}
+
 // ── Farm upgrade tiers (mirrors src/data/upgrades.ts) ────────────────────────
 const FARM_UPGRADES = [
   { rows: 3, cols: 3, cost: 0       },
@@ -32,22 +38,15 @@ const SHOP_SLOT_UPGRADES = [
 function getNextFarmUpgrade(rows: number, cols: number) {
   return FARM_UPGRADES.find((u) => u.rows > rows || (u.rows === rows && u.cols > cols)) ?? null;
 }
-
 function getNextShopSlotUpgrade(currentSlots: number) {
   return SHOP_SLOT_UPGRADES.find((u) => u.slots > currentSlots) ?? null;
 }
 
-// Mirrors resizeGrid() in gameStore.ts — preserves existing plants when expanding
-function resizeGrid(
-  old: { id: string; plant: unknown }[][],
-  newRows: number,
-  newCols: number
-) {
+function resizeGrid(old: { id: string; plant: unknown }[][], newRows: number, newCols: number) {
   return Array.from({ length: newRows }, (_, row) =>
-    Array.from({ length: newCols }, (_, col) => {
-      const existing = old[row]?.[col];
-      return existing ?? { id: `${row}-${col}`, plant: null };
-    })
+    Array.from({ length: newCols }, (_, col) =>
+      old[row]?.[col] ?? { id: `${row}-${col}`, plant: null }
+    )
   );
 }
 
@@ -57,58 +56,61 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    // ── Auth ─────────────────────────────────────────────────────────────────
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const supabaseUser = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
+    const token = authHeader.replace("Bearer ", "");
+
+    let userId: string;
+    try {
+      const p = JSON.parse(atob(b64url(token.split(".")[1])));
+      userId = p.sub;
+    } catch {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── Parse action first so we can target the right columns ─────────────────
+    const { action } = await req.json() as { action: "farm" | "shop_slots" };
+
+    if (action !== "farm" && action !== "shop_slots") {
+      return new Response(JSON.stringify({ error: "Invalid action — use 'farm' or 'shop_slots'" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
-    if (userError || !user) {
+    const selectCols = action === "farm"
+      ? "coins, farm_rows, farm_size, grid"
+      : "coins, shop_slots, shop";
+
+    // ── Verify JWT + load save in parallel ────────────────────────────────────
+    const [authResult, saveResult] = await Promise.all([
+      supabaseAdmin.auth.getUser(token),
+      supabaseAdmin.from("game_saves").select(selectCols).eq("user_id", userId).single(),
+    ]);
+
+    if (authResult.error || !authResult.data.user || authResult.data.user.id !== userId) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    // ── Parse input ───────────────────────────────────────────────────────────
-    const { action } = await req.json() as { action: "farm" | "shop_slots" };
-
-    if (action !== "farm" && action !== "shop_slots") {
-      return new Response(JSON.stringify({ error: "Invalid action — use 'farm' or 'shop_slots'" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // ── Load save ─────────────────────────────────────────────────────────────
-    const { data: save, error: saveError } = await supabaseAdmin
-      .from("game_saves")
-      .select("*")
-      .eq("user_id", user.id)
-      .single();
-
-    if (saveError || !save) {
+    if (saveResult.error || !saveResult.data) {
       return new Response(JSON.stringify({ error: "Save not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    const save = saveResult.data;
     let coins     = save.coins as number;
     let updatePayload: Record<string, unknown> = {};
     let logResult: Record<string, unknown>     = {};
@@ -121,30 +123,18 @@ Deno.serve(async (req: Request) => {
 
       if (!next) {
         return new Response(JSON.stringify({ error: "Farm is already at max size" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (coins < next.cost) {
         return new Response(JSON.stringify({ error: "Not enough coins" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       coins -= next.cost;
-      const newGrid = resizeGrid(
-        save.grid as { id: string; plant: unknown }[][],
-        next.rows,
-        next.cols
-      );
-
-      updatePayload = {
-        coins,
-        farm_size: next.cols,
-        farm_rows: next.rows,
-        grid:      newGrid,
-      };
+      const newGrid = resizeGrid(save.grid as { id: string; plant: unknown }[][], next.rows, next.cols);
+      updatePayload = { coins, farm_size: next.cols, farm_rows: next.rows, grid: newGrid };
       logResult = { from: { rows: farmRows, cols: farmSize }, to: { rows: next.rows, cols: next.cols }, cost: next.cost };
     }
 
@@ -155,34 +145,25 @@ Deno.serve(async (req: Request) => {
 
       if (!next) {
         return new Response(JSON.stringify({ error: "Shop slots already at maximum" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (coins < next.cost) {
         return new Response(JSON.stringify({ error: "Not enough coins" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       coins -= next.cost;
-
       const newSlotCount = next.slots - currentSlots;
       const shop         = (save.shop ?? []) as { isFertilizer?: boolean }[];
-      const flowerSlots  = shop.filter((s) => !s.isFertilizer);
-      const fertSlots    = shop.filter((s) => s.isFertilizer);
       const emptySlots   = Array.from({ length: newSlotCount }, (_, i) => ({
-        speciesId: `empty_${Date.now()}_${i}`,
-        price:     0,
-        quantity:  0,
-        isEmpty:   true,
+        speciesId: `empty_${Date.now()}_${i}`, price: 0, quantity: 0, isEmpty: true,
       }));
 
       updatePayload = {
-        coins,
-        shop_slots: next.slots,
-        shop:       [...flowerSlots, ...emptySlots, ...fertSlots],
+        coins, shop_slots: next.slots,
+        shop: [...shop.filter((s) => !s.isFertilizer), ...emptySlots, ...shop.filter((s) => s.isFertilizer)],
       };
       logResult = { from: currentSlots, to: next.slots, cost: next.cost };
     }
@@ -191,37 +172,27 @@ Deno.serve(async (req: Request) => {
     const { error: updateError } = await supabaseAdmin
       .from("game_saves")
       .update({ ...updatePayload, updated_at: new Date().toISOString() })
-      .eq("user_id", user.id);
+      .eq("user_id", userId);
 
     if (updateError) {
       return new Response(JSON.stringify({ error: "Failed to save" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // ── Log action ────────────────────────────────────────────────────────────
-    await supabaseAdmin.from("action_log").insert({
-      user_id: user.id,
-      action:  `upgrade_${action}`,
-      payload: { action },
-      result:  logResult,
+    void supabaseAdmin.from("action_log").insert({
+      user_id: userId, action: `upgrade_${action}`,
+      payload: { action }, result: logResult,
     });
 
-    // ── Return delta ──────────────────────────────────────────────────────────
     return new Response(
       JSON.stringify({ ok: true, ...updatePayload }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-
   } catch (err) {
     console.error("upgrade error:", err);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

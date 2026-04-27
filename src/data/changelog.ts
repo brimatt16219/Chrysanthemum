@@ -14,6 +14,17 @@ export interface ChangelogEntry {
 // Most recent version first — update this with every release
 export const CHANGELOGS: ChangelogEntry[] = [
   {
+    version: "2.0.1",
+    title:   "Edge Function Hotfix",
+    items: [
+      { type: "fixed",   text: "All game actions (plant, harvest, sell, buy, fertilize, upgrade) were reverting — fixed broken JWT verification that was rejecting every request with 401 Unauthorized" },
+      { type: "fixed",   text: "Harvest incorrectly rejecting ready flowers — server now computes bloom status from planting time rather than relying on a client-only field" },
+      { type: "fixed",   text: "Selling newer flowers returned 0 coins — sell value catalog was stale and missing recent species" },
+      { type: "fixed",   text: "Advanced and Elite fertilizers were rejected by the apply-fertilizer function" },
+      { type: "changed", text: "Auth verification and save loading now run in parallel — slightly faster action response times" },
+    ],
+  },
+  {
     version: "2.0.0",
     title:   "Server-Authoritative Architecture",
     items: [
