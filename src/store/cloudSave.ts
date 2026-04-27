@@ -123,6 +123,7 @@ export async function loadCloudSave(userId: string): Promise<GameState | null> {
       lastSaved:            data.last_saved,
       discovered:           (data.discovered as string[]) ?? [],
       weatherForecastSlots: (data.weather_forecast_slots as number) ?? 0,
+      marketplaceSlots:     (data.marketplace_slots as number) ?? 2,
     } as GameState;
   } catch {
     return null;
@@ -149,6 +150,7 @@ export async function saveToCloud(
       last_saved:             Date.now(),
       discovered:             state.discovered ?? [],
       weather_forecast_slots: state.weatherForecastSlots ?? 0,
+      marketplace_slots:      state.marketplaceSlots ?? 2,
       updated_at:             new Date().toISOString(),
     });
 
@@ -209,6 +211,7 @@ export async function getPublicSave(userId: string): Promise<GameState | null> {
     lastSaved:            data.last_saved,
     discovered:           (data.discovered as string[]) ?? [],
     weatherForecastSlots: (data.weather_forecast_slots as number) ?? 0,
+    marketplaceSlots:     (data.marketplace_slots as number) ?? 2,
   } as GameState;
 }
 
