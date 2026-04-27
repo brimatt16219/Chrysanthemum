@@ -1,3 +1,21 @@
+## [v1.6.0] — 2026-04-26 — Economy & Prismatic Update
+
+### Added
+- **🌈 Prismatic rarity** — a new tier above Exalted with animated rainbow borders, glow, and color; obtainable only through Botany
+- **20 new flowers** — 3 Uncommon, 5 Rare, 4 Legendary, 1 Mythic, and 6 Prismatic including the special Princess Blossom
+- **⚡ Codex Mastery** — fully discover a flower (base bloom + all 9 mutations) to permanently grow that species 20% faster
+- **Mastery indicators** — ⚡ badge in the seed picker and yellow highlighted timer in the plot tooltip show when a mastery bonus is active
+
+### Changed
+- Shop now rolls rarity first (weighted: Common → Mythic), then picks a random flower from that tier — guaranteeing variety across all rarities
+- Shop buy price changed from 60% → 75% of sell value
+- Sell values rebalanced across all tiers — each tier now has at most a 2× spread from cheapest to most expensive, scaled by growth time
+
+### Fixed
+- Coral Bells renamed to Pearlwort with a working emoji (previous emoji was broken on older devices)
+
+---
+
 ## [v1.5.2] — 2026-04-26 — Bug Fixes
 
 ### Fixed
