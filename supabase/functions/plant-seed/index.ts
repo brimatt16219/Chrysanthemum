@@ -8,21 +8,18 @@ const corsHeaders = {
 
 // All 9 mutation types (mirrors src/data/flowers.ts)
 const ALL_MUTATIONS = [
-  "giant", "wet", "scorched", "frosted", "stellar",
-  "prismatic", "gilded", "moonlit", "shocked", "windstruck",
+  "golden", "rainbow", "giant", "moonlit", "frozen",
+  "scorched", "wet", "windstruck", "shocked",
 ];
 
 // Mirrors isSpeciesMastered() in gameStore.ts
-// A species is mastered when base + all 9 mutations are in discovered
 function isSpeciesMastered(discovered: string[], speciesId: string): boolean {
   const total = 1 + ALL_MUTATIONS.length; // 10
   let found = 0;
-
   if (discovered.includes(speciesId)) found++;
   for (const mut of ALL_MUTATIONS) {
     if (discovered.includes(`${speciesId}:${mut}`)) found++;
   }
-
   return found === total;
 }
 
@@ -41,18 +38,13 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const supabaseUser = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     if (userError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -74,10 +66,10 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // ── Load save ─────────────────────────────────────────────────────────────
+    // ── Load save (only needed columns) ──────────────────────────────────────
     const { data: save, error: saveError } = await supabaseAdmin
       .from("game_saves")
-      .select("*")
+      .select("grid, inventory, discovered")
       .eq("user_id", user.id)
       .single();
 
@@ -108,9 +100,9 @@ Deno.serve(async (req: Request) => {
     // ── Validate seed ownership ───────────────────────────────────────────────
     const inventory = (save.inventory ?? []) as {
       speciesId: string;
-      quantity: number;
+      quantity:  number;
       mutation?: string;
-      isSeed?: boolean;
+      isSeed?:   boolean;
     }[];
 
     const seedItem = inventory.find((i) => i.speciesId === speciesId && i.isSeed);
@@ -164,8 +156,8 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // ── Log action ────────────────────────────────────────────────────────────
-    await supabaseAdmin.from("action_log").insert({
+    // ── Log action (fire-and-forget) ──────────────────────────────────────────
+    void supabaseAdmin.from("action_log").insert({
       user_id: user.id,
       action:  "plant_seed",
       payload: { row, col, speciesId },
@@ -174,11 +166,7 @@ Deno.serve(async (req: Request) => {
 
     // ── Return delta ──────────────────────────────────────────────────────────
     return new Response(
-      JSON.stringify({
-        ok:        true,
-        grid:      newGrid,
-        inventory: newInventory,
-      }),
+      JSON.stringify({ ok: true, grid: newGrid, inventory: newInventory }),
       {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -6,7 +6,8 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const VALID_FERTILIZER_TYPES = ["basic", "premium", "miracle"];
+// All valid fertilizer types (mirrors src/data/upgrades.ts)
+const VALID_FERTILIZER_TYPES = ["basic", "advanced", "premium", "elite", "miracle"];
 
 interface FertilizerItem {
   type:     string;
@@ -28,18 +29,13 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const supabaseUser = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     if (userError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -68,10 +64,10 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // ── Load save ─────────────────────────────────────────────────────────────
+    // ── Load save (only needed columns) ──────────────────────────────────────
     const { data: save, error: saveError } = await supabaseAdmin
       .from("game_saves")
-      .select("*")
+      .select("grid, fertilizers")
       .eq("user_id", user.id)
       .single();
 
@@ -100,14 +96,6 @@ Deno.serve(async (req: Request) => {
     }
     if (plot.plant.fertilizer) {
       return new Response(JSON.stringify({ error: "Plant already has fertilizer" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Plant must not be bloomed — bloomedAt being set means it's fully grown
-    if (plot.plant.bloomedAt) {
-      return new Response(JSON.stringify({ error: "Cannot fertilize a bloomed plant" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -155,21 +143,17 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // ── Log action ────────────────────────────────────────────────────────────
-    await supabaseAdmin.from("action_log").insert({
+    // ── Log action (fire-and-forget) ──────────────────────────────────────────
+    void supabaseAdmin.from("action_log").insert({
       user_id: user.id,
       action:  "apply_fertilizer",
       payload: { row, col, fertType },
-      result:  { remainingFert: (fertItem.quantity - 1) },
+      result:  { remainingFert: fertItem.quantity - 1 },
     });
 
     // ── Return delta ──────────────────────────────────────────────────────────
     return new Response(
-      JSON.stringify({
-        ok:          true,
-        grid:        newGrid,
-        fertilizers: newFertilizers,
-      }),
+      JSON.stringify({ ok: true, grid: newGrid, fertilizers: newFertilizers }),
       {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

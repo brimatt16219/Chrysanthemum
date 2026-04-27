@@ -66,18 +66,13 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const supabaseUser = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     if (userError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -85,7 +80,7 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // ── Parse input ───────────────────────────────────────────────────────────
+    // ── Parse input first so we can select targeted columns ───────────────────
     const { action } = await req.json() as { action: "farm" | "shop_slots" };
 
     if (action !== "farm" && action !== "shop_slots") {
@@ -95,10 +90,14 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // ── Load save ─────────────────────────────────────────────────────────────
+    // ── Load save (only columns needed for this action) ───────────────────────
+    const selectCols = action === "farm"
+      ? "coins, farm_rows, farm_size, grid"
+      : "coins, shop_slots, shop";
+
     const { data: save, error: saveError } = await supabaseAdmin
       .from("game_saves")
-      .select("*")
+      .select(selectCols)
       .eq("user_id", user.id)
       .single();
 
@@ -139,12 +138,7 @@ Deno.serve(async (req: Request) => {
         next.cols
       );
 
-      updatePayload = {
-        coins,
-        farm_size: next.cols,
-        farm_rows: next.rows,
-        grid:      newGrid,
-      };
+      updatePayload = { coins, farm_size: next.cols, farm_rows: next.rows, grid: newGrid };
       logResult = { from: { rows: farmRows, cols: farmSize }, to: { rows: next.rows, cols: next.cols }, cost: next.cost };
     }
 
@@ -179,11 +173,7 @@ Deno.serve(async (req: Request) => {
         isEmpty:   true,
       }));
 
-      updatePayload = {
-        coins,
-        shop_slots: next.slots,
-        shop:       [...flowerSlots, ...emptySlots, ...fertSlots],
-      };
+      updatePayload = { coins, shop_slots: next.slots, shop: [...flowerSlots, ...emptySlots, ...fertSlots] };
       logResult = { from: currentSlots, to: next.slots, cost: next.cost };
     }
 
@@ -200,8 +190,8 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // ── Log action ────────────────────────────────────────────────────────────
-    await supabaseAdmin.from("action_log").insert({
+    // ── Log action (fire-and-forget) ──────────────────────────────────────────
+    void supabaseAdmin.from("action_log").insert({
       user_id: user.id,
       action:  `upgrade_${action}`,
       payload: { action },

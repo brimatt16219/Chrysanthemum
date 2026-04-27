@@ -95,17 +95,16 @@ const NEXT_RARITY: Partial<Record<Rarity, Rarity>> = {
   legendary: "mythic", mythic: "exalted", exalted: "prismatic",
 };
 
-// ── Types ─────────────────────────────────────────────────────────────────────
 interface InventoryItem {
-  speciesId:  string;
-  quantity:   number;
-  mutation?:  string;
-  isSeed?:    boolean;
+  speciesId: string;
+  quantity:  number;
+  mutation?: string;
+  isSeed?:   boolean;
 }
 
 interface Selection {
-  speciesId:  string;
-  mutation?:  string;
+  speciesId: string;
+  mutation?: string;
 }
 
 // ── Core convert logic (mirrors botanyConvert in gameStore.ts) ────────────────
@@ -116,7 +115,6 @@ function convertOnce(
 ): { inventory: InventoryItem[]; outputSpeciesId: string } | { error: string } {
   if (selections.length === 0) return { error: "No selections provided" };
 
-  // Validate all same rarity
   const firstFlower = FLOWERS.find((f) => f.id === selections[0].speciesId);
   if (!firstFlower) return { error: "Unknown species" };
   const rarity = firstFlower.rarity;
@@ -128,7 +126,6 @@ function convertOnce(
     return { error: "All selections must be the same rarity" };
   }
 
-  // Validate inventory
   const consumeCounts = new Map<string, number>();
   for (const sel of selections) {
     const key = `${sel.speciesId}||${sel.mutation ?? ""}`;
@@ -143,7 +140,6 @@ function convertOnce(
     if (!item || item.quantity < count) return { error: "Insufficient inventory" };
   }
 
-  // Determine output
   const nextRarity = NEXT_RARITY[rarity];
   if (!nextRarity) return { error: "No next rarity available" };
 
@@ -152,7 +148,6 @@ function convertOnce(
   const outputPool = undiscovered.length > 0 ? undiscovered : pool;
   const outputSpecies = outputPool[Math.floor(Math.random() * outputPool.length)];
 
-  // Remove consumed
   let newInventory = [...inventory];
   for (const [key, count] of consumeCounts) {
     const [speciesId, mutStr] = key.split("||");
@@ -166,7 +161,6 @@ function convertOnce(
       .filter((i) => i.quantity > 0);
   }
 
-  // Add output seed
   const existingSeed = newInventory.find((i) => i.speciesId === outputSpecies.id && i.isSeed);
   if (existingSeed) {
     newInventory = newInventory.map((i) =>
@@ -194,18 +188,13 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const supabaseUser = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     if (userError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -216,8 +205,8 @@ Deno.serve(async (req: Request) => {
     // ── Parse input ───────────────────────────────────────────────────────────
     const body = await req.json() as {
       action:      "convert" | "convert_all";
-      selections?: Selection[];   // for convert
-      rarity?:     Rarity;        // for convert_all
+      selections?: Selection[];
+      rarity?:     Rarity;
     };
 
     if (body.action !== "convert" && body.action !== "convert_all") {
@@ -227,7 +216,7 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // ── Load save ─────────────────────────────────────────────────────────────
+    // ── Load save (only needed columns) ──────────────────────────────────────
     const { data: save, error: saveError } = await supabaseAdmin
       .from("game_saves")
       .select("inventory, discovered")
@@ -241,7 +230,7 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    let inventory  = (save.inventory  ?? []) as InventoryItem[];
+    let inventory    = (save.inventory  ?? []) as InventoryItem[];
     const discovered = (save.discovered ?? []) as string[];
     const outputSpeciesIds: string[] = [];
 
@@ -283,7 +272,6 @@ Deno.serve(async (req: Request) => {
         });
       }
 
-      // Loop until not enough inventory
       while (true) {
         const eligible = inventory.filter((i) => {
           if (i.isSeed) return false;
@@ -293,7 +281,6 @@ Deno.serve(async (req: Request) => {
         const total = eligible.reduce((sum, i) => sum + i.quantity, 0);
         if (total < required) break;
 
-        // Build selections greedily
         const selections: Selection[] = [];
         const tempUsed = new Map<string, number>();
 
@@ -339,8 +326,8 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // ── Log action ────────────────────────────────────────────────────────────
-    await supabaseAdmin.from("action_log").insert({
+    // ── Log action (fire-and-forget) ──────────────────────────────────────────
+    void supabaseAdmin.from("action_log").insert({
       user_id: user.id,
       action:  `botany_${body.action}`,
       payload: { action: body.action, rarity: body.rarity, count: outputSpeciesIds.length },
