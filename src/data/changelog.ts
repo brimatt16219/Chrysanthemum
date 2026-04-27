@@ -14,6 +14,16 @@ export interface ChangelogEntry {
 // Most recent version first — update this with every release
 export const CHANGELOGS: ChangelogEntry[] = [
   {
+    version: "2.0.0",
+    title:   "Server-Authoritative Architecture",
+    items: [
+      { type: "added",   text: "🔒 All game actions (plant, harvest, buy, sell, fertilize, upgrade, convert) are now validated server-side via Edge Functions — no client can fake progress" },
+      { type: "added",   text: "Optimistic UI with automatic rollback — actions feel instant but revert if the server rejects them" },
+      { type: "changed", text: "Game saves are now protected by Row Level Security — all writes go through the server" },
+      { type: "changed", text: "Coin calculations, inventory changes, and codex discoveries are all validated server-side" },
+    ],
+  },
+  {
     version: "1.6.0",
     title:   "Economy & Prismatic Update",
     items: [

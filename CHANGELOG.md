@@ -1,3 +1,21 @@
+## [v2.0.0] — 2026-04-26 — Server-Authoritative Architecture
+
+### Added
+- **🔒 Server-authoritative game logic** — all actions (plant, harvest, buy, sell, fertilize, upgrade, convert) are now validated and written server-side via Supabase Edge Functions
+- **Optimistic UI with automatic rollback** — actions feel instant but revert silently if the server rejects them
+- `marketplaceSlots` field on game saves (default 2) in preparation for v2.1.0 Marketplace
+- Server-side audit log for all game actions
+
+### Changed
+- `game_saves` is now protected by Row Level Security — clients can only read their own save; all writes go through Edge Functions
+- Removed client-side auto-save for signed-in users — Edge Functions own all writes
+
+### Security
+- Game state can no longer be manipulated via client-side localStorage or direct Supabase writes
+- Coin calculations, inventory changes, and discoveries are all validated server-side
+
+---
+
 ## [v1.6.0] — 2026-04-26 — Economy & Prismatic Update
 
 ### Added
