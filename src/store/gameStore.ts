@@ -187,7 +187,7 @@ function generateShop(shopSlots: number = DEFAULT_SHOP_SLOTS): ShopSlot[] {
     usedIds.add(flower.id);
     chosen.push({
       speciesId: flower.id,
-      price:     Math.max(5, Math.floor(flower.sellValue * 0.8)),
+      price:     Math.max(5, Math.floor(flower.sellValue * 0.75)),
       quantity:  Math.floor(Math.random() * 4) + 1,
     });
   }
