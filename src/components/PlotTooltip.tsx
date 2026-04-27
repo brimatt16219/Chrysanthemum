@@ -82,8 +82,13 @@ export function PlotTooltip({ plant, row, col, onClose }: Props) {
           {!isBloomed && (
             <p>
               Next stage in:{" "}
-              <span className="text-primary font-mono">{formatMs(msLeft)}</span>
+              <span className={`font-mono ${plant.masteredBonus ? "text-yellow-400" : "text-primary"}`}>
+                {plant.masteredBonus ? "⚡ " : ""}{formatMs(msLeft)}
+              </span>
             </p>
+          )}
+          {!isBloomed && plant.masteredBonus && (
+            <p className="text-[10px] text-yellow-400/70 font-mono">mastered · 20% faster</p>
           )}
           {isBloomed && (
             <p className="text-primary font-semibold">Ready to harvest!</p>

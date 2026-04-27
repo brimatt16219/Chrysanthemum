@@ -1,5 +1,6 @@
 import { getFlower, RARITY_CONFIG } from "../data/flowers";
 import { useGame } from "../store/GameContext";
+import { isSpeciesMastered } from "../store/gameStore";
 
 interface Props {
   onSelect: (speciesId: string) => void;
@@ -42,7 +43,8 @@ export function SeedPicker({ onSelect, onClose }: Props) {
         {seeds.map((item) => {
           const species = getFlower(item.speciesId);
           if (!species) return null;
-          const rarity = RARITY_CONFIG[species.rarity];
+          const rarity    = RARITY_CONFIG[species.rarity];
+          const mastered  = isSpeciesMastered(state.discovered, item.speciesId);
           return (
             <button
               key={item.speciesId}
@@ -51,7 +53,10 @@ export function SeedPicker({ onSelect, onClose }: Props) {
             >
               <span className="text-xl">{species.emoji.seed}</span>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{species.name}</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-medium truncate">{species.name}</p>
+                  {mastered && <span className="text-yellow-400 text-xs leading-none flex-shrink-0" title="Mastered — grows 20% faster">⚡</span>}
+                </div>
                 <p className={`text-xs ${rarity.color}`}>{rarity.label}</p>
               </div>
               <span className="text-xs text-muted-foreground">×{item.quantity}</span>
