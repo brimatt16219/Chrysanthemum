@@ -209,7 +209,7 @@ export function Codex({ discoveredOverride, compact = false }: Props) {
                     {specFound}/{specTotal}
                   </p>
                   {specFound === specTotal && (
-                    <p className="text-[10px] text-primary">✓ Complete</p>
+                    <p className="text-[10px] text-primary font-semibold">⚡ Mastered</p>
                   )}
                 </div>
 
@@ -260,6 +260,15 @@ export function Codex({ discoveredOverride, compact = false }: Props) {
                       </div>
                     );
                   })}
+
+                  {/* Mastery bonus */}
+                  {specFound === specTotal && (
+                    <div className="mt-1 pt-2 border-t border-border/40 flex items-center gap-2">
+                      <span className="text-sm">⚡</span>
+                      <span className="text-xs text-primary font-semibold">Mastered</span>
+                      <span className="text-xs text-muted-foreground ml-auto">grows 20% faster</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

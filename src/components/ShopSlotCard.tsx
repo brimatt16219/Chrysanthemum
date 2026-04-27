@@ -32,6 +32,7 @@ function rarityBadgeClass(rarity: Rarity): string {
     case "legendary": return "bg-yellow-500 text-black";
     case "mythic":    return "bg-pink-500 text-white";
     case "exalted":   return "bg-slate-700 text-slate-200";
+    case "prismatic": return "bg-slate-700 text-white";
   }
 }
 

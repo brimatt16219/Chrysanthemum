@@ -1,4 +1,4 @@
-export type Rarity = "common" | "uncommon" | "rare" | "legendary" | "mythic" | "exalted";
+export type Rarity = "common" | "uncommon" | "rare" | "legendary" | "mythic" | "exalted" | "prismatic";
 
 export type GrowthStage = "seed" | "sprout" | "bloom";
 
@@ -59,7 +59,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🎄" },
     rarity: "common",
     growthTime: { seed: 40_000, sprout: 80_000 },
-    sellValue: 5,
+    sellValue: 10,
     shopWeight: 70,
   },
   {
@@ -69,7 +69,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🌫️" },
     rarity: "common",
     growthTime: { seed: 45_000, sprout: 90_000 },
-    sellValue: 6,
+    sellValue: 10,
     shopWeight: 68,
   },
   {
@@ -79,7 +79,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🎍" },
     rarity: "common",
     growthTime: { seed: 60_000, sprout: 120_000 },
-    sellValue: 7,
+    sellValue: 12,
     shopWeight: 68,
   },
   {
@@ -89,7 +89,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "💧" },
     rarity: "common",
     growthTime: { seed: 65_000, sprout: 130_000 },
-    sellValue: 9,
+    sellValue: 12,
     shopWeight: 63,
   },
   {
@@ -99,7 +99,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🗿" },
     rarity: "common",
     growthTime: { seed: 68_000, sprout: 136_000 },
-    sellValue: 9,
+    sellValue: 12,
     shopWeight: 62,
   },
   {
@@ -109,7 +109,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🔴" },
     rarity: "common",
     growthTime: { seed: 70_000, sprout: 140_000 },
-    sellValue: 10,
+    sellValue: 12,
     shopWeight: 60,
   },
   {
@@ -119,7 +119,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🌾" },
     rarity: "common",
     growthTime: { seed: 75_000, sprout: 150_000 },
-    sellValue: 8,
+    sellValue: 13,
     shopWeight: 65,
   },
   {
@@ -129,7 +129,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🍀" },
     rarity: "common",
     growthTime: { seed: 80_000, sprout: 160_000 },
-    sellValue: 10,
+    sellValue: 13,
     shopWeight: 58,
   },
   {
@@ -139,7 +139,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "💟" },
     rarity: "common",
     growthTime: { seed: 85_000, sprout: 170_000 },
-    sellValue: 11,
+    sellValue: 14,
     shopWeight: 56,
   },
   {
@@ -149,7 +149,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🍋" },
     rarity: "common",
     growthTime: { seed: 88_000, sprout: 176_000 },
-    sellValue: 11,
+    sellValue: 14,
     shopWeight: 55,
   },
   {
@@ -159,7 +159,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🌼" },
     rarity: "common",
     growthTime: { seed: 90_000, sprout: 180_000 },
-    sellValue: 12,
+    sellValue: 14,
     shopWeight: 60,
   },
   {
@@ -179,7 +179,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "💝" },
     rarity: "common",
     growthTime: { seed: 95_000, sprout: 190_000 },
-    sellValue: 13,
+    sellValue: 14,
     shopWeight: 54,
   },
   {
@@ -189,7 +189,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🌛" },
     rarity: "common",
     growthTime: { seed: 97_000, sprout: 194_000 },
-    sellValue: 13,
+    sellValue: 15,
     shopWeight: 52,
   },
   {
@@ -199,7 +199,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "📍" },
     rarity: "common",
     growthTime: { seed: 100_000, sprout: 200_000 },
-    sellValue: 14,
+    sellValue: 15,
     shopWeight: 55,
   },
   {
@@ -229,7 +229,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🌻" },
     rarity: "common",
     growthTime: { seed: 120_000, sprout: 240_000 },
-    sellValue: 18,
+    sellValue: 17,
     shopWeight: 50,
   },
   {
@@ -239,7 +239,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🟤" },
     rarity: "common",
     growthTime: { seed: 125_000, sprout: 250_000 },
-    sellValue: 16,
+    sellValue: 17,
     shopWeight: 50,
   },
   {
@@ -249,7 +249,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🔵" },
     rarity: "common",
     growthTime: { seed: 130_000, sprout: 260_000 },
-    sellValue: 16,
+    sellValue: 17,
     shopWeight: 49,
   },
   {
@@ -259,7 +259,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🍒" },
     rarity: "common",
     growthTime: { seed: 140_000, sprout: 280_000 },
-    sellValue: 17,
+    sellValue: 18,
     shopWeight: 48,
   },
   {
@@ -269,7 +269,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "💙" },
     rarity: "common",
     growthTime: { seed: 148_000, sprout: 296_000 },
-    sellValue: 18,
+    sellValue: 19,
     shopWeight: 47,
   },
   {
@@ -279,7 +279,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "☁️" },
     rarity: "common",
     growthTime: { seed: 155_000, sprout: 310_000 },
-    sellValue: 20,
+    sellValue: 19,
     shopWeight: 46,
   },
   {
@@ -289,7 +289,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "⚪" },
     rarity: "common",
     growthTime: { seed: 163_000, sprout: 326_000 },
-    sellValue: 21,
+    sellValue: 20,
     shopWeight: 44,
   },
 
@@ -301,7 +301,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "💨" },
     rarity: "uncommon",
     growthTime: { seed: 240_000, sprout: 480_000 },
-    sellValue: 38,
+    sellValue: 42,
     shopWeight: 32,
   },
   {
@@ -311,7 +311,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🍃" },
     rarity: "uncommon",
     growthTime: { seed: 255_000, sprout: 510_000 },
-    sellValue: 40,
+    sellValue: 44,
     shopWeight: 31,
   },
   {
@@ -321,7 +321,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🌵" },
     rarity: "uncommon",
     growthTime: { seed: 280_000, sprout: 560_000 },
-    sellValue: 43,
+    sellValue: 48,
     shopWeight: 31,
   },
   {
@@ -331,7 +331,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "✳️" },
     rarity: "uncommon",
     growthTime: { seed: 290_000, sprout: 580_000 },
-    sellValue: 44,
+    sellValue: 50,
     shopWeight: 30,
   },
   {
@@ -341,7 +341,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🍵" },
     rarity: "uncommon",
     growthTime: { seed: 295_000, sprout: 590_000 },
-    sellValue: 45,
+    sellValue: 50,
     shopWeight: 30,
   },
   {
@@ -351,7 +351,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🌷" },
     rarity: "uncommon",
     growthTime: { seed: 300_000, sprout: 600_000 },
-    sellValue: 45,
+    sellValue: 50,
     shopWeight: 30,
   },
   {
@@ -361,8 +361,18 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🟣" },
     rarity: "uncommon",
     growthTime: { seed: 310_000, sprout: 620_000 },
-    sellValue: 47,
+    sellValue: 52,
     shopWeight: 29,
+  },
+  {
+    id: "hyacinth",
+    name: "Hyacinth",
+    description: "Dense clusters that burst into color all at once. The whole row looks like a celebration.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🧨" },
+    rarity: "uncommon",
+    growthTime: { seed: 320_000, sprout: 640_000 },
+    sellValue: 53,
+    shopWeight: 27,
   },
   {
     id: "snapdragon",
@@ -371,7 +381,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🐉" },
     rarity: "uncommon",
     growthTime: { seed: 330_000, sprout: 660_000 },
-    sellValue: 50,
+    sellValue: 55,
     shopWeight: 29,
   },
   {
@@ -381,7 +391,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🐝" },
     rarity: "uncommon",
     growthTime: { seed: 345_000, sprout: 690_000 },
-    sellValue: 53,
+    sellValue: 57,
     shopWeight: 26,
   },
   {
@@ -391,7 +401,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🕯️" },
     rarity: "uncommon",
     growthTime: { seed: 350_000, sprout: 700_000 },
-    sellValue: 52,
+    sellValue: 57,
     shopWeight: 26,
   },
   {
@@ -401,7 +411,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "💐" },
     rarity: "uncommon",
     growthTime: { seed: 360_000, sprout: 720_000 },
-    sellValue: 55,
+    sellValue: 59,
     shopWeight: 27,
   },
   {
@@ -411,7 +421,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🎀" },
     rarity: "uncommon",
     growthTime: { seed: 370_000, sprout: 740_000 },
-    sellValue: 57,
+    sellValue: 60,
     shopWeight: 25,
   },
   {
@@ -421,8 +431,18 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🍁" },
     rarity: "uncommon",
     growthTime: { seed: 380_000, sprout: 760_000 },
-    sellValue: 58,
+    sellValue: 62,
     shopWeight: 26,
+  },
+  {
+    id: "wildberry",
+    name: "Wildberry Bloom",
+    description: "More flower than fruit. The bees find it before you do, every time.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🍓" },
+    rarity: "uncommon",
+    growthTime: { seed: 395_000, sprout: 790_000 },
+    sellValue: 64,
+    shopWeight: 24,
   },
   {
     id: "frostbell",
@@ -431,7 +451,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🧊" },
     rarity: "uncommon",
     growthTime: { seed: 390_000, sprout: 780_000 },
-    sellValue: 60,
+    sellValue: 63,
     shopWeight: 24,
   },
   {
@@ -441,7 +461,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🔔" },
     rarity: "uncommon",
     growthTime: { seed: 400_000, sprout: 800_000 },
-    sellValue: 62,
+    sellValue: 64,
     shopWeight: 24,
   },
   {
@@ -451,8 +471,18 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🌸" },
     rarity: "uncommon",
     growthTime: { seed: 410_000, sprout: 820_000 },
-    sellValue: 68,
+    sellValue: 66,
     shopWeight: 23,
+  },
+  {
+    id: "rose",
+    name: "Rose",
+    description: "Timeless beauty, but takes patience.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🌹" },
+    rarity: "uncommon",
+    growthTime: { seed: 420_000, sprout: 840_000 },
+    sellValue: 67,
+    shopWeight: 25,
   },
   {
     id: "peacockflower",
@@ -461,7 +491,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🦚" },
     rarity: "uncommon",
     growthTime: { seed: 430_000, sprout: 860_000 },
-    sellValue: 70,
+    sellValue: 69,
     shopWeight: 22,
   },
   {
@@ -471,18 +501,8 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🎋" },
     rarity: "uncommon",
     growthTime: { seed: 440_000, sprout: 880_000 },
-    sellValue: 72,
+    sellValue: 70,
     shopWeight: 21,
-  },
-  {
-    id: "rose",
-    name: "Rose",
-    description: "Timeless beauty, but takes patience.",
-    emoji: { seed: "🌱", sprout: "🌿", bloom: "🌹" },
-    rarity: "uncommon",
-    growthTime: { seed: 420_000, sprout: 840_000 },
-    sellValue: 65,
-    shopWeight: 25,
   },
   {
     id: "hummingbloom",
@@ -491,8 +511,18 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🦩" },
     rarity: "uncommon",
     growthTime: { seed: 440_000, sprout: 880_000 },
-    sellValue: 68,
+    sellValue: 70,
     shopWeight: 5,
+  },
+  {
+    id: "water_lily",
+    name: "Water Lily",
+    description: "Rises spotless from muddy water. The frogs refuse to share it.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🐸" },
+    rarity: "uncommon",
+    growthTime: { seed: 450_000, sprout: 900_000 },
+    sellValue: 71,
+    shopWeight: 23,
   },
   {
     id: "lanternflower",
@@ -501,7 +531,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🏮" },
     rarity: "uncommon",
     growthTime: { seed: 460_000, sprout: 920_000 },
-    sellValue: 72,
+    sellValue: 73,
     shopWeight: 4,
   },
   {
@@ -516,12 +546,12 @@ export const FLOWERS: FlowerSpecies[] = [
   },
   {
     id: "coral_bells",
-    name: "Coral Bells",
-    description: "Bright branching clusters that look lifted from the ocean floor.",
-    emoji: { seed: "🌱", sprout: "🌿", bloom: "🪸" },
+    name: "Pearlwort",
+    description: "Each tiny cluster blooms brilliant white, like pearls scattered across velvet.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🤍" },
     rarity: "uncommon",
     growthTime: { seed: 500_000, sprout: 1_000_000 },
-    sellValue: 80,
+    sellValue: 78,
     shopWeight: 4,
   },
   {
@@ -531,7 +561,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🟢" },
     rarity: "uncommon",
     growthTime: { seed: 520_000, sprout: 1_040_000 },
-    sellValue: 82,
+    sellValue: 81,
     shopWeight: 3,
   },
   {
@@ -541,7 +571,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "💦" },
     rarity: "uncommon",
     growthTime: { seed: 540_000, sprout: 1_080_000 },
-    sellValue: 85,
+    sellValue: 84,
     shopWeight: 3,
   },
 
@@ -553,7 +583,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "⚡" },
     rarity: "rare",
     growthTime: { seed: 900_000, sprout: 1_800_000 },
-    sellValue: 170,
+    sellValue: 250,
     shopWeight: 13,
   },
   {
@@ -563,8 +593,18 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🎐" },
     rarity: "rare",
     growthTime: { seed: 960_000, sprout: 1_920_000 },
-    sellValue: 185,
+    sellValue: 260,
     shopWeight: 12,
+  },
+  {
+    id: "sweetheart_lily",
+    name: "Sweetheart Lily",
+    description: "Petals grow in pairs and always lean toward each other. No one has managed to separate them.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "💕" },
+    rarity: "rare",
+    growthTime: { seed: 1_080_000, sprout: 2_160_000 },
+    sellValue: 280,
+    shopWeight: 11,
   },
   {
     id: "glassbell",
@@ -573,7 +613,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🔭" },
     rarity: "rare",
     growthTime: { seed: 1_100_000, sprout: 2_200_000 },
-    sellValue: 200,
+    sellValue: 285,
     shopWeight: 12,
   },
   {
@@ -583,7 +623,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "⛈️" },
     rarity: "rare",
     growthTime: { seed: 1_140_000, sprout: 2_280_000 },
-    sellValue: 210,
+    sellValue: 290,
     shopWeight: 11,
   },
   {
@@ -593,7 +633,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "💜" },
     rarity: "rare",
     growthTime: { seed: 1_200_000, sprout: 2_400_000 },
-    sellValue: 220,
+    sellValue: 300,
     shopWeight: 11,
   },
   {
@@ -603,8 +643,18 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🟠" },
     rarity: "rare",
     growthTime: { seed: 1_200_000, sprout: 2_400_000 },
-    sellValue: 225,
+    sellValue: 300,
     shopWeight: 11,
+  },
+  {
+    id: "peach_blossom",
+    name: "Peach Blossom",
+    description: "Soft pink petals that smell of summer. Butterflies choose it over every other bloom.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🍑" },
+    rarity: "rare",
+    growthTime: { seed: 1_200_000, sprout: 2_400_000 },
+    sellValue: 300,
+    shopWeight: 10,
   },
   {
     id: "foxglove",
@@ -613,7 +663,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🥀" },
     rarity: "rare",
     growthTime: { seed: 1_320_000, sprout: 2_640_000 },
-    sellValue: 250,
+    sellValue: 320,
     shopWeight: 10,
   },
   {
@@ -623,7 +673,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🦋" },
     rarity: "rare",
     growthTime: { seed: 1_380_000, sprout: 2_760_000 },
-    sellValue: 265,
+    sellValue: 330,
     shopWeight: 9,
   },
   {
@@ -633,7 +683,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "💮" },
     rarity: "rare",
     growthTime: { seed: 1_440_000, sprout: 2_880_000 },
-    sellValue: 280,
+    sellValue: 340,
     shopWeight: 9,
   },
   {
@@ -643,7 +693,17 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🌊" },
     rarity: "rare",
     growthTime: { seed: 1_500_000, sprout: 3_000_000 },
-    sellValue: 290,
+    sellValue: 350,
+    shopWeight: 8,
+  },
+  {
+    id: "starweave",
+    name: "Starweave",
+    description: "Petals spiral like a galaxy in miniature. It hums faintly on clear nights.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "💫" },
+    rarity: "rare",
+    growthTime: { seed: 1_500_000, sprout: 3_000_000 },
+    sellValue: 350,
     shopWeight: 8,
   },
   {
@@ -653,7 +713,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🍇" },
     rarity: "rare",
     growthTime: { seed: 1_560_000, sprout: 3_120_000 },
-    sellValue: 310,
+    sellValue: 360,
     shopWeight: 8,
   },
   {
@@ -663,7 +723,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🧁" },
     rarity: "rare",
     growthTime: { seed: 1_560_000, sprout: 3_120_000 },
-    sellValue: 305,
+    sellValue: 360,
     shopWeight: 8,
   },
   {
@@ -673,7 +733,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🐚" },
     rarity: "rare",
     growthTime: { seed: 1_620_000, sprout: 3_240_000 },
-    sellValue: 320,
+    sellValue: 370,
     shopWeight: 8,
   },
   {
@@ -683,7 +743,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🦊" },
     rarity: "rare",
     growthTime: { seed: 1_650_000, sprout: 3_300_000 },
-    sellValue: 335,
+    sellValue: 375,
     shopWeight: 8,
   },
   {
@@ -693,8 +753,18 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🦜" },
     rarity: "rare",
     growthTime: { seed: 1_680_000, sprout: 3_360_000 },
-    sellValue: 340,
+    sellValue: 380,
     shopWeight: 8,
+  },
+  {
+    id: "solarbell",
+    name: "Solar Bell",
+    description: "Radiates steady warmth even in winter. Bees refuse to leave it alone.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🌞" },
+    rarity: "rare",
+    growthTime: { seed: 1_680_000, sprout: 3_360_000 },
+    sellValue: 380,
+    shopWeight: 7,
   },
   {
     id: "moonpetal",
@@ -703,7 +773,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🌙" },
     rarity: "rare",
     growthTime: { seed: 1_740_000, sprout: 3_480_000 },
-    sellValue: 360,
+    sellValue: 390,
     shopWeight: 7,
   },
   {
@@ -713,7 +783,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🌺" },
     rarity: "rare",
     growthTime: { seed: 1_800_000, sprout: 3_600_000 },
-    sellValue: 380,
+    sellValue: 400,
     shopWeight: 7,
   },
   {
@@ -723,7 +793,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🌜" },
     rarity: "rare",
     growthTime: { seed: 1_860_000, sprout: 3_720_000 },
-    sellValue: 400,
+    sellValue: 410,
     shopWeight: 6,
   },
   {
@@ -743,7 +813,17 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🔮" },
     rarity: "rare",
     growthTime: { seed: 2_000_000, sprout: 4_000_000 },
-    sellValue: 440,
+    sellValue: 435,
+    shopWeight: 5,
+  },
+  {
+    id: "mirror_orchid",
+    name: "Mirror Orchid",
+    description: "Each petal catches light like polished silver. You can see yourself in every bloom.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "💿" },
+    rarity: "rare",
+    growthTime: { seed: 2_100_000, sprout: 4_200_000 },
+    sellValue: 450,
     shopWeight: 5,
   },
   {
@@ -785,7 +865,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🥇" },
     rarity: "legendary",
     growthTime: { seed: 5_400_000, sprout: 10_800_000 },
-    sellValue: 1_800,
+    sellValue: 3_600,
     shopWeight: 5,
   },
   {
@@ -795,7 +875,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🏃" },
     rarity: "legendary",
     growthTime: { seed: 5_800_000, sprout: 11_600_000 },
-    sellValue: 1_950,
+    sellValue: 3_800,
     shopWeight: 5,
   },
   {
@@ -805,7 +885,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "👑" },
     rarity: "legendary",
     growthTime: { seed: 6_600_000, sprout: 13_200_000 },
-    sellValue: 2_100,
+    sellValue: 4_200,
     shopWeight: 4,
   },
   {
@@ -815,7 +895,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "⚙️" },
     rarity: "legendary",
     growthTime: { seed: 6_800_000, sprout: 13_600_000 },
-    sellValue: 2_150,
+    sellValue: 4_300,
     shopWeight: 4,
   },
   {
@@ -825,7 +905,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🕐" },
     rarity: "legendary",
     growthTime: { seed: 7_000_000, sprout: 14_000_000 },
-    sellValue: 2_200,
+    sellValue: 4_400,
     shopWeight: 4,
   },
   {
@@ -835,7 +915,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🏵️" },
     rarity: "legendary",
     growthTime: { seed: 7_200_000, sprout: 14_400_000 },
-    sellValue: 2_200,
+    sellValue: 4_500,
     shopWeight: 4,
   },
   {
@@ -845,7 +925,17 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🍭" },
     rarity: "legendary",
     growthTime: { seed: 7_500_000, sprout: 15_000_000 },
-    sellValue: 2_400,
+    sellValue: 4_700,
+    shopWeight: 4,
+  },
+  {
+    id: "prismbark",
+    name: "Prismbark",
+    description: "An ancient tree that blooms once a century. No two petals share the same colour.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🌲" },
+    rarity: "legendary",
+    growthTime: { seed: 7_500_000, sprout: 15_000_000 },
+    sellValue: 4_700,
     shopWeight: 4,
   },
   {
@@ -855,7 +945,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🐬" },
     rarity: "legendary",
     growthTime: { seed: 7_800_000, sprout: 15_600_000 },
-    sellValue: 2_700,
+    sellValue: 4_800,
     shopWeight: 4,
   },
   {
@@ -865,7 +955,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "👻" },
     rarity: "legendary",
     growthTime: { seed: 7_800_000, sprout: 15_600_000 },
-    sellValue: 2_600,
+    sellValue: 4_800,
     shopWeight: 4,
   },
   {
@@ -875,7 +965,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🐣" },
     rarity: "legendary",
     growthTime: { seed: 8_100_000, sprout: 16_200_000 },
-    sellValue: 2_800,
+    sellValue: 5_000,
     shopWeight: 4,
   },
   {
@@ -885,7 +975,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🖤" },
     rarity: "legendary",
     growthTime: { seed: 8_400_000, sprout: 16_800_000 },
-    sellValue: 3_000,
+    sellValue: 5_100,
     shopWeight: 4,
   },
   {
@@ -895,7 +985,17 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🎃" },
     rarity: "legendary",
     growthTime: { seed: 8_400_000, sprout: 16_800_000 },
-    sellValue: 2_900,
+    sellValue: 5_100,
+    shopWeight: 4,
+  },
+  {
+    id: "starburst_lily",
+    name: "Starburst",
+    description: "Erupts into colour the moment it opens. Gardeners learn to step back.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🎊" },
+    rarity: "legendary",
+    growthTime: { seed: 8_400_000, sprout: 16_800_000 },
+    sellValue: 5_100,
     shopWeight: 4,
   },
   {
@@ -905,7 +1005,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🍄" },
     rarity: "legendary",
     growthTime: { seed: 8_700_000, sprout: 17_400_000 },
-    sellValue: 3_200,
+    sellValue: 5_300,
     shopWeight: 4,
   },
   {
@@ -915,7 +1015,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🔥" },
     rarity: "legendary",
     growthTime: { seed: 9_000_000, sprout: 18_000_000 },
-    sellValue: 3_800,
+    sellValue: 5_400,
     shopWeight: 3,
   },
   {
@@ -925,7 +1025,17 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🌟" },
     rarity: "legendary",
     growthTime: { seed: 9_300_000, sprout: 18_600_000 },
-    sellValue: 4_100,
+    sellValue: 5_600,
+    shopWeight: 3,
+  },
+  {
+    id: "fullmoon_bloom",
+    name: "Fullmoon Bloom",
+    description: "Perfectly round petals that glow softly at night. Only opens under a full moon.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🌕" },
+    rarity: "legendary",
+    growthTime: { seed: 9_600_000, sprout: 19_200_000 },
+    sellValue: 5_700,
     shopWeight: 3,
   },
   {
@@ -935,7 +1045,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "❄️" },
     rarity: "legendary",
     growthTime: { seed: 9_600_000, sprout: 19_200_000 },
-    sellValue: 4_500,
+    sellValue: 5_700,
     shopWeight: 3,
   },
   {
@@ -945,7 +1055,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "💎" },
     rarity: "legendary",
     growthTime: { seed: 10_200_000, sprout: 20_400_000 },
-    sellValue: 5_500,
+    sellValue: 6_000,
     shopWeight: 4,
   },
   {
@@ -955,8 +1065,18 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🧿" },
     rarity: "legendary",
     growthTime: { seed: 10_800_000, sprout: 21_600_000 },
-    sellValue: 6_000,
+    sellValue: 6_300,
     shopWeight: 4,
+  },
+  {
+    id: "halfmoon_bloom",
+    name: "Halfmoon Bloom",
+    description: "Petals arc like a crescent and never grow straight. Gardeners set their calendars by it.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🌓" },
+    rarity: "legendary",
+    growthTime: { seed: 11_400_000, sprout: 22_800_000 },
+    sellValue: 6_600,
+    shopWeight: 3,
   },
   {
     id: "aurora_bloom",
@@ -965,7 +1085,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🌌" },
     rarity: "legendary",
     growthTime: { seed: 11_500_000, sprout: 23_000_000 },
-    sellValue: 6_500,
+    sellValue: 6_700,
     shopWeight: 3,
   },
   {
@@ -975,7 +1095,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🌐" },
     rarity: "legendary",
     growthTime: { seed: 12_000_000, sprout: 24_000_000 },
-    sellValue: 6_800,
+    sellValue: 6_900,
     shopWeight: 3,
   },
   {
@@ -997,7 +1117,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "👁️" },
     rarity: "mythic",
     growthTime: { seed: 18_000_000, sprout: 36_000_000 },
-    sellValue: 9_000,
+    sellValue: 50_000,
     shopWeight: 1,
   },
   {
@@ -1007,7 +1127,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🌄" },
     rarity: "mythic",
     growthTime: { seed: 21_600_000, sprout: 43_200_000 },
-    sellValue: 11_000,
+    sellValue: 53_000,
     shopWeight: 1,
   },
   {
@@ -1017,8 +1137,18 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🎑" },
     rarity: "mythic",
     growthTime: { seed: 28_800_000, sprout: 57_600_000 },
-    sellValue: 12_000,
+    sellValue: 58_000,
     shopWeight: 2,
+  },
+  {
+    id: "jellybloom",
+    name: "Jellybloom",
+    description: "Translucent blue petals pulse with cold light. Scientists cannot explain how it survives on land.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🔷" },
+    rarity: "mythic",
+    growthTime: { seed: 30_000_000, sprout: 60_000_000 },
+    sellValue: 59_000,
+    shopWeight: 1,
   },
   {
     id: "celestial_bloom",
@@ -1027,7 +1157,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "⭐" },
     rarity: "mythic",
     growthTime: { seed: 36_000_000, sprout: 72_000_000 },
-    sellValue: 20_000,
+    sellValue: 63_000,
     shopWeight: 2,
   },
   {
@@ -1037,8 +1167,18 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🌑" },
     rarity: "mythic",
     growthTime: { seed: 43_200_000, sprout: 86_400_000 },
-    sellValue: 32_000,
+    sellValue: 69_000,
     shopWeight: 2,
+  },
+  {
+    id: "seraph_wing",
+    name: "Seraph Wing",
+    description: "Six-petalled and impossibly symmetrical. Legends say it fell from somewhere higher.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🦢" },
+    rarity: "mythic",
+    growthTime: { seed: 54_000_000, sprout: 108_000_000 },
+    sellValue: 77_000,
+    shopWeight: 1,
   },
   {
     id: "solar_rose",
@@ -1047,7 +1187,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "☀️" },
     rarity: "mythic",
     growthTime: { seed: 57_600_000, sprout: 115_200_000 },
-    sellValue: 60_000,
+    sellValue: 79_000,
     shopWeight: 1,
   },
   {
@@ -1057,7 +1197,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🪐" },
     rarity: "mythic",
     growthTime: { seed: 64_800_000, sprout: 129_600_000 },
-    sellValue: 80_000,
+    sellValue: 84_000,
     shopWeight: 1,
   },
   {
@@ -1071,23 +1211,13 @@ export const FLOWERS: FlowerSpecies[] = [
     shopWeight: 1,
   },
   {
-    id: "seraph_wing",
-    name: "Seraph Wing",
-    description: "Six-petalled and impossibly symmetrical. Legends say it fell from somewhere higher.",
-    emoji: { seed: "🌱", sprout: "🌿", bloom: "🦢" },
-    rarity: "mythic",
-    growthTime: { seed: 54_000_000, sprout: 108_000_000 },
-    sellValue: 35_000,
-    shopWeight: 1,
-  },
-  {
     id: "wanderbloom",
     name: "Wanderbloom",
     description: "Found in a different spot each morning. No one has ever seen it move.",
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🧭" },
     rarity: "mythic",
     growthTime: { seed: 72_000_000, sprout: 144_000_000 },
-    sellValue: 60_000,
+    sellValue: 90_000,
     shopWeight: 1,
   },
   {
@@ -1109,7 +1239,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🌚" },
     rarity: "exalted",
     growthTime: { seed: 108_000_000, sprout: 216_000_000 },
-    sellValue: 150_000,
+    sellValue: 250_000,
     shopWeight: 0,
   },
   {
@@ -1119,7 +1249,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "⚫" },
     rarity: "exalted",
     growthTime: { seed: 129_600_000, sprout: 259_200_000 },
-    sellValue: 200_000,
+    sellValue: 285_000,
     shopWeight: 0,
   },
   {
@@ -1129,7 +1259,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🌘" },
     rarity: "exalted",
     growthTime: { seed: 144_000_000, sprout: 288_000_000 },
-    sellValue: 230_000,
+    sellValue: 310_000,
     shopWeight: 0,
   },
   {
@@ -1139,7 +1269,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🕸️" },
     rarity: "exalted",
     growthTime: { seed: 172_800_000, sprout: 345_600_000 },
-    sellValue: 280_000,
+    sellValue: 355_000,
     shopWeight: 0,
   },
   {
@@ -1149,7 +1279,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🦇" },
     rarity: "exalted",
     growthTime: { seed: 216_000_000, sprout: 432_000_000 },
-    sellValue: 380_000,
+    sellValue: 430_000,
     shopWeight: 0,
   },
   {
@@ -1159,7 +1289,7 @@ export const FLOWERS: FlowerSpecies[] = [
     emoji: { seed: "🌱", sprout: "🌿", bloom: "⛓️" },
     rarity: "exalted",
     growthTime: { seed: 237_600_000, sprout: 475_200_000 },
-    sellValue: 430_000,
+    sellValue: 465_000,
     shopWeight: 0,
   },
   {
@@ -1170,6 +1300,68 @@ export const FLOWERS: FlowerSpecies[] = [
     rarity: "exalted",
     growthTime: { seed: 259_200_000, sprout: 518_400_000 },
     sellValue: 500_000,
+    shopWeight: 0,
+  },
+
+  // ── PRISMATIC — obtainable only via Botany from Exalted, shopWeight always 0 ─
+  {
+    id: "dreambloom",
+    name: "Dreambloom",
+    description: "Only appears at the edge of sleep. By morning, only its scent remains.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🦄" },
+    rarity: "prismatic",
+    growthTime: { seed: 300_000_000, sprout: 600_000_000 },
+    sellValue: 1_000_000,
+    shopWeight: 0,
+  },
+  {
+    id: "fairy_blossom",
+    name: "Fairy Blossom",
+    description: "Tiny sparks drift off its petals at dusk. The garden smells of something ancient and kind.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🧚" },
+    rarity: "prismatic",
+    growthTime: { seed: 324_000_000, sprout: 648_000_000 },
+    sellValue: 1_200_000,
+    shopWeight: 0,
+  },
+  {
+    id: "lovebind",
+    name: "Lovebind",
+    description: "Two stems always grow intertwined, no matter how far apart you plant the seeds.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "💞" },
+    rarity: "prismatic",
+    growthTime: { seed: 345_600_000, sprout: 691_200_000 },
+    sellValue: 1_350_000,
+    shopWeight: 0,
+  },
+  {
+    id: "eternal_heart",
+    name: "Eternal Heart",
+    description: "Beats faintly when cupped in both hands. Gardeners say it never stops.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "💖" },
+    rarity: "prismatic",
+    growthTime: { seed: 374_400_000, sprout: 748_800_000 },
+    sellValue: 1_550_000,
+    shopWeight: 0,
+  },
+  {
+    id: "nova_bloom",
+    name: "Nova Bloom",
+    description: "Burns bright enough to cast shadows the moment it blooms. Then dims to something gentle.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "💥" },
+    rarity: "prismatic",
+    growthTime: { seed: 403_200_000, sprout: 806_400_000 },
+    sellValue: 1_800_000,
+    shopWeight: 0,
+  },
+  {
+    id: "princess_blossom",
+    name: "Princess Blossom",
+    description: "The rarest bloom in existence — grown for the one who makes every ordinary day feel like forever. Worth every moment of the wait.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "👸" },
+    rarity: "prismatic",
+    growthTime: { seed: 432_000_000, sprout: 864_000_000 },
+    sellValue: 2_000_000,
     shopWeight: 0,
   },
 ];
@@ -1188,10 +1380,11 @@ export const RARITY_CONFIG: Record<Rarity, {
   /** Background fill when the plant has fully bloomed */
   bgBloom: string;
 }> = {
-  common:    { label: "Common",    color: "text-gray-400",   glow: "",                                         borderGrowing: "border-gray-400/20",   borderBloom: "border-gray-400/60",   bgBloom: "bg-gray-400/10"   },
-  uncommon:  { label: "Uncommon",  color: "text-green-400",  glow: "shadow-[0_0_8px_rgba(74,222,128,0.4)]",   borderGrowing: "border-green-400/25",  borderBloom: "border-green-400/70",  bgBloom: "bg-green-400/10"  },
-  rare:      { label: "Rare",      color: "text-blue-400",   glow: "shadow-[0_0_8px_rgba(96,165,250,0.5)]",   borderGrowing: "border-blue-400/25",   borderBloom: "border-blue-400/70",   bgBloom: "bg-blue-400/10"   },
-  legendary: { label: "Legendary", color: "text-yellow-400", glow: "shadow-[0_0_12px_rgba(250,204,21,0.6)]",  borderGrowing: "border-yellow-400/30", borderBloom: "border-yellow-400/80", bgBloom: "bg-yellow-400/10" },
-  mythic:    { label: "Mythic",    color: "text-pink-400",   glow: "shadow-[0_0_16px_rgba(244,114,182,0.7)]", borderGrowing: "border-pink-400/30",   borderBloom: "border-pink-400/80",   bgBloom: "bg-pink-400/10"   },
-  exalted:   { label: "Exalted",   color: "text-black",      glow: "shadow-[0_0_24px_rgba(226,232,240,0.6)]", borderGrowing: "border-slate-300/25",  borderBloom: "border-slate-300/70",  bgBloom: "bg-slate-300/10"  },
+  common:    { label: "Common",    color: "text-gray-400",   glow: "",                                                                                                      borderGrowing: "border-gray-400/20",    borderBloom: "border-gray-400/60",    bgBloom: "bg-gray-400/10"    },
+  uncommon:  { label: "Uncommon",  color: "text-green-400",  glow: "shadow-[0_0_8px_rgba(74,222,128,0.4)]",                                                               borderGrowing: "border-green-400/25",   borderBloom: "border-green-400/70",   bgBloom: "bg-green-400/10"   },
+  rare:      { label: "Rare",      color: "text-blue-400",   glow: "shadow-[0_0_8px_rgba(96,165,250,0.5)]",                                                               borderGrowing: "border-blue-400/25",    borderBloom: "border-blue-400/70",    bgBloom: "bg-blue-400/10"    },
+  legendary: { label: "Legendary", color: "text-yellow-400", glow: "shadow-[0_0_12px_rgba(250,204,21,0.6)]",                                                              borderGrowing: "border-yellow-400/30",  borderBloom: "border-yellow-400/80",  bgBloom: "bg-yellow-400/10"  },
+  mythic:    { label: "Mythic",    color: "text-pink-400",   glow: "shadow-[0_0_16px_rgba(244,114,182,0.7)]",                                                             borderGrowing: "border-pink-400/30",    borderBloom: "border-pink-400/80",    bgBloom: "bg-pink-400/10"    },
+  exalted:   { label: "Exalted",   color: "text-black",      glow: "shadow-[0_0_24px_rgba(226,232,240,0.6)]",                                                             borderGrowing: "border-slate-300/25",   borderBloom: "border-slate-300/70",   bgBloom: "bg-slate-300/10"   },
+  prismatic: { label: "Prismatic", color: "rainbow-text", glow: "rainbow-glow", borderGrowing: "rainbow-border", borderBloom: "rainbow-border", bgBloom: "rainbow-bg" },
 };

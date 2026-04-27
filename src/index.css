@@ -28,6 +28,52 @@
   --color-border:              hsl(var(--border));
 }
 
+/* ── Prismatic / Rainbow animations ───────────────────────────────────── */
+@keyframes rainbow-cycle {
+  0%   { color: #f87171; }
+  16%  { color: #fb923c; }
+  33%  { color: #facc15; }
+  50%  { color: #4ade80; }
+  66%  { color: #60a5fa; }
+  83%  { color: #c084fc; }
+  100% { color: #f87171; }
+}
+
+@keyframes rainbow-border-cycle {
+  0%   { border-color: rgba(248,113,113,0.9); }
+  16%  { border-color: rgba(251,146,60,0.9);  }
+  33%  { border-color: rgba(250,204,21,0.9);  }
+  50%  { border-color: rgba(74,222,128,0.9);  }
+  66%  { border-color: rgba(96,165,250,0.9);  }
+  83%  { border-color: rgba(192,132,252,0.9); }
+  100% { border-color: rgba(248,113,113,0.9); }
+}
+
+@keyframes rainbow-glow-cycle {
+  0%   { box-shadow: 0 0 18px rgba(248,113,113,0.7); }
+  16%  { box-shadow: 0 0 18px rgba(251,146,60,0.7);  }
+  33%  { box-shadow: 0 0 18px rgba(250,204,21,0.7);  }
+  50%  { box-shadow: 0 0 18px rgba(74,222,128,0.7);  }
+  66%  { box-shadow: 0 0 18px rgba(96,165,250,0.7);  }
+  83%  { box-shadow: 0 0 18px rgba(192,132,252,0.7); }
+  100% { box-shadow: 0 0 18px rgba(248,113,113,0.7); }
+}
+
+@keyframes rainbow-bg-cycle {
+  0%   { background-color: rgba(248,113,113,0.12); }
+  16%  { background-color: rgba(251,146,60,0.12);  }
+  33%  { background-color: rgba(250,204,21,0.12);  }
+  50%  { background-color: rgba(74,222,128,0.12);  }
+  66%  { background-color: rgba(96,165,250,0.12);  }
+  83%  { background-color: rgba(192,132,252,0.12); }
+  100% { background-color: rgba(248,113,113,0.12); }
+}
+
+.rainbow-text   { animation: rainbow-cycle        3s linear infinite; }
+.rainbow-border { animation: rainbow-border-cycle 3s linear infinite; }
+.rainbow-glow   { animation: rainbow-glow-cycle   3s linear infinite; }
+.rainbow-bg     { animation: rainbow-bg-cycle     3s linear infinite; }
+
 /* ── Base resets ───────────────────────────────────────────────────────── */
 @layer base {
   *, *::before, *::after {

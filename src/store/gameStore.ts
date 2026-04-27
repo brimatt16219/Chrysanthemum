@@ -20,6 +20,8 @@ export interface PlantedFlower {
   growthMs?: number;
   /** Wall-clock time when growthMs was last saved */
   lastTickAt?: number;
+  /** 1.25 if this species was fully mastered in the codex at plant time (20% faster growth), otherwise undefined */
+  masteredBonus?: number;
 }
 
 export interface Plot {
@@ -133,39 +135,69 @@ export function getSpeciesCompletion(discovered: string[], speciesId: string): {
   return { found, total };
 }
 
+// Returns true when all 10 codex entries (base + 9 mutations) are filled for a species
+export function isSpeciesMastered(discovered: string[], speciesId: string): boolean {
+  const { found, total } = getSpeciesCompletion(discovered, speciesId);
+  return total > 0 && found === total;
+}
+
 // ── Shop helpers ───────────────────────────────────────────────────────────
 
-function generateShop(shopSlots: number = DEFAULT_SHOP_SLOTS): ShopSlot[] {
-  const flowerSlots = shopSlots;
+/**
+ * Rarity weights for shop slot generation.
+ * A rarity is rolled first, then a random flower from that rarity is picked.
+ * Rarities omitted here (exalted, prismatic) never appear in the shop by default.
+ */
+export const SHOP_RARITY_WEIGHTS: Partial<Record<Rarity, number>> = {
+  common:    50,
+  uncommon:  30,
+  rare:      15,
+  legendary: 4,
+  mythic:    1,
+};
 
+function generateShop(shopSlots: number = DEFAULT_SHOP_SLOTS): ShopSlot[] {
   const chosen: ShopSlot[] = [];
   const usedIds = new Set<string>();
 
-  // ── FLOWERS ─────────────────────────────
-  const available   = FLOWERS.filter((f) => f.shopWeight > 0);
-  const totalWeight = available.reduce((s, f) => s + f.shopWeight, 0);
-
+  // ── FLOWERS — roll rarity first, then pick a random flower from that tier ─
   let attempts = 0;
 
-  while (chosen.length < flowerSlots && attempts < 1000) {
+  while (chosen.length < shopSlots && attempts < 1000) {
+    attempts++;
+
+    // Build eligible rarities: has weight > 0 AND has at least one unused flower
+    const eligibleRarities = (Object.entries(SHOP_RARITY_WEIGHTS) as [Rarity, number][])
+      .filter(([rarity, weight]) =>
+        weight > 0 &&
+        FLOWERS.some((f) => f.rarity === rarity && f.shopWeight > 0 && !usedIds.has(f.id))
+      );
+
+    if (eligibleRarities.length === 0) break;
+
+    // Roll a rarity by weight
+    const totalWeight = eligibleRarities.reduce((s, [, w]) => s + w, 0);
     let roll = Math.random() * totalWeight;
+    let chosenRarity: Rarity = eligibleRarities[eligibleRarities.length - 1][0];
 
-    for (const f of available) {
-      roll -= f.shopWeight;
-
-      if (roll <= 0 && !usedIds.has(f.id)) {
-        chosen.push({
-          speciesId: f.id,
-          price: Math.max(5, Math.floor(f.sellValue * 0.6)),
-          quantity: Math.floor(Math.random() * 4) + 1,
-        });
-
-        usedIds.add(f.id);
-        break;
-      }
+    for (const [rarity, weight] of eligibleRarities) {
+      roll -= weight;
+      if (roll <= 0) { chosenRarity = rarity; break; }
     }
 
-    attempts++;
+    // Pick a random unused flower from that rarity
+    const pool = FLOWERS.filter(
+      (f) => f.rarity === chosenRarity && f.shopWeight > 0 && !usedIds.has(f.id)
+    );
+    if (pool.length === 0) continue;
+
+    const flower = pool[Math.floor(Math.random() * pool.length)];
+    usedIds.add(flower.id);
+    chosen.push({
+      speciesId: flower.id,
+      price:     Math.max(5, Math.floor(flower.sellValue * 0.75)),
+      quantity:  Math.floor(Math.random() * 4) + 1,
+    });
   }
 
   // ── FERTILIZERS (weighted, 2 picks) ─────
@@ -364,7 +396,8 @@ function computeGrowthMs(
 
   const fertMultiplier    = plant.fertilizer ? FERTILIZERS[plant.fertilizer].speedMultiplier : 1.0;
   const weatherMultiplier = WEATHER[weatherType].growthMultiplier;
-  const multiplier        = fertMultiplier * weatherMultiplier;
+  const masteredMultiplier = plant.masteredBonus ?? 1.0;
+  const multiplier        = fertMultiplier * weatherMultiplier * masteredMultiplier;
 
   if (plant.growthMs !== undefined && plant.lastTickAt !== undefined) {
     // Extrapolate from last saved checkpoint (delta is always small — updated every ~1 s)
@@ -428,7 +461,8 @@ export function getMsUntilNextStage(
 
   const fertMultiplier    = plant.fertilizer ? FERTILIZERS[plant.fertilizer].speedMultiplier : 1.0;
   const weatherMultiplier = WEATHER[weatherType].growthMultiplier;
-  const multiplier        = fertMultiplier * weatherMultiplier;
+  const masteredMultiplier = plant.masteredBonus ?? 1.0;
+  const multiplier        = fertMultiplier * weatherMultiplier * masteredMultiplier;
 
   const gMs     = computeGrowthMs(plant, now, weatherType);
   const seedMs  = species.growthTime.seed;
@@ -461,10 +495,20 @@ export function plantSeed(
   );
   if (!invItem || invItem.quantity < 1) return null;
 
+  const mastered = isSpeciesMastered(state.discovered, speciesId);
+
   const newGrid = state.grid.map((r, ri) =>
     r.map((p, ci) => {
       if (ri === row && ci === col)
-        return { ...p, plant: { speciesId, timePlanted: Date.now(), fertilizer: null } };
+        return {
+          ...p,
+          plant: {
+            speciesId,
+            timePlanted: Date.now(),
+            fertilizer: null,
+            ...(mastered ? { masteredBonus: 1.25 } : {}),
+          },
+        };
       return p;
     })
   );
@@ -506,7 +550,8 @@ export function stampStageTransitions(
 
       const fertMultiplier    = plant.fertilizer ? FERTILIZERS[plant.fertilizer].speedMultiplier : 1.0;
       const weatherMultiplier = WEATHER[weatherType].growthMultiplier;
-      const multiplier        = fertMultiplier * weatherMultiplier;
+      const masteredMultiplier = plant.masteredBonus ?? 1.0;
+      const multiplier        = fertMultiplier * weatherMultiplier * masteredMultiplier;
 
       const seedMs   = species.growthTime.seed;
       const sproutMs = species.growthTime.sprout;
@@ -758,12 +803,13 @@ export function harvestPlant(
 }
 
 const RARITY_PRIORITY: Record<Rarity, number> = {
-  exalted:   0,
-  mythic:    1,
-  legendary: 2,
-  rare:      3,
-  uncommon:  4,
-  common:    5,
+  prismatic: 0,
+  exalted:   1,
+  mythic:    2,
+  legendary: 3,
+  rare:      4,
+  uncommon:  5,
+  common:    6,
 };
 
 export function plantAll(state: GameState): GameState {

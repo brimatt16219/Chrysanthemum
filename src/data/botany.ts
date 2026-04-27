@@ -8,11 +8,12 @@ export const BOTANY_REQUIREMENTS: Partial<Record<Rarity, number>> = {
   rare:      5,
   legendary: 5,
   mythic:    5,
+  exalted:   5,
 };
 
-// Conversion chain — exalted is terminal (cannot be converted)
+// Conversion chain — prismatic is terminal (cannot be converted further)
 export const BOTANY_RARITY_ORDER: Rarity[] = [
-  "common", "uncommon", "rare", "legendary", "mythic",
+  "common", "uncommon", "rare", "legendary", "mythic", "exalted",
 ];
 
 export const NEXT_RARITY: Partial<Record<Rarity, Rarity>> = {
@@ -21,4 +22,5 @@ export const NEXT_RARITY: Partial<Record<Rarity, Rarity>> = {
   rare:      "legendary",
   legendary: "mythic",
   mythic:    "exalted",
+  exalted:   "prismatic",
 };
