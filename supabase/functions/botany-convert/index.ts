@@ -6,11 +6,42 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-// ── Flower catalog (mirrors src/data/flowers.ts — id + rarity only) ──────────
+// ── Local JWT verification — no network round trip ────────────────────────────
+async function verifyJWT(token: string): Promise<string | null> {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    const [headerB64, payloadB64, sigB64] = parts;
+
+    const key = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(Deno.env.get("SUPABASE_JWT_SECRET")!),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["verify"]
+    );
+
+    const sig = Uint8Array.from(
+      atob(sigB64.replace(/-/g, "+").replace(/_/g, "/")),
+      (c) => c.charCodeAt(0)
+    );
+    const valid = await crypto.subtle.verify(
+      "HMAC", key, sig,
+      new TextEncoder().encode(`${headerB64}.${payloadB64}`)
+    );
+    if (!valid) return null;
+
+    const payload = JSON.parse(atob(payloadB64.replace(/-/g, "+").replace(/_/g, "/")));
+    if (payload.exp && payload.exp < Date.now() / 1000) return null;
+    return payload.sub as string;
+  } catch {
+    return null;
+  }
+}
+
 type Rarity = "common" | "uncommon" | "rare" | "legendary" | "mythic" | "exalted" | "prismatic";
 
 const FLOWERS: { id: string; rarity: Rarity }[] = [
-  // Common
   { id: "quickgrass", rarity: "common" }, { id: "dustweed", rarity: "common" },
   { id: "sprig", rarity: "common" }, { id: "dewdrop", rarity: "common" },
   { id: "pebblebloom", rarity: "common" }, { id: "ember_moss", rarity: "common" },
@@ -23,7 +54,6 @@ const FLOWERS: { id: string; rarity: Rarity }[] = [
   { id: "coppercup", rarity: "common" }, { id: "ivybell", rarity: "common" },
   { id: "thornberry", rarity: "common" }, { id: "saltmoss", rarity: "common" },
   { id: "ashpetal", rarity: "common" }, { id: "snowdrift", rarity: "common" },
-  // Uncommon
   { id: "swiftbloom", rarity: "uncommon" }, { id: "shortcress", rarity: "uncommon" },
   { id: "thornwhistle", rarity: "uncommon" }, { id: "starwort", rarity: "uncommon" },
   { id: "mintleaf", rarity: "uncommon" }, { id: "tulip", rarity: "uncommon" },
@@ -38,7 +68,6 @@ const FLOWERS: { id: string; rarity: Rarity }[] = [
   { id: "water_lily", rarity: "uncommon" }, { id: "lanternflower", rarity: "uncommon" },
   { id: "dovebloom", rarity: "uncommon" }, { id: "coral_bells", rarity: "uncommon" },
   { id: "sundew", rarity: "uncommon" }, { id: "bubblebloom", rarity: "uncommon" },
-  // Rare
   { id: "flashpetal", rarity: "rare" }, { id: "rushwillow", rarity: "rare" },
   { id: "sweetheart_lily", rarity: "rare" }, { id: "glassbell", rarity: "rare" },
   { id: "stormcaller", rarity: "rare" }, { id: "lavender", rarity: "rare" },
@@ -53,7 +82,6 @@ const FLOWERS: { id: string; rarity: Rarity }[] = [
   { id: "passionflower", rarity: "rare" }, { id: "glasswing", rarity: "rare" },
   { id: "mirror_orchid", rarity: "rare" }, { id: "stargazer_lily", rarity: "rare" },
   { id: "prism_lily", rarity: "rare" }, { id: "dusk_orchid", rarity: "rare" },
-  // Legendary
   { id: "firstbloom", rarity: "legendary" }, { id: "haste_lily", rarity: "legendary" },
   { id: "verdant_crown", rarity: "legendary" }, { id: "ironwood_bloom", rarity: "legendary" },
   { id: "sundial", rarity: "legendary" }, { id: "lotus", rarity: "legendary" },
@@ -67,58 +95,40 @@ const FLOWERS: { id: string; rarity: Rarity }[] = [
   { id: "oracle_eye", rarity: "legendary" }, { id: "halfmoon_bloom", rarity: "legendary" },
   { id: "aurora_bloom", rarity: "legendary" }, { id: "mirrorpetal", rarity: "legendary" },
   { id: "emberspark", rarity: "legendary" },
-  // Mythic
   { id: "blink_rose", rarity: "mythic" }, { id: "dawnfire", rarity: "mythic" },
   { id: "moonflower", rarity: "mythic" }, { id: "jellybloom", rarity: "mythic" },
   { id: "celestial_bloom", rarity: "mythic" }, { id: "void_blossom", rarity: "mythic" },
   { id: "seraph_wing", rarity: "mythic" }, { id: "solar_rose", rarity: "mythic" },
   { id: "nebula_drift", rarity: "mythic" }, { id: "superbloom", rarity: "mythic" },
   { id: "wanderbloom", rarity: "mythic" }, { id: "chrysanthemum", rarity: "mythic" },
-  // Exalted
   { id: "umbral_bloom", rarity: "exalted" }, { id: "obsidian_rose", rarity: "exalted" },
   { id: "duskmantle", rarity: "exalted" }, { id: "graveweb", rarity: "exalted" },
   { id: "nightwing", rarity: "exalted" }, { id: "ashenveil", rarity: "exalted" },
   { id: "voidfire", rarity: "exalted" },
-  // Prismatic
   { id: "dreambloom", rarity: "prismatic" }, { id: "fairy_blossom", rarity: "prismatic" },
   { id: "lovebind", rarity: "prismatic" }, { id: "eternal_heart", rarity: "prismatic" },
   { id: "nova_bloom", rarity: "prismatic" }, { id: "princess_blossom", rarity: "prismatic" },
 ];
 
-// ── Botany config (mirrors src/data/botany.ts) ────────────────────────────────
 const BOTANY_REQUIREMENTS: Partial<Record<Rarity, number>> = {
   common: 5, uncommon: 5, rare: 5, legendary: 5, mythic: 5, exalted: 5,
 };
-
 const NEXT_RARITY: Partial<Record<Rarity, Rarity>> = {
   common: "uncommon", uncommon: "rare", rare: "legendary",
   legendary: "mythic", mythic: "exalted", exalted: "prismatic",
 };
 
-interface InventoryItem {
-  speciesId: string;
-  quantity:  number;
-  mutation?: string;
-  isSeed?:   boolean;
-}
+interface InventoryItem { speciesId: string; quantity: number; mutation?: string; isSeed?: boolean; }
+interface Selection { speciesId: string; mutation?: string; }
 
-interface Selection {
-  speciesId: string;
-  mutation?: string;
-}
-
-// ── Core convert logic (mirrors botanyConvert in gameStore.ts) ────────────────
 function convertOnce(
-  inventory: InventoryItem[],
-  discovered: string[],
-  selections: Selection[]
+  inventory: InventoryItem[], discovered: string[], selections: Selection[]
 ): { inventory: InventoryItem[]; outputSpeciesId: string } | { error: string } {
   if (selections.length === 0) return { error: "No selections provided" };
 
   const firstFlower = FLOWERS.find((f) => f.id === selections[0].speciesId);
   if (!firstFlower) return { error: "Unknown species" };
-  const rarity = firstFlower.rarity;
-
+  const rarity   = firstFlower.rarity;
   const required = BOTANY_REQUIREMENTS[rarity];
   if (!required) return { error: "This rarity cannot be converted" };
   if (selections.length !== required) return { error: `Expected ${required} selections for ${rarity}` };
@@ -134,18 +144,15 @@ function convertOnce(
   for (const [key, count] of consumeCounts) {
     const [speciesId, mutStr] = key.split("||");
     const mutation = mutStr || undefined;
-    const item = inventory.find(
-      (i) => i.speciesId === speciesId && i.mutation === mutation && !i.isSeed
-    );
+    const item = inventory.find((i) => i.speciesId === speciesId && i.mutation === mutation && !i.isSeed);
     if (!item || item.quantity < count) return { error: "Insufficient inventory" };
   }
 
-  const nextRarity = NEXT_RARITY[rarity];
+  const nextRarity   = NEXT_RARITY[rarity];
   if (!nextRarity) return { error: "No next rarity available" };
-
-  const pool = FLOWERS.filter((f) => f.rarity === nextRarity);
+  const pool         = FLOWERS.filter((f) => f.rarity === nextRarity);
   const undiscovered = pool.filter((f) => !discovered.includes(f.id));
-  const outputPool = undiscovered.length > 0 ? undiscovered : pool;
+  const outputPool   = undiscovered.length > 0 ? undiscovered : pool;
   const outputSpecies = outputPool[Math.floor(Math.random() * outputPool.length)];
 
   let newInventory = [...inventory];
@@ -153,11 +160,7 @@ function convertOnce(
     const [speciesId, mutStr] = key.split("||");
     const mutation = mutStr || undefined;
     newInventory = newInventory
-      .map((i) =>
-        i.speciesId === speciesId && i.mutation === mutation && !i.isSeed
-          ? { ...i, quantity: i.quantity - count }
-          : i
-      )
+      .map((i) => i.speciesId === speciesId && i.mutation === mutation && !i.isSeed ? { ...i, quantity: i.quantity - count } : i)
       .filter((i) => i.quantity > 0);
   }
 
@@ -169,7 +172,6 @@ function convertOnce(
   } else {
     newInventory.push({ speciesId: outputSpecies.id, quantity: 1, isSeed: true });
   }
-
   return { inventory: newInventory, outputSpeciesId: outputSpecies.id };
 }
 
@@ -179,12 +181,32 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    // ── Auth ─────────────────────────────────────────────────────────────────
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+
+    let userId: string;
+    try {
+      const p = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+      userId = p.sub;
+    } catch {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const body = await req.json() as {
+      action: "convert" | "convert_all"; selections?: Selection[]; rarity?: Rarity;
+    };
+
+    if (body.action !== "convert" && body.action !== "convert_all") {
+      return new Response(JSON.stringify({ error: "Invalid action" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -193,161 +215,114 @@ Deno.serve(async (req: Request) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
-    if (userError || !user) {
+    // ── Verify JWT + load save in parallel ────────────────────────────────────
+    const [verifiedId, saveResult] = await Promise.all([
+      verifyJWT(token),
+      supabaseAdmin.from("game_saves").select("inventory, discovered").eq("user_id", userId).single(),
+    ]);
+
+    if (!verifiedId || verifiedId !== userId) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    // ── Parse input ───────────────────────────────────────────────────────────
-    const body = await req.json() as {
-      action:      "convert" | "convert_all";
-      selections?: Selection[];
-      rarity?:     Rarity;
-    };
-
-    if (body.action !== "convert" && body.action !== "convert_all") {
-      return new Response(JSON.stringify({ error: "Invalid action" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // ── Load save (only needed columns) ──────────────────────────────────────
-    const { data: save, error: saveError } = await supabaseAdmin
-      .from("game_saves")
-      .select("inventory, discovered")
-      .eq("user_id", user.id)
-      .single();
-
-    if (saveError || !save) {
+    if (saveResult.error || !saveResult.data) {
       return new Response(JSON.stringify({ error: "Save not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    const save = saveResult.data;
     let inventory    = (save.inventory  ?? []) as InventoryItem[];
     const discovered = (save.discovered ?? []) as string[];
     const outputSpeciesIds: string[] = [];
 
-    // ── convert ───────────────────────────────────────────────────────────────
     if (body.action === "convert") {
       if (!body.selections || body.selections.length === 0) {
         return new Response(JSON.stringify({ error: "selections required" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-
       const result = convertOnce(inventory, discovered, body.selections);
       if ("error" in result) {
         return new Response(JSON.stringify({ error: result.error }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       inventory = result.inventory;
       outputSpeciesIds.push(result.outputSpeciesId);
     }
 
-    // ── convert_all ───────────────────────────────────────────────────────────
     if (body.action === "convert_all") {
       const { rarity } = body;
       if (!rarity) {
         return new Response(JSON.stringify({ error: "rarity required for convert_all" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-
       const required = BOTANY_REQUIREMENTS[rarity];
       if (!required) {
         return new Response(JSON.stringify({ error: "This rarity cannot be converted" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       while (true) {
-        const eligible = inventory.filter((i) => {
-          if (i.isSeed) return false;
-          return FLOWERS.find((f) => f.id === i.speciesId)?.rarity === rarity && i.quantity > 0;
-        });
-
-        const total = eligible.reduce((sum, i) => sum + i.quantity, 0);
-        if (total < required) break;
+        const eligible = inventory.filter((i) =>
+          !i.isSeed && FLOWERS.find((f) => f.id === i.speciesId)?.rarity === rarity && i.quantity > 0
+        );
+        if (eligible.reduce((s, i) => s + i.quantity, 0) < required) break;
 
         const selections: Selection[] = [];
         const tempUsed = new Map<string, number>();
-
         for (const item of eligible) {
-          const key   = `${item.speciesId}||${item.mutation ?? ""}`;
-          const used  = tempUsed.get(key) ?? 0;
-          const avail = item.quantity - used;
-          const take  = Math.min(avail, required - selections.length);
-          for (let i = 0; i < take; i++) {
-            selections.push({ speciesId: item.speciesId, mutation: item.mutation });
-          }
+          const key  = `${item.speciesId}||${item.mutation ?? ""}`;
+          const used = tempUsed.get(key) ?? 0;
+          const take = Math.min(item.quantity - used, required - selections.length);
+          for (let i = 0; i < take; i++) selections.push({ speciesId: item.speciesId, mutation: item.mutation });
           if (take > 0) tempUsed.set(key, used + take);
           if (selections.length === required) break;
         }
-
         if (selections.length < required) break;
 
         const result = convertOnce(inventory, discovered, selections);
         if ("error" in result) break;
-
         inventory = result.inventory;
         outputSpeciesIds.push(result.outputSpeciesId);
       }
 
       if (outputSpeciesIds.length === 0) {
         return new Response(JSON.stringify({ error: "Not enough blooms to convert" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
     }
 
-    // ── Write to DB ───────────────────────────────────────────────────────────
     const { error: updateError } = await supabaseAdmin
       .from("game_saves")
       .update({ inventory, updated_at: new Date().toISOString() })
-      .eq("user_id", user.id);
+      .eq("user_id", userId);
 
     if (updateError) {
       return new Response(JSON.stringify({ error: "Failed to save" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // ── Log action (fire-and-forget) ──────────────────────────────────────────
     void supabaseAdmin.from("action_log").insert({
-      user_id: user.id,
-      action:  `botany_${body.action}`,
+      user_id: userId, action: `botany_${body.action}`,
       payload: { action: body.action, rarity: body.rarity, count: outputSpeciesIds.length },
       result:  { outputSpeciesIds },
     });
 
-    // ── Return delta ──────────────────────────────────────────────────────────
     return new Response(
       JSON.stringify({ ok: true, inventory, outputSpeciesIds }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-
   } catch (err) {
     console.error("botany-convert error:", err);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
