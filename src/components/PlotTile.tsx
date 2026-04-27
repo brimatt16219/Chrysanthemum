@@ -9,6 +9,7 @@ import { getFlower, RARITY_CONFIG, MUTATIONS, type MutationType } from "../data/
 import { FERTILIZERS } from "../data/upgrades";
 import { PlotTooltip } from "./PlotTooltip";
 import { useGame } from "../store/GameContext";
+import { edgeHarvest } from "../lib/edgeFunctions";
 
 interface Props {
   plot: { id: string; plant: PlantedFlower | null };
@@ -21,7 +22,7 @@ interface Props {
 }
 
 export function PlotTile({ plot, row, col, onEmptyClick, onHarvest, isSelected, cellSize = "w-16 h-16" }: Props) {
-  const { state, update, activeWeather } = useGame();
+  const { state, perform, activeWeather } = useGame();
   const now           = Date.now();
   const plant         = plot.plant;
   const species       = plant ? getFlower(plant.speciesId) : null;
@@ -58,10 +59,11 @@ export function PlotTile({ plot, row, col, onEmptyClick, onHarvest, isSelected, 
       return;
     }
     if (isBloomed) {
-      const result = harvestPlant(state, row, col, activeWeather);
-      if (result) {
-        update(result.state);
-        onHarvest(plant.speciesId, result.mutation);
+      const optimistic = harvestPlant(state, row, col, activeWeather);
+      if (optimistic) {
+        perform(optimistic.state, () => edgeHarvest(row, col), () => {
+          onHarvest(plant.speciesId, optimistic.mutation);
+        });
         setOpen(false);
       }
       return;

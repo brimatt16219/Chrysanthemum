@@ -66,6 +66,8 @@ export interface GameState {
   discovered: string[];
   // Weather forecast — number of upcoming slots the player has purchased (0 = not unlocked)
   weatherForecastSlots: number;
+  // Marketplace — number of active listing slots the player has purchased (default 2)
+  marketplaceSlots: number;
 }
 
 export interface OfflineSummary {
@@ -252,6 +254,7 @@ export function defaultState(): GameState {
     lastSaved:            Date.now(),
     discovered:           [],
     weatherForecastSlots: 0,
+    marketplaceSlots:     2,
   };
 }
 
