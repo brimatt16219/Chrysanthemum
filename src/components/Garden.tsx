@@ -5,11 +5,12 @@ import { PlotTile } from "./PlotTile";
 import { SeedPicker } from "./SeedPicker";
 import { HarvestPopup } from "./HarvestPopup";
 import { getCurrentStage, plantSeed, upgradeFarm, harvestAll, plantAll, assignBloomMutations, tickWeatherMutations, stampStageTransitions } from "../store/gameStore";
+import { edgePlantSeed, edgeUpgradeFarm, edgeHarvest } from "../lib/edgeFunctions";
 import { getNextUpgrade, getCurrentTier } from "../data/upgrades";
 import type { MutationType } from "../data/flowers";
 
 export function Garden() {
-  const { state, update, activeWeather } = useGame();
+  const { state, update, perform, activeWeather } = useGame();
   useGrowthTick(5_000);
 
   // Every render: stamp transitions first (locks stages permanently),
@@ -44,22 +45,55 @@ export function Garden() {
 
   function handleSeedSelect(speciesId: string) {
     if (!selectedPlot) return;
-    const next = plantSeed(state, selectedPlot.row, selectedPlot.col, speciesId);
-    if (next) update(next);
+    const { row, col } = selectedPlot;
+    const optimistic = plantSeed(state, row, col, speciesId);
+    if (optimistic) perform(optimistic, () => edgePlantSeed(row, col, speciesId));
     setSelectedPlot(null);
   }
 
   function handleUpgrade() {
-    const next = upgradeFarm(state);
-    if (next) update(next);
+    const optimistic = upgradeFarm(state);
+    if (optimistic) perform(optimistic, () => edgeUpgradeFarm());
   }
 
-  function handleCollectAll() {
+  async function handleCollectAll() {
+    const bloomed = state.grid.flatMap((r, ri) =>
+      r.flatMap((p, ci) =>
+        p.plant && getCurrentStage(p.plant, Date.now(), activeWeather) === "bloom"
+          ? [{ row: ri, col: ci }]
+          : []
+      )
+    );
+    if (bloomed.length === 0) return;
+    const prev = state;
     update(harvestAll(state, activeWeather ?? "clear"));
+    try {
+      for (const { row, col } of bloomed) await edgeHarvest(row, col);
+    } catch {
+      update(prev);
+    }
   }
 
-  function handlePlantAll() {
-    update(plantAll(state));
+  async function handlePlantAll() {
+    const optimistic = plantAll(state);
+    const prev = state;
+    update(optimistic);
+    // Collect which plots were newly filled
+    const planted: { row: number; col: number; speciesId: string }[] = [];
+    for (let ri = 0; ri < optimistic.grid.length; ri++) {
+      for (let ci = 0; ci < optimistic.grid[ri].length; ci++) {
+        const wasEmpty = !state.grid[ri]?.[ci]?.plant;
+        const nowFilled = optimistic.grid[ri]?.[ci]?.plant;
+        if (wasEmpty && nowFilled) {
+          planted.push({ row: ri, col: ci, speciesId: nowFilled.speciesId });
+        }
+      }
+    }
+    try {
+      for (const { row, col, speciesId } of planted) await edgePlantSeed(row, col, speciesId);
+    } catch {
+      update(prev);
+    }
   }
 
   const bloomedCount = state.grid

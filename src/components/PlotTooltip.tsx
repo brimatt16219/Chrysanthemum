@@ -5,6 +5,7 @@ import {
   getMsUntilNextStage,
   applyFertilizer,
 } from "../store/gameStore";
+import { edgeApplyFertilizer } from "../lib/edgeFunctions";
 import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
 import { FERTILIZERS, type FertilizerType } from "../data/upgrades";
 import { useGame } from "../store/GameContext";
@@ -28,7 +29,7 @@ function formatMs(ms: number): string {
 }
 
 export function PlotTooltip({ plant, row, col, onClose }: Props) {
-  const { state, update, activeWeather } = useGame();
+  const { state, perform, activeWeather } = useGame();
   const [showFertPicker, setShowFertPicker] = useState(false);
 
   const now     = Date.now();
@@ -45,10 +46,10 @@ export function PlotTooltip({ plant, row, col, onClose }: Props) {
     .sort((a, b) => FERTILIZERS[a.type].speedMultiplier - FERTILIZERS[b.type].speedMultiplier);
 
   function handleApplyFertilizer(type: FertilizerType) {
-    const next = applyFertilizer(state, row, col, type);
-    if (next) update(next);
+    const optimistic = applyFertilizer(state, row, col, type);
+    if (optimistic) perform(optimistic, () => edgeApplyFertilizer(row, col, type));
     setShowFertPicker(false);
-    onClose?.(); // close tooltip after applying fertilizer
+    onClose?.();
   }
 
   return (

@@ -3,6 +3,7 @@ import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
 import type { MutationType } from "../data/flowers";
 import { InventoryItemCard } from "./InventoryItemCard";
 import { sellFlower, type InventoryItem } from "../store/gameStore";
+import { edgeSellFlower } from "../lib/edgeFunctions";
 import { FERTILIZERS } from "../data/upgrades";
 
 export function Inventory() {
@@ -19,18 +20,21 @@ export function Inventory() {
     return sum + Math.floor((species?.sellValue ?? 0) * (mut?.valueMultiplier ?? 1)) * item.quantity;
   }, 0);
 
-  function handleSellAll() {
-    let current = state;
+  async function handleSellAll() {
+    let optimistic = state;
     for (const item of blooms) {
-      const next = sellFlower(
-        current,
-        item.speciesId,
-        item.quantity,
-        item.mutation as MutationType | undefined
-      );
-      if (next) current = next;
+      const next = sellFlower(optimistic, item.speciesId, item.quantity, item.mutation as MutationType | undefined);
+      if (next) optimistic = next;
     }
-    update(current);
+    const prev = state;
+    update(optimistic);
+    try {
+      for (const item of blooms) {
+        await edgeSellFlower(item.speciesId, item.mutation, item.quantity);
+      }
+    } catch {
+      update(prev);
+    }
   }
 
   const isEmpty = items.length === 0 && fertilizers.length === 0;
