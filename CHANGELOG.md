@@ -1,3 +1,18 @@
+## [v2.0.1] — 2026-04-26 — Edge Function Hotfix
+
+### Fixed
+- All game actions (plant, harvest, sell, buy, fertilize, upgrade) were returning 401 Unauthorized and rolling back — root cause was local JWT verification using `SUPABASE_JWT_SECRET`, which is not automatically injected into Edge Functions
+- Harvest failing server-side bloom check because `bloomedAt` is client-only and never written to the DB — fixed by computing bloom status server-side from `timePlanted` + growth catalog + fertilizer + mastery
+- Shop sell values were completely stale for newer flowers (many returned 0 coins) — updated to match current full flower catalog
+- `apply-fertilizer` rejecting `advanced` and `elite` fertilizer types — these were missing from the valid types list
+
+### Changed
+- All Edge Functions now use `auth.getUser()` for JWT verification (reliable, officially supported)
+- JWT decode + DB load run in parallel via `Promise.all` — auth and save are fetched simultaneously to reduce latency
+- All Edge Functions now use targeted column selects instead of `SELECT *` to reduce DB payload
+
+---
+
 ## [v2.0.0] — 2026-04-26 — Server-Authoritative Architecture
 
 ### Added
