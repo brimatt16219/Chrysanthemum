@@ -26,7 +26,7 @@ interface Props {
 }
 
 export function PlotTile({ plot, row, col, onEmptyClick, onHarvest, onHarvestStart, onHarvestEnd, harvestPending, isSelected, cellSize = "w-16 h-16" }: Props) {
-  const { state, perform, getState, activeWeather } = useGame();
+  const { perform, getState, activeWeather } = useGame();
   const now           = Date.now();
   const plant         = plot.plant;
   const species       = plant ? getFlower(plant.speciesId) : null;
