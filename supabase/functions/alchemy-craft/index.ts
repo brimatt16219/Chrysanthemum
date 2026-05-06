@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { initSentry, Sentry } from "../_shared/sentry.ts";
+import { awardXp, DISCOVERY_XP_BY_RARITY } from "../_shared/gardenerLevel.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin":  "*",
@@ -198,7 +199,7 @@ Deno.serve(async (req: Request) => {
       supabaseAdmin.auth.getUser(token),
       supabaseAdmin
         .from("game_saves")
-        .select("essences, consumables, infusers, updated_at") // "infusers" is the DB column name for attunements
+        .select("essences, consumables, infusers, gardener_level, gardener_xp, updated_at") // "infusers" is the DB column name for attunements
         .eq("user_id", userId)
         .single(),
     ]);
@@ -216,6 +217,8 @@ Deno.serve(async (req: Request) => {
 
     const save          = saveResult.data;
     const priorUpdatedAt = save.updated_at as string;
+    const gardenerLevel = (save.gardener_level as number) ?? 1;
+    const gardenerXp    = (save.gardener_xp    as number) ?? 0;
 
     let essences:    { type: string; amount: number }[]    = (save.essences    ?? []) as { type: string; amount: number }[];
     let consumables: { id: string;   quantity: number }[]  = (save.consumables ?? []) as { id: string;   quantity: number }[];
@@ -314,10 +317,22 @@ Deno.serve(async (req: Request) => {
         : [...attunements, { rarity: recipe.rarity, quantity: 1 }];
     }
 
+    const xpGained = craftType === "attunement"
+      ? (DISCOVERY_XP_BY_RARITY[ATTUNEMENT_RECIPES.find((r) => r.tier === parseInt(id!, 10))?.rarity ?? ""] ?? 0)
+      : 25;
+    const { level: newLevel, xp: newXp, leveledUp, levelsGained } = awardXp(gardenerLevel, gardenerXp, xpGained);
+
     // ── Write ────────────────────────────────────────────────────────────────
     const { data: updateData, error: updateError } = await supabaseAdmin
       .from("game_saves")
-      .update({ essences, consumables, infusers: attunements, updated_at: new Date().toISOString() })
+      .update({
+        essences,
+        consumables,
+        infusers:       attunements,
+        gardener_level: newLevel,
+        gardener_xp:    newXp,
+        updated_at:     new Date().toISOString(),
+      })
       .eq("user_id", userId)
       .eq("updated_at", priorUpdatedAt)
       .select("updated_at")
@@ -337,7 +352,18 @@ Deno.serve(async (req: Request) => {
     });
 
     return new Response(
-      JSON.stringify({ ok: true, essences, consumables, infusers: attunements, serverUpdatedAt: updateData.updated_at }),
+      JSON.stringify({
+        ok:              true,
+        essences,
+        consumables,
+        infusers:        attunements,
+        xpGained,
+        gardenerLevel:   newLevel,
+        gardenerXp:      newXp,
+        leveledUp,
+        levelsGained,
+        serverUpdatedAt: updateData.updated_at,
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {
