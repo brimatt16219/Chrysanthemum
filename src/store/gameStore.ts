@@ -239,6 +239,9 @@ export interface GameState {
   // saveToCloud uses this as a CAS guard so stale sessions can't overwrite
   // server-authoritative state (inventory, coins, etc.) with stale client data.
   serverUpdatedAt:   string | null;
+  
+  gardenerLevel: number,
+  gardenerXp: number
 }
 
 export interface OfflineSummary {
@@ -540,6 +543,8 @@ export function defaultState(): GameState {
     attunementQueue:      [],
     activeBoosts:         [],
     serverUpdatedAt:      null,
+    gardenerLevel:        1,
+    gardenerXp:           0,
   };
 }
 
@@ -631,6 +636,8 @@ export function applyOfflineTick(
     attunementSlots:      save.attunementSlots       ?? 0,
     attunementQueue:      save.attunementQueue       ?? [],
     activeBoosts:         pruneActiveBoosts(save.activeBoosts, now),
+    gardenerLevel:        save.gardenerLevel         ?? 1,
+    gardenerXp:           save.gardenerXp            ?? 0
   };
 
   let shopRestocked    = false;
@@ -1735,7 +1742,7 @@ export function tickFanMutations(
  *  Called both in the live tick and in applyOfflineTick for offline progress. */
 export function tickHarvestBells(
   state: GameState,
-  weatherType: WeatherType = "clear"
+  weatherType: WeatherType = "clear",
 ): GameState {
   const now     = Date.now();
   let   updated = state;
