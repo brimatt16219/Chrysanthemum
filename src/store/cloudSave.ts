@@ -164,6 +164,9 @@ export async function loadCloudSave(userId: string): Promise<GameState | null> {
       // v2.3 Alchemy attunement queue (separate from craft queue — own slot count)
       attunementSlots:      (data.attunement_slots      as number)                      ?? 0,
       attunementQueue:      (data.attunement_queue      as GameState["attunementQueue"]) ?? [],
+      // Gardener Level
+      gardenerLevel:        (data.gardener_level        as number)                      ?? 1,
+      gardenerXp:           (data.gardener_xp           as number)                      ?? 0,
     } as GameState;
   } catch {
     return null;
@@ -222,6 +225,9 @@ export async function saveToCloud(
     // v2.3 Alchemy attunement queue
     attunement_slots:       state.attunementSlots   ?? 0,
     attunement_queue:       state.attunementQueue   ?? [],
+    // Gardener Level
+    gardener_level:         state.gardenerLevel     ?? 1,
+    gardener_xp:            state.gardenerXp        ?? 0,
     updated_at:             newUpdatedAt,
   };
 
@@ -323,6 +329,9 @@ export async function getPublicSave(userId: string): Promise<GameState | null> {
     attunementQueue:      (data.attunement_queue      as GameState["attunementQueue"])    ?? [],
     activeBoosts:         (data.active_boosts         as GameState["activeBoosts"])       ?? [],
     serverUpdatedAt:      (data.updated_at            as string | null)                   ?? null,
+    // Gardener Level
+    gardenerLevel:        (data.gardener_level        as number)                          ?? 1,
+    gardenerXp:           (data.gardener_xp           as number)                          ?? 0,
   } as GameState;
 }
 
