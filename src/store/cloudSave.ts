@@ -1,5 +1,7 @@
 import { supabase } from "../lib/supabase";
 import type { GameState } from "./gameStore";
+import { awardXp, DISCOVERY_XP_BY_RARITY, MUTATION_DISCOVERY_BONUS } from "../data/gardenerLevel";
+import { getFlower } from "../data/flowers";
 
 export interface CloudProfile {
   id: string;
@@ -118,7 +120,7 @@ export async function loadCloudSave(userId: string): Promise<GameState | null> {
 
     if (result.error || !result.data) return null;
     const data = result.data;
-    return {
+    const state = {
       coins:                data.coins,
       farmSize:             data.farm_size,
       farmRows:             data.farm_rows ?? data.farm_size, // backfill: square for old saves
@@ -168,6 +170,32 @@ export async function loadCloudSave(userId: string): Promise<GameState | null> {
       gardenerLevel:        (data.gardener_level        as number)                      ?? 1,
       gardenerXp:           (data.gardener_xp           as number)                      ?? 0,
     } as GameState;
+
+    // ── Gardener XP backfill (first load post-deploy) ──────────────────────
+    // Pre-deploy saves have gardener_xp = 0. Recompute from the discovered
+    // array so existing players get credit for what they've already found.
+    if (state.gardenerXp === 0 && state.discovered.length > 0) {
+      let backfillXp = 0;
+      for (const entry of state.discovered) {
+        const sep = entry.indexOf(":");
+        const speciesId = sep === -1 ? entry : entry.slice(0, sep);
+        const isMutation = sep !== -1;
+        const rarity = getFlower(speciesId)?.rarity;
+        if (!rarity) continue;
+        const baseXp = DISCOVERY_XP_BY_RARITY[rarity];
+        backfillXp += isMutation ? Math.floor(baseXp * MUTATION_DISCOVERY_BONUS) : baseXp;
+      }
+      if (backfillXp > 0) {
+        const { level, xp } = awardXp(1, 0, backfillXp);
+        state.gardenerLevel = level;
+        state.gardenerXp    = xp;
+        void supabase
+          .from("game_saves")
+          .update({ gardener_level: level, gardener_xp: xp })
+          .eq("user_id", userId);
+      }
+    }
+    return state;
   } catch {
     return null;
   }
