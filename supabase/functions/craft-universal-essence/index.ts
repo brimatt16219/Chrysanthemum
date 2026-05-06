@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { initSentry, Sentry } from "../_shared/sentry.ts";
+import { awardXp } from "../_shared/gardenerLevel.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin":  "*",
@@ -76,7 +77,7 @@ Deno.serve(async (req: Request) => {
       supabaseAdmin.auth.getUser(token),
       supabaseAdmin
         .from("game_saves")
-        .select("essences, updated_at")
+        .select("essences, gardener_level, gardener_xp, updated_at")
         .eq("user_id", userId)
         .single(),
     ]);
@@ -90,6 +91,8 @@ Deno.serve(async (req: Request) => {
 
     const save           = saveResult.data;
     const priorUpdatedAt = save.updated_at as string;
+    const gardenerLevel  = (save.gardener_level as number) ?? 1;
+    const gardenerXp     = (save.gardener_xp    as number) ?? 0;
     const essences       = (save.essences ?? []) as EssenceItem[];
 
     // ── Validate — must have enough of each type ──────────────────────────────
@@ -121,11 +124,18 @@ Deno.serve(async (req: Request) => {
       .map(([type, amount]) => ({ type, amount }))
       .filter((e) => e.amount > 0);
 
+    const xpGained = 250 * quantity;
+    const { level: newLevel, xp: newXp, leveledUp, levelsGained } = awardXp(gardenerLevel, gardenerXp, xpGained);
     // ── CAS write ─────────────────────────────────────────────────────────────
 
     const { data: ud, error: ue } = await supabaseAdmin
       .from("game_saves")
-      .update({ essences: newEssences, updated_at: new Date().toISOString() })
+      .update({
+        essences:       newEssences,
+        gardener_level: newLevel,
+        gardener_xp:    newXp,
+        updated_at:     new Date().toISOString(),
+      })
       .eq("user_id", userId)
       .eq("updated_at", priorUpdatedAt)
       .select("updated_at")
@@ -139,7 +149,16 @@ Deno.serve(async (req: Request) => {
       result:  { newUniversalTotal: map.get("universal") ?? 0 },
     });
 
-    return json({ ok: true, essences: newEssences, serverUpdatedAt: ud.updated_at });
+    return json({
+      ok:              true,
+      essences:        newEssences,
+      xpGained,
+      gardenerLevel:   newLevel,
+      gardenerXp:      newXp,
+      leveledUp,
+      levelsGained,
+      serverUpdatedAt: ud.updated_at,
+    });
 
   } catch (e) {
     console.error("craft-universal-essence error:", e);
