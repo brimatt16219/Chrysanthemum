@@ -39,3 +39,19 @@ export function cumulativeXpForLevel(level: number): number {
     return sum;
 }
 
+export function awardXp(
+    currentLevel: number,
+    currentXp: number,
+    amount: number
+): { level: number; xp: number; leveledUp: boolean; levelsGained: number } {
+    const cap = cumulativeXpForLevel(MAX_GARDENER_LEVEL);
+    const newXp = Math.min(currentXp + amount, cap);
+    const newLevel = levelFromXp(newXp);
+    return {
+        xp:           newXp,
+        level:        newLevel,
+        leveledUp:    newLevel > currentLevel,
+        levelsGained: newLevel - currentLevel,
+    };
+}
+
