@@ -53,6 +53,7 @@ import { usePresence } from "./hooks/usePresence";
 import { UpdateBanner } from "./components/UpdateBanner";
 import { HarvestPopup } from "./components/HarvestPopup";
 import { GenericToastPopup } from "./components/GenericToastPopup";
+import { GardenerXpBar } from "./components/GardenerXpBar";
 import { CHANGELOGS, LATEST_CHANGELOG_VERSION, type ChangelogEntry } from "./data/changelog";
 
 type Tab        = "garden" | "shop" | "inventory" | "social" | "codex" | "alchemy" | "craft";
@@ -673,6 +674,7 @@ function AppInner() {
             )}
           </div>
         </div>
+        <GardenerXpBar level={state.gardenerLevel} xp={state.gardenerXp} />
       </header>
 
       {/* Tabs */}
