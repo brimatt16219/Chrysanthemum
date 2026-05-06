@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { initSentry, Sentry } from "../_shared/sentry.ts";
+import { awardXp, SELL_XP_PERCENT } from "../_shared/gardenerLevel.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin":  "*",
@@ -211,6 +212,29 @@ Deno.serve(async (req: Request) => {
         status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // ── Seller XP grant (fire-and-forget — does not block the response) ──────
+    void (async () => {
+      const sellerXpGained = Math.floor((listing.ask_price as number) * SELL_XP_PERCENT);
+      if (sellerXpGained <= 0) return;
+      const { data: sellerSave } = await supabaseAdmin
+        .from("game_saves")
+        .select("gardener_level, gardener_xp")
+        .eq("user_id", listing.seller_id)
+        .single();
+
+      if (!sellerSave) return;
+      const { level: newLevel, xp: newXp } = awardXp(
+        (sellerSave.gardener_level as number) ?? 1,
+        (sellerSave.gardener_xp    as number) ?? 0,
+        sellerXpGained,
+      );
+
+      await supabaseAdmin
+        .from("game_saves")
+        .update({ gardener_level: newLevel, gardener_xp: newXp })
+        .eq("user_id", listing.seller_id);
+    })();
 
     return new Response(
       JSON.stringify({ ok: true, coins: newBuyerCoins, serverUpdatedAt: coinResult.data.updated_at }),
