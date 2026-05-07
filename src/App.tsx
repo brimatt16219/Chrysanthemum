@@ -55,8 +55,9 @@ import { HarvestPopup } from "./components/HarvestPopup";
 import { GenericToastPopup } from "./components/GenericToastPopup";
 import { GardenerXpBar } from "./components/GardenerXpBar";
 import { CHANGELOGS, LATEST_CHANGELOG_VERSION, type ChangelogEntry } from "./data/changelog";
+import { DailyTasksPanel } from "./components/DailyTasksPanel";
 
-type Tab        = "garden" | "shop" | "inventory" | "social" | "codex" | "alchemy" | "craft";
+type Tab = "garden" | "shop" | "inventory" | "social" | "codex" | "alchemy" | "craft" | "daily";
 type ShopView   = "seeds" | "supply";
 type SocialView = "search" | "friends" | "mailbox" | "leaderboard" | "marketplace";
 
@@ -276,7 +277,7 @@ function AppInner() {
   //             inventory(3) → alchemy(4) → codex(5) →
   //             social:search(6) → friends(7) → mailbox(8) →
   //             marketplace(9) → leaderboard(10) → me(profile)
-  const MAIN_TABS: Tab[] = ["garden", "shop", "inventory", "alchemy", "craft", "codex", "social"];
+  const MAIN_TABS: Tab[] = ["garden", "shop", "inventory", "alchemy", "craft", "codex", "daily", "social"];
 
   const handleSwipeLeft = useCallback(() => {
     if (profileUsername) return;
@@ -699,6 +700,7 @@ function AppInner() {
                : t === "alchemy"   ? "⚗️"
                : t === "craft"     ? "⚒️"
                : t === "codex"     ? "📖"
+               : t === "daily"     ? "☀️"
                : "🌍"}
               <span className="ml-1 hidden sm:inline capitalize">{t}</span>
 
@@ -813,6 +815,7 @@ function AppInner() {
           {tab === "alchemy"     && <AlchemyTab activeView={alchemyView} onViewChange={setAlchemyView} />}
           {tab === "craft"       && <CraftingTab />}
           {tab === "codex"       && <Codex unseenEntries={unseenCodex} markSeen={markCodexSeen} />}
+          {tab === "daily"       && <DailyTasksPanel />}
           {tab === "social"    && (
             <>
               {/* Sub-nav — always visible for signed-in users; guests only see Market */}
