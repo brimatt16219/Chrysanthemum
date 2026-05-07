@@ -19,6 +19,7 @@ import { GearTooltip } from "./GearTooltip";
 import { useGame } from "../store/GameContext";
 import { useSettings } from "../store/SettingsContext";
 import { edgeHarvest } from "../lib/edgeFunctions";
+import { useDailyProgress } from "../hooks/useDailyProgress";
 
 const WEATHER_MUT_LABEL: Partial<Record<WeatherType, string>> = {
   rain:            "wet",
@@ -101,6 +102,7 @@ export function PlotTile({
   const plant  = plot.plant;
   const gear   = plot.gear;
   const species = plant ? getFlower(plant.speciesId) : null;
+  const { trackProgress } = useDailyProgress();
 
   // gearMult already folds Verdant Rush in so PlotTooltip downstream gets the
   // combined multiplier without needing a separate prop for activeBoosts.
@@ -213,7 +215,10 @@ export function PlotTile({
             onHarvestEnd?.();
           }
         },
-        () => { onHarvest(plant.speciesId, optimistic.mutation, savedCell.plant?.timePlanted === 0, savedCell.plant?.heirloomActive); },
+        () => { 
+          onHarvest(plant.speciesId, optimistic.mutation, savedCell.plant?.timePlanted === 0, savedCell.plant?.heirloomActive); 
+          void trackProgress("harvest");
+        },
         {
           serialize: true,
           rollback: (cur) => ({

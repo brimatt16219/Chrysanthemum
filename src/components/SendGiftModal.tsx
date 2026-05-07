@@ -3,6 +3,7 @@ import { useGame } from "../store/GameContext";
 import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
 import { edgeSendGift } from "../lib/edgeFunctions";
 import type { MutationType } from "../data/flowers";
+import { useDailyProgress } from "../hooks/useDailyProgress";
 
 interface Props {
   receiverId: string;
@@ -23,6 +24,8 @@ export function SendGiftModal({ receiverId, receiverUsername, onClose, onSent }:
   // as blooms (the modal always renders the bloom emoji regardless of isSeed)
   const items = state.inventory.filter((i) => i.quantity > 0 && !i.isSeed);
 
+  const { trackProgress } = useDailyProgress();
+
   async function handleSend() {
     if (!user || selectedIdx === null) return;
     const item = items[selectedIdx];
@@ -40,6 +43,7 @@ export function SendGiftModal({ receiverId, receiverUsername, onClose, onSent }:
       );
       // Server has validated inventory, deducted the item, and inserted the gift row
       update({ ...state, inventory: result.inventory });
+      void trackProgress("send_gift");
       onSent();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to send gift. Try again.");

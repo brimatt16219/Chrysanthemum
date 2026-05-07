@@ -27,6 +27,7 @@ import { getAffectedCells, GEAR, isGearExpired } from "../data/gear";
 import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
 import type { MutationType } from "../data/flowers";
 import type { GearType, FanDirection } from "../data/gear";
+import { useDailyProgress } from "../hooks/useDailyProgress";
 
 export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string, mutation?: MutationType, isSeed?: boolean) => void }) {
   const { state, update, perform, getState, awaitHarvests, activeWeather, reloadFromCloud, saveGridNow, user, requestSignIn, pushGenericToast } = useGame();
@@ -373,6 +374,8 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
     return map;
   }, [state.grid]);
 
+  const { trackProgress } = useDailyProgress();
+
   function handlePlotClick(row: number, col: number) {
     const plot = state.grid[row][col];
     if (plot.plant || harvestingPlots.current.has(`${row}-${col}`)) return;
@@ -537,7 +540,7 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
           for (const { row, col } of plots) harvestingPlots.current.delete(`${row}-${col}`);
         }
       },
-      undefined,
+      () => { void trackProgress("harvest", plots.length); },
       {
         serialize: true,
         rollback: () => currentState,

@@ -7,6 +7,7 @@ import { buyFromShop, buyFertilizer, buyAllFromShop, buyAllFertilizer, getSpecie
 import { edgeBuyFlower, edgeBuyFertilizer, edgeSyncShop } from "../lib/edgeFunctions";
 import type { ShopSlot } from "../store/gameStore";
 import type { Rarity } from "../data/flowers";
+import { useDailyProgress } from "../hooks/useDailyProgress";
 
 
 interface Props {
@@ -44,6 +45,7 @@ export function ShopSlotCard({ slot }: Props) {
   // Absolute per-card gate: blocks any buy while a server call is in-flight,
   // even if stateRef or queuing somehow lets a second request slip through.
   const buyingRef = useRef(false);
+  const { trackProgress } = useDailyProgress();
 
   function flashBought() {
     setJustBought(true);
@@ -97,7 +99,10 @@ export function ShopSlotCard({ slot }: Props) {
             buyingRef.current = false;
           }
         },
-        () => flashBought(),
+        () => {
+          flashBought();
+          void trackProgress("shop_buy");
+        },
         {
           serialize: true,
           rollback: (c) => ({ ...c, coins: savedCoins, shop: savedShop, fertilizers: savedFertilizers }),
@@ -132,7 +137,10 @@ export function ShopSlotCard({ slot }: Props) {
             buyingRef.current = false;
           }
         },
-        () => flashBought(),
+        () => {
+          flashBought();
+          void trackProgress("shop_buy");
+        },
         {
           serialize: true,
           rollback: (c) => ({ ...c, coins: savedCoins, shop: savedShop, fertilizers: savedFertilizers }),
@@ -244,6 +252,7 @@ export function ShopSlotCard({ slot }: Props) {
       },
       () => {
         flashBought();
+        void trackProgress("shop_buy");
         const emoji = isNew ? "❓" : species!.emoji.seed;
         const label = isNew ? "??? Seed" : `${species!.name} Seed`;
         pushGenericToast(`gain:seed:${species!.id}`, emoji, label, "text-green-400", "gain");
@@ -287,6 +296,7 @@ export function ShopSlotCard({ slot }: Props) {
       },
       () => {
         flashBought();
+        void trackProgress("shop_buy");
         if (qty > 0) {
           const emoji = isNew ? "❓" : species!.emoji.seed;
           const label = isNew ? "??? Seed" : `${species!.name} Seed`;

@@ -9,6 +9,7 @@ import { EssenceBank } from "./EssenceBank";
 import { YieldTableModal } from "./YieldTableModal";
 import { ROMAN } from "../data/consumables";
 import { sacrificeFlowers, getBoostMultiplier, type SacrificeEntry } from "../store/gameStore";
+import { useDailyProgress } from "../hooks/useDailyProgress";
 import {
   edgeAlchemySacrifice,
   edgeAttuneStart, edgeAttuneCollect, edgeAttuneCancel, edgeUpgradeAttunementSlots,
@@ -89,6 +90,7 @@ interface AlchemyTabProps {
 
 export function AlchemyTab({ activeView, onViewChange }: AlchemyTabProps = {}) {
   const { state, perform, getState, update } = useGame();
+  const { trackProgress } = useDailyProgress();
 
   const [localView, setLocalView] = useState<AlchemyView>("sacrifice");
   // Use controlled view when provided by parent (swipe), otherwise local state
@@ -268,6 +270,7 @@ export function AlchemyTab({ activeView, onViewChange }: AlchemyTabProps = {}) {
         setSuccess(gained);
         setSelections(new Map());
         succeeded = true;
+        void trackProgress("alchemy_sacrifice");
       },
     );
 

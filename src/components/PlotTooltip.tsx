@@ -13,6 +13,7 @@ import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
 import { FlowerTypeBadges } from "./FlowerTypeBadges";
 import { FERTILIZERS, type FertilizerType } from "../data/upgrades";
 import { useGame } from "../store/GameContext";
+import { useDailyProgress } from "../hooks/useDailyProgress";
 import { CONSUMABLE_RECIPE_MAP, ROMAN, RARITY_TIER, type ConsumableId } from "../data/consumables";
 
 interface Props {
@@ -64,6 +65,7 @@ export function PlotTooltip({
   balanceScaleSide, isUnderAegis,
 }: Props) {
   const { state, getState, perform, update, activeWeather, pushHarvestPopup, pushGenericToast } = useGame();
+  const { trackProgress } = useDailyProgress();
   const [showFertPicker,    setShowFertPicker]    = useState(false);
   const [confirmRemove,     setConfirmRemove]     = useState(false);
   const [removing,          setRemoving]          = useState(false);
@@ -217,6 +219,7 @@ export function PlotTooltip({
       const f = FERTILIZERS[type];
       perform(optimistic, () => edgeApplyFertilizer(row, col, type), () => {
         pushGenericToast(`loss:fert:${type}`, f.emoji, f.name, undefined, "loss");
+        void trackProgress("apply_fertilizer");
       });
     }
     setShowFertPicker(false);
