@@ -2,6 +2,7 @@ import { supabase } from "../lib/supabase";
 import type { GameState } from "./gameStore";
 import { awardXp, DISCOVERY_XP_BY_RARITY, MUTATION_DISCOVERY_BONUS } from "../data/gardenerLevel";
 import { getFlower } from "../data/flowers";
+import { freshDailyState, isStale } from "../lib/dailySeed";
 
 export interface CloudProfile {
   id: string;
@@ -169,6 +170,8 @@ export async function loadCloudSave(userId: string): Promise<GameState | null> {
       // Gardener Level
       gardenerLevel:        (data.gardener_level        as number)                      ?? 1,
       gardenerXp:           (data.gardener_xp           as number)                      ?? 0,
+      // v2.4 — Daily tasks
+      dailyTasks:           (data.daily_tasks           as GameState["dailyTasks"])      ?? null,
     } as GameState;
 
     // ── Gardener XP backfill (first load post-deploy) ──────────────────────
@@ -194,6 +197,18 @@ export async function loadCloudSave(userId: string): Promise<GameState | null> {
           .update({ gardener_level: level, gardener_xp: xp })
           .eq("user_id", userId);
       }
+    }
+
+    // ── Daily tasks init / reset ───────────────────────────────────────────
+    // If daily_tasks is null (new column) or stale (yesterday's tasks),
+    // generate a fresh set for today and silently write it to the DB.
+    if (!state.dailyTasks || isStale(state.dailyTasks)) {
+      const fresh      = freshDailyState(userId);
+      state.dailyTasks = fresh;
+      void supabase
+        .from("game_saves")
+        .update({ daily_tasks: fresh })
+        .eq("user_id", userId);
     }
     return state;
   } catch {
@@ -256,6 +271,8 @@ export async function saveToCloud(
     // Gardener Level
     gardener_level:         state.gardenerLevel     ?? 1,
     gardener_xp:            state.gardenerXp        ?? 0,
+    // v2.4 — Daily tasks
+    daily_tasks:            state.dailyTasks        ?? null,
     updated_at:             newUpdatedAt,
   };
 
@@ -360,6 +377,7 @@ export async function getPublicSave(userId: string): Promise<GameState | null> {
     // Gardener Level
     gardenerLevel:        (data.gardener_level        as number)                          ?? 1,
     gardenerXp:           (data.gardener_xp           as number)                          ?? 0,
+    dailyTasks:           null,
   } as GameState;
 }
 
