@@ -729,3 +729,22 @@ export interface DailyCompleteResult {
 export function edgeDailyComplete(taskType: string) {
   return callEdge<DailyCompleteResult>("daily-complete", { taskType });
 }
+
+// ── Achievements ──────────────────────────────────────────────────────────────
+
+export interface AchievementClaimResult {
+  ok:                  true;
+  xpGained:            number;
+  gemsGained:          number;
+  gardenerLevel:       number;
+  gardenerXp:          number;
+  leveledUp:           boolean;
+  levelsGained:        number;
+  gems:                number;
+  achievementsClaimed: string[];
+  serverUpdatedAt:     string;
+}
+
+export function edgeAchievementClaim(achievementId: string) {
+  return callEdge<AchievementClaimResult>("achievement-claim", { achievementId });
+}
