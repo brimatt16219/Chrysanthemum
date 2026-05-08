@@ -28,6 +28,8 @@ import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
 import type { MutationType } from "../data/flowers";
 import type { GearType, FanDirection } from "../data/gear";
 import { useDailyProgress } from "../hooks/useDailyProgress";
+import { useAchievementStats } from "../hooks/useAchievementStats";
+import type { AchievementStatKey } from "../data/achievements";
 
 export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string, mutation?: MutationType, isSeed?: boolean) => void }) {
   const { state, update, perform, getState, awaitHarvests, activeWeather, reloadFromCloud, saveGridNow, user, requestSignIn, pushGenericToast } = useGame();
@@ -113,6 +115,17 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
                 if (harvestedSpeciesId) {
                   onHarvestPopup(harvestedSpeciesId, harvestedMutation);
                   if (harvestedHeirloom) onHarvestPopup(harvestedSpeciesId, undefined, true);
+                  // Achievement stats
+                  const flower = getFlower(harvestedSpeciesId);
+                  if (flower) {
+                    incrementStat("total_harvests");
+                    for (const type of flower.types) {
+                      incrementStat(`harvest_${type}`);
+                    }
+                    if (flower.rarity === "legendary" || flower.rarity === "mythic" || flower.rarity === "prismatic") {
+                      incrementStat(`harvest_${flower.rarity}` as AchievementStatKey);
+                    }
+                  }
                 }
               },
               {
@@ -374,7 +387,24 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
     return map;
   }, [state.grid]);
 
-  const { trackProgress } = useDailyProgress();
+  const { trackProgress }  = useDailyProgress();
+  const { incrementStat }  = useAchievementStats();
+
+  // Maps a GearType to its "placed_*" achievement stat key group.
+  function gearTypeToPlacedGroup(gearType: string): string | null {
+    const overrides: Record<string, string> = {
+      sprinkler_flame:        "heater",
+      sprinkler_frost:        "cooler",
+      sprinkler_lightning:    "generator",
+      sprinkler_lunar:        "crystal_ball",
+      sprinkler_midas:        "golden_veil",
+      sprinkler_prism:        "kaleidoscope",
+      auto_planter_prismatic: "auto_planter",
+      cropsticks:             "cropsticks",
+    };
+    if (overrides[gearType]) return overrides[gearType];
+    return gearType.replace(/_(?:prismatic|exalted|mythic|legendary|rare|uncommon)$/, "") || null;
+  }
 
   function handlePlotClick(row: number, col: number) {
     const plot = state.grid[row][col];
@@ -418,6 +448,7 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
           const emoji = discovered && sp ? sp.emoji.seed : "❓";
           const label = discovered && sp ? `${sp.name} Seed` : "??? Seed";
           pushGenericToast(`loss:seed:${speciesId}`, emoji, label, "text-green-400", "loss");
+          incrementStat("seeds_planted");
         },
       );
     }
@@ -435,6 +466,7 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
         () => edgePlantBloom(row, col, speciesId, mutation),
         () => {
           if (sp) pushGenericToast(`loss:bloom:${speciesId}:${mutation ?? ""}`, sp.emoji.bloom, sp.name, RARITY_CONFIG[sp.rarity].color, "loss");
+          incrementStat("seeds_planted");
         },
       );
     }
@@ -468,7 +500,11 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
           throw e;
         }
       },
-      () => pushGenericToast(`loss:gear:${gearType}`, gearDef.emoji, gearDef.name, RARITY_CONFIG[gearDef.rarity].color, "loss"),
+      () => {
+        pushGenericToast(`loss:gear:${gearType}`, gearDef.emoji, gearDef.name, RARITY_CONFIG[gearDef.rarity].color, "loss");
+        const group = gearTypeToPlacedGroup(gearType);
+        if (group) incrementStat(`placed_${group}` as AchievementStatKey);
+      },
       {
         rollback: (cur) => ({
           ...cur,
@@ -540,7 +576,29 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
           for (const { row, col } of plots) harvestingPlots.current.delete(`${row}-${col}`);
         }
       },
-      () => { void trackProgress("harvest", plots.length); },
+      () => {
+        void trackProgress("harvest", plots.length);
+        // Aggregate per-type and per-rarity counts across all harvested plants
+        const typeCounts: Record<string, number>   = {};
+        const rarityCounts: Record<string, number> = {};
+        for (const { speciesId } of toHarvest) {
+          const flower = getFlower(speciesId);
+          if (!flower) continue;
+          for (const type of flower.types) {
+            typeCounts[type] = (typeCounts[type] ?? 0) + 1;
+          }
+          if (flower.rarity === "legendary" || flower.rarity === "mythic" || flower.rarity === "prismatic") {
+            rarityCounts[flower.rarity] = (rarityCounts[flower.rarity] ?? 0) + 1;
+          }
+        }
+        incrementStat("total_harvests", toHarvest.length);
+        for (const [type, count] of Object.entries(typeCounts)) {
+          incrementStat(`harvest_${type}` as AchievementStatKey, count);
+        }
+        for (const [rarity, count] of Object.entries(rarityCounts)) {
+          incrementStat(`harvest_${rarity}` as AchievementStatKey, count);
+        }
+      },
       {
         serialize: true,
         rollback: () => currentState,

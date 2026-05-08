@@ -13,6 +13,7 @@ import { FERTILIZERS } from "../data/upgrades";
 import { GEAR } from "../data/gear";
 import type { GearInventoryItem } from "../data/gear";
 import { CONSUMABLE_RECIPE_MAP, type ConsumableId } from "../data/consumables";
+import { useAchievementStats } from "../hooks/useAchievementStats";
 
 type Tab = 0 | 1 | 2 | 3 | 4;
 const TAB_LABELS  = ["Seeds", "Blooms", "Supplies", "Consumables", "Essences"] as const;
@@ -30,6 +31,7 @@ interface Props {
 
 export function Inventory({ newSeeds = 0, newBlooms = 0, newSupplies = 0, onSubTabView, activeTab, onTabChange }: Props) {
   const { state, perform, getState, awaitHarvests, update } = useGame();
+  const { incrementStat } = useAchievementStats();
   const [localTab, setLocalTab] = useState<Tab>(0);
   const [search, setSearch] = useState("");
   // Use controlled tab when provided by parent (swipe), otherwise local state
@@ -120,10 +122,11 @@ export function Inventory({ newSeeds = 0, newBlooms = 0, newSupplies = 0, onSubT
     // On failure, rollbackSellAll undoes only the sold blooms + earnings against
     // whatever state looks like AT rollback time, leaving concurrent harvests
     // and other changes intact.
+    const totalSold = currentBlooms.reduce((sum, i) => sum + i.quantity, 0);
     await perform(
       optimistic,
       () => edgeSellAll(items),
-      undefined,
+      () => { incrementStat("blooms_sold", totalSold); },
       { rollback: (c) => rollbackSellAll(c, items, earned) }
     );
   }
@@ -173,6 +176,7 @@ export function Inventory({ newSeeds = 0, newBlooms = 0, newSupplies = 0, onSubT
       const cur = getState();
       update({ ...cur, inventory: res.inventory, consumables: res.consumables, serverUpdatedAt: res.serverUpdatedAt });
       setPouchResult({ speciesId: res.outputSpeciesId });
+      incrementStat("pouches_opened");
     } catch {
       // silent — pouch stays in inventory on failure
     } finally {

@@ -5,6 +5,7 @@ import { useGame } from "../store/GameContext";
 import { sellFlower, rollbackSellAll } from "../store/gameStore";
 import { edgeSellFlower } from "../lib/edgeFunctions";
 import type { InventoryItem } from "../store/gameStore";
+import { useAchievementStats } from "../hooks/useAchievementStats";
 
 interface Props {
   item: InventoryItem;
@@ -12,6 +13,7 @@ interface Props {
 
 export function InventoryItemCard({ item }: Props) {
   const { getState, perform } = useGame();
+  const { incrementStat }    = useAchievementStats();
   // Per-card gate: blocks any sell while a server call is in-flight for this card,
   // preventing rapid clicks from queuing duplicate sells that the server will reject.
   const sellingRef = useRef(false);
@@ -37,7 +39,7 @@ export function InventoryItemCard({ item }: Props) {
     perform(
       optimistic,
       async () => { try { return await edgeSellFlower(item.speciesId, item.mutation, 1); } finally { sellingRef.current = false; } },
-      undefined,
+      () => { incrementStat("blooms_sold"); },
       {
         serialize: true,
         rollback: (c) => rollbackSellAll(c, items, earned),
@@ -61,7 +63,7 @@ export function InventoryItemCard({ item }: Props) {
     perform(
       optimistic,
       async () => { try { return await edgeSellFlower(item.speciesId, item.mutation, liveQty); } finally { sellingRef.current = false; } },
-      undefined,
+      () => { incrementStat("blooms_sold", liveQty); },
       {
         serialize: true,
         rollback: (c) => rollbackSellAll(c, items, earned),

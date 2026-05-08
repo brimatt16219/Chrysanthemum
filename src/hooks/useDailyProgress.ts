@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { useGame } from "../store/GameContext";
 import { edgeDailyComplete } from "../lib/edgeFunctions";
 import type { DailyTaskType } from "../lib/dailySeed";
+import { useAchievementStats } from "./useAchievementStats";
 
 /**
  * Returns `trackProgress(taskType, count?)` — call it after any action that
@@ -11,6 +12,7 @@ import type { DailyTaskType } from "../lib/dailySeed";
  */
 export function useDailyProgress() {
   const { update, getState, pushGenericToast } = useGame();
+  const { incrementStat } = useAchievementStats();
 
   const trackProgress = useCallback(async (taskType: DailyTaskType, count = 1) => {
     const dailyTasks = getState().dailyTasks;
@@ -55,6 +57,10 @@ export function useDailyProgress() {
           undefined,
           "gain",
         );
+      }
+      // Increment daily set counter when all 4 tasks complete in one day
+      if (result.dailyTasks.tasks.every((t) => t.completed)) {
+        incrementStat("daily_sets_completed");
       }
     } catch {
       // Server rejected — roll back the optimistic completion

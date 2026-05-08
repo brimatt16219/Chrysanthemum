@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAchievementStats } from "../hooks/useAchievementStats";
 import { useGame } from "../store/GameContext";
 import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
 import type { MutationType } from "../data/flowers";
@@ -54,6 +55,7 @@ export function CreateListingModal({ onClose, onListed }: Props) {
     .map((g) => ({ gearType: g.gearType as GearType, quantity: g.quantity }));
 
   const { trackProgress } = useDailyProgress();
+  const { incrementStat } = useAchievementStats();
 
   function switchTab(tab: Tab) {
     setActiveTab(tab);
@@ -102,6 +104,7 @@ export function CreateListingModal({ onClose, onListed }: Props) {
         update({ ...state, coins: result.coins, inventory: result.inventory });
       }
       void trackProgress("marketplace_list");
+      incrementStat("marketplace_sales");
       onListed();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to create listing");

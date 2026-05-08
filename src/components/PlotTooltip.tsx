@@ -14,6 +14,8 @@ import { FlowerTypeBadges } from "./FlowerTypeBadges";
 import { FERTILIZERS, type FertilizerType } from "../data/upgrades";
 import { useGame } from "../store/GameContext";
 import { useDailyProgress } from "../hooks/useDailyProgress";
+import { useAchievementStats } from "../hooks/useAchievementStats";
+import type { AchievementStatKey } from "../data/achievements";
 import { CONSUMABLE_RECIPE_MAP, ROMAN, RARITY_TIER, type ConsumableId } from "../data/consumables";
 
 interface Props {
@@ -66,6 +68,7 @@ export function PlotTooltip({
 }: Props) {
   const { state, getState, perform, update, activeWeather, pushHarvestPopup, pushGenericToast } = useGame();
   const { trackProgress } = useDailyProgress();
+  const { incrementStat } = useAchievementStats();
   const [showFertPicker,    setShowFertPicker]    = useState(false);
   const [confirmRemove,     setConfirmRemove]     = useState(false);
   const [removing,          setRemoving]          = useState(false);
@@ -220,6 +223,7 @@ export function PlotTooltip({
       perform(optimistic, () => edgeApplyFertilizer(row, col, type), () => {
         pushGenericToast(`loss:fert:${type}`, f.emoji, f.name, undefined, "loss");
         void trackProgress("apply_fertilizer");
+        incrementStat("fertilizers_applied");
       });
     }
     setShowFertPicker(false);
@@ -241,6 +245,9 @@ export function PlotTooltip({
       () => {
         setApplyingConsumable(null);
         if (recipe) pushGenericToast(`loss:consumable:${consumableId}`, recipe.emoji, recipe.name, undefined, "loss");
+        // Strip trailing tier suffix (_1…_5) to get the family key
+        const familyKey = consumableId.replace(/_[1-5]$/, "");
+        incrementStat(`used_${familyKey}` as AchievementStatKey);
       },
       {
         rollback: (c) => ({

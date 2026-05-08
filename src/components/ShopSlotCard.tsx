@@ -8,6 +8,7 @@ import { edgeBuyFlower, edgeBuyFertilizer, edgeSyncShop } from "../lib/edgeFunct
 import type { ShopSlot } from "../store/gameStore";
 import type { Rarity } from "../data/flowers";
 import { useDailyProgress } from "../hooks/useDailyProgress";
+import { useAchievementStats } from "../hooks/useAchievementStats";
 
 
 interface Props {
@@ -46,6 +47,7 @@ export function ShopSlotCard({ slot }: Props) {
   // even if stateRef or queuing somehow lets a second request slip through.
   const buyingRef = useRef(false);
   const { trackProgress } = useDailyProgress();
+  const { incrementStat } = useAchievementStats();
 
   function flashBought() {
     setJustBought(true);
@@ -253,6 +255,7 @@ export function ShopSlotCard({ slot }: Props) {
       () => {
         flashBought();
         void trackProgress("shop_buy");
+        incrementStat("plants_bought");
         const emoji = isNew ? "❓" : species!.emoji.seed;
         const label = isNew ? "??? Seed" : `${species!.name} Seed`;
         pushGenericToast(`gain:seed:${species!.id}`, emoji, label, "text-green-400", "gain");
@@ -298,6 +301,7 @@ export function ShopSlotCard({ slot }: Props) {
         flashBought();
         void trackProgress("shop_buy");
         if (qty > 0) {
+          incrementStat("plants_bought", qty);
           const emoji = isNew ? "❓" : species!.emoji.seed;
           const label = isNew ? "??? Seed" : `${species!.name} Seed`;
           pushGenericToast(`gain:seed:${species!.id}`, emoji, label, "text-green-400", "gain", qty);

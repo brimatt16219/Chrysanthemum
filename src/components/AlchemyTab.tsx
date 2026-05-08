@@ -10,6 +10,8 @@ import { YieldTableModal } from "./YieldTableModal";
 import { ROMAN } from "../data/consumables";
 import { sacrificeFlowers, getBoostMultiplier, type SacrificeEntry } from "../store/gameStore";
 import { useDailyProgress } from "../hooks/useDailyProgress";
+import { useAchievementStats } from "../hooks/useAchievementStats";
+import type { AchievementStatKey } from "../data/achievements";
 import {
   edgeAlchemySacrifice,
   edgeAttuneStart, edgeAttuneCollect, edgeAttuneCancel, edgeUpgradeAttunementSlots,
@@ -91,6 +93,7 @@ interface AlchemyTabProps {
 export function AlchemyTab({ activeView, onViewChange }: AlchemyTabProps = {}) {
   const { state, perform, getState, update } = useGame();
   const { trackProgress } = useDailyProgress();
+  const { incrementStat } = useAchievementStats();
 
   const [localView, setLocalView] = useState<AlchemyView>("sacrifice");
   // Use controlled view when provided by parent (swipe), otherwise local state
@@ -271,6 +274,22 @@ export function AlchemyTab({ activeView, onViewChange }: AlchemyTabProps = {}) {
         setSelections(new Map());
         succeeded = true;
         void trackProgress("alchemy_sacrifice");
+        // Achievement stats — tally total and per-type counts
+        let totalSacrificed = 0;
+        const typeCounts: Record<string, number> = {};
+        for (const s of sacrifices) {
+          totalSacrificed += s.quantity;
+          const flower = getFlower(s.speciesId);
+          if (flower) {
+            for (const type of flower.types) {
+              typeCounts[type] = (typeCounts[type] ?? 0) + s.quantity;
+            }
+          }
+        }
+        incrementStat("total_sacrifices", totalSacrificed);
+        for (const [type, count] of Object.entries(typeCounts)) {
+          incrementStat(`sacrifice_${type}` as AchievementStatKey, count);
+        }
       },
     );
 
@@ -673,6 +692,7 @@ export function AlchemyTab({ activeView, onViewChange }: AlchemyTabProps = {}) {
               serverUpdatedAt: res.serverUpdatedAt,
             });
             setAttuneResult({ mutation: res.mutation, tier: res.tier });
+            incrementStat("attunements_completed");
           } catch (e) {
             setAttuneError(e instanceof Error ? e.message : "Collect failed");
           }

@@ -4,6 +4,7 @@ import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
 import { edgeSendGift } from "../lib/edgeFunctions";
 import type { MutationType } from "../data/flowers";
 import { useDailyProgress } from "../hooks/useDailyProgress";
+import { useAchievementStats } from "../hooks/useAchievementStats";
 
 interface Props {
   receiverId: string;
@@ -25,6 +26,7 @@ export function SendGiftModal({ receiverId, receiverUsername, onClose, onSent }:
   const items = state.inventory.filter((i) => i.quantity > 0 && !i.isSeed);
 
   const { trackProgress } = useDailyProgress();
+  const { incrementStat } = useAchievementStats();
 
   async function handleSend() {
     if (!user || selectedIdx === null) return;
@@ -44,6 +46,7 @@ export function SendGiftModal({ receiverId, receiverUsername, onClose, onSent }:
       // Server has validated inventory, deducted the item, and inserted the gift row
       update({ ...state, inventory: result.inventory });
       void trackProgress("send_gift");
+      incrementStat("gifts_sent");
       onSent();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to send gift. Try again.");

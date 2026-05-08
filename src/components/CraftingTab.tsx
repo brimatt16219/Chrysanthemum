@@ -26,6 +26,8 @@ import {
 import type { GameState, CraftingQueueEntry } from "../store/gameStore";
 import { getBoostMultiplier } from "../store/gameStore";
 import { queueEntryDisplay } from "../lib/craftDisplay";
+import { useAchievementStats } from "../hooks/useAchievementStats";
+import type { AchievementStatKey } from "../data/achievements";
 
 // ── Forge Haste / Resonance Draft (Phase 5a) ───────────────────────────────────
 // If the relevant boost is active when a craft starts, halve its durationMs.
@@ -980,6 +982,7 @@ const FILTER_LABELS: { id: CraftFilter; label: string; emoji: string }[] = [
 
 export function CraftingTab() {
   const { state, getState, update, perform, pushGenericToast } = useGame();
+  const { incrementStat } = useAchievementStats();
   const [filter,       setFilter]       = useState<CraftFilter>("all");
   const [search,       setSearch]       = useState("");
   const [selected,     setSelected]     = useState<CraftEntry | null>(null);
@@ -1407,6 +1410,12 @@ export function CraftingTab() {
           // Show collect notification
           const toastId = crypto.randomUUID();
           setCollectToasts((prev) => [...prev, { id: toastId, emoji, name }]);
+          // Achievement stats
+          if (kind === "gear") {
+            incrementStat(`crafted_gear_${outputId}` as AchievementStatKey, qty);
+          } else if (kind === "consumable") {
+            incrementStat(`crafted_${outputId}` as AchievementStatKey, qty);
+          }
         },
       );
     } catch (e) {
