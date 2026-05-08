@@ -55,7 +55,7 @@ import { HarvestPopup } from "./components/HarvestPopup";
 import { GenericToastPopup } from "./components/GenericToastPopup";
 import { GardenerXpBar } from "./components/GardenerXpBar";
 import { CHANGELOGS, LATEST_CHANGELOG_VERSION, type ChangelogEntry } from "./data/changelog";
-import { DailyTasksPanel } from "./components/DailyTasksPanel";
+import { EventsTab } from "./components/EventsTab";
 
 type Tab = "garden" | "shop" | "inventory" | "social" | "codex" | "alchemy" | "craft" | "events";
 type ShopView   = "seeds" | "supply";
@@ -816,7 +816,7 @@ function AppInner() {
           {tab === "alchemy"     && <AlchemyTab activeView={alchemyView} onViewChange={setAlchemyView} />}
           {tab === "craft"       && <CraftingTab />}
           {tab === "codex"       && <Codex unseenEntries={unseenCodex} markSeen={markCodexSeen} />}
-          {tab === "events"      && <DailyTasksPanel />}
+          {tab === "events"      && <EventsTab />}
           {tab === "social"    && (
             <>
               {/* Sub-nav — always visible for signed-in users; guests only see Market */}
