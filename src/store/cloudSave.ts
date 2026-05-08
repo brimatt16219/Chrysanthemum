@@ -3,6 +3,7 @@ import type { GameState } from "./gameStore";
 import { awardXp, DISCOVERY_XP_BY_RARITY, MUTATION_DISCOVERY_BONUS } from "../data/gardenerLevel";
 import { getFlower } from "../data/flowers";
 import { freshDailyState, isStale } from "../lib/dailySeed";
+import type { AchievementStats } from "../data/achievements";
 
 export interface CloudProfile {
   id: string;
@@ -174,6 +175,9 @@ export async function loadCloudSave(userId: string): Promise<GameState | null> {
       dailyTasks:           (data.daily_tasks           as GameState["dailyTasks"])      ?? null,
       // v2.4 — Gems
       gems:                 (data.gems                  as number)                       ?? 0,
+      // v2.4 — Achievements
+      achievementStats:    (data.achievement_stats    as AchievementStats) ?? {},
+      achievementsClaimed: (data.achievements_claimed as string[])         ?? [],
     } as GameState;
 
     // ── Gardener XP backfill (first load post-deploy) ──────────────────────
@@ -277,6 +281,9 @@ export async function saveToCloud(
     daily_tasks:            state.dailyTasks        ?? null,
     // v2.4 — Gems
     gems:                   state.gems              ?? 0,
+    // v2.4 — Achievements
+    achievement_stats:    state.achievementStats    ?? {},
+    achievements_claimed: state.achievementsClaimed ?? [],
     updated_at:             newUpdatedAt,
   };
 
@@ -383,6 +390,9 @@ export async function getPublicSave(userId: string): Promise<GameState | null> {
     gardenerXp:           (data.gardener_xp           as number)                          ?? 0,
     dailyTasks:           null,
     gems:                 (data.gems                  as number)                       ?? 0,
+    // v2.4 — Achievements
+    achievementStats:    (data.achievement_stats    as AchievementStats) ?? {},
+    achievementsClaimed: (data.achievements_claimed as string[])         ?? [],
   } as GameState;
 }
 

@@ -22,6 +22,7 @@ import {
   type GearType, type PlacedGear, type GearInventoryItem, type FanDirection,
 } from "../data/gear";
 import type { DailyTaskState } from "../lib/dailySeed";
+import type { AchievementStats } from "../data/achievements";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -245,6 +246,8 @@ export interface GameState {
   gardenerXp: number,
   dailyTasks: DailyTaskState | null,
   gems:       number,
+  achievementStats:    AchievementStats,
+  achievementsClaimed: string[],
 }
 
 export interface OfflineSummary {
@@ -550,6 +553,8 @@ export function defaultState(): GameState {
     gardenerXp:           0,
     dailyTasks:           null,
     gems:                 0,
+    achievementStats:    {},
+    achievementsClaimed: [],
   };
 }
 
