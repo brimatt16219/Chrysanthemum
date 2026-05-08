@@ -681,7 +681,7 @@ function AppInner() {
       {/* Tabs */}
       <nav className="bg-card/40 border-b border-border backdrop-blur">
         <div className="w-full sm:max-w-2xl sm:mx-auto flex">
-          {(["garden", "shop", "inventory", "alchemy", "craft", "codex", "social"] as Tab[]).map((t) => (
+          {(["garden", "shop", "inventory", "alchemy", "craft", "codex", "events", "social"] as Tab[]).map((t) => (
             <button
               key={t}
               onClick={() => handleTabChange(t)}
