@@ -1,6 +1,7 @@
 import { supabase } from "./supabase";
 import type { GameState } from "../store/gameStore";
-import * as Sentry from "@sentry/react"
+import * as Sentry from "@sentry/react";
+import type { DailyTaskState } from "./dailySeed";
 
 const BASE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
@@ -707,3 +708,22 @@ export function edgeActivateBoost(consumableId: string) {
   return callEdge<ActivateBoostResult>("use-consumable", { action: "activate_boost", consumableId });
 }
 
+
+// ── Daily tasks ───────────────────────────────────────────────────────────────
+
+export interface DailyCompleteResult {
+  ok:              true;
+  dailyTasks:      DailyTaskState;
+  consumables?:    GameState["consumables"];
+  xpGained?:       number;
+  gardenerLevel?:  number;
+  gardenerXp?:     number;
+  leveledUp?:      boolean;
+  levelsGained?:   number;
+  rewardPouch?:    string;
+  serverUpdatedAt: string;
+}
+
+export function edgeDailyComplete(taskType: string) {
+  return callEdge<DailyCompleteResult>("daily-complete", { taskType });
+}

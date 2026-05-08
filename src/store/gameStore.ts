@@ -21,6 +21,7 @@ import {
   SUPPLY_POOLS, SUPPLY_RARITY_WEIGHTS, isRarityUnlocked,
   type GearType, type PlacedGear, type GearInventoryItem, type FanDirection,
 } from "../data/gear";
+import type { DailyTaskState } from "../lib/dailySeed";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -241,7 +242,8 @@ export interface GameState {
   serverUpdatedAt:   string | null;
   
   gardenerLevel: number,
-  gardenerXp: number
+  gardenerXp: number,
+  dailyTasks: DailyTaskState | null,
 }
 
 export interface OfflineSummary {
@@ -545,6 +547,7 @@ export function defaultState(): GameState {
     serverUpdatedAt:      null,
     gardenerLevel:        1,
     gardenerXp:           0,
+    dailyTasks:           null,
   };
 }
 
@@ -637,7 +640,8 @@ export function applyOfflineTick(
     attunementQueue:      save.attunementQueue       ?? [],
     activeBoosts:         pruneActiveBoosts(save.activeBoosts, now),
     gardenerLevel:        save.gardenerLevel         ?? 1,
-    gardenerXp:           save.gardenerXp            ?? 0
+    gardenerXp:           save.gardenerXp            ?? 0,
+    dailyTasks:           save.dailyTasks            ?? null,
   };
 
   let shopRestocked    = false;

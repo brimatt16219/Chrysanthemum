@@ -14,6 +14,7 @@ import {
   edgeMarketplaceCreateGearListing,
   edgeMarketplaceCreateConsumableListing,
 } from "../lib/edgeFunctions";
+import { useDailyProgress } from "../hooks/useDailyProgress";
 
 const LISTING_FEE_PCT = 0.05;
 
@@ -51,6 +52,8 @@ export function CreateListingModal({ onClose, onListed }: Props) {
   const gearItems = state.gearInventory
     .filter((g) => g.quantity > 0)
     .map((g) => ({ gearType: g.gearType as GearType, quantity: g.quantity }));
+
+  const { trackProgress } = useDailyProgress();
 
   function switchTab(tab: Tab) {
     setActiveTab(tab);
@@ -98,6 +101,7 @@ export function CreateListingModal({ onClose, onListed }: Props) {
         );
         update({ ...state, coins: result.coins, inventory: result.inventory });
       }
+      void trackProgress("marketplace_list");
       onListed();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to create listing");

@@ -16,6 +16,7 @@ import {
   MAX_MARKETPLACE_SLOTS,
 } from "../data/upgrades";
 import { edgeMarketplaceUpgradeSlots } from "../lib/edgeFunctions";
+import { useDailyProgress } from "../hooks/useDailyProgress";
 
 const PAGE_SIZE = 20;
 
@@ -204,6 +205,8 @@ export function MarketplacePage({ onViewProfile }: Props) {
     return () => { supabase.removeChannel(channel); };
   }, []); // subscribe once — filter logic reads from filtersRef
 
+  const { trackProgress } = useDailyProgress();
+
   // ── Buy handler ────────────────────────────────────────────────────────────
   async function handleBuy(listing: Listing) {
     setBuyError(null);
@@ -212,6 +215,7 @@ export function MarketplacePage({ onViewProfile }: Props) {
       const result = await edgeMarketplaceBuy(listing.id);
       const cur = getState();
       update({ ...cur, coins: result.coins });
+      void trackProgress("marketplace_buy");
       setListings((prev) => prev.filter((l) => l.id !== listing.id));
       setBuySuccess(true);
       setTimeout(() => setBuySuccess(false), 5_000);
