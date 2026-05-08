@@ -244,6 +244,7 @@ export interface GameState {
   gardenerLevel: number,
   gardenerXp: number,
   dailyTasks: DailyTaskState | null,
+  gems:       number,
 }
 
 export interface OfflineSummary {
@@ -548,6 +549,7 @@ export function defaultState(): GameState {
     gardenerLevel:        1,
     gardenerXp:           0,
     dailyTasks:           null,
+    gems:                 0,
   };
 }
 
@@ -642,6 +644,7 @@ export function applyOfflineTick(
     gardenerLevel:        save.gardenerLevel         ?? 1,
     gardenerXp:           save.gardenerXp            ?? 0,
     dailyTasks:           save.dailyTasks            ?? null,
+    gems:                 save.gems                  ?? 0,
   };
 
   let shopRestocked    = false;

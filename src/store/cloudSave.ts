@@ -172,6 +172,8 @@ export async function loadCloudSave(userId: string): Promise<GameState | null> {
       gardenerXp:           (data.gardener_xp           as number)                      ?? 0,
       // v2.4 — Daily tasks
       dailyTasks:           (data.daily_tasks           as GameState["dailyTasks"])      ?? null,
+      // v2.4 — Gems
+      gems:                 (data.gems                  as number)                       ?? 0,
     } as GameState;
 
     // ── Gardener XP backfill (first load post-deploy) ──────────────────────
@@ -273,6 +275,8 @@ export async function saveToCloud(
     gardener_xp:            state.gardenerXp        ?? 0,
     // v2.4 — Daily tasks
     daily_tasks:            state.dailyTasks        ?? null,
+    // v2.4 — Gems
+    gems:                   state.gems              ?? 0,
     updated_at:             newUpdatedAt,
   };
 
@@ -378,6 +382,7 @@ export async function getPublicSave(userId: string): Promise<GameState | null> {
     gardenerLevel:        (data.gardener_level        as number)                          ?? 1,
     gardenerXp:           (data.gardener_xp           as number)                          ?? 0,
     dailyTasks:           null,
+    gems:                 (data.gems                  as number)                       ?? 0,
   } as GameState;
 }
 

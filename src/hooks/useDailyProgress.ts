@@ -42,6 +42,7 @@ export function useDailyProgress() {
         consumables:     result.consumables     ?? cur.consumables,
         gardenerLevel:   result.gardenerLevel   ?? cur.gardenerLevel,
         gardenerXp:      result.gardenerXp      ?? cur.gardenerXp,
+        gems:            result.gems            ?? cur.gems,
         serverUpdatedAt: result.serverUpdatedAt,
       });
 

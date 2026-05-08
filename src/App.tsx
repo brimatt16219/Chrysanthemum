@@ -640,6 +640,7 @@ function AppInner() {
             </button>
             <ActiveBoostsHUD activeBoosts={state.activeBoosts} />
             <span className="text-sm font-mono" title={state.coins.toLocaleString()}>🟡 {formatCoins(state.coins)}</span>
+            <span className="text-sm font-mono" title={state.gems.toLocaleString()}>💎 {state.gems.toLocaleString()}</span>
             {!authLoading && (
               user ? (
                 <div className="flex items-center gap-2">
