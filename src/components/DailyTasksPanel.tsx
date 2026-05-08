@@ -28,10 +28,10 @@ function taskLabel(type: DailyTaskType, target: number): string {
 // ── Reward tier definitions ───────────────────────────────────────────────────
 
 const REWARDS = [
-  { xp:  50, label: "Seed Pouch I"   },
-  { xp:  75, label: "Seed Pouch I"   },
-  { xp: 100, label: "Seed Pouch II"  },
-  { xp: 200, label: "Seed Pouch III" },
+  { xp:  50, label: "Seed Pouch I",   gems: 10 },
+  { xp:  75, label: "Seed Pouch I",   gems: 15 },
+  { xp: 100, label: "Seed Pouch II",  gems: 20 },
+  { xp: 200, label: "Seed Pouch III", gems: 35 },
 ] as const;
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -121,7 +121,7 @@ export function DailyTasksPanel() {
               }`}>
                 {collected ? "✓" : i + 1}
               </span>
-              <span className={collected ? "line-through" : ""}>{reward.xp} XP + {reward.label}</span>
+              <span className={collected ? "line-through" : ""}>{reward.xp} XP + {reward.label} + {reward.gems} 💎</span>
             </div>
           );
         })}

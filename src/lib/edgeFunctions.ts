@@ -721,6 +721,8 @@ export interface DailyCompleteResult {
   leveledUp?:      boolean;
   levelsGained?:   number;
   rewardPouch?:    string;
+  gemsGained?:     number;
+  gems?:           number;
   serverUpdatedAt: string;
 }
 
