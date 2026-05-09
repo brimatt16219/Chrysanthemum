@@ -24,6 +24,26 @@ import {
 import type { DailyTaskState } from "../lib/dailySeed";
 import type { AchievementStats } from "../data/achievements";
 
+// ── Events ───────────────────────────────────────────────────────────────────
+
+export interface EventProgress {
+  claimedDays?:     number[];
+  lastClaimedAt?:   string;
+  completedQuests?: string[];
+  claimedRewards?:  string[];
+}
+
+export interface EventEntry {
+  id:          string;
+  type:        string;
+  name:        string;
+  description: string;
+  startsAt:    string;
+  endsAt:      string;
+  config:      unknown;
+  progress:    EventProgress | null;
+}
+
 // ── Types ──────────────────────────────────────────────────────────────────
 
 export interface PlantedFlower {
@@ -248,6 +268,7 @@ export interface GameState {
   gems:       number,
   achievementStats:    AchievementStats,
   achievementsClaimed: string[],
+  events:              EventEntry[],
 }
 
 export interface OfflineSummary {
@@ -555,6 +576,7 @@ export function defaultState(): GameState {
     gems:                 0,
     achievementStats:    {},
     achievementsClaimed: [],
+    events: [],
   };
 }
 

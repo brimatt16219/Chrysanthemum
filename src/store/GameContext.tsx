@@ -20,6 +20,7 @@ import {
   loadCloudSave,
   saveToCloud,
   getProfile,
+  loadEvents,
   type CloudProfile,
 } from "./cloudSave";
 import { supabase } from "../lib/supabase";
@@ -268,6 +269,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         saveToUse = cloudSave;
       }
 
+      let loadedEvents: EventEntry[] = [];
+      try {
+        loadedEvents = await loadEvents(u.id);
+      } catch {}
+
       // Fetch current weather so offline growth can apply rain / storm bonuses.
       let offlineWeather: WeatherWindow | undefined;
       try {
@@ -288,7 +294,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       if (loadGen.current !== gen) return; // sign-out fired — discard
 
       const { state: ticked, summary } = applyOfflineTick(saveToUse, offlineWeather);
-      setState(ticked);
+      setState({ ...ticked, events: loadedEvents });
       setOfflineSummary(summary);
       if (summary.shopRestocked)   setShopJustRestocked(true);
       if (summary.supplyRestocked) setSupplyJustRestocked(true);
@@ -304,7 +310,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
       if (savedUpdatedAt) {
         // Keep serverUpdatedAt in sync so subsequent CAS writes use the correct stamp.
-        stateRef.current = { ...ticked, serverUpdatedAt: savedUpdatedAt };
+        stateRef.current = { ...ticked, events: loadedEvents, serverUpdatedAt: savedUpdatedAt };
         setState(stateRef.current);
       } else {
         // CAS failed — the offline cron or another process wrote to DB between our
