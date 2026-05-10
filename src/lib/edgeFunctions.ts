@@ -748,3 +748,18 @@ export interface AchievementClaimResult {
 export function edgeAchievementClaim(achievementId: string) {
   return callEdge<AchievementClaimResult>("achievement-claim", { achievementId });
 }
+
+// ── Events ────────────────────────────────────────────────────────────────────
+
+export interface CheckinClaimResult {
+  ok:              true;
+  claimedDay:      number;
+  gemsGained:      number;
+  gems:            number;
+  progress:        { claimedDays: number[]; lastClaimedAt: string };
+  serverUpdatedAt: string;
+}
+
+export function edgeCheckinClaim(eventId: string) {
+  return callEdge<CheckinClaimResult>("event-checkin-claim", { eventId });
+}
