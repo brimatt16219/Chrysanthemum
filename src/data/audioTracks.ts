@@ -34,12 +34,15 @@ export const WEATHER_TRACKS: Partial<Record<WeatherType, string[]>> = {
 // ── SFX ───────────────────────────────────────────────────────────────────────
 
 export const SFX_TRACKS: Record<string, string> = {
-  harvest:         "/audio/sfx/harvest.mp3",
-  plant:           "/audio/sfx/plant.mp3",
-  levelUp:         "/audio/sfx/level_up.mp3",
-  mutation:        "/audio/sfx/mutation.mp3",
-  questComplete:   "/audio/sfx/quest_complete.mp3",
-  checkinClaim:    "/audio/sfx/checkin_claim.mp3",
+  harvest:          "/audio/sfx/harvest.mp3",
+  plant:            "/audio/sfx/plant.mp3",
+  levelUp:          "/audio/sfx/level_up.mp3",
+  mutation:         "/audio/sfx/mutation.mp3",
+  questComplete:    "/audio/sfx/quest_complete.mp3",
+  checkinClaim:     "/audio/sfx/checkin_claim.mp3",
   achievementClaim: "/audio/sfx/achievement_claim.mp3",
-  click:           "/audio/sfx/click.mp3",
+  click:            "/audio/sfx/click.mp3",
+  // ── Weather SFX ────────────────────────────────────────
+  thunderCrack:     "/audio/sfx/thunder_crack.mp3",   // one-shot, synced to lightning flash
+  rainLoop:         "/audio/sfx/rain_loop.mp3",        // looping ambient — via setWeatherAmbience
 };
