@@ -57,6 +57,7 @@ import { GardenerXpBar } from "./components/GardenerXpBar";
 import { CHANGELOGS, LATEST_CHANGELOG_VERSION, type ChangelogEntry } from "./data/changelog";
 import { EventsTab } from "./components/EventsTab";
 import { LoginPage } from "./components/LoginPage";
+import { useAudio } from "./hooks/useAudio";
 
 type Tab = "garden" | "shop" | "inventory" | "social" | "codex" | "alchemy" | "craft" | "events";
 type ShopView   = "seeds" | "supply";
@@ -82,6 +83,8 @@ function AppInner() {
     signInPromptReason, dismissSignInPrompt,
     activeWeather, weatherMsLeft, weatherIsActive,
   } = useGame();
+
+  useAudio();
 
   usePresence();
 
