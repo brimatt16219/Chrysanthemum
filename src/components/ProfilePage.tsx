@@ -9,8 +9,6 @@ import { getFlower, RARITY_CONFIG, MUTATIONS, FLOWERS } from "../data/flowers";
 import type { MutationType } from "../data/flowers";
 import { getPresenceStatus, formatLastSeen, STATUS_DOT, STATUS_TEXT_COLOR } from "../lib/presence";
 import { useGame } from "../store/GameContext";
-import { useSettings } from "../store/SettingsContext";
-import { THEMES } from "../data/themes";
 import { FriendButton } from "./FriendButton";
 import { SendGiftModal } from "./SendGiftModal";
 import { Codex } from "./Codex";
@@ -500,9 +498,6 @@ export function ProfilePage({ username }: Props) {
         </div>
       )}
 
-      {/* Visual settings — own profile only */}
-      {isOwnProfile && <SettingsPanel />}
-
       {/* Garden */}
       {save && save.grid.length > 0 && (
         <div className="bg-card/60 border border-border rounded-2xl p-5">
@@ -563,109 +558,3 @@ export function ProfilePage({ username }: Props) {
   );
 }
 
-// ── Visual settings panel ─────────────────────────────────────────────────
-
-function SettingsPanel() {
-  const { settings, setSetting } = useSettings();
-
-  const rows: { key: keyof typeof settings; label: string; description: string }[] = [
-    {
-      key:         "plotAnimations",
-      label:       "Tile animations",
-      description: "Particle effects on tiles (water drops, glow, birds, sparkles)",
-    },
-    {
-      key:         "plotGearIndicator",
-      label:       "Gear indicators",
-      description: "Small icons showing active gear effects (💧 🌸 🧹 🧺 💡)",
-    },
-    {
-      key:         "plotMutationIndicator",
-      label:       "Mutation badge",
-      description: "Mutation emoji shown on bloomed tiles",
-    },
-    {
-      key:         "plotMasteryIndicator",
-      label:       "Mastery badge",
-      description: "⚡ shown on tiles with a mastery speed bonus",
-    },
-    {
-      key:         "plotFertilizerIndicator",
-      label:       "Fertilizer badge",
-      description: "Fertilizer emoji shown on tiles with an active fertilizer",
-    },
-  ];
-
-  return (
-    <div className="bg-card/60 border border-border rounded-2xl p-5">
-      <div className="mb-4">
-        <h3 className="text-sm font-semibold">Visual Settings</h3>
-        <p className="text-xs text-muted-foreground mt-0.5">Stored locally on this device</p>
-      </div>
-
-      {/* Theme picker */}
-      <div className="mb-4">
-        <p className="text-xs font-medium text-foreground mb-2">Theme</p>
-        <div className="grid grid-cols-3 gap-2">
-          {THEMES.map((t) => {
-            const active = settings.theme === t.id;
-            return (
-              <button
-                key={t.id}
-                onClick={() => setSetting("theme", t.id)}
-                className={`
-                  rounded-xl border-2 p-2 transition-all text-left
-                  ${active ? "border-primary scale-[1.03]" : "border-border hover:border-primary/40"}
-                `}
-              >
-                <div
-                  className="w-full h-7 rounded-lg mb-1.5 relative overflow-hidden"
-                  style={{ backgroundColor: t.swatch[0] }}
-                >
-                  <div
-                    className="absolute bottom-1 right-1.5 w-3 h-3 rounded-full"
-                    style={{ backgroundColor: t.swatch[1] }}
-                  />
-                </div>
-                <p className="text-[10px] font-medium leading-none">{t.emoji} {t.name}</p>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="border-t border-border pt-4 space-y-3">
-        {rows.map(({ key, label, description }) => (
-          <div key={key} className="flex items-center justify-between gap-4">
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-foreground">{label}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">{description}</p>
-            </div>
-            <button
-              onClick={() => setSetting(key, !settings[key])}
-              className={`
-                relative flex-shrink-0 w-10 h-6 rounded-full border transition-colors duration-200
-                ${settings[key]
-                  ? "bg-primary/30 border-primary/60"
-                  : "bg-card border-border"
-                }
-              `}
-              role="switch"
-              aria-checked={settings[key] as boolean}
-            >
-              <span
-                className={`
-                  absolute inset-y-0 my-auto w-4 h-4 rounded-full transition-transform duration-200
-                  ${settings[key]
-                    ? "translate-x-5 bg-primary"
-                    : "translate-x-0.5 bg-muted-foreground/50"
-                  }
-                `}
-              />
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}

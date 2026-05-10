@@ -699,13 +699,6 @@ function AppInner() {
                   >
                     Sign out
                   </button>
-                  <button
-                    onClick={() => setShowSettings(true)}
-                    className="text-xs px-2 py-1.5 rounded-lg border border-border text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
-                    title="Settings"
-                  >
-                    ⚙️
-                  </button>
                 </div>
               ) : (
                 <button
@@ -716,6 +709,13 @@ function AppInner() {
                 </button>
               )
             )}
+            <button
+              onClick={() => setShowSettings(true)}
+              className="text-xs px-2 py-1.5 rounded-lg border border-border text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
+              title="Settings"
+            >
+              ⚙️
+            </button>
           </div>
         </div>
         <GardenerXpBar level={state.gardenerLevel} xp={state.gardenerXp} />
