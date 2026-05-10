@@ -25,13 +25,13 @@ export function LoginPage({ onSignIn, onGuest }: Props) {
       <div className="flex flex-col gap-3 w-full max-w-xs">
         <button
           onClick={onSignIn}
-          className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity"
+          className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity text-center"
         >
           Sign in with Google
         </button>
         <button
           onClick={onGuest}
-          className="w-full py-2.5 rounded-xl border border-border text-sm text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
+          className="w-full py-2.5 rounded-xl border border-border text-sm text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors text-center"
         >
           Play as guest
         </button>
