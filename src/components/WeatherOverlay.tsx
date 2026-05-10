@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { WeatherType } from "../data/weather";
+import { audioManager } from "../lib/audioManager";
 
 interface Props {
   weatherType: WeatherType;
@@ -264,6 +265,42 @@ function HeatwaveOverlay({ active }: { active: boolean }) {
 function ThunderstormOverlay({ active }: { active: boolean }) {
   const drops = useParticles(35, active);
 
+  // JS-driven lightning — three independent flashes per 15 s cycle,
+  // each firing audioManager.playSfx("thunderCrack") when it lights up.
+  const [flashes, setFlashes] = useState([false, false, false]);
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  useEffect(() => {
+    const timers = timersRef.current;
+    timers.forEach(clearTimeout);
+    timers.length = 0;
+
+    if (!active) {
+      setFlashes([false, false, false]);
+      return;
+    }
+
+    const PERIOD_MS      = 15_000;
+    const FLASH_DELAYS   = [2_000, 7_000, 13_000];
+    const FLASH_DURATION = 200;
+
+    function scheduleAll() {
+      FLASH_DELAYS.forEach((delay, i) => {
+        timers.push(setTimeout(() => {
+          setFlashes((prev) => { const next = [...prev]; next[i] = true; return next; });
+          audioManager.playSfx("thunderCrack");
+          timers.push(setTimeout(() => {
+            setFlashes((prev) => { const next = [...prev]; next[i] = false; return next; });
+          }, FLASH_DURATION));
+        }, delay));
+      });
+      timers.push(setTimeout(scheduleAll, PERIOD_MS));
+    }
+
+    scheduleAll();
+    return () => { timers.forEach(clearTimeout); timers.length = 0; };
+  }, [active]);
+
   return (
     <OverlayWrapper active={active}>
       <div className="absolute inset-0 bg-slate-900/30" />
@@ -283,12 +320,12 @@ function ThunderstormOverlay({ active }: { active: boolean }) {
           |
         </div>
       ))}
-      {/* Lightning flashes */}
-      {[{ delay: 2 }, { delay: 7 }, { delay: 13 }].map((l, i) => (
+      {/* JS-driven lightning flashes — opacity toggled in sync with thunder SFX */}
+      {flashes.map((on, i) => (
         <div
           key={i}
-          className="absolute inset-0 bg-white/5"
-          style={{ animation: `lightning 15s ${l.delay}s ease-out infinite` }}
+          className="absolute inset-0 bg-white/20 transition-opacity duration-75"
+          style={{ opacity: on ? 1 : 0 }}
         />
       ))}
       <style>{`
@@ -297,11 +334,6 @@ function ThunderstormOverlay({ active }: { active: boolean }) {
           10%  { opacity: 1; }
           90%  { opacity: 1; }
           100% { transform: translateY(110vh) rotate(20deg); opacity: 0; }
-        }
-        @keyframes lightning {
-          0%, 4%, 8%, 100% { opacity: 0; }
-          2%               { opacity: 1; }
-          6%               { opacity: 0.6; }
         }
       `}</style>
     </OverlayWrapper>

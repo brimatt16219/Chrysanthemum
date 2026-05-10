@@ -7,6 +7,7 @@ import {
   type Achievement,
 } from "../data/achievements";
 import { edgeAchievementClaim } from "../lib/edgeFunctions";
+import { audioManager } from "../lib/audioManager";
 
 // ── Category display order ─────────────────────────────────────────────────────
 
@@ -113,6 +114,7 @@ export function AchievementsPanel() {
         undefined,
         "gain",
       );
+      audioManager.playSfx("achievementClaim");
     } catch (e) {
       setClaimError(e instanceof Error ? e.message : "Could not claim. Try again.");
     } finally {

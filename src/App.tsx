@@ -58,6 +58,7 @@ import { CHANGELOGS, LATEST_CHANGELOG_VERSION, type ChangelogEntry } from "./dat
 import { EventsTab } from "./components/EventsTab";
 import { LoginPage } from "./components/LoginPage";
 import { useAudio } from "./hooks/useAudio";
+import { audioManager } from "./lib/audioManager";
 
 type Tab = "garden" | "shop" | "inventory" | "social" | "codex" | "alchemy" | "craft" | "events";
 type ShopView   = "seeds" | "supply";
@@ -85,6 +86,15 @@ function AppInner() {
   } = useGame();
 
   useAudio();
+
+  // ── Level-up SFX ─────────────────────────────────────────────────────────────
+  const prevGardenerLevelRef = useRef(state.gardenerLevel);
+  useEffect(() => {
+    if (state.gardenerLevel > prevGardenerLevelRef.current) {
+      audioManager.playSfx("levelUp");
+    }
+    prevGardenerLevelRef.current = state.gardenerLevel;
+  }, [state.gardenerLevel]);
 
   usePresence();
 

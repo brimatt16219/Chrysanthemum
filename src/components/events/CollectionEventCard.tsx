@@ -3,6 +3,7 @@ import { useGame } from "../../store/GameContext";
 import type { EventEntry } from "../../store/gameStore";
 import { FLOWERS } from "../../data/flowers";
 import { edgeQuestSubmit } from "../../lib/edgeFunctions";
+import { audioManager } from "../../lib/audioManager";
 
 interface QuestDef {
   id:              string;
@@ -75,6 +76,7 @@ export function CollectionEventCard({ event }: Props) {
       } else {
         pushGenericToast("quest_submit", "💎", `Quest complete! +${result.gemsGained}`, undefined, "gain", result.gemsGained);
       }
+      audioManager.playSfx("questComplete");
     } catch (e) {
       console.error("quest submit failed:", e);
     } finally {
