@@ -56,6 +56,7 @@ import { GenericToastPopup } from "./components/GenericToastPopup";
 import { GardenerXpBar } from "./components/GardenerXpBar";
 import { CHANGELOGS, LATEST_CHANGELOG_VERSION, type ChangelogEntry } from "./data/changelog";
 import { EventsTab } from "./components/EventsTab";
+import { LoginPage } from "./components/LoginPage";
 
 type Tab = "garden" | "shop" | "inventory" | "social" | "codex" | "alchemy" | "craft" | "events";
 type ShopView   = "seeds" | "supply";
@@ -87,6 +88,7 @@ function AppInner() {
   const { pendingCount, newRequest, clearNewRequest } = useFriendRequests(user?.id ?? null);
   const { newGift, clearNewGift } = useGiftNotifications(user?.id ?? null);
   const { unreadCount: mailboxUnreadCount } = useMailbox(user?.id ?? null);
+  const [playAsGuest, setPlayAsGuest] = useState(false);
 
   const [tab, setTab]               = useState<Tab>("garden");
   const [shopView,      setShopView]      = useState<ShopView>("seeds");
@@ -480,6 +482,23 @@ function AppInner() {
     setTabDir(null);
     setSocialView(v);
     setProfileUsername(null);
+  }
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <span className="text-4xl animate-pulse">🌱</span>
+      </div>
+    );
+  }
+
+  if (!user && !playAsGuest) {
+    return (
+      <LoginPage
+        onSignIn={signInWithGoogle}
+        onGuest={() => setPlayAsGuest(true)}
+      />
+    );
   }
 
   return (
