@@ -59,6 +59,7 @@ import { EventsTab } from "./components/EventsTab";
 import { LoginPage } from "./components/LoginPage";
 import { useAudio } from "./hooks/useAudio";
 import { audioManager } from "./lib/audioManager";
+import { SettingsModal } from "./components/SettingsModal";
 
 type Tab = "garden" | "shop" | "inventory" | "social" | "codex" | "alchemy" | "craft" | "events";
 type ShopView   = "seeds" | "supply";
@@ -101,7 +102,8 @@ function AppInner() {
   const { pendingCount, newRequest, clearNewRequest } = useFriendRequests(user?.id ?? null);
   const { newGift, clearNewGift } = useGiftNotifications(user?.id ?? null);
   const { unreadCount: mailboxUnreadCount } = useMailbox(user?.id ?? null);
-  const [playAsGuest, setPlayAsGuest] = useState(false);
+  const [playAsGuest,   setPlayAsGuest]   = useState(false);
+  const [showSettings,  setShowSettings]  = useState(false);
 
   const [tab, setTab]               = useState<Tab>("garden");
   const [shopView,      setShopView]      = useState<ShopView>("seeds");
@@ -623,6 +625,7 @@ function AppInner() {
           }}
         />
       )}
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
 
       {updateAvailable && !dismissedUpdate && (
         <UpdateBanner onDismiss={() => setDismissedUpdate(true)} />
@@ -695,6 +698,13 @@ function AppInner() {
                     className="text-xs px-2 sm:px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
                   >
                     Sign out
+                  </button>
+                  <button
+                    onClick={() => setShowSettings(true)}
+                    className="text-xs px-2 py-1.5 rounded-lg border border-border text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
+                    title="Settings"
+                  >
+                    ⚙️
                   </button>
                 </div>
               ) : (
