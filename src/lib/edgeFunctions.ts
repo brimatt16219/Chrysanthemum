@@ -748,3 +748,41 @@ export interface AchievementClaimResult {
 export function edgeAchievementClaim(achievementId: string) {
   return callEdge<AchievementClaimResult>("achievement-claim", { achievementId });
 }
+
+// ── Events ────────────────────────────────────────────────────────────────────
+
+export interface CheckinClaimResult {
+  ok:              true;
+  claimedDay:      number;
+  gemsGained:      number;
+  gems:            number;
+  progress:        { claimedDays: number[]; lastClaimedAt: string };
+  serverUpdatedAt: string;
+}
+
+export function edgeCheckinClaim(eventId: string) {
+  return callEdge<CheckinClaimResult>("event-checkin-claim", { eventId });
+}
+
+export interface QuestSubmitResult {
+  ok:                   true;
+  questId:              string;
+  gemsGained:           number;
+  xpGained:             number;
+  finalRewardDelivered: boolean;
+  inventory:            GameState["inventory"];
+  progress:             { completedQuests: string[]; claimedRewards: string[] };
+  gardenerLevel:        number;
+  gardenerXp:           number;
+  gems:                 number;
+  serverUpdatedAt:      string;
+}
+
+export function edgeQuestSubmit(
+  eventId:   string,
+  questId:   string,
+  speciesId: string,
+  mutation:  string | null,
+) {
+  return callEdge<QuestSubmitResult>("event-quest-submit", { eventId, questId, speciesId, mutation });
+}

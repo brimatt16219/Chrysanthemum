@@ -1,5 +1,5 @@
 import { supabase } from "../lib/supabase";
-import type { GameState } from "./gameStore";
+import type { GameState, EventEntry, EventProgress } from "./gameStore";
 import { awardXp, DISCOVERY_XP_BY_RARITY, MUTATION_DISCOVERY_BONUS } from "../data/gardenerLevel";
 import { getFlower } from "../data/flowers";
 import { freshDailyState, isStale } from "../lib/dailySeed";
@@ -222,6 +222,43 @@ export async function loadCloudSave(userId: string): Promise<GameState | null> {
   }
 }
 
+export async function loadEvents(userId: string): Promise<EventEntry[]> {
+  try {
+    const now = new Date().toISOString();
+
+    const { data: eventRows, error } = await supabase
+      .from("events")
+      .select("*")
+      .gte("ends_at", now)
+      .order("starts_at", { ascending: false });
+
+    if (error || !eventRows || eventRows.length === 0) return [];
+
+    const { data: progressRows } = await supabase
+      .from("event_progress")
+      .select("event_id, progress")
+      .eq("user_id", userId)
+      .in("event_id", eventRows.map((e) => e.id));
+
+    const progressMap = new Map(
+      (progressRows ?? []).map((p) => [p.event_id, p.progress as EventProgress])
+    );
+
+    return eventRows.map((e) => ({
+      id:          e.id          as string,
+      type:        e.type        as string,
+      name:        e.name        as string,
+      description: e.description as string,
+      startsAt:    e.starts_at   as string,
+      endsAt:      e.ends_at     as string,
+      config:      e.config,
+      progress:    progressMap.get(e.id) ?? null,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 /** Saves state to the cloud.
  *  Returns the new `updated_at` string on success, or `false` on failure (CAS miss or DB error).
  *  Callers should update `state.serverUpdatedAt` with the returned value so subsequent
@@ -393,6 +430,8 @@ export async function getPublicSave(userId: string): Promise<GameState | null> {
     // v2.4 — Achievements
     achievementStats:    (data.achievement_stats    as AchievementStats) ?? {},
     achievementsClaimed: (data.achievements_claimed as string[])         ?? [],
+    // v2.4 — Events (public save never needs event progress)
+    events:              [],
   } as GameState;
 }
 

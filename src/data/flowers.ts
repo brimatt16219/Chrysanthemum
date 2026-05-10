@@ -69,18 +69,20 @@ export const FLOWER_TYPES: Record<FlowerType, FlowerTypeConfig> = {
 // ── Flower species ────────────────────────────────────────────────────────────
 
 export interface FlowerSpecies {
-  id: string;
-  name: string;
+  id:          string;
+  name:        string;
   description: string;
-  emoji: Record<GrowthStage, string>;
-  rarity: Rarity;
-  types: FlowerType[];
+  emoji:       Record<GrowthStage, string>;
+  rarity:      Rarity;
+  types:       FlowerType[];
   growthTime: {
-    seed: number;
+    seed:   number;
     sprout: number;
   };
-  sellValue: number;
-  shopWeight: number;
+  sellValue:   number;
+  shopWeight:  number;
+  eventOnly?:  boolean;
+  eventId?:    string;
 }
 
 export const FLOWERS: FlowerSpecies[] = [
@@ -2207,6 +2209,21 @@ export const FLOWERS: FlowerSpecies[] = [
     growthTime: { seed: 604_800_000, sprout: 1_209_600_000 },
     sellValue: 5_000_000,
     shopWeight: 0,
+  },
+
+  // ── EVENT-ONLY — exclusive to limited-time events, shopWeight always 0 ─────
+  {
+    id: "sakura_blossom",
+    name: "Sakura Blossom",
+    description: "A cherry blossom that blooms only during the Sakura Festival. Some say it carries the memory of every spring before it.",
+    emoji: { seed: "🌱", sprout: "🌿", bloom: "🌸" },
+    rarity: "prismatic",
+    types: ["fairy", "zephyr"],
+    growthTime: { seed: 259_200_000, sprout: 518_400_000 },
+    sellValue: 1_500_000,
+    shopWeight: 0,
+    eventOnly: true,
+    eventId: "spring_sakura",
   },
 ];
 
