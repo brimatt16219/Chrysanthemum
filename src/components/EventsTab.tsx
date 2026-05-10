@@ -1,17 +1,28 @@
-import { useState } from "react";
+import { useState, ComponentType } from "react";
+import { useGame } from "../store/GameContext";
+import type { EventEntry } from "../store/gameStore";
+import { CheckinEventCard }    from "./events/CheckinEventCard";
+import { CollectionEventCard } from "./events/CollectionEventCard";
 import { DailyTasksPanel } from "./DailyTasksPanel";
 import { AchievementsPanel } from "./AchievementsPanel";
 
-type EventsView = "daily" | "achievements";
+// Maps event type string → card component. Unknown types render nothing.
+const EVENT_CARD_REGISTRY: Record<string, ComponentType<{ event: EventEntry }>> = {
+  checkin:    CheckinEventCard,
+  collection: CollectionEventCard,
+};
+
+type EventsView = "events" | "daily" | "achievements";
 
 export function EventsTab() {
-  const [view, setView] = useState<EventsView>("daily");
+  const { state } = useGame();
+  const [view, setView] = useState<EventsView>("events");
 
   return (
     <>
       {/* Sub-nav */}
       <div className="flex gap-2 mb-6">
-        {(["daily", "achievements"] as EventsView[]).map((v) => (
+        {(["events", "daily", "achievements"] as EventsView[]).map((v) => (
           <button
             key={v}
             onClick={() => setView(v)}
@@ -23,14 +34,31 @@ export function EventsTab() {
               }
             `}
           >
-            <span>{v === "daily" ? "📅" : "🏆"}</span>
+            <span>
+              {v === "events" ? "🌸" : v === "daily" ? "📅" : "🏆"}
+            </span>
             <span className="hidden sm:inline ml-1">
-              {v === "daily" ? "Daily Tasks" : "Achievements"}
+              {v === "events" ? "Events" : v === "daily" ? "Daily Tasks" : "Achievements"}
             </span>
           </button>
         ))}
       </div>
 
+      {view === "events" && (
+        <div className="flex flex-col gap-4">
+          {state.events.length === 0 ? (
+            <p className="text-xs text-center text-muted-foreground py-8">
+              No active events right now — check back soon! 🌱
+            </p>
+          ) : (
+            state.events.map((event) => {
+              const Card = EVENT_CARD_REGISTRY[event.type];
+              if (!Card) return null;
+              return <Card key={event.id} event={event} />;
+            })
+          )}
+        </div>
+      )}
       {view === "daily"        && <DailyTasksPanel />}
       {view === "achievements" && <AchievementsPanel />}
     </>
