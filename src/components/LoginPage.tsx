@@ -1,4 +1,12 @@
+import { useEffect, useRef } from "react";
 import { FLOWERS } from "../data/flowers";
+
+// ── Login title music — plays in order, loops back to track 1 ─────────────
+const LOGIN_TRACKS = [
+  "/audio/music/dragonica_title_screen.mp3",
+  "/audio/music/acnh_6pm.mp3",
+  "/audio/music/dusk_in_mondstadt.mp3",
+];
 
 // ── Seeded pseudo-random (stable, no useState needed) ─────────────────────
 function sr(seed: number) {
@@ -61,6 +69,41 @@ interface Props {
 }
 
 export function LoginPage({ onSignIn, onGuest }: Props) {
+  const audioRef  = useRef<HTMLAudioElement | null>(null);
+  const trackIdx  = useRef(0);
+
+  useEffect(() => {
+    const el = new Audio(LOGIN_TRACKS[0]);
+    el.volume = 0.5;
+    audioRef.current = el;
+
+    const advance = () => {
+      trackIdx.current = (trackIdx.current + 1) % LOGIN_TRACKS.length;
+      el.src = LOGIN_TRACKS[trackIdx.current];
+      void el.play().catch(() => {});
+    };
+
+    el.addEventListener("ended", advance);
+
+    // Attempt autoplay; browsers will allow it after a user gesture if blocked
+    void el.play().catch(() => {});
+
+    // Resume if blocked — any interaction on the page will kick it off
+    const resume = () => { if (el.paused) void el.play().catch(() => {}); };
+    document.addEventListener("click",      resume);
+    document.addEventListener("keydown",    resume);
+    document.addEventListener("touchstart", resume);
+
+    return () => {
+      el.removeEventListener("ended", advance);
+      document.removeEventListener("click",      resume);
+      document.removeEventListener("keydown",    resume);
+      document.removeEventListener("touchstart", resume);
+      el.pause();
+      el.src = "";
+    };
+  }, []);
+
   return (
     <div className="relative min-h-screen bg-background overflow-hidden flex flex-col items-center justify-center px-6 gap-8">
 
