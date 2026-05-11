@@ -18,7 +18,7 @@ export interface AchievementDef {
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-function reward(gems: number) { return { xp: gems * 10, gems }; }
+function reward(gems: number) { return { xp: 0, gems }; }
 
 const data: Record<string, AchievementDef> = {};
 

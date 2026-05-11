@@ -110,7 +110,7 @@ export function AchievementsPanel() {
       pushGenericToast(
         "achievement_claim",
         "🏆",
-        `Achievement unlocked! +${result.xpGained} XP · +${result.gemsGained} 💎`,
+        `Achievement unlocked! +${result.gemsGained} 💎`,
         undefined,
         "gain",
       );
@@ -236,8 +236,6 @@ export function AchievementsPanel() {
                 <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
                   <div className="flex items-center gap-1 text-[10px] font-mono text-muted-foreground">
                     <span>{a.gems}💎</span>
-                    <span className="text-border">·</span>
-                    <span>{a.xp}XP</span>
                   </div>
                   {!claimed && (
                     <button
