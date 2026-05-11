@@ -15,7 +15,6 @@ export type AchievementCategory =
   | "consumables_used"
   | "fertilizers"
   | "daily"
-  | "discovery"
   | "crossbreeding"
   | "social"
   | "attunement";
@@ -45,7 +44,7 @@ export type AchievementStats = Record<string, number>;
 // ── Category display metadata ──────────────────────────────────────────────────
 
 export const ACHIEVEMENT_CATEGORY_META: Record<AchievementCategory, { label: string; emoji: string }> = {
-  harvest:             { label: "Harvesting",     emoji: "🌸" },
+  harvest:             { label: "Discover",        emoji: "🔍" },
   seeds:               { label: "Planting",        emoji: "🌱" },
   sacrifice:           { label: "Alchemy",         emoji: "⚗️" },
   shopping:            { label: "Shopping",        emoji: "🛒" },
@@ -56,7 +55,6 @@ export const ACHIEVEMENT_CATEGORY_META: Record<AchievementCategory, { label: str
   consumables_used:    { label: "Consumables",     emoji: "🧪" },
   fertilizers:         { label: "Fertilizers",     emoji: "🌾" },
   daily:               { label: "Daily Tasks",     emoji: "📅" },
-  discovery:           { label: "Discovery",       emoji: "📖" },
   crossbreeding:       { label: "Cross-Breeding",  emoji: "🥢" },
   social:              { label: "Social",          emoji: "🌍" },
   attunement:          { label: "Attunement",      emoji: "✨" },
@@ -217,80 +215,33 @@ function ach(
 
 const achievements: Achievement[] = [];
 
-// ── 🌸 Total Harvests ──────────────────────────────────────────────────────────
+// ── 🔍 Flower Discovery ────────────────────────────────────────────────────────
 
-const TOTAL_HARVEST_TIERS: [number, number][] = [
-  [10, 5], [50, 5], [100, 10], [500, 10], [1_000, 15], [2_500, 15], [5_000, 25],
+const DISCOVER_TIERS: [number, number, string][] = [
+  [1,   5,  "Curious Mind"],
+  [5,   5,  "First Steps"],
+  [10,  5,  "Budding Botanist"],
+  [20,  10, "Field Notes"],
+  [30,  10, "Nature Walk"],
+  [40,  10, "Avid Collector"],
+  [50,  15, "Species Hunter"],
+  [75,  15, "Living Encyclopedia"],
+  [100, 20, "Naturalist"],
+  [125, 20, "Senior Naturalist"],
+  [150, 25, "Codex Scholar"],
+  [175, 25, "Master Botanist"],
+  [190, 35, "Grand Collector"],
 ];
-const TOTAL_HARVEST_NAMES = [
-  "First Bloom", "Busy Gardener", "Harvest Season", "Blooming Veteran",
-  "Master Harvester", "Grand Cultivator", "Legendary Harvester",
-];
-for (let i = 0; i < TOTAL_HARVEST_TIERS.length; i++) {
-  const [target, gems] = TOTAL_HARVEST_TIERS[i];
+for (const [target, gems, name] of DISCOVER_TIERS) {
   achievements.push(ach(
-    `harvest_total_${target}`,
-    TOTAL_HARVEST_NAMES[i],
-    `Harvest ${target.toLocaleString()} flowers.`,
-    "🌸",
+    `species_discovered_${target}`,
+    name,
+    `Discover ${target} unique flower species.`,
+    "🔍",
     "harvest",
-    { kind: "stat", statKey: "total_harvests" },
+    { kind: "species_discovered" },
     target, gems,
   ));
-}
-
-// ── 🌸 Harvest by Type ─────────────────────────────────────────────────────────
-
-const TYPE_HARVEST_MILESTONES: [number, number][] = [
-  [2, 5], [5, 5], [10, 5], [25, 10], [50, 10], [100, 10], [250, 15], [500, 15],
-];
-const TYPE_HARVEST_TIER_NAMES = [
-  "Sprout", "Picker", "Farmer", "Grower", "Cultivator",
-  "Specialist", "Expert", "Master",
-];
-for (const type of FLOWER_TYPES) {
-  const label = TYPE_LABEL[type];
-  const emoji = TYPE_EMOJI[type];
-  for (let i = 0; i < TYPE_HARVEST_MILESTONES.length; i++) {
-    const [target, gems] = TYPE_HARVEST_MILESTONES[i];
-    achievements.push(ach(
-      `harvest_${type}_${target}`,
-      `${label} ${TYPE_HARVEST_TIER_NAMES[i]}`,
-      `Harvest ${target} ${label} flowers.`,
-      emoji,
-      "harvest",
-      { kind: "stat", statKey: `harvest_${type}` },
-      target, gems,
-    ));
-  }
-}
-
-// ── 🌸 Harvest by Rarity ───────────────────────────────────────────────────────
-
-const RARITY_HARVEST: [string, string, [number, number][]][] = [
-  ["legendary", "👑", [[10, 5], [25, 10], [50, 10], [100, 15]]],
-  ["mythic",    "🔮", [[5,  5], [10, 10], [25, 10], [50,  15]]],
-  ["prismatic", "🌈", [[1,  5], [5,  10], [10, 15], [25,  25]]],
-];
-const RARITY_HARVEST_TIER_NAMES: Record<string, string[]> = {
-  legendary: ["Legendary Find",    "Legendary Farmer",     "Legendary Veteran",    "Legendary Master"],
-  mythic:    ["Mythic Find",       "Mythic Farmer",        "Mythic Veteran",       "Mythic Master"],
-  prismatic: ["Prismatic Wonder",  "Prismatic Collector",  "Prismatic Expert",     "Prismatic Legend"],
-};
-for (const [rarity, emoji, tiers] of RARITY_HARVEST) {
-  const label = rarity.charAt(0).toUpperCase() + rarity.slice(1);
-  for (let i = 0; i < tiers.length; i++) {
-    const [target, gems] = tiers[i];
-    achievements.push(ach(
-      `harvest_${rarity}_${target}`,
-      RARITY_HARVEST_TIER_NAMES[rarity][i],
-      `Harvest ${target} ${label} flowers.`,
-      emoji,
-      "harvest",
-      { kind: "stat", statKey: `harvest_${rarity}` },
-      target, gems,
-    ));
-  }
 }
 
 // ── 🌱 Seeds Planted ───────────────────────────────────────────────────────────
@@ -640,27 +591,6 @@ for (let i = 0; i < DAILY_MILESTONES.length; i++) {
   ));
 }
 
-// ── 📖 Species Discovery ──────────────────────────────────────────────────────
-
-const DISCOVERY_MILESTONES: [number, number, string][] = [
-  [10,  5,  "Budding Botanist"],
-  [25,  10, "Field Notes"],
-  [50,  15, "Living Encyclopedia"],
-  [999, 25, "Complete Collection"],   // 999 = "all species" sentinel; UI caps to actual total
-];
-for (const [target, gems, name] of DISCOVERY_MILESTONES) {
-  achievements.push(ach(
-    `species_discovered_${target}`,
-    name,
-    target === 999
-      ? "Discover every species in the Codex."
-      : `Discover ${target} species.`,
-    "📖",
-    "discovery",
-    { kind: "species_discovered" },
-    target, gems,
-  ));
-}
 
 // ── 🥢 Cross-Breeding — per recipe ────────────────────────────────────────────
 

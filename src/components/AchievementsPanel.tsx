@@ -15,7 +15,7 @@ const CATEGORY_ORDER: AchievementCategory[] = [
   "harvest", "seeds", "sacrifice", "attunement",
   "shopping", "crafting_consumable", "crafting_gear",
   "pouches", "fertilizers", "consumables_used",
-  "gear_placed", "daily", "discovery", "crossbreeding", "social",
+  "gear_placed", "daily", "crossbreeding", "social",
 ];
 
 // ── Component ──────────────────────────────────────────────────────────────────
