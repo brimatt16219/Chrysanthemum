@@ -24,8 +24,7 @@ export type AchievementCheck =
   | { kind: "stat";    statKey: string }
   | { kind: "species_discovered" }
   | { kind: "friends_count" }
-  | { kind: "recipe_completed"; recipeId: string }
-  | { kind: "all_recipes_completed" };
+  | { kind: "recipe_completed"; recipeId: string };
 
 export interface Achievement {
   id:          string;
@@ -51,7 +50,7 @@ export const ACHIEVEMENT_CATEGORY_META: Record<AchievementCategory, { label: str
   crafting_consumable: { label: "Crafting",        emoji: "🔨" },
   crafting_gear:       { label: "Gear Crafting",   emoji: "🔧" },
   pouches:             { label: "Seed Pouches",    emoji: "🎁" },
-  gear_placed:         { label: "Gear Placed",     emoji: "🪴" },
+  gear_placed:         { label: "Gear Placed",     emoji: "🚿" },
   consumables_used:    { label: "Consumables",     emoji: "🧪" },
   fertilizers:         { label: "Fertilizers",     emoji: "🌾" },
   daily:               { label: "Daily Tasks",     emoji: "📅" },
@@ -229,7 +228,6 @@ const DISCOVER_TIERS: [number, number, string][] = [
   [100, 20, "Naturalist"],
   [125, 20, "Senior Naturalist"],
   [150, 25, "Codex Scholar"],
-  [175, 25, "Master Botanist"],
   [190, 35, "Grand Collector"],
 ];
 for (const [target, gems, name] of DISCOVER_TIERS) {
@@ -608,15 +606,6 @@ for (const [recipeId, outputName, emoji] of CROSSBREED_RECIPES) {
 
 // ── 🥢 Cross-Breeding — complete all recipes ───────────────────────────────────
 
-achievements.push(ach(
-  "crossbred_all",
-  "Master Botanist",
-  "Successfully complete every cross-breeding recipe.",
-  "🥢",
-  "crossbreeding",
-  { kind: "all_recipes_completed" },
-  CROSSBREED_RECIPES.length, 50,
-));
 
 // ── 🌍 Social — Gifts Sent ────────────────────────────────────────────────────
 

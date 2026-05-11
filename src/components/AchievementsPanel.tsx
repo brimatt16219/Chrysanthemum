@@ -35,14 +35,6 @@ export function AchievementsPanel() {
     [state.inventory],
   );
 
-  /** IDs of all per-recipe crossbreed achievements (used to compute all_recipes progress). */
-  const recipeAchIds = useMemo(() =>
-    ACHIEVEMENTS
-      .filter((a) => a.check.kind === "recipe_completed")
-      .map((a) => a.id),
-    [],
-  );
-
   /** Pre-computed { current, target } for every achievement — drives both the
    *  list rows and the claimable badge counts on tabs. */
   const allProgress = useMemo(() => {
@@ -63,11 +55,7 @@ export function AchievementsPanel() {
           current = -1; // unknown locally — validated on the server at claim time
           break;
         case "recipe_completed":
-          // We don't track recipe progress locally yet; treat as complete once claimed
           current = state.achievementsClaimed.includes(a.id) ? 1 : 0;
-          break;
-        case "all_recipes_completed":
-          current = recipeAchIds.filter((id) => state.achievementsClaimed.includes(id)).length;
           break;
       }
 
@@ -75,7 +63,7 @@ export function AchievementsPanel() {
     }
 
     return result;
-  }, [state.achievementStats, state.achievementsClaimed, speciesDiscovered, recipeAchIds]);
+  }, [state.achievementStats, state.achievementsClaimed, speciesDiscovered]);
 
   /** Per-category count of achievements that are complete but not yet claimed. */
   const claimableCounts = useMemo(() => {
@@ -176,10 +164,13 @@ export function AchievementsPanel() {
         {filtered.map((a) => {
           const claimed    = state.achievementsClaimed.includes(a.id);
           const { current, target } = allProgress[a.id];
-          const friendsKind = a.check.kind === "friends_count";
-          const recipeKind  = a.check.kind === "recipe_completed";
-          const ready      = !claimed && !friendsKind && !recipeKind && current >= target;
-          const canTryClaim = !claimed && (friendsKind || recipeKind || ready);
+          const friendsKind      = a.check.kind === "friends_count";
+          const recipeKind       = a.check.kind === "recipe_completed";
+          const recipeDiscovered = recipeKind && state.discoveredRecipes.includes(
+            (a.check as { kind: "recipe_completed"; recipeId: string }).recipeId,
+          );
+          const ready       = !claimed && !friendsKind && !recipeKind && current >= target;
+          const canTryClaim = !claimed && (friendsKind || recipeDiscovered || ready);
           const pct        = friendsKind || recipeKind
             ? 0
             : Math.min(100, Math.round((current / target) * 100));
