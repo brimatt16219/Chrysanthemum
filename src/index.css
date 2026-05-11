@@ -30,6 +30,12 @@
   --color-border:              hsl(var(--border));
 }
 
+/* ── Login page flower drift ───────────────────────────────────────────── */
+@keyframes flower-drift {
+  from { translate:  0 0;           }
+  to   { translate: -15vw 120vh;   }
+}
+
 /* ── Global font ───────────────────────────────────────────────────────── */
 body {
   font-family: "Pixelify Sans", sans-serif;
