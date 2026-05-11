@@ -138,8 +138,8 @@ export function AchievementsPanel() {
   return (
     <div className="flex flex-col gap-4">
 
-      {/* ── Category tab strip ──────────────────────────────────────────────── */}
-      <div className="flex gap-1.5 overflow-x-auto pb-1 pt-1.5">
+      {/* ── Category grid ───────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5">
         {CATEGORY_ORDER.map((cat) => {
           const meta     = ACHIEVEMENT_CATEGORY_META[cat];
           const badge    = claimableCounts[cat] ?? 0;
@@ -149,8 +149,8 @@ export function AchievementsPanel() {
               key={cat}
               onClick={() => { setActiveCategory(cat); setClaimError(null); }}
               className={`
-                relative flex-shrink-0 flex flex-col items-center gap-0.5
-                px-3 py-2 rounded-xl border text-xs font-semibold transition-all
+                relative flex flex-col items-center gap-0.5
+                px-2 py-2 rounded-xl border text-xs font-semibold transition-all
                 ${isActive
                   ? "bg-primary/20 border-primary/50 text-primary"
                   : "bg-card/60 border-border text-muted-foreground hover:border-primary/30"
@@ -158,7 +158,7 @@ export function AchievementsPanel() {
               `}
             >
               <span className="text-base">{meta.emoji}</span>
-              <span className="text-[10px] leading-none whitespace-nowrap">{meta.label}</span>
+              <span className="text-[10px] leading-none text-center">{meta.label}</span>
               {badge > 0 && (
                 <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full" />
               )}
