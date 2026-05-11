@@ -265,9 +265,8 @@ function HeatwaveOverlay({ active }: { active: boolean }) {
 function ThunderstormOverlay({ active }: { active: boolean }) {
   const drops = useParticles(35, active);
 
-  // JS-driven lightning — three independent flashes per 15 s cycle,
-  // each firing audioManager.playSfx("thunderCrack") when it lights up.
-  const [flashes, setFlashes] = useState([false, false, false]);
+  // Each increment remounts the flash div, restarting the CSS animation cleanly.
+  const [flashKey, setFlashKey] = useState(0);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useEffect(() => {
@@ -275,29 +274,20 @@ function ThunderstormOverlay({ active }: { active: boolean }) {
     timers.forEach(clearTimeout);
     timers.length = 0;
 
-    if (!active) {
-      setFlashes([false, false, false]);
-      return;
+    if (!active) return;
+
+    function strike() {
+      setFlashKey((k) => k + 1);
+      audioManager.playSfx("thunderCrack");
+      // Next strike: random 20–40 s gap
+      const next = 20_000 + Math.random() * 20_000;
+      timers.push(setTimeout(strike, next));
     }
 
-    const PERIOD_MS      = 15_000;
-    const FLASH_DELAYS   = [2_000, 7_000, 13_000];
-    const FLASH_DURATION = 200;
+    // First strike after 4–8 s
+    const first = 4_000 + Math.random() * 4_000;
+    timers.push(setTimeout(strike, first));
 
-    function scheduleAll() {
-      FLASH_DELAYS.forEach((delay, i) => {
-        timers.push(setTimeout(() => {
-          setFlashes((prev) => { const next = [...prev]; next[i] = true; return next; });
-          audioManager.playSfx("thunderCrack");
-          timers.push(setTimeout(() => {
-            setFlashes((prev) => { const next = [...prev]; next[i] = false; return next; });
-          }, FLASH_DURATION));
-        }, delay));
-      });
-      timers.push(setTimeout(scheduleAll, PERIOD_MS));
-    }
-
-    scheduleAll();
     return () => { timers.forEach(clearTimeout); timers.length = 0; };
   }, [active]);
 
@@ -320,15 +310,27 @@ function ThunderstormOverlay({ active }: { active: boolean }) {
           |
         </div>
       ))}
-      {/* JS-driven lightning flashes — opacity toggled in sync with thunder SFX */}
-      {flashes.map((on, i) => (
+      {/* CSS-keyframe flash — remounted on each strike so animation always restarts.
+          Double-flash curve built into the keyframe for a realistic lightning look. */}
+      {flashKey > 0 && (
         <div
-          key={i}
-          className="absolute inset-0 bg-white/20 transition-opacity duration-75"
-          style={{ opacity: on ? 1 : 0 }}
+          key={flashKey}
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: "rgba(220, 235, 255, 0.35)",
+            animation:  "lightningFlash 900ms ease-out forwards",
+          }}
         />
-      ))}
+      )}
       <style>{`
+        @keyframes lightningFlash {
+          0%   { opacity: 0; }
+          4%   { opacity: 1; }
+          14%  { opacity: 0.06; }
+          20%  { opacity: 0.65; }
+          35%  { opacity: 0; }
+          100% { opacity: 0; }
+        }
         @keyframes heavyRain {
           0%   { transform: translateY(-10vh) rotate(20deg); opacity: 0; }
           10%  { opacity: 1; }
