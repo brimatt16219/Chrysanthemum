@@ -1,6 +1,9 @@
+import React from "react";
 import { useSettings } from "../store/SettingsContext";
 import type { Settings } from "../store/SettingsContext";
 import { THEMES } from "../data/themes";
+
+const PX: React.CSSProperties = { imageRendering: "pixelated" };
 
 interface Props { onClose: () => void; onSignOut?: () => void; }
 
@@ -56,13 +59,25 @@ export function SettingsModal({ onClose, onSignOut }: Props) {
 
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="font-bold text-sm">⚙️ Settings</h2>
+          <h2 className="font-bold text-sm flex items-center gap-1.5">
+            {settings.useSprites
+              ? <img src="/sprites/ui/settings.png" alt="⚙️" className="w-4 h-4 object-contain" style={PX} />
+              : <span>⚙️</span>
+            }
+            Settings
+          </h2>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-xs">✕</button>
         </div>
 
         {/* ── Appearance ──────────────────────────────────────────────────── */}
         <section className="flex flex-col gap-3">
-          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">🎨 Appearance</p>
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+            {settings.useSprites
+              ? <img src="/sprites/ui/settings_appearance.png" alt="🎨" className="w-3.5 h-3.5 object-contain" style={PX} />
+              : <span>🎨</span>
+            }
+            Appearance
+          </p>
 
           {/* Theme picker */}
           <div>
@@ -113,10 +128,17 @@ export function SettingsModal({ onClose, onSignOut }: Props) {
 
         {/* ── Music ───────────────────────────────────────────────────────── */}
         <section className="flex flex-col gap-3">
-          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">🎵 Music</p>
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+            {settings.useSprites
+              ? <img src="/sprites/ui/settings_music.png" alt="🎵" className="w-3.5 h-3.5 object-contain" style={PX} />
+              : <span>🎵</span>
+            }
+            Music
+          </p>
           <SliderRow
             value={settings.musicVolume}
             muted={settings.musicMuted}
+            useSprites={settings.useSprites}
             onChange={(v) => setSetting("musicVolume", v)}
             onToggleMute={() => setSetting("musicMuted", !settings.musicMuted)}
           />
@@ -126,10 +148,17 @@ export function SettingsModal({ onClose, onSignOut }: Props) {
 
         {/* ── Sound Effects ────────────────────────────────────────────────── */}
         <section className="flex flex-col gap-3">
-          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">🔊 Sound Effects</p>
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+            {settings.useSprites
+              ? <img src="/sprites/ui/settings_sfx.png" alt="🔊" className="w-3.5 h-3.5 object-contain" style={PX} />
+              : <span>🔊</span>
+            }
+            Sound Effects
+          </p>
           <SliderRow
             value={settings.sfxVolume}
             muted={settings.sfxMuted}
+            useSprites={settings.useSprites}
             onChange={(v) => setSetting("sfxVolume", v)}
             onToggleMute={() => setSetting("sfxMuted", !settings.sfxMuted)}
           />
@@ -187,9 +216,9 @@ function ToggleRow({
 }
 
 function SliderRow({
-  value, muted, onChange, onToggleMute,
+  value, muted, useSprites, onChange, onToggleMute,
 }: {
-  value: number; muted: boolean;
+  value: number; muted: boolean; useSprites: boolean;
   onChange: (v: number) => void;
   onToggleMute: () => void;
 }) {
@@ -197,10 +226,18 @@ function SliderRow({
     <div className="flex items-center gap-3">
       <button
         onClick={onToggleMute}
-        className="text-base leading-none flex-shrink-0 opacity-80 hover:opacity-100 transition-opacity"
+        className="flex-shrink-0 opacity-80 hover:opacity-100 transition-opacity"
         title={muted ? "Unmute" : "Mute"}
       >
-        {muted ? "🔇" : "🔈"}
+        {useSprites
+          ? <img
+              src={muted ? "/sprites/ui/settings_mute.png" : "/sprites/ui/settings_unmute.png"}
+              alt={muted ? "🔇" : "🔈"}
+              className="w-5 h-5 object-contain"
+              style={PX}
+            />
+          : <span className="text-base leading-none">{muted ? "🔇" : "🔈"}</span>
+        }
       </button>
       <input
         type="range"
