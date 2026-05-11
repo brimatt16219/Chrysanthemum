@@ -21,7 +21,7 @@ const CATEGORY_ORDER: AchievementCategory[] = [
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export function AchievementsPanel() {
-  const { state, update, getState, pushGenericToast } = useGame();
+  const { state, update, getState, pushGenericToast, saveGridNow } = useGame();
 
   const [activeCategory, setActiveCategory] = useState<AchievementCategory>("harvest");
   const [claiming,       setClaiming]       = useState<string | null>(null);
@@ -97,6 +97,10 @@ export function AchievementsPanel() {
     setClaiming(achievementId);
     setClaimError(null);
     try {
+      // Flush local state (achievement stats, etc.) to DB before the edge
+      // function reads it — stats aren't written by edge functions, so we must
+      // ensure the latest values are persisted before the progress check runs.
+      await saveGridNow();
       const result = await edgeAchievementClaim(achievementId);
       const cur    = getState();
       update({

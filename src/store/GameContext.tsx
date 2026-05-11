@@ -609,6 +609,23 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
+  // ── Periodic cloud auto-save ──────────────────────────────────────────────
+  // Achievement stats and other local-only state changes (incrementStat, etc.)
+  // are not written by edge functions. This interval flushes them to the DB
+  // every 30 s so the achievement-claim edge function always sees current data.
+  useEffect(() => {
+    if (!user) return;
+    const interval = setInterval(async () => {
+      if (!saveEnabled.current || isStaleTab) return;
+      const saved = await saveToCloud(user.id, stateRef.current);
+      if (saved) {
+        stateRef.current = { ...stateRef.current, serverUpdatedAt: saved };
+        setState((prev) => ({ ...prev, serverUpdatedAt: saved }));
+      }
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, [user, isStaleTab]);
+
   // Global queue for harvest server calls — ensures they execute one at a time
   // so concurrent DB reads/writes don't overwrite each other's grid changes.
   const harvestQueue = useRef<Promise<unknown>>(Promise.resolve());
@@ -636,15 +653,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const doServer = async () => {
       try {
         const result = await serverFn();
-        // Update BOTH React state and stateRef so the auto-save CAS token
-        // (stateRef.current.serverUpdatedAt) stays current. Without this,
-        // stateRef holds the pre-action optimistic serverUpdatedAt forever,
-        // causing every subsequent auto-save to fail with a 406 CAS miss.
-        setState((cur) => {
-          const merged = mergeServerResult(cur, result);
-          stateRef.current = merged;
-          return merged;
-        });
+        // Merge synchronously into stateRef FIRST so the auto-save CAS token
+        // (serverUpdatedAt) is current before onSuccess runs. Using the updater
+        // form of setState would defer the stateRef update until React processes
+        // the batch — too late for onSuccess callbacks like incrementStat.
+        const merged = mergeServerResult(stateRef.current, result);
+        stateRef.current = merged;
+        setState(merged);
         onSuccess?.(result);
       } catch (err) {
         console.error("Action failed, rolling back:", err);

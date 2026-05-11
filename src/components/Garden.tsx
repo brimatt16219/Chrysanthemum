@@ -645,7 +645,7 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
           throw e;
         }
       },
-      undefined,
+      () => { incrementStat("seeds_planted", planted.length); },
       {
         serialize: true,
         rollback: () => currentState,
