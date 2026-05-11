@@ -650,6 +650,7 @@ export function applyOfflineTick(
     ),
     discovered:           save.discovered           ?? [],
     codexAcked:           save.codexAcked           ?? [],
+    events:               save.events               ?? [],
     shopSlots:            save.shopSlots            ?? DEFAULT_SHOP_SLOTS,
     weatherForecastSlots: save.weatherForecastSlots ?? 0,
     supplySlots:          save.supplySlots          ?? DEFAULT_SUPPLY_SLOTS,
