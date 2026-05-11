@@ -636,7 +636,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const doServer = async () => {
       try {
         const result = await serverFn();
-        setState((cur) => mergeServerResult(cur, result));
+        // Update BOTH React state and stateRef so the auto-save CAS token
+        // (stateRef.current.serverUpdatedAt) stays current. Without this,
+        // stateRef holds the pre-action optimistic serverUpdatedAt forever,
+        // causing every subsequent auto-save to fail with a 406 CAS miss.
+        setState((cur) => {
+          const merged = mergeServerResult(cur, result);
+          stateRef.current = merged;
+          return merged;
+        });
         onSuccess?.(result);
       } catch (err) {
         console.error("Action failed, rolling back:", err);

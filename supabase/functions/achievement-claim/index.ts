@@ -112,22 +112,47 @@ Deno.serve(async (req: Request) => {
     const newGems    = gems + def.gems;
     const newClaimed = [...claimed, achievementId];
 
-    // ── CAS write ─────────────────────────────────────────────────────────────
-    const { data: ud, error: ue } = await supabaseAdmin
-      .from("game_saves")
-      .update({
-        achievements_claimed: newClaimed,
-        gardener_level:       newLevel,
-        gardener_xp:          newXp,
-        gems:                 newGems,
-        updated_at:           new Date().toISOString(),
-      })
-      .eq("user_id", userId)
-      .eq("updated_at", priorUpdatedAt)
-      .select("updated_at")
-      .single();
+    // ── CAS write with retry ──────────────────────────────────────────────────
+    // Auto-save can change updated_at between our SELECT and UPDATE, causing a
+    // spurious 409. Retry up to 3 times: re-read the latest timestamp and try
+    // again, aborting early if the achievement was already claimed concurrently.
+    let ud: { updated_at: string } | null = null;
+    let priorAt = priorUpdatedAt;
 
-    if (ue || !ud) return err("Save conflict — please retry", 409);
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const { data, error } = await supabaseAdmin
+        .from("game_saves")
+        .update({
+          achievements_claimed: newClaimed,
+          gardener_level:       newLevel,
+          gardener_xp:          newXp,
+          gems:                 newGems,
+          updated_at:           new Date().toISOString(),
+        })
+        .eq("user_id", userId)
+        .eq("updated_at", priorAt)
+        .select("updated_at")
+        .single();
+
+      if (!error && data) { ud = data; break; }
+
+      // CAS failed — re-read the latest save before retrying
+      if (attempt < 2) {
+        const { data: fresh } = await supabaseAdmin
+          .from("game_saves")
+          .select("achievements_claimed, updated_at")
+          .eq("user_id", userId)
+          .single();
+        if (!fresh) break;
+        // A concurrent request already claimed this achievement
+        if ((fresh.achievements_claimed as string[] ?? []).includes(achievementId)) {
+          return err("Achievement already claimed", 409);
+        }
+        priorAt = fresh.updated_at as string;
+      }
+    }
+
+    if (!ud) return err("Save conflict — please retry", 409);
 
     // ── Audit log ─────────────────────────────────────────────────────────────
     void supabaseAdmin.from("action_log").insert({
