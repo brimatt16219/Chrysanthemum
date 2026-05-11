@@ -125,7 +125,7 @@ export function Inventory({ newSeeds = 0, newBlooms = 0, newSupplies = 0, onSubT
     // and other changes intact.
     const totalSold = currentBlooms.reduce((sum, i) => sum + i.quantity, 0);
     audioManager.playSfx("sell");
-    pushGenericToast("sell:all", "🟡", `+${earned.toLocaleString()} coins`, "text-yellow-400", "gain");
+    pushGenericToast("sell:all", "🟡", "coins", "text-yellow-400", "gain", earned);
     await perform(
       optimistic,
       () => edgeSellAll(items),

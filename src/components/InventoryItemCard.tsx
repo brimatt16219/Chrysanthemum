@@ -38,7 +38,7 @@ export function InventoryItemCard({ item }: Props) {
     const earned = optimistic.coins - cur.coins;
     const items  = [{ speciesId: item.speciesId, mutation: item.mutation, quantity: 1 }];
     audioManager.playSfx("sell");
-    pushGenericToast(`sell:${item.speciesId}:${item.mutation ?? ""}`, "🟡", `+${earned.toLocaleString()} coins`, "text-yellow-400", "gain");
+    pushGenericToast(`sell:${item.speciesId}:${item.mutation ?? ""}`, "🟡", "coins", "text-yellow-400", "gain", earned);
     perform(
       optimistic,
       async () => { try { return await edgeSellFlower(item.speciesId, item.mutation, 1); } finally { sellingRef.current = false; } },
@@ -64,7 +64,7 @@ export function InventoryItemCard({ item }: Props) {
     const earned = optimistic.coins - cur.coins;
     const items  = [{ speciesId: item.speciesId, mutation: item.mutation, quantity: liveQty }];
     audioManager.playSfx("sell");
-    pushGenericToast(`sell:${item.speciesId}:${item.mutation ?? ""}`, "🟡", `+${earned.toLocaleString()} coins`, "text-yellow-400", "gain");
+    pushGenericToast(`sell:${item.speciesId}:${item.mutation ?? ""}`, "🟡", "coins", "text-yellow-400", "gain", earned);
     perform(
       optimistic,
       async () => { try { return await edgeSellFlower(item.speciesId, item.mutation, liveQty); } finally { sellingRef.current = false; } },
