@@ -746,41 +746,13 @@ function AppInner() {
                : "🌍"}
               <span className="ml-1 hidden sm:inline capitalize">{t}</span>
 
-              {t === "garden" && gardenNewBlooms > 0 && (
-                <span className="absolute top-2 right-1 sm:right-6 w-4 h-4 bg-yellow-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
-                  {gardenNewBlooms > 9 ? "9+" : gardenNewBlooms}
-                </span>
-              )}
-              {t === "shop" && (newSeedsShopBadge + newSupplyShopBadge) > 0 && (
-                <span className="absolute top-2 right-1 sm:right-6 w-4 h-4 bg-yellow-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
-                  {(newSeedsShopBadge + newSupplyShopBadge) > 9 ? "9+" : newSeedsShopBadge + newSupplyShopBadge}
-                </span>
-              )}
-              {t === "inventory" && newInvTotal > 0 && (
-                <span className="absolute top-2 right-1 sm:right-6 w-4 h-4 bg-primary rounded-full text-[10px] text-primary-foreground flex items-center justify-center font-bold">
-                  {newInvTotal > 9 ? "9+" : newInvTotal}
-                </span>
-              )}
-              {t === "craft" && claimableCraftsCount > 0 && (
-                <span className="absolute top-2 right-1 sm:right-6 w-4 h-4 bg-amber-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
-                  {claimableCraftsCount > 9 ? "9+" : claimableCraftsCount}
-                </span>
-              )}
-              {t === "alchemy" && claimableAttunementsCount > 0 && (
-                <span className="absolute top-2 right-1 sm:right-6 w-4 h-4 bg-emerald-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
-                  {claimableAttunementsCount > 9 ? "9+" : claimableAttunementsCount}
-                </span>
-              )}
-              {t === "codex" && unseenCodex.size > 0 && (
-                <span className="absolute top-2 right-1 sm:right-6 w-4 h-4 bg-primary rounded-full text-[10px] text-primary-foreground flex items-center justify-center font-bold">
-                  {unseenCodex.size > 9 ? "9+" : unseenCodex.size}
-                </span>
-              )}
-              {t === "social" && socialBadgeCount > 0 && (
-                <span className="absolute top-2 right-1 sm:right-6 w-4 h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
-                  {socialBadgeCount > 9 ? "9+" : socialBadgeCount}
-                </span>
-              )}
+              {t === "garden"    && gardenNewBlooms > 0                              && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary rounded-full" />}
+              {t === "shop"      && (newSeedsShopBadge + newSupplyShopBadge) > 0      && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary rounded-full" />}
+              {t === "inventory" && newInvTotal > 0                                   && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary rounded-full" />}
+              {t === "craft"     && claimableCraftsCount > 0                          && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary rounded-full" />}
+              {t === "alchemy"   && claimableAttunementsCount > 0                     && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary rounded-full" />}
+              {t === "codex"     && unseenCodex.size > 0                              && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary rounded-full" />}
+              {t === "social"    && socialBadgeCount > 0                              && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary rounded-full" />}
             </button>
           ))}
         </div>
