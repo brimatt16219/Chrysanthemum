@@ -1,6 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { initSentry, Sentry } from "../_shared/sentry.ts";
-import { awardXp } from "../_shared/gardenerLevel.ts";
 import { loadEvent, loadProgress, saveProgress } from "../_shared/eventHelpers.ts";
 
 const corsHeaders = {
@@ -94,16 +93,14 @@ Deno.serve(async (req: Request) => {
     // ── Load game_saves ───────────────────────────────────────────────────────
     const { data: save, error: se } = await supabase
       .from("game_saves")
-      .select("inventory, gems, gardener_level, gardener_xp, updated_at")
+      .select("inventory, gems, updated_at")
       .eq("user_id", userId)
       .single();
     if (se || !save) return err("Save not found", 404);
 
-    const inventory      = [...((save.inventory      as InventoryItem[]) ?? [])];
-    const priorUpdatedAt = save.updated_at    as string;
-    const gems           = (save.gems         as number) ?? 0;
-    const gardenerLevel  = (save.gardener_level as number) ?? 1;
-    const gardenerXp     = (save.gardener_xp   as number) ?? 0;
+    const inventory      = [...((save.inventory as InventoryItem[]) ?? [])];
+    const priorUpdatedAt = save.updated_at as string;
+    const gems           = (save.gems      as number) ?? 0;
 
     // ── Validate submitted flower ─────────────────────────────────────────────
     // speciesId must be in the quest's allow-list (validates rarity + type server-side)
@@ -134,8 +131,7 @@ Deno.serve(async (req: Request) => {
       inventory[itemIdx] = { ...item, quantity: item.quantity - 1 };
     }
 
-    // ── Award XP + gems ───────────────────────────────────────────────────────
-    const { level: newLevel, xp: newXp } = awardXp(gardenerLevel, gardenerXp, quest.xp);
+    // ── Award gems ────────────────────────────────────────────────────────────
     const newGems = gems + quest.gems;
 
     // ── Final reward — deliver exclusive seed if this is the last quest ────────
@@ -157,11 +153,9 @@ Deno.serve(async (req: Request) => {
     const { data: ud, error: ue } = await supabase
       .from("game_saves")
       .update({
-        inventory:      inventory,
-        gems:           newGems,
-        gardener_level: newLevel,
-        gardener_xp:    newXp,
-        updated_at:     new Date().toISOString(),
+        inventory:  inventory,
+        gems:       newGems,
+        updated_at: new Date().toISOString(),
       })
       .eq("user_id", userId)
       .eq("updated_at", priorUpdatedAt)
@@ -180,19 +174,16 @@ Deno.serve(async (req: Request) => {
     // ── Audit log ─────────────────────────────────────────────────────────────
     void supabase.from("action_log").insert({
       user_id: userId, action: "event_quest_submit",
-      payload: { eventId, questId, speciesId, mutation: submittedMutation, gemsGained: quest.gems, xpGained: quest.xp, finalRewardDelivered },
+      payload: { eventId, questId, speciesId, mutation: submittedMutation, gemsGained: quest.gems, finalRewardDelivered },
     });
 
     return json({
       ok:                   true,
       questId,
       gemsGained:           quest.gems,
-      xpGained:             quest.xp,
       finalRewardDelivered,
       inventory,
       progress:             newProgress,
-      gardenerLevel:        newLevel,
-      gardenerXp:           newXp,
       gems:                 newGems,
       serverUpdatedAt:      ud.updated_at,
     });

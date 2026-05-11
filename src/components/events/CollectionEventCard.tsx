@@ -62,8 +62,6 @@ export function CollectionEventCard({ event }: Props) {
       update({
         ...cur,
         gems:            result.gems,
-        gardenerLevel:   result.gardenerLevel,
-        gardenerXp:      result.gardenerXp,
         inventory:       result.inventory,
         serverUpdatedAt: result.serverUpdatedAt,
         events:          cur.events.map((e) =>
@@ -115,7 +113,7 @@ export function CollectionEventCard({ event }: Props) {
                   {done ? "✓ " : `${idx + 1}. `}{quest.name}
                 </span>
                 <span className="text-[10px] text-muted-foreground">
-                  {quest.gems} 💎 · {quest.xp} XP
+                  {quest.gems} 💎
                 </span>
               </div>
 

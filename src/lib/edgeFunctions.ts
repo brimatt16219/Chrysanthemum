@@ -772,12 +772,9 @@ export interface QuestSubmitResult {
   ok:                   true;
   questId:              string;
   gemsGained:           number;
-  xpGained:             number;
   finalRewardDelivered: boolean;
   inventory:            GameState["inventory"];
   progress:             { completedQuests: string[]; claimedRewards: string[] };
-  gardenerLevel:        number;
-  gardenerXp:           number;
   gems:                 number;
   serverUpdatedAt:      string;
 }

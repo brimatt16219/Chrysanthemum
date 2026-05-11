@@ -139,7 +139,7 @@ export function AchievementsPanel() {
     <div className="flex flex-col gap-4">
 
       {/* ── Category tab strip ──────────────────────────────────────────────── */}
-      <div className="flex gap-1.5 overflow-x-auto pb-1">
+      <div className="flex gap-1.5 overflow-x-auto pb-1 pt-1.5">
         {CATEGORY_ORDER.map((cat) => {
           const meta     = ACHIEVEMENT_CATEGORY_META[cat];
           const badge    = claimableCounts[cat] ?? 0;
@@ -160,9 +160,7 @@ export function AchievementsPanel() {
               <span className="text-base">{meta.emoji}</span>
               <span className="text-[10px] leading-none whitespace-nowrap">{meta.label}</span>
               {badge > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[1rem] h-4 px-0.5 rounded-full bg-primary text-primary-foreground text-[9px] flex items-center justify-center font-bold">
-                  {badge}
-                </span>
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full" />
               )}
             </button>
           );

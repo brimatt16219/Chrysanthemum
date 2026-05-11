@@ -56,6 +56,7 @@ import { GenericToastPopup } from "./components/GenericToastPopup";
 import { GardenerXpBar } from "./components/GardenerXpBar";
 import { CHANGELOGS, LATEST_CHANGELOG_VERSION, type ChangelogEntry } from "./data/changelog";
 import { EventsTab } from "./components/EventsTab";
+import { ACHIEVEMENTS } from "./data/achievements";
 import { LoginPage } from "./components/LoginPage";
 import { useAudio } from "./hooks/useAudio";
 import { audioManager } from "./lib/audioManager";
@@ -288,6 +289,30 @@ function AppInner() {
     const doneAt = new Date(e.startedAt).getTime() + e.durationMs;
     return craftBadgeNow >= doneAt ? acc + 1 : acc;
   }, 0);
+
+  // ── Events tab badge ─────────────────────────────────────────────────────────
+  // True if any sub-section (events / daily / achievements) has something actionable.
+  const eventsBadge = useMemo(() => {
+    // Events: any active events
+    if ((state.events ?? []).length > 0) return true;
+    // Daily: any reward tier unlocked but not yet collected
+    if (state.dailyTasks) {
+      const { tasks, rewardsCollected } = state.dailyTasks;
+      const completedCount = tasks.filter((t) => t.completed).length;
+      if (rewardsCollected.some((_c, i) => !rewardsCollected[i] && completedCount >= i + 1)) return true;
+    }
+    // Achievements: any locally-verifiable achievement ready to claim
+    const speciesDiscovered = new Set(
+      state.inventory.filter((i) => !i.isSeed).map((i) => i.speciesId)
+    ).size;
+    return ACHIEVEMENTS.some((a) => {
+      if (state.achievementsClaimed.includes(a.id)) return false;
+      if (a.check.kind === "friends_count" || a.check.kind === "recipe_completed") return false;
+      if (a.check.kind === "stat") return (state.achievementStats[a.check.statKey] ?? 0) >= a.target;
+      if (a.check.kind === "species_discovered") return speciesDiscovered >= a.target;
+      return false;
+    });
+  }, [state.events, state.dailyTasks, state.achievementsClaimed, state.achievementStats, state.inventory]);
 
   // ── Swipe navigation ─────────────────────────────────────────────────────────
   // Flat order: garden(0) → shop:seeds(1) → shop:supply(2) →
@@ -752,6 +777,7 @@ function AppInner() {
               {t === "craft"     && claimableCraftsCount > 0                          && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary rounded-full" />}
               {t === "alchemy"   && claimableAttunementsCount > 0                     && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary rounded-full" />}
               {t === "codex"     && unseenCodex.size > 0                              && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary rounded-full" />}
+              {t === "events"    && eventsBadge                                        && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary rounded-full" />}
               {t === "social"    && socialBadgeCount > 0                              && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary rounded-full" />}
             </button>
           ))}

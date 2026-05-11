@@ -1,5 +1,6 @@
 import { useGame } from "../store/GameContext";
 import { TASKS_REQUIRED, type DailyTaskType } from "../lib/dailySeed";
+import { awardXp } from "../data/gardenerLevel";
 
 // ── Task display metadata ─────────────────────────────────────────────────────
 
@@ -27,7 +28,7 @@ function taskLabel(type: DailyTaskType, target: number): string {
 
 // ── Reward tier definitions ───────────────────────────────────────────────────
 
-const REWARDS = [
+export const DAILY_REWARDS = [
   { xp:  50, label: "Seed Pouch I",   gems: 10 },
   { xp:  75, label: "Seed Pouch I",   gems: 15 },
   { xp: 100, label: "Seed Pouch II",  gems: 20 },
@@ -37,7 +38,7 @@ const REWARDS = [
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function DailyTasksPanel() {
-  const { state } = useGame();
+  const { state, getState, update, pushGenericToast, saveGridNow } = useGame();
   const dailyTasks = state.dailyTasks;
 
   if (!dailyTasks) return null;
@@ -45,6 +46,30 @@ export function DailyTasksPanel() {
   const { tasks, rewardsCollected } = dailyTasks;
   const completedCount  = tasks.filter((t) => t.completed).length;
   const collectedCount  = rewardsCollected.filter(Boolean).length;
+
+  async function handleCollect(i: number) {
+    const cur    = getState();
+    if (!cur.dailyTasks) return;
+    const reward = DAILY_REWARDS[i];
+    const { level: newLevel, xp: newXp } = awardXp(cur.gardenerLevel, cur.gardenerXp, reward.xp);
+    const updated = [...cur.dailyTasks.rewardsCollected];
+    updated[i]   = true;
+    update({
+      ...cur,
+      gems:          cur.gems + reward.gems,
+      gardenerLevel: newLevel,
+      gardenerXp:    newXp,
+      dailyTasks:    { ...cur.dailyTasks, rewardsCollected: updated },
+    });
+    pushGenericToast(
+      `daily_reward_${i}`,
+      "🎁",
+      `+${reward.gems} 💎  +${reward.xp} XP`,
+      undefined,
+      "gain",
+    );
+    await saveGridNow();
+  }
 
   return (
     <div className="space-y-3 px-1">
@@ -102,9 +127,11 @@ export function DailyTasksPanel() {
       {/* Reward tiers */}
       <div className="border-t border-border pt-3 space-y-1.5">
         <p className="text-xs font-medium text-muted-foreground mb-2">Rewards</p>
-        {REWARDS.map((reward, i) => {
-          const collected = rewardsCollected[i];
-          const isNext    = !collected && i === collectedCount;
+        {DAILY_REWARDS.map((reward, i) => {
+          const collected  = rewardsCollected[i];
+          const unlocked   = completedCount >= i + 1;
+          const canCollect = unlocked && !collected;
+          const isNext     = !collected && i === collectedCount;
           return (
             <div
               key={i}
@@ -115,13 +142,23 @@ export function DailyTasksPanel() {
               <span className={`w-4 h-4 rounded-full border flex items-center justify-center text-[10px] shrink-0 font-semibold ${
                 collected
                   ? "border-primary bg-primary text-primary-foreground"
-                  : isNext
+                  : canCollect
                   ? "border-primary text-primary"
                   : "border-muted-foreground"
               }`}>
                 {collected ? "✓" : i + 1}
               </span>
-              <span className={collected ? "line-through" : ""}>{reward.xp} XP + {reward.label} + {reward.gems} 💎</span>
+              <span className={`flex-1 ${collected ? "line-through" : ""}`}>
+                {reward.xp} XP + {reward.label} + {reward.gems} 💎
+              </span>
+              {canCollect && (
+                <button
+                  onClick={() => handleCollect(i)}
+                  className="ml-auto px-2.5 py-0.5 rounded-lg bg-primary text-primary-foreground text-[10px] font-semibold hover:opacity-90 transition-opacity"
+                >
+                  Collect
+                </button>
+              )}
             </div>
           );
         })}
