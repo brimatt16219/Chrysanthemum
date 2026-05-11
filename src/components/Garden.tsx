@@ -102,6 +102,9 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
           if (!opt) {
             harvestingPlots.current.delete(key);
           } else {
+            if (harvestedSpeciesId) {
+              audioManager.playSfx(harvestedMutation ? "mutation" : "harvest");
+            }
             perform(
               opt.state,
               async () => {
@@ -116,7 +119,6 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
                 if (harvestedSpeciesId) {
                   onHarvestPopup(harvestedSpeciesId, harvestedMutation);
                   if (harvestedHeirloom) onHarvestPopup(harvestedSpeciesId, undefined, true);
-                  audioManager.playSfx(harvestedMutation ? "mutation" : "harvest");
                   // Achievement stats
                   const flower = getFlower(harvestedSpeciesId);
                   if (flower) {
@@ -426,6 +428,7 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
     const optimistic = plantSeed(state, row, col, speciesId);
     if (optimistic) {
       const sp = getFlower(speciesId);
+      audioManager.playSfx("plant");
       perform(
         optimistic,
         async () => {
@@ -451,7 +454,6 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
           const label = discovered && sp ? `${sp.name} Seed` : "??? Seed";
           pushGenericToast(`loss:seed:${speciesId}`, emoji, label, "text-green-400", "loss");
           incrementStat("seeds_planted");
-          audioManager.playSfx("plant");
         },
       );
     }
@@ -464,13 +466,13 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
     const optimistic = plantBloom(state, row, col, speciesId, mutation);
     if (optimistic) {
       const sp = getFlower(speciesId);
+      audioManager.playSfx("plant");
       perform(
         optimistic,
         () => edgePlantBloom(row, col, speciesId, mutation),
         () => {
           if (sp) pushGenericToast(`loss:bloom:${speciesId}:${mutation ?? ""}`, sp.emoji.bloom, sp.name, RARITY_CONFIG[sp.rarity].color, "loss");
           incrementStat("seeds_planted");
-          audioManager.playSfx("plant");
         },
       );
     }
@@ -718,7 +720,6 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
                 onHarvest={(speciesId, mutation, _isBloomPlaced, heirloomActive) => {
                   onHarvestPopup(speciesId, mutation);
                   if (heirloomActive) onHarvestPopup(speciesId, undefined, true);
-                  audioManager.playSfx(mutation ? "mutation" : "harvest");
                 }}
                 onHarvestStart={() => harvestingPlots.current.add(`${row}-${col}`)}
                 onHarvestEnd={() => harvestingPlots.current.delete(`${row}-${col}`)}

@@ -20,6 +20,7 @@ import { useGame } from "../store/GameContext";
 import { useSettings } from "../store/SettingsContext";
 import { edgeHarvest } from "../lib/edgeFunctions";
 import { useDailyProgress } from "../hooks/useDailyProgress";
+import { audioManager } from "../lib/audioManager";
 
 const WEATHER_MUT_LABEL: Partial<Record<WeatherType, string>> = {
   rain:            "wet",
@@ -206,6 +207,7 @@ export function PlotTile({
       const harvestedMutation = savedCell.plant?.mutation ?? undefined;
       harvestingRef.current = true;
       onHarvestStart?.();
+      audioManager.playSfx(harvestedMutation ? "mutation" : "harvest");
       perform(
         optimistic.state,
         async () => {

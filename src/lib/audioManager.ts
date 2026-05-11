@@ -49,6 +49,15 @@ class AudioManager {
     this.elA.addEventListener("ended", () => this.advancePlaylist());
     this.elB.addEventListener("ended", () => this.advancePlaylist());
 
+    // Pre-load all SFX into the pool so the browser fetches and decodes
+    // every file at startup. Without this, first-play incurs a network
+    // round-trip that causes a noticeable delay on harvest/plant/etc.
+    for (const [id, url] of Object.entries(SFX_TRACKS)) {
+      const el    = new Audio(url);
+      el.preload  = "auto";
+      this.sfxPool.set(id, [el]);
+    }
+
     const unlock = () => {
       this.unlocked = true;
       if (this.pendingUrl) {
