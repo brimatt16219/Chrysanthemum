@@ -87,9 +87,7 @@ function AppInner() {
     activeWeather, weatherMsLeft, weatherIsActive,
   } = useGame();
 
-  const [playAsGuest,   setPlayAsGuest]   = useState(false);
-
-  useAudio(!!user || playAsGuest);
+  useAudio(!!user);
 
   // ── Level-up SFX ─────────────────────────────────────────────────────────────
   const prevGardenerLevelRef = useRef(state.gardenerLevel);
@@ -533,11 +531,10 @@ function AppInner() {
     );
   }
 
-  if (!user && !playAsGuest) {
+  if (!user) {
     return (
       <LoginPage
         onSignIn={signInWithGoogle}
-        onGuest={() => setPlayAsGuest(true)}
       />
     );
   }

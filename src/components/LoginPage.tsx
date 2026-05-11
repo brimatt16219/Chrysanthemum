@@ -59,10 +59,9 @@ for (let col = 0; col < COLS; col++) {
 
 interface Props {
   onSignIn: () => void;
-  onGuest:  () => void;
 }
 
-export function LoginPage({ onSignIn, onGuest }: Props) {
+export function LoginPage({ onSignIn }: Props) {
   useEffect(() => {
     // Module-level singleton — persists through React unmounts so music
     // survives the brief component teardown during guest / OAuth flow.
@@ -119,15 +118,6 @@ export function LoginPage({ onSignIn, onGuest }: Props) {
         >
           Sign in with Google
         </button>
-        <button
-          onClick={onGuest}
-          className="w-full py-2.5 rounded-xl border border-border text-sm text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors text-center"
-        >
-          Play as guest
-        </button>
-        <p className="text-center text-[10px] text-muted-foreground px-2">
-          Guest progress saves locally only and won't sync across devices.
-        </p>
       </div>
 
     </div>
