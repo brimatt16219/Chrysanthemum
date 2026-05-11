@@ -76,6 +76,15 @@ class AudioManager {
     document.addEventListener("touchstart", resumeBlocked);
   }
 
+  /** Hard-stop all music immediately (used when leaving the game to the login page). */
+  stopMusic(): void {
+    if (this.fadeTimer) { clearInterval(this.fadeTimer); this.fadeTimer = null; }
+    this.elA.pause(); this.elA.src = ""; this.elA.volume = 0;
+    this.elB.pause(); this.elB.src = ""; this.elB.volume = 0;
+    this.currentUrl     = null;
+    this.currentContext = "";
+  }
+
   // ── Public: music ───────────────────────────────────────────────────────────
 
   /**

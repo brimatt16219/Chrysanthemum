@@ -87,7 +87,9 @@ function AppInner() {
     activeWeather, weatherMsLeft, weatherIsActive,
   } = useGame();
 
-  useAudio();
+  const [playAsGuest,   setPlayAsGuest]   = useState(false);
+
+  useAudio(!!user || playAsGuest);
 
   // ── Level-up SFX ─────────────────────────────────────────────────────────────
   const prevGardenerLevelRef = useRef(state.gardenerLevel);
@@ -103,7 +105,6 @@ function AppInner() {
   const { pendingCount, newRequest, clearNewRequest } = useFriendRequests(user?.id ?? null);
   const { newGift, clearNewGift } = useGiftNotifications(user?.id ?? null);
   const { unreadCount: mailboxUnreadCount } = useMailbox(user?.id ?? null);
-  const [playAsGuest,   setPlayAsGuest]   = useState(false);
   const [showSettings,  setShowSettings]  = useState(false);
 
   const [tab, setTab]               = useState<Tab>("garden");
