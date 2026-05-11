@@ -109,6 +109,7 @@ export const FLOWERS: FlowerSpecies[] = [
     name: "Dustweed",
     description: "Barely worth harvesting. But it's ready in a minute.",
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🌫️" },
+    sprite: { bloom: "/sprites/flowers/dustweed.png" },
     rarity: "common",
     types: ["zephyr", "shadow"],
     growthTime: { seed: 45_000, sprout: 90_000 },
