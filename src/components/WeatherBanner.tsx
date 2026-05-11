@@ -1,6 +1,32 @@
+import React from "react";
 import { WEATHER } from "../data/weather";
 import type { WeatherType } from "../data/weather";
-import type { DayPeriodDefinition } from "../data/dayNight";
+import type { DayPeriodDefinition, DayPeriod } from "../data/dayNight";
+
+const PX: React.CSSProperties = { imageRendering: "pixelated" };
+
+const WEATHER_SPRITE: Record<WeatherType, string> = {
+  clear:           "/sprites/ui/weather_clear.png",
+  rain:            "/sprites/ui/weather_rain.png",
+  golden_hour:     "/sprites/ui/weather_golden_hour.png",
+  prismatic_skies: "/sprites/ui/weather_prismatic_skies.png",
+  star_shower:     "/sprites/ui/weather_star_shower.png",
+  cold_front:      "/sprites/ui/weather_cold_front.png",
+  heatwave:        "/sprites/ui/weather_heatwave.png",
+  thunderstorm:    "/sprites/ui/weather_thunderstorm.png",
+  tornado:         "/sprites/ui/weather_tornado.png",
+};
+
+const PERIOD_SPRITE: Record<DayPeriod, string> = {
+  midnight:  "/sprites/ui/period_midnight.png",
+  dawn:      "/sprites/ui/period_dawn.png",
+  morning:   "/sprites/ui/period_morning.png",
+  midday:    "/sprites/ui/period_midday.png",
+  afternoon: "/sprites/ui/period_afternoon.png",
+  sunset:    "/sprites/ui/period_sunset.png",
+  dusk:      "/sprites/ui/period_dusk.png",
+  night:     "/sprites/ui/period_night.png",
+};
 
 interface Props {
   weatherType: WeatherType;
@@ -75,13 +101,13 @@ export function WeatherBanner({ weatherType, isActive, msLeft, period, suppressT
       title={weatherActive ? def.description : period.label}
     >
       {/* Day/night period — always shown */}
-      <span className="text-sm">{period.emoji}</span>
+      <img src={PERIOD_SPRITE[period.id]} alt={period.label} className="w-4 h-4 object-contain" style={PX} />
 
       {/* Separator + weather info — only when weather is active */}
       {weatherActive && (
         <>
           <span className="opacity-40">·</span>
-          <span className="text-sm">{def.emoji}</span>
+          <img src={WEATHER_SPRITE[weatherType]} alt={def.name} className="w-4 h-4 object-contain" style={PX} />
           <span className="font-semibold hidden">{SHORT_NAMES[weatherType]}</span>
           {!suppressTime && <span className="opacity-70 sm:hidden">{formatTimeLeftShort(msLeft)}</span>}
           {!suppressTime && <span className="opacity-70 hidden sm:inline">{formatTimeLeft(msLeft)}</span>}
