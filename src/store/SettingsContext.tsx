@@ -7,6 +7,7 @@ export interface Settings {
   plotMutationIndicator:   boolean;
   plotMasteryIndicator:    boolean;
   plotFertilizerIndicator: boolean;
+  useSprites:              boolean;
   theme:                   string;
   // ── Audio ──────────────────────────────────────────────
   musicVolume:             number;   // 0–1
@@ -21,6 +22,7 @@ const DEFAULTS: Settings = {
   plotMutationIndicator:   true,
   plotMasteryIndicator:    true,
   plotFertilizerIndicator: true,
+  useSprites:              true,
   theme:                   "garden",
   // ── Audio ──────────────────────────────────────────────
   musicVolume:             0.5,

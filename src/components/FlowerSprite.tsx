@@ -1,4 +1,5 @@
 import type { FlowerSpecies, GrowthStage } from "../data/flowers";
+import { useSettings } from "../store/SettingsContext";
 
 interface Props {
   species:   FlowerSpecies;
@@ -22,7 +23,8 @@ export function FlowerSprite({
   imgSize   = "w-8 h-8",
   className = "",
 }: Props) {
-  const src = species.sprite?.[stage];
+  const { settings } = useSettings();
+  const src = settings.useSprites ? species.sprite?.[stage] : undefined;
 
   if (src) {
     return (

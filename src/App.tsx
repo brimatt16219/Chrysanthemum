@@ -41,7 +41,7 @@ import { WeatherForecastPanel } from "./components/WeatherForecastPanel";
 import { DayNightOverlay } from "./components/DayNightOverlay";
 import { useGame } from "./store/GameContext";
 import { supabase } from "./lib/supabase";
-import { SettingsProvider } from "./store/SettingsContext";
+import { SettingsProvider, useSettings } from "./store/SettingsContext";
 import { useFriendRequests } from "./hooks/useFriendRequests";
 import { useGiftNotifications } from "./hooks/useGiftNotifications";
 import { useMailbox } from "./hooks/useMailbox";
@@ -66,6 +66,17 @@ type Tab = "garden" | "shop" | "inventory" | "social" | "codex" | "alchemy" | "c
 type ShopView   = "seeds" | "supply";
 type SocialView = "search" | "friends" | "mailbox" | "leaderboard" | "marketplace";
 
+const TAB_EMOJI: Record<Tab, string> = {
+  garden:    "🌱",
+  shop:      "🛒",
+  inventory: "🎒",
+  alchemy:   "⚗️",
+  craft:     "⚒️",
+  codex:     "📖",
+  events:    "🎉",
+  social:    "👥",
+};
+
 
 export default function App() {
   return <SettingsProvider><AppInner /></SettingsProvider>;
@@ -86,6 +97,8 @@ function AppInner() {
     signInPromptReason, dismissSignInPrompt,
     activeWeather, weatherMsLeft, weatherIsActive,
   } = useGame();
+
+  const { settings } = useSettings();
 
   useAudio(!!user);
 
@@ -681,7 +694,10 @@ function AppInner() {
             className="font-bold text-primary tracking-wide cursor-pointer flex items-center gap-1"
             onClick={() => handleTabChange("garden")}
           >
-            <img src="/sprites/ui/logo.png" alt="🌸" className="w-6 h-6 object-contain" style={{ imageRendering: "pixelated" }} />
+            {settings.useSprites
+              ? <img src="/sprites/ui/logo.png" alt="🌸" className="w-6 h-6 object-contain" style={{ imageRendering: "pixelated" }} />
+              : <span>🌸</span>
+            }
             <span className="hidden sm:block text-lg">Chrysanthemum</span>
           </h1>
           <div className="flex items-center gap-2 sm:gap-3">
@@ -703,11 +719,17 @@ function AppInner() {
             </button>
             <ActiveBoostsHUD activeBoosts={state.activeBoosts} />
             <span className="flex items-center gap-1 text-sm font-mono" title={state.coins.toLocaleString()}>
-              <img src="/sprites/ui/coins.png" alt="coins" className="w-4 h-4 object-contain" style={{ imageRendering: "pixelated" }} />
+              {settings.useSprites
+                ? <img src="/sprites/ui/coins.png" alt="coins" className="w-4 h-4 object-contain" style={{ imageRendering: "pixelated" }} />
+                : <span>🟡</span>
+              }
               {formatCoins(state.coins)}
             </span>
             <span className="flex items-center gap-1 text-sm font-mono" title={state.gems.toLocaleString()}>
-              <img src="/sprites/ui/gems.png" alt="gems" className="w-4 h-4 object-contain" style={{ imageRendering: "pixelated" }} />
+              {settings.useSprites
+                ? <img src="/sprites/ui/gems.png" alt="gems" className="w-4 h-4 object-contain" style={{ imageRendering: "pixelated" }} />
+                : <span>💎</span>
+              }
               {state.gems.toLocaleString()}
             </span>
             {!authLoading && (
@@ -742,7 +764,10 @@ function AppInner() {
               className="text-xs px-2 py-1.5 rounded-lg border border-border text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
               title="Settings"
             >
-              <img src="/sprites/ui/settings.png" alt="⚙️" className="w-4 h-4 object-contain" style={{ imageRendering: "pixelated" }} />
+              {settings.useSprites
+                ? <img src="/sprites/ui/settings.png" alt="⚙️" className="w-4 h-4 object-contain" style={{ imageRendering: "pixelated" }} />
+                : <span>⚙️</span>
+              }
             </button>
           </div>
         </div>
@@ -765,12 +790,15 @@ function AppInner() {
                 }
               `}
             >
-              <img
-                src={`/sprites/ui/tab_${t}.png`}
-                alt={t}
-                className="w-5 h-5 sm:w-6 sm:h-6 object-contain"
-                style={{ imageRendering: "pixelated" }}
-              />
+              {settings.useSprites
+                ? <img
+                    src={`/sprites/ui/tab_${t}.png`}
+                    alt={t}
+                    className="w-5 h-5 sm:w-6 sm:h-6 object-contain"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                : <span className="text-lg sm:text-xl leading-none">{TAB_EMOJI[t]}</span>
+              }
               <span className="hidden sm:inline text-xs capitalize">{t}</span>
 
               {t === "garden"    && gardenNewBlooms > 0                              && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary rounded-full" />}

@@ -1,5 +1,6 @@
 import React from "react";
 import { WEATHER } from "../data/weather";
+import { useSettings } from "../store/SettingsContext";
 import type { WeatherType } from "../data/weather";
 import type { DayPeriodDefinition, DayPeriod } from "../data/dayNight";
 
@@ -87,6 +88,7 @@ const bgClass: Record<WeatherType, string> = {
 };
 
 export function WeatherBanner({ weatherType, isActive, msLeft, period, suppressTime = false }: Props) {
+  const { settings } = useSettings();
   const def = WEATHER[weatherType];
   const weatherActive = isActive && weatherType !== "clear";
 
@@ -101,13 +103,19 @@ export function WeatherBanner({ weatherType, isActive, msLeft, period, suppressT
       title={weatherActive ? def.description : period.label}
     >
       {/* Day/night period — always shown */}
-      <img src={PERIOD_SPRITE[period.id]} alt={period.label} className="w-4 h-4 object-contain" style={PX} />
+      {settings.useSprites
+        ? <img src={PERIOD_SPRITE[period.id]} alt={period.label} className="w-4 h-4 object-contain" style={PX} />
+        : <span className="text-sm">{period.emoji}</span>
+      }
 
       {/* Separator + weather info — only when weather is active */}
       {weatherActive && (
         <>
           <span className="opacity-40">·</span>
-          <img src={WEATHER_SPRITE[weatherType]} alt={def.name} className="w-4 h-4 object-contain" style={PX} />
+          {settings.useSprites
+            ? <img src={WEATHER_SPRITE[weatherType]} alt={def.name} className="w-4 h-4 object-contain" style={PX} />
+            : <span className="text-sm">{def.emoji}</span>
+          }
           <span className="font-semibold hidden">{SHORT_NAMES[weatherType]}</span>
           {!suppressTime && <span className="opacity-70 sm:hidden">{formatTimeLeftShort(msLeft)}</span>}
           {!suppressTime && <span className="opacity-70 hidden sm:inline">{formatTimeLeft(msLeft)}</span>}

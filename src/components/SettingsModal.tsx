@@ -8,6 +8,11 @@ interface Props { onClose: () => void; onSignOut?: () => void; }
 
 const VISUAL_TOGGLES: { key: keyof Settings; label: string; description: string }[] = [
   {
+    key:         "useSprites",
+    label:       "Pixel art sprites",
+    description: "Show pixel art images for flowers and UI icons. Turn off to use classic emoji.",
+  },
+  {
     key:         "plotAnimations",
     label:       "Tile animations",
     description: "Particle effects on tiles (water drops, glow, birds, sparkles)",

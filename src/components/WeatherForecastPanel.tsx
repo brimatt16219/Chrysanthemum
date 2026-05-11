@@ -3,6 +3,7 @@ import { WEATHER } from "../data/weather";
 import type { WeatherType } from "../data/weather";
 import { useGame } from "../store/GameContext";
 import { FORECAST_SLOT_COSTS, MAX_FORECAST_SLOTS } from "../store/gameStore";
+import { useSettings } from "../store/SettingsContext";
 
 const PX: React.CSSProperties = { imageRendering: "pixelated" };
 
@@ -78,6 +79,8 @@ export function WeatherForecastPanel({ onClose }: Props) {
     weatherIsActive,
   } = useGame();
 
+  const { settings } = useSettings();
+
   const slots      = state.weatherForecastSlots ?? 0;
   const canUpgrade = slots < MAX_FORECAST_SLOTS;
   const nextCost   = canUpgrade ? FORECAST_SLOT_COSTS[slots] : null;
@@ -122,7 +125,10 @@ export function WeatherForecastPanel({ onClose }: Props) {
         {/* Sticky header */}
         <div className="flex items-center justify-between px-5 py-4 sticky top-0 bg-card rounded-t-2xl z-10 border-b border-border/40">
           <h2 className="font-bold text-base flex items-center gap-2">
-            <img src="/sprites/ui/forecast.png" alt="forecast" className="w-5 h-5 object-contain" style={PX} />
+            {settings.useSprites
+              ? <img src="/sprites/ui/forecast.png" alt="forecast" className="w-5 h-5 object-contain" style={PX} />
+              : <span>🔭</span>
+            }
             <span>Weather Forecast</span>
           </h2>
           <button
@@ -138,7 +144,10 @@ export function WeatherForecastPanel({ onClose }: Props) {
 
         {/* Current weather */}
         <div className={`flex items-center gap-3 rounded-xl border p-3 ${bgClass[activeWeather]} ${accentClass[activeWeather]}`}>
-          <img src={WEATHER_SPRITE[activeWeather]} alt={currentDef.name} className="w-10 h-10 object-contain shrink-0" style={PX} />
+          {settings.useSprites
+            ? <img src={WEATHER_SPRITE[activeWeather]} alt={currentDef.name} className="w-10 h-10 object-contain shrink-0" style={PX} />
+            : <span className="text-3xl shrink-0">{currentDef.emoji}</span>
+          }
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm">{currentDef.name}</p>
             <p className="text-xs text-muted-foreground">Now</p>
@@ -159,7 +168,10 @@ export function WeatherForecastPanel({ onClose }: Props) {
 
           {slots === 0 ? (
             <div className="flex flex-col items-center gap-2 py-6 text-center">
-              <img src="/sprites/ui/weather_unknown.png" alt="unknown" className="w-10 h-10 object-contain" style={PX} />
+              {settings.useSprites
+                ? <img src="/sprites/ui/weather_unknown.png" alt="unknown" className="w-10 h-10 object-contain" style={PX} />
+                : <span className="text-3xl">🌫️</span>
+              }
               <p className="text-sm text-muted-foreground">
                 Purchase forecast slots to see upcoming weather.
               </p>
@@ -194,7 +206,10 @@ export function WeatherForecastPanel({ onClose }: Props) {
                     key={i}
                     className={`flex items-center gap-3 rounded-xl border p-3 ${bgClass[entry.type]} ${accentClass[entry.type]}`}
                   >
-                    <img src={WEATHER_SPRITE[entry.type]} alt={def.name} className="w-8 h-8 object-contain shrink-0" style={PX} />
+                    {settings.useSprites
+                      ? <img src={WEATHER_SPRITE[entry.type]} alt={def.name} className="w-8 h-8 object-contain shrink-0" style={PX} />
+                      : <span className="text-2xl shrink-0">{def.emoji}</span>
+                    }
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold">{def.name}</p>
                       <p className="text-xs text-muted-foreground/70 font-mono">
@@ -224,12 +239,19 @@ export function WeatherForecastPanel({ onClose }: Props) {
             >
               <span className="flex items-center justify-center gap-1.5">
                 {`Unlock slot ${slots + 1} — ${nextCost!.toLocaleString()}`}
-                <img src="/sprites/ui/coins.png" alt="coins" className="w-4 h-4 object-contain" style={PX} />
+                {settings.useSprites
+                  ? <img src="/sprites/ui/coins.png" alt="coins" className="w-4 h-4 object-contain" style={PX} />
+                  : <span>🟡</span>
+                }
               </span>
             </button>
             {!canAfford && (
               <p className="text-xs text-muted-foreground/60 text-center">
-                You have {state.coins.toLocaleString()} <img src="/sprites/ui/coins.png" alt="coins" className="w-3.5 h-3.5 object-contain inline" style={PX} />
+                You have {state.coins.toLocaleString()}{" "}
+                {settings.useSprites
+                  ? <img src="/sprites/ui/coins.png" alt="coins" className="w-3.5 h-3.5 object-contain inline" style={PX} />
+                  : <span>🟡</span>
+                }
               </p>
             )}
           </div>
