@@ -57,6 +57,9 @@ import { GardenerXpBar } from "./components/GardenerXpBar";
 import { CHANGELOGS, LATEST_CHANGELOG_VERSION, type ChangelogEntry } from "./data/changelog";
 import { EventsTab } from "./components/EventsTab";
 import { LoginPage } from "./components/LoginPage";
+import { useAudio } from "./hooks/useAudio";
+import { audioManager } from "./lib/audioManager";
+import { SettingsModal } from "./components/SettingsModal";
 
 type Tab = "garden" | "shop" | "inventory" | "social" | "codex" | "alchemy" | "craft" | "events";
 type ShopView   = "seeds" | "supply";
@@ -83,12 +86,24 @@ function AppInner() {
     activeWeather, weatherMsLeft, weatherIsActive,
   } = useGame();
 
+  useAudio();
+
+  // ── Level-up SFX ─────────────────────────────────────────────────────────────
+  const prevGardenerLevelRef = useRef(state.gardenerLevel);
+  useEffect(() => {
+    if (state.gardenerLevel > prevGardenerLevelRef.current) {
+      audioManager.playSfx("levelUp");
+    }
+    prevGardenerLevelRef.current = state.gardenerLevel;
+  }, [state.gardenerLevel]);
+
   usePresence();
 
   const { pendingCount, newRequest, clearNewRequest } = useFriendRequests(user?.id ?? null);
   const { newGift, clearNewGift } = useGiftNotifications(user?.id ?? null);
   const { unreadCount: mailboxUnreadCount } = useMailbox(user?.id ?? null);
-  const [playAsGuest, setPlayAsGuest] = useState(false);
+  const [playAsGuest,   setPlayAsGuest]   = useState(false);
+  const [showSettings,  setShowSettings]  = useState(false);
 
   const [tab, setTab]               = useState<Tab>("garden");
   const [shopView,      setShopView]      = useState<ShopView>("seeds");
@@ -610,6 +625,12 @@ function AppInner() {
           }}
         />
       )}
+      {showSettings && (
+        <SettingsModal
+          onClose={() => setShowSettings(false)}
+          onSignOut={user ? () => { setShowSettings(false); signOut(); } : undefined}
+        />
+      )}
 
       {updateAvailable && !dismissedUpdate && (
         <UpdateBanner onDismiss={() => setDismissedUpdate(true)} />
@@ -677,12 +698,6 @@ function AppInner() {
                     </span>
                     <span className="hidden sm:inline">{profile?.username ?? "..."}</span>
                   </button>
-                  <button
-                    onClick={signOut}
-                    className="text-xs px-2 sm:px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
-                  >
-                    Sign out
-                  </button>
                 </div>
               ) : (
                 <button
@@ -693,6 +708,13 @@ function AppInner() {
                 </button>
               )
             )}
+            <button
+              onClick={() => setShowSettings(true)}
+              className="text-xs px-2 py-1.5 rounded-lg border border-border text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
+              title="Settings"
+            >
+              ⚙️
+            </button>
           </div>
         </div>
         <GardenerXpBar level={state.gardenerLevel} xp={state.gardenerXp} />

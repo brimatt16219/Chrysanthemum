@@ -321,12 +321,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         if (loadGen.current !== gen) return;
         if (freshCloud) {
           const { state: reticked } = applyOfflineTick(freshCloud, offlineWeather);
-          stateRef.current = reticked;
-          setState(reticked);
+          stateRef.current = { ...reticked, events: loadedEvents };
+          setState(stateRef.current);
           savedUpdatedAt = await saveToCloud(u.id, reticked);
           if (loadGen.current !== gen) return;
           if (savedUpdatedAt) {
-            stateRef.current = { ...reticked, serverUpdatedAt: savedUpdatedAt };
+            stateRef.current = { ...reticked, events: loadedEvents, serverUpdatedAt: savedUpdatedAt };
             setState(stateRef.current);
           }
         }
@@ -337,7 +337,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     } catch (e) {
       if (loadGen.current !== gen) return; // sign-out fired — discard
       const { state: localState, summary } = loadGame();
-      setState(localState);
+      setState({ ...localState, events: loadedEvents });
       setOfflineSummary(summary);
       saveEnabled.current = true;
     }

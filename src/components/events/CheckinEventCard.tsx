@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useGame } from "../../store/GameContext";
 import type { EventEntry } from "../../store/gameStore";
 import { edgeCheckinClaim } from "../../lib/edgeFunctions";
+import { audioManager } from "../../lib/audioManager";
 
 interface CheckinConfig {
   days: { day: number; gems: number }[];
@@ -42,6 +43,7 @@ export function CheckinEventCard({ event }: Props) {
         ),
       });
       pushGenericToast("checkin_claim", "💎", `Day ${result.claimedDay} claimed!`, undefined, "gain", result.gemsGained);
+      audioManager.playSfx("checkinClaim");
     } catch (e) {
       console.error("checkin claim failed:", e);
     } finally {

@@ -32,6 +32,7 @@ import {
 import type { ShopSlot } from "../store/gameStore";
 import { RatesModal } from "./RatesModal";
 import type { RateRow } from "./RatesModal";
+import { audioManager } from "../lib/audioManager";
 
 function formatCountdown(ms: number): string {
   const totalSec = Math.max(0, Math.floor(ms / 1_000));
@@ -109,10 +110,12 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
       const r = CONSUMABLE_RECIPE_MAP[slot.consumableId as ConsumableId];
       if (r) { toastEmoji = r.emoji; toastLabel = r.name; toastColor = RARITY_CONFIG[r.rarity].color; }
     }
+    audioManager.playSfx("buy");
+    if (toastEmoji) pushGenericToast(slot.speciesId!, toastEmoji, toastLabel, toastColor);
     perform(
       optimistic,
       () => edgeBuyFromSupplyShop(slot.speciesId),
-      () => { if (toastEmoji) pushGenericToast(slot.speciesId!, toastEmoji, toastLabel, toastColor); },
+      undefined,
       {
         rollback: (cur) => {
           const restoredShop = (cur.supplyShop ?? []).map((s) =>

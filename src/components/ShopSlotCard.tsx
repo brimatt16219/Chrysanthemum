@@ -9,6 +9,7 @@ import type { ShopSlot } from "../store/gameStore";
 import type { Rarity } from "../data/flowers";
 import { useDailyProgress } from "../hooks/useDailyProgress";
 import { useAchievementStats } from "../hooks/useAchievementStats";
+import { audioManager } from "../lib/audioManager";
 
 
 interface Props {
@@ -83,6 +84,8 @@ export function ShopSlotCard({ slot }: Props) {
       const savedCoins       = cur.coins;
       const savedShop        = cur.shop;
       const savedFertilizers = cur.fertilizers;
+      audioManager.playSfx("buy");
+      flashBought();
       perform(
         optimistic,
         async () => {
@@ -101,10 +104,7 @@ export function ShopSlotCard({ slot }: Props) {
             buyingRef.current = false;
           }
         },
-        () => {
-          flashBought();
-          void trackProgress("shop_buy");
-        },
+        () => { void trackProgress("shop_buy"); },
         {
           serialize: true,
           rollback: (c) => ({ ...c, coins: savedCoins, shop: savedShop, fertilizers: savedFertilizers }),
@@ -122,6 +122,8 @@ export function ShopSlotCard({ slot }: Props) {
       const savedCoins       = cur.coins;
       const savedShop        = cur.shop;
       const savedFertilizers = cur.fertilizers;
+      audioManager.playSfx("buy");
+      flashBought();
       perform(
         optimistic,
         async () => {
@@ -139,10 +141,7 @@ export function ShopSlotCard({ slot }: Props) {
             buyingRef.current = false;
           }
         },
-        () => {
-          flashBought();
-          void trackProgress("shop_buy");
-        },
+        () => { void trackProgress("shop_buy"); },
         {
           serialize: true,
           rollback: (c) => ({ ...c, coins: savedCoins, shop: savedShop, fertilizers: savedFertilizers }),
@@ -234,6 +233,9 @@ export function ShopSlotCard({ slot }: Props) {
     const savedCoins     = cur.coins;
     const savedShop      = cur.shop;
     const savedInventory = cur.inventory;
+    audioManager.playSfx("buy");
+    flashBought();
+    pushGenericToast(`gain:seed:${species!.id}`, isNew ? "❓" : species!.emoji.seed, isNew ? "??? Seed" : `${species!.name} Seed`, "text-green-400", "gain");
     perform(
       optimistic,
       async () => {
@@ -252,14 +254,7 @@ export function ShopSlotCard({ slot }: Props) {
           buyingRef.current = false;
         }
       },
-      () => {
-        flashBought();
-        void trackProgress("shop_buy");
-        incrementStat("plants_bought");
-        const emoji = isNew ? "❓" : species!.emoji.seed;
-        const label = isNew ? "??? Seed" : `${species!.name} Seed`;
-        pushGenericToast(`gain:seed:${species!.id}`, emoji, label, "text-green-400", "gain");
-      },
+      () => { void trackProgress("shop_buy"); incrementStat("plants_bought"); },
       {
         serialize: true,
         rollback: (c) => ({ ...c, coins: savedCoins, shop: savedShop, inventory: savedInventory }),
@@ -280,6 +275,9 @@ export function ShopSlotCard({ slot }: Props) {
     const savedCoins     = cur.coins;
     const savedShop      = cur.shop;
     const savedInventory = cur.inventory;
+    audioManager.playSfx("buy");
+    flashBought();
+    if (qty > 0) pushGenericToast(`gain:seed:${species!.id}`, isNew ? "❓" : species!.emoji.seed, isNew ? "??? Seed" : `${species!.name} Seed`, "text-green-400", "gain", qty);
     perform(
       optimistic,
       async () => {
@@ -297,16 +295,7 @@ export function ShopSlotCard({ slot }: Props) {
           buyingRef.current = false;
         }
       },
-      () => {
-        flashBought();
-        void trackProgress("shop_buy");
-        if (qty > 0) {
-          incrementStat("plants_bought", qty);
-          const emoji = isNew ? "❓" : species!.emoji.seed;
-          const label = isNew ? "??? Seed" : `${species!.name} Seed`;
-          pushGenericToast(`gain:seed:${species!.id}`, emoji, label, "text-green-400", "gain", qty);
-        }
-      },
+      () => { void trackProgress("shop_buy"); if (qty > 0) incrementStat("plants_bought", qty); },
       {
         serialize: true,
         rollback: (c) => ({ ...c, coins: savedCoins, shop: savedShop, inventory: savedInventory }),

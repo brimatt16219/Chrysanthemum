@@ -17,6 +17,7 @@ import {
 } from "../data/upgrades";
 import { edgeMarketplaceUpgradeSlots } from "../lib/edgeFunctions";
 import { useDailyProgress } from "../hooks/useDailyProgress";
+import { audioManager } from "../lib/audioManager";
 
 const PAGE_SIZE = 20;
 
@@ -215,6 +216,7 @@ export function MarketplacePage({ onViewProfile }: Props) {
       const result = await edgeMarketplaceBuy(listing.id);
       const cur = getState();
       update({ ...cur, coins: result.coins });
+      audioManager.playSfx("buy");
       void trackProgress("marketplace_buy");
       setListings((prev) => prev.filter((l) => l.id !== listing.id));
       setBuySuccess(true);

@@ -46,12 +46,12 @@ export function EventsTab() {
 
       {view === "events" && (
         <div className="flex flex-col gap-4">
-          {state.events.length === 0 ? (
+          {(state.events ?? []).length === 0 ? (
             <p className="text-xs text-center text-muted-foreground py-8">
               No active events right now — check back soon! 🌱
             </p>
           ) : (
-            state.events.map((event) => {
+            (state.events ?? []).map((event) => {
               const Card = EVENT_CARD_REGISTRY[event.type];
               if (!Card) return null;
               return <Card key={event.id} event={event} />;
