@@ -66,11 +66,19 @@ class AudioManager {
   /** Call whenever the resolved playlist changes (period or weather switch). */
   playPlaylist(tracks: string[]): void {
     if (!tracks.length) return;
-    const shuffled       = this.shuffle(tracks);
+    const shuffled = this.shuffle(tracks);
+
+    // After a period/weather switch, avoid immediately replaying the track
+    // that was just playing. If the shuffle put it first and there are other
+    // options, rotate it to the end so something new always plays.
+    if (shuffled[0] === this.currentUrl && shuffled.length > 1) {
+      shuffled.push(shuffled.shift()!);
+    }
+
     this.currentPlaylist = shuffled;
     this.playlistIndex   = 0;
     const url            = shuffled[0];
-    if (url === this.currentUrl) return; // already playing — don't interrupt
+    if (url === this.currentUrl) return; // single-track playlist — keep playing
     this.crossfadeTo(url);
   }
 
