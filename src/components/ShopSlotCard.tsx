@@ -9,6 +9,7 @@ import type { ShopSlot } from "../store/gameStore";
 import type { Rarity } from "../data/flowers";
 import { useDailyProgress } from "../hooks/useDailyProgress";
 import { useAchievementStats } from "../hooks/useAchievementStats";
+import { audioManager } from "../lib/audioManager";
 
 
 interface Props {
@@ -83,6 +84,7 @@ export function ShopSlotCard({ slot }: Props) {
       const savedCoins       = cur.coins;
       const savedShop        = cur.shop;
       const savedFertilizers = cur.fertilizers;
+      audioManager.playSfx("buy");
       perform(
         optimistic,
         async () => {
@@ -122,6 +124,7 @@ export function ShopSlotCard({ slot }: Props) {
       const savedCoins       = cur.coins;
       const savedShop        = cur.shop;
       const savedFertilizers = cur.fertilizers;
+      audioManager.playSfx("buy");
       perform(
         optimistic,
         async () => {
@@ -234,6 +237,7 @@ export function ShopSlotCard({ slot }: Props) {
     const savedCoins     = cur.coins;
     const savedShop      = cur.shop;
     const savedInventory = cur.inventory;
+    audioManager.playSfx("buy");
     perform(
       optimistic,
       async () => {
@@ -280,6 +284,7 @@ export function ShopSlotCard({ slot }: Props) {
     const savedCoins     = cur.coins;
     const savedShop      = cur.shop;
     const savedInventory = cur.inventory;
+    audioManager.playSfx("buy");
     perform(
       optimistic,
       async () => {

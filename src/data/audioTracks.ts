@@ -123,4 +123,7 @@ export const SFX_TRACKS: Record<string, string> = {
   // ── Weather SFX ────────────────────────────────────────────────────────────
   thunderCrack:     "/audio/sfx/thunder_crack.mp3",   // one-shot, synced to lightning flash
   rainLoop:         "/audio/sfx/rain_loop.mp3",        // looping ambient — via setWeatherAmbience
+  // ── Economy SFX ────────────────────────────────────────────────────────────
+  sell:             "/audio/sfx/sell.mp3",              // sell all blooms from inventory
+  buy:              "/audio/sfx/buy.mp3",               // purchase from shop, supply shop, or marketplace
 };
