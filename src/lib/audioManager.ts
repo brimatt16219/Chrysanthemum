@@ -208,19 +208,46 @@ class AudioManager {
   private effectiveAmbienceVolume(){ return this._sfxMuted   ? 0 : this._sfxVolume * 0.6;      }
 
   /**
-   * Immediately silence both elements, then fade in `url` from scratch.
-   * Used for context switches so two clashing playlists never overlap.
+   * Fade out the current track, then fade in `url` from scratch.
+   * Used for context switches (ambient ↔ weather) so two clashing styles
+   * never play simultaneously, while still sounding smooth on transition.
    */
   private hardCutTo(url: string): void {
     if (!this.unlocked) { this.pendingUrl = url; return; }
 
     if (this.fadeTimer) { clearInterval(this.fadeTimer); this.fadeTimer = null; }
 
-    // Kill both elements completely so no ghost audio lingers from a mid-crossfade state
-    this.elA.pause(); this.elA.src = ""; this.elA.volume = 0;
-    this.elB.pause(); this.elB.src = ""; this.elB.volume = 0;
+    const FADE_OUT_MS = 800;
+    const cur      = this.activeEl();
+    const startVol = cur.volume;
 
-    // Always restart on elA so the active pointer is deterministic
+    // Nothing audible — skip fade-out and go straight to fade-in
+    if (startVol === 0 || !cur.src) {
+      this.elA.pause(); this.elA.src = ""; this.elA.volume = 0;
+      this.elB.pause(); this.elB.src = ""; this.elB.volume = 0;
+      this.startFadeIn(url);
+      return;
+    }
+
+    // Fade out the current track, then start the new one
+    const outSteps = FADE_OUT_MS / FADE_STEP_MS;
+    let   step     = 0;
+    this.fadeTimer = setInterval(() => {
+      step++;
+      const t   = Math.min(step / outSteps, 1);
+      cur.volume = startVol * (1 - t);
+      if (t >= 1) {
+        clearInterval(this.fadeTimer!);
+        this.fadeTimer = null;
+        this.elA.pause(); this.elA.src = ""; this.elA.volume = 0;
+        this.elB.pause(); this.elB.src = ""; this.elB.volume = 0;
+        this.startFadeIn(url);
+      }
+    }, FADE_STEP_MS);
+  }
+
+  /** Start a fresh fade-in on elA. Always called after hardCutTo's fade-out. */
+  private startFadeIn(url: string): void {
     this.active     = "A";
     this.currentUrl = url;
     this.elA.src    = url;
@@ -232,12 +259,9 @@ class AudioManager {
     let   step   = 0;
     this.fadeTimer = setInterval(() => {
       step++;
-      const t = Math.min(step / steps, 1);
+      const t         = Math.min(step / steps, 1);
       this.elA.volume = target * t;
-      if (t >= 1) {
-        clearInterval(this.fadeTimer!);
-        this.fadeTimer = null;
-      }
+      if (t >= 1) { clearInterval(this.fadeTimer!); this.fadeTimer = null; }
     }, FADE_STEP_MS);
   }
 
