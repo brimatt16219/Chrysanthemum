@@ -208,6 +208,7 @@ export function PlotTile({
       harvestingRef.current = true;
       onHarvestStart?.();
       audioManager.playSfx(harvestedMutation ? "mutation" : "harvest");
+      onHarvest(plant.speciesId, optimistic.mutation, savedCell.plant?.timePlanted === 0, savedCell.plant?.heirloomActive);
       perform(
         optimistic.state,
         async () => {
@@ -217,10 +218,7 @@ export function PlotTile({
             onHarvestEnd?.();
           }
         },
-        () => { 
-          onHarvest(plant.speciesId, optimistic.mutation, savedCell.plant?.timePlanted === 0, savedCell.plant?.heirloomActive); 
-          void trackProgress("harvest");
-        },
+        () => { void trackProgress("harvest"); },
         {
           serialize: true,
           rollback: (cur) => ({
