@@ -715,10 +715,51 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function signInWithGoogle() {
-    await supabase.auth.signInWithOAuth({
+    // Open about:blank synchronously — window.open must be called within the
+    // browser's user-gesture activation window; any await before it causes the
+    // popup to be blocked silently.
+    const w    = 500, h = 650;
+    const left = Math.round(window.screenX + (window.outerWidth  - w) / 2);
+    const top  = Math.round(window.screenY + (window.outerHeight - h) / 2);
+    const popup = window.open(
+      "about:blank",
+      "google-signin",
+      `width=${w},height=${h},left=${left},top=${top},scrollbars=yes,resizable=yes`,
+    );
+
+    const { data } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: window.location.origin },
+      options: {
+        redirectTo: window.location.origin,
+        skipBrowserRedirect: true,
+      },
     });
+
+    if (!popup || popup.closed || !data.url) {
+      popup?.close();
+      // Popup was blocked — fall back to full-page redirect.
+      await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: window.location.origin },
+      });
+      return;
+    }
+
+    popup.location.href = data.url;
+
+    // Poll every 500 ms. As soon as a session appears in localStorage (written
+    // by the popup's Supabase client after the OAuth exchange), load it on the
+    // main window and close the popup from here.  We also stop if the user
+    // manually closes the popup before completing sign-in.
+    const interval = setInterval(async () => {
+      if (popup.closed) { clearInterval(interval); return; }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        clearInterval(interval);
+        try { popup.close(); } catch { /* ignore */ }
+        await loadUserSession(session.user);
+      }
+    }, 500);
   }
 
   async function signOut() {

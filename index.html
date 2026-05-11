@@ -11,6 +11,13 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Capture OAuth callback params before any module JS runs.
+         ES module imports are hoisted, so this inline script is the only
+         place we can read ?code=&state= before Supabase strips them. -->
+    <script>
+      var p = new URLSearchParams(window.location.search);
+      if (p.has('code') && p.has('state')) window.__oauthCallback = true;
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
