@@ -1,5 +1,8 @@
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { getFlower, RARITY_CONFIG } from "../data/flowers";
+import { useSettings } from "../store/SettingsContext";
+
+const PX = { imageRendering: "pixelated" as const };
 import { FlowerTypeBadges } from "./FlowerTypeBadges";
 import { FERTILIZERS } from "../data/upgrades";
 import { useGame } from "../store/GameContext";
@@ -43,6 +46,7 @@ function rarityBadgeClass(rarity: Rarity): string {
 
 export function ShopSlotCard({ slot }: Props) {
   const { state, getState, perform, user, requestSignIn, pushGenericToast } = useGame();
+  const { settings } = useSettings();
   const [justBought, setJustBought] = useState(false);
   // Absolute per-card gate: blocks any buy while a server call is in-flight,
   // even if stateRef or queuing somehow lets a second request slip through.
@@ -59,7 +63,10 @@ export function ShopSlotCard({ slot }: Props) {
   if (slot.isEmpty) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 bg-card/20 border border-dashed border-border/50 rounded-xl p-4 min-h-[160px] opacity-60">
-        <span className="text-2xl">🌱</span>
+        {settings.useSprites
+          ? <img src="/sprites/ui/shop_empty_seed.png" alt="🌱" className="w-8 h-8 object-contain" style={PX} />
+          : <span className="text-2xl">🌱</span>
+        }
         <p className="text-xs text-muted-foreground text-center">New slot — fills on next restock</p>
       </div>
     );
@@ -198,7 +205,15 @@ export function ShopSlotCard({ slot }: Props) {
                 }
               `}
             >
-              {justBought ? "✓ Bought!" : `${slot.price} 🟡`}
+              {justBought ? "✓ Bought!" : (
+                <span className="flex items-center gap-1 justify-center">
+                  {slot.price}
+                  {settings.useSprites
+                    ? <img src="/sprites/ui/coins.png" alt="🟡" className="w-3.5 h-3.5 object-contain" style={PX} />
+                    : <span>🟡</span>
+                  }
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -354,7 +369,13 @@ export function ShopSlotCard({ slot }: Props) {
       <div className="text-xs text-muted-foreground font-mono space-y-0.5">
         <p>Seed → Sprout: {formatDuration(species.growthTime.seed)}</p>
         <p>Sprout → Bloom: {formatDuration(species.growthTime.sprout)}</p>
-        <p className="text-foreground/60">Sells for: {species.sellValue} 🟡</p>
+        <p className="text-foreground/60 flex items-center gap-1">
+          Sells for: {species.sellValue}
+          {settings.useSprites
+            ? <img src="/sprites/ui/coins.png" alt="🟡" className="w-3 h-3 object-contain" style={PX} />
+            : <span>🟡</span>
+          }
+        </p>
         <p className={`mt-1 ${ownedSeeds > 0 || ownedBlooms > 0 ? "text-primary/70" : "text-muted-foreground/50"}`}>
           You own: {ownedSeeds} seed{ownedSeeds !== 1 ? "s" : ""}
           {ownedBlooms > 0 && ` · ${ownedBlooms} bloom${ownedBlooms !== 1 ? "s" : ""}`}
@@ -387,7 +408,15 @@ export function ShopSlotCard({ slot }: Props) {
               }
             `}
           >
-            {justBought ? "✓ Bought!" : `${slot.price} 🟡`}
+            {justBought ? "✓ Bought!" : (
+              <span className="flex items-center gap-1 justify-center">
+                {slot.price}
+                {settings.useSprites
+                  ? <img src="/sprites/ui/coins.png" alt="🟡" className="w-3.5 h-3.5 object-contain" style={PX} />
+                  : <span>🟡</span>
+                }
+              </span>
+            )}
           </button>
         </div>
       </div>
