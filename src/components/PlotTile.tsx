@@ -16,6 +16,7 @@ import type { WeatherType } from "../data/weather";
 import { GEAR, isGearExpired, CROPSTICKS_BREED_DURATION_MS, type FanDirection } from "../data/gear";
 import { PlotTooltip } from "./PlotTooltip";
 import { GearTooltip } from "./GearTooltip";
+import { FlowerSprite } from "./FlowerSprite";
 import { useGame } from "../store/GameContext";
 import { useSettings } from "../store/SettingsContext";
 import { edgeHarvest } from "../lib/edgeFunctions";
@@ -573,9 +574,16 @@ export function PlotTile({
           </div>
         )}
 
-        <span className="text-2xl leading-none">
-          {(isIdentified || isBloomed) ? (species?.emoji[stage!] ?? "🌱") : "🌱"}
-        </span>
+        {species && (isIdentified || isBloomed) ? (
+          <FlowerSprite
+            species={species}
+            stage={stage!}
+            textSize="text-2xl"
+            imgSize="w-9 h-9"
+          />
+        ) : (
+          <span className="text-2xl leading-none">🌱</span>
+        )}
 
         {/* Fertilizer indicator — top-left */}
         {settings.plotFertilizerIndicator && hasFert && !isBloomed && (

@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
+import { FlowerSprite } from "./FlowerSprite";
 import { FlowerTypeBadges } from "./FlowerTypeBadges";
 import { useGame } from "../store/GameContext";
 import { sellFlower, rollbackSellAll } from "../store/gameStore";
@@ -90,9 +91,9 @@ export function InventoryItemCard({ item }: Props) {
         ${rarity.glow}
       `}
     >
-      {/* Emoji */}
+      {/* Sprite / Emoji */}
       <div className="relative flex-shrink-0">
-        <span className="text-3xl">{species.emoji.bloom}</span>
+        <FlowerSprite species={species} stage="bloom" textSize="text-3xl" imgSize="w-10 h-10" />
         {mut && (
           <span className="absolute -top-1 -right-1 text-sm">{mut.emoji}</span>
         )}

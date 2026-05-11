@@ -73,6 +73,10 @@ export interface FlowerSpecies {
   name:        string;
   description: string;
   emoji:       Record<GrowthStage, string>;
+  /** Optional pixel-art PNG sprite for each growth stage.
+   *  Files live in public/sprites/flowers/{id}_{stage}.png
+   *  Falls back to emoji when absent. */
+  sprite?:     Partial<Record<GrowthStage, string>>;
   rarity:      Rarity;
   types:       FlowerType[];
   growthTime: {
@@ -93,6 +97,7 @@ export const FLOWERS: FlowerSpecies[] = [
     name: "Quickgrass",
     description: "Sprouts so fast you can almost watch it grow.",
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🎄" },
+    sprite: { bloom: "/sprites/flowers/quickgrass.png" },
     rarity: "common",
     types: ["grove"],
     growthTime: { seed: 40_000, sprout: 80_000 },
@@ -115,6 +120,7 @@ export const FLOWERS: FlowerSpecies[] = [
     name: "Sprig",
     description: "Barely a flower. Barely worth growing. And yet.",
     emoji: { seed: "🌱", sprout: "🌿", bloom: "🎍" },
+    sprite: { bloom: "/sprites/flowers/sprig.png" },
     rarity: "common",
     types: ["grove"],
     growthTime: { seed: 60_000, sprout: 120_000 },
@@ -126,6 +132,7 @@ export const FLOWERS: FlowerSpecies[] = [
     name: "Dewdrop",
     description: "Tiny white petals that glisten like morning dew.",
     emoji: { seed: "🌱", sprout: "🌿", bloom: "💧" },
+    sprite: { bloom: "/sprites/flowers/dewdrop.png" },
     rarity: "common",
     types: ["tide"],
     growthTime: { seed: 65_000, sprout: 130_000 },
