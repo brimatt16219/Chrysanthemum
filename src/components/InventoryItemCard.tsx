@@ -6,13 +6,14 @@ import { sellFlower, rollbackSellAll } from "../store/gameStore";
 import { edgeSellFlower } from "../lib/edgeFunctions";
 import type { InventoryItem } from "../store/gameStore";
 import { useAchievementStats } from "../hooks/useAchievementStats";
+import { audioManager } from "../lib/audioManager";
 
 interface Props {
   item: InventoryItem;
 }
 
 export function InventoryItemCard({ item }: Props) {
-  const { getState, perform } = useGame();
+  const { getState, perform, pushGenericToast } = useGame();
   const { incrementStat }    = useAchievementStats();
   // Per-card gate: blocks any sell while a server call is in-flight for this card,
   // preventing rapid clicks from queuing duplicate sells that the server will reject.
@@ -36,6 +37,8 @@ export function InventoryItemCard({ item }: Props) {
     // server roundtrip (e.g. a harvest the user did mid-sell).
     const earned = optimistic.coins - cur.coins;
     const items  = [{ speciesId: item.speciesId, mutation: item.mutation, quantity: 1 }];
+    audioManager.playSfx("sell");
+    pushGenericToast(`sell:${item.speciesId}:${item.mutation ?? ""}`, "🟡", `+${earned.toLocaleString()} coins`, "text-yellow-400", "gain");
     perform(
       optimistic,
       async () => { try { return await edgeSellFlower(item.speciesId, item.mutation, 1); } finally { sellingRef.current = false; } },
@@ -60,6 +63,8 @@ export function InventoryItemCard({ item }: Props) {
     sellingRef.current = true;
     const earned = optimistic.coins - cur.coins;
     const items  = [{ speciesId: item.speciesId, mutation: item.mutation, quantity: liveQty }];
+    audioManager.playSfx("sell");
+    pushGenericToast(`sell:${item.speciesId}:${item.mutation ?? ""}`, "🟡", `+${earned.toLocaleString()} coins`, "text-yellow-400", "gain");
     perform(
       optimistic,
       async () => { try { return await edgeSellFlower(item.speciesId, item.mutation, liveQty); } finally { sellingRef.current = false; } },
