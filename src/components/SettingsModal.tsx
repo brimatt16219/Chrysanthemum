@@ -136,7 +136,7 @@ export function SettingsModal({ onClose, onSignOut }: Props) {
             <div className="border-t border-border" />
             <button
               onClick={onSignOut}
-              className="w-full py-2 rounded-xl text-xs font-semibold border border-border text-muted-foreground hover:border-red-500/50 hover:text-red-400 transition-colors"
+              className="w-full py-2 rounded-xl text-xs font-semibold border border-border text-muted-foreground hover:border-red-500/50 hover:text-red-400 transition-colors text-center"
             >
               Sign out
             </button>
