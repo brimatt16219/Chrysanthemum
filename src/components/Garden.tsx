@@ -1,5 +1,8 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useGame } from "../store/GameContext";
+import { useSettings } from "../store/SettingsContext";
+
+const PX = { imageRendering: "pixelated" as const };
 import { useGrowthTick } from "../hooks/useGrowthTick";
 import { PlotTile } from "./PlotTile";
 import { SeedPicker } from "./SeedPicker";
@@ -34,6 +37,7 @@ import { audioManager } from "../lib/audioManager";
 
 export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string, mutation?: MutationType, isSeed?: boolean) => void }) {
   const { state, update, perform, getState, awaitHarvests, activeWeather, reloadFromCloud, saveGridNow, user, requestSignIn, pushGenericToast } = useGame();
+  const { settings } = useSettings();
   useGrowthTick(5_000);
 
   const [showGrowthDebug, setShowGrowthDebug] = useState(getDevShowGrowthDebug());
@@ -689,7 +693,13 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
                 onClick={handlePlantAll}
                 className="px-3 py-1 rounded-full text-xs font-semibold bg-card border border-border text-muted-foreground hover:border-primary/50 hover:text-primary transition-all"
               >
-                🌱 Plant All
+                <span className="flex items-center gap-1">
+                  {settings.useSprites
+                    ? <img src="/sprites/flowers/seed.png" alt="🌱" className="w-3.5 h-3.5 object-contain" style={PX} />
+                    : <span>🌱</span>
+                  }
+                  Plant All
+                </span>
               </button>
             )}
           </div>
@@ -798,7 +808,13 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
               }
             `}
           >
-            Upgrade to {nextUpgrade.label} — {nextUpgrade.cost.toLocaleString()} 🟡
+            <span className="flex items-center gap-1.5">
+              {`Upgrade to ${nextUpgrade.label} — ${nextUpgrade.cost.toLocaleString()}`}
+              {settings.useSprites
+                ? <img src="/sprites/ui/coins.png" alt="🟡" className="w-3.5 h-3.5 object-contain" style={PX} />
+                : <span>🟡</span>
+              }
+            </span>
           </button>
           <p className="text-xs text-muted-foreground">{nextUpgrade.description}</p>
         </div>

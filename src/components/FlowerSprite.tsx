@@ -1,6 +1,13 @@
 import type { FlowerSpecies, GrowthStage } from "../data/flowers";
 import { useSettings } from "../store/SettingsContext";
 
+// Shared sprites used for every species at these stages.
+// Per-species overrides (species.sprite[stage]) take priority if present.
+const SHARED_SPRITES: Partial<Record<GrowthStage, string>> = {
+  seed:   "/sprites/flowers/seed.png",
+  sprout: "/sprites/flowers/sprout.png",
+};
+
 interface Props {
   species:   FlowerSpecies;
   stage:     GrowthStage;
@@ -13,8 +20,8 @@ interface Props {
 
 /**
  * Renders a pixel-art sprite <img> when one is available for the given stage,
- * otherwise falls back to the emoji. Add new sprites to FlowerSpecies.sprite
- * and drop the PNG in public/sprites/flowers/.
+ * otherwise falls back to the emoji. Seed/sprout use shared sprites; bloom
+ * uses a per-species sprite (species.sprite.bloom) when available.
  */
 export function FlowerSprite({
   species,
@@ -24,7 +31,10 @@ export function FlowerSprite({
   className = "",
 }: Props) {
   const { settings } = useSettings();
-  const src = settings.useSprites ? species.sprite?.[stage] : undefined;
+  // Per-species sprite takes priority; shared sprite is the fallback for seed/sprout
+  const src = settings.useSprites
+    ? (species.sprite?.[stage] ?? SHARED_SPRITES[stage])
+    : undefined;
 
   if (src) {
     return (

@@ -582,7 +582,9 @@ export function PlotTile({
             imgSize="w-9 h-9"
           />
         ) : (
-          <span className="text-2xl leading-none">🌱</span>
+          settings.useSprites
+            ? <img src="/sprites/flowers/seed.png" alt="🌱" className="w-9 h-9 object-contain" style={{ imageRendering: "pixelated" }} />
+            : <span className="text-2xl leading-none">🌱</span>
         )}
 
         {/* Fertilizer indicator — top-left */}
