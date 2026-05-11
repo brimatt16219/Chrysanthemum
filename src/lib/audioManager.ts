@@ -32,9 +32,9 @@ class AudioManager {
   private currentAmbienceUrl: string | null = null;
   private ambienceTimer:    ReturnType<typeof setInterval> | null = null;
 
-  // Autoplay gate — browsers block audio until first user gesture
-  private unlocked    = false;
-  private pendingUrl: string | null = null;
+  // Set to true on first user gesture — used by resumeBlocked to know
+  // whether a paused element was blocked by autoplay or intentionally paused.
+  private unlocked = false;
 
   constructor() {
     const raw    = localStorage.getItem(LS_KEY);
@@ -59,16 +59,21 @@ class AudioManager {
       this.sfxPool.set(id, [el]);
     }
 
-    const unlock = () => {
+    // On the first user gesture, resume any audio that was blocked by autoplay.
+    const resumeBlocked = () => {
       this.unlocked = true;
-      if (this.pendingUrl) {
-        this.crossfadeTo(this.pendingUrl);
-        this.pendingUrl = null;
+      // Music: resume whichever element has a src but is paused (blocked by autoplay).
+      for (const el of [this.elA, this.elB]) {
+        if (el.src && el.paused) void el.play().catch(() => {});
+      }
+      // Ambience: same — if rain/storm loop was blocked, kick it back off.
+      if (this.currentAmbienceUrl && this.elAmbience.paused) {
+        void this.elAmbience.play().catch(() => {});
       }
     };
-    document.addEventListener("click",      unlock, { once: true });
-    document.addEventListener("keydown",    unlock, { once: true });
-    document.addEventListener("touchstart", unlock, { once: true });
+    document.addEventListener("click",      resumeBlocked);
+    document.addEventListener("keydown",    resumeBlocked);
+    document.addEventListener("touchstart", resumeBlocked);
   }
 
   // ── Public: music ───────────────────────────────────────────────────────────
@@ -213,8 +218,6 @@ class AudioManager {
    * never play simultaneously, while still sounding smooth on transition.
    */
   private hardCutTo(url: string): void {
-    if (!this.unlocked) { this.pendingUrl = url; return; }
-
     if (this.fadeTimer) { clearInterval(this.fadeTimer); this.fadeTimer = null; }
 
     const FADE_OUT_MS = 800;
@@ -266,8 +269,6 @@ class AudioManager {
   }
 
   private crossfadeTo(url: string): void {
-    if (!this.unlocked) { this.pendingUrl = url; return; }
-
     this.currentUrl    = url;
     const next         = this.inactiveEl();
     next.src           = url;
