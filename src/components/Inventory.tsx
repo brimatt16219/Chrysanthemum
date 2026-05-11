@@ -15,6 +15,7 @@ import type { GearInventoryItem } from "../data/gear";
 import { CONSUMABLE_RECIPE_MAP, type ConsumableId } from "../data/consumables";
 import { useAchievementStats } from "../hooks/useAchievementStats";
 import { audioManager } from "../lib/audioManager";
+import { awardXp, SELL_XP_PERCENT } from "../data/gardenerLevel";
 
 type Tab = 0 | 1 | 2 | 3 | 4;
 const TAB_LABELS  = ["Seeds", "Blooms", "Supplies", "Consumables", "Essences"] as const;
@@ -116,7 +117,11 @@ export function Inventory({ newSeeds = 0, newBlooms = 0, newSupplies = 0, onSubT
     // Snapshot the coin delta so the rollback can subtract exactly what was
     // optimistically added — without touching coins gained from concurrent
     // actions (a harvest sell card, a marketplace claim, etc.).
-    const earned = optimistic.coins - current.coins;
+    const earned   = optimistic.coins - current.coins;
+    const xpGained = Math.floor(earned * SELL_XP_PERCENT);
+    const { level: newLevel, xp: newXp } = awardXp(current.gardenerLevel, current.gardenerXp, xpGained);
+    const prevLevel = current.gardenerLevel;
+    const prevXp    = current.gardenerXp;
 
     // Single atomic server write — one CAS check, no partial-failure rollback risk.
     // perform() auto-merges the SellAllResult (coins + inventory) on success.
@@ -127,10 +132,10 @@ export function Inventory({ newSeeds = 0, newBlooms = 0, newSupplies = 0, onSubT
     audioManager.playSfx("sell");
     pushGenericToast("sell:all", "🟡", "coins", "text-yellow-400", "gain", earned);
     await perform(
-      optimistic,
+      { ...optimistic, gardenerLevel: newLevel, gardenerXp: newXp },
       () => edgeSellAll(items),
       () => { incrementStat("blooms_sold", totalSold); },
-      { rollback: (c) => rollbackSellAll(c, items, earned) }
+      { rollback: (c) => ({ ...rollbackSellAll(c, items, earned), gardenerLevel: prevLevel, gardenerXp: prevXp }) }
     );
   }
 

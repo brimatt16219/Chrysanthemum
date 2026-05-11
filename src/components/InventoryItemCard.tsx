@@ -7,6 +7,7 @@ import { edgeSellFlower } from "../lib/edgeFunctions";
 import type { InventoryItem } from "../store/gameStore";
 import { useAchievementStats } from "../hooks/useAchievementStats";
 import { audioManager } from "../lib/audioManager";
+import { awardXp, SELL_XP_PERCENT } from "../data/gardenerLevel";
 
 interface Props {
   item: InventoryItem;
@@ -32,20 +33,21 @@ export function InventoryItemCard({ item }: Props) {
     const optimistic = sellFlower(cur, item.speciesId, 1, item.mutation);
     if (!optimistic) return;
     sellingRef.current = true;
-    // Snapshot the coin delta this action introduced so the rollback can be
-    // SURGICAL — undoing only this sell, not anything that landed during the
-    // server roundtrip (e.g. a harvest the user did mid-sell).
-    const earned = optimistic.coins - cur.coins;
-    const items  = [{ speciesId: item.speciesId, mutation: item.mutation, quantity: 1 }];
+    const earned   = optimistic.coins - cur.coins;
+    const xpGained = Math.floor(earned * SELL_XP_PERCENT);
+    const { level: newLevel, xp: newXp } = awardXp(cur.gardenerLevel, cur.gardenerXp, xpGained);
+    const prevLevel = cur.gardenerLevel;
+    const prevXp    = cur.gardenerXp;
+    const items     = [{ speciesId: item.speciesId, mutation: item.mutation, quantity: 1 }];
     audioManager.playSfx("sell");
     pushGenericToast(`sell:${item.speciesId}:${item.mutation ?? ""}`, "🟡", "coins", "text-yellow-400", "gain", earned);
     perform(
-      optimistic,
+      { ...optimistic, gardenerLevel: newLevel, gardenerXp: newXp },
       async () => { try { return await edgeSellFlower(item.speciesId, item.mutation, 1); } finally { sellingRef.current = false; } },
       () => { incrementStat("blooms_sold"); },
       {
         serialize: true,
-        rollback: (c) => rollbackSellAll(c, items, earned),
+        rollback: (c) => ({ ...rollbackSellAll(c, items, earned), gardenerLevel: prevLevel, gardenerXp: prevXp }),
       }
     );
   }
@@ -61,17 +63,21 @@ export function InventoryItemCard({ item }: Props) {
     const optimistic = sellFlower(cur, item.speciesId, liveQty, item.mutation);
     if (!optimistic) return;
     sellingRef.current = true;
-    const earned = optimistic.coins - cur.coins;
-    const items  = [{ speciesId: item.speciesId, mutation: item.mutation, quantity: liveQty }];
+    const earned   = optimistic.coins - cur.coins;
+    const xpGained = Math.floor(earned * SELL_XP_PERCENT);
+    const { level: newLevel, xp: newXp } = awardXp(cur.gardenerLevel, cur.gardenerXp, xpGained);
+    const prevLevel = cur.gardenerLevel;
+    const prevXp    = cur.gardenerXp;
+    const items     = [{ speciesId: item.speciesId, mutation: item.mutation, quantity: liveQty }];
     audioManager.playSfx("sell");
     pushGenericToast(`sell:${item.speciesId}:${item.mutation ?? ""}`, "🟡", "coins", "text-yellow-400", "gain", earned);
     perform(
-      optimistic,
+      { ...optimistic, gardenerLevel: newLevel, gardenerXp: newXp },
       async () => { try { return await edgeSellFlower(item.speciesId, item.mutation, liveQty); } finally { sellingRef.current = false; } },
       () => { incrementStat("blooms_sold", liveQty); },
       {
         serialize: true,
-        rollback: (c) => rollbackSellAll(c, items, earned),
+        rollback: (c) => ({ ...rollbackSellAll(c, items, earned), gardenerLevel: prevLevel, gardenerXp: prevXp }),
       }
     );
   }

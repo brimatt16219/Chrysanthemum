@@ -65,9 +65,11 @@ export interface PlantAllResult {
 }
 
 export interface SellAllResult {
-  ok:          true;
-  coins:       number;
-  inventory:   GameState["inventory"];
+  ok:            true;
+  coins:         number;
+  inventory:     GameState["inventory"];
+  gardenerXp?:   number;
+  gardenerLevel?: number;
   serverUpdatedAt: string;
 }
 
@@ -79,11 +81,13 @@ export interface PlantSeedResult {
 }
 
 export interface ShopActionResult {
-  ok:          true;
-  coins:       number;
-  shop:        GameState["shop"];
-  inventory:   GameState["inventory"];
-  fertilizers: GameState["fertilizers"];
+  ok:            true;
+  coins:         number;
+  shop:          GameState["shop"];
+  inventory:     GameState["inventory"];
+  fertilizers:   GameState["fertilizers"];
+  gardenerXp?:   number;
+  gardenerLevel?: number;
   serverUpdatedAt: string;
 }
 
