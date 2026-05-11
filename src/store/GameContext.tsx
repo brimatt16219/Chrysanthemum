@@ -757,7 +757,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       if (session) {
         clearInterval(interval);
         try { popup.close(); } catch { /* ignore */ }
-        await loadUserSession(session.user);
+        // Reload the main window — the session is now in localStorage and will
+        // be picked up cleanly by INITIAL_SESSION on the fresh load. This is
+        // more reliable than trying to update in-memory auth state cross-tab.
+        window.location.reload();
       }
     }, 500);
   }
