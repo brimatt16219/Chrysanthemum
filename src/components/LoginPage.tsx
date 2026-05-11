@@ -14,37 +14,41 @@ const EMOJIS = FLOWERS.map((f) => f.emoji.bloom);
 // ALL flowers start at top:−3rem (above the fold); negative delays mean they
 // are already mid-flight on mount — they entered from the top, never pop in.
 
+// Desktop: 9 cols × 6 rows. Mobile (sm breakpoint): every-other column (cols 0,2,4,6,8)
+// and only the first 4 rows — 5×4 = 20 petals instead of 54.
 const COLS         = 9;
 const ROWS_PER_COL = 6;
+const MOBILE_ROWS  = 4;  // rows visible on mobile per column
 
 interface Petal {
-  id:       number;
-  emoji:    string;
-  left:     string;   // CSS vw value
-  duration: number;   // animation duration (s) — varies per column
-  delay:    number;   // animation delay  (s) — negative, evenly staggered
-  size:     number;   // font-size (rem)
-  opacity:  number;
+  id:          number;
+  emoji:       string;
+  left:        string;
+  duration:    number;
+  delay:       number;
+  size:        number;
+  opacity:     number;
+  mobileHide:  boolean; // true → hidden on small screens
 }
 
 const PETALS: Petal[] = [];
 
 for (let col = 0; col < COLS; col++) {
-  // Slight duration variation per column so columns don't all loop simultaneously
-  const duration = 26 + sr(col * 3) * 14;           // 26 – 40 s
-  const leftPct  = (col / (COLS - 1)) * 115 - 5;    // −5 vw … 110 vw
+  const duration   = 26 + sr(col * 3) * 14;
+  const leftPct    = (col / (COLS - 1)) * 115 - 5;
+  const mobileCol  = col % 2 === 0;               // keep cols 0,2,4,6,8 on mobile
 
   for (let row = 0; row < ROWS_PER_COL; row++) {
     const idx = col * ROWS_PER_COL + row;
     PETALS.push({
-      id:       idx,
-      emoji:    EMOJIS[Math.floor(sr(idx * 7) * EMOJIS.length)],
-      left:     `${leftPct}vw`,
+      id:         idx,
+      emoji:      EMOJIS[Math.floor(sr(idx * 7) * EMOJIS.length)],
+      left:       `${leftPct}vw`,
       duration,
-      // Each row is evenly spaced through the cycle so the column is always full
-      delay:    -(row / ROWS_PER_COL) * duration,
-      size:     2,                                    // uniform size
-      opacity:  0.07 + sr(idx * 13) * 0.12,           // 0.07 – 0.19
+      delay:      -(row / ROWS_PER_COL) * duration,
+      size:       2,
+      opacity:    0.07 + sr(idx * 13) * 0.12,
+      mobileHide: !mobileCol || row >= MOBILE_ROWS,
     });
   }
 }
@@ -65,6 +69,7 @@ export function LoginPage({ onSignIn, onGuest }: Props) {
         {PETALS.map((p) => (
           <span
             key={p.id}
+            className={p.mobileHide ? "hidden sm:inline" : undefined}
             style={{
               position:   "absolute",
               left:       p.left,
