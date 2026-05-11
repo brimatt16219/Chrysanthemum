@@ -681,7 +681,7 @@ function AppInner() {
             className="font-bold text-primary tracking-wide cursor-pointer flex items-center gap-1"
             onClick={() => handleTabChange("garden")}
           >
-            <span className="text-lg">🌸</span>
+            <img src="/sprites/ui/logo.png" alt="🌸" className="w-6 h-6 object-contain" style={{ imageRendering: "pixelated" }} />
             <span className="hidden sm:block text-lg">Chrysanthemum</span>
           </h1>
           <div className="flex items-center gap-2 sm:gap-3">
@@ -702,8 +702,14 @@ function AppInner() {
               />
             </button>
             <ActiveBoostsHUD activeBoosts={state.activeBoosts} />
-            <span className="text-sm font-mono" title={state.coins.toLocaleString()}>🟡 {formatCoins(state.coins)}</span>
-            <span className="text-sm font-mono" title={state.gems.toLocaleString()}>💎 {state.gems.toLocaleString()}</span>
+            <span className="flex items-center gap-1 text-sm font-mono" title={state.coins.toLocaleString()}>
+              <img src="/sprites/ui/coins.png" alt="coins" className="w-4 h-4 object-contain" style={{ imageRendering: "pixelated" }} />
+              {formatCoins(state.coins)}
+            </span>
+            <span className="flex items-center gap-1 text-sm font-mono" title={state.gems.toLocaleString()}>
+              <img src="/sprites/ui/gems.png" alt="gems" className="w-4 h-4 object-contain" style={{ imageRendering: "pixelated" }} />
+              {state.gems.toLocaleString()}
+            </span>
             {!authLoading && (
               user ? (
                 <div className="flex items-center gap-2">
@@ -736,7 +742,7 @@ function AppInner() {
               className="text-xs px-2 py-1.5 rounded-lg border border-border text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
               title="Settings"
             >
-              ⚙️
+              <img src="/sprites/ui/settings.png" alt="⚙️" className="w-4 h-4 object-contain" style={{ imageRendering: "pixelated" }} />
             </button>
           </div>
         </div>
@@ -759,15 +765,13 @@ function AppInner() {
                 }
               `}
             >
-              {t === "garden"      ? "🌱"
-               : t === "shop"      ? "🛒"
-               : t === "inventory" ? "🎒"
-               : t === "alchemy"   ? "⚗️"
-               : t === "craft"     ? "⚒️"
-               : t === "codex"     ? "📖"
-               : t === "events"    ? "🎉"
-               : "🌍"}
-              <span className="ml-1 hidden sm:inline capitalize">{t}</span>
+              <img
+                src={`/sprites/ui/tab_${t}.png`}
+                alt={t}
+                className="w-5 h-5 sm:w-6 sm:h-6 object-contain"
+                style={{ imageRendering: "pixelated" }}
+              />
+              <span className="hidden sm:inline text-xs capitalize">{t}</span>
 
               {t === "garden"    && gardenNewBlooms > 0                              && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary rounded-full" />}
               {t === "shop"      && (newSeedsShopBadge + newSupplyShopBadge) > 0      && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary rounded-full" />}
