@@ -2,7 +2,7 @@ import { useSettings } from "../store/SettingsContext";
 import type { Settings } from "../store/SettingsContext";
 import { THEMES } from "../data/themes";
 
-interface Props { onClose: () => void; }
+interface Props { onClose: () => void; onSignOut?: () => void; }
 
 // ── Module-level constants ────────────────────────────────────────────────────
 
@@ -36,7 +36,7 @@ const VISUAL_TOGGLES: { key: keyof Settings; label: string; description: string 
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export function SettingsModal({ onClose }: Props) {
+export function SettingsModal({ onClose, onSignOut }: Props) {
   const { settings, setSetting } = useSettings();
 
   return (
@@ -129,6 +129,19 @@ export function SettingsModal({ onClose }: Props) {
             onToggleMute={() => setSetting("sfxMuted", !settings.sfxMuted)}
           />
         </section>
+
+        {/* ── Account ──────────────────────────────────────────────────────── */}
+        {onSignOut && (
+          <>
+            <div className="border-t border-border" />
+            <button
+              onClick={onSignOut}
+              className="w-full py-2 rounded-xl text-xs font-semibold border border-border text-muted-foreground hover:border-red-500/50 hover:text-red-400 transition-colors"
+            >
+              Sign out
+            </button>
+          </>
+        )}
 
       </div>
     </div>

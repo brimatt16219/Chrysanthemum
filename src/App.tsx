@@ -625,7 +625,12 @@ function AppInner() {
           }}
         />
       )}
-      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      {showSettings && (
+        <SettingsModal
+          onClose={() => setShowSettings(false)}
+          onSignOut={user ? () => { setShowSettings(false); signOut(); } : undefined}
+        />
+      )}
 
       {updateAvailable && !dismissedUpdate && (
         <UpdateBanner onDismiss={() => setDismissedUpdate(true)} />
@@ -692,12 +697,6 @@ function AppInner() {
                       )}
                     </span>
                     <span className="hidden sm:inline">{profile?.username ?? "..."}</span>
-                  </button>
-                  <button
-                    onClick={signOut}
-                    className="text-xs px-2 sm:px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
-                  >
-                    Sign out
                   </button>
                 </div>
               ) : (
