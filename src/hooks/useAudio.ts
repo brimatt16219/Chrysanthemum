@@ -19,12 +19,16 @@ export function useAudio(): void {
   // ── Resolve and play correct music playlist ───────────────────────────────
   // Weather overrides ambient when active and a track exists for that type.
   // Falls through to the current day period's playlist otherwise.
+  // A stable `context` string is passed so the manager can detect ambient ↔
+  // weather switches and hard-cut (no crossfade overlap) between them.
+  // Empty playlists (e.g. the unfinished night period) fall back to midnight
+  // tracks so music never silences on first load.
   useEffect(() => {
-    const playlist =
-      weatherIsActive && WEATHER_TRACKS[activeWeather]?.length
-        ? WEATHER_TRACKS[activeWeather]!
-        : AMBIENT_TRACKS[dayPeriod.id];
-    audioManager.playPlaylist(playlist);
+    const isWeather = weatherIsActive && !!WEATHER_TRACKS[activeWeather]?.length;
+    const raw       = isWeather ? WEATHER_TRACKS[activeWeather]! : AMBIENT_TRACKS[dayPeriod.id];
+    const playlist  = raw.length ? raw : AMBIENT_TRACKS.midnight; // fallback for empty periods
+    const context   = isWeather ? `weather:${activeWeather}` : "ambient";
+    audioManager.playPlaylist(playlist, context);
   }, [weatherIsActive, activeWeather, dayPeriod.id]);
 
   // ── Weather ambience (looping rain) ──────────────────────────────────────

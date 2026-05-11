@@ -16,6 +16,7 @@ class AudioManager {
   private currentPlaylist: string[]      = [];
   private playlistIndex:   number        = 0;
   private fadeTimer:       ReturnType<typeof setInterval> | null = null;
+  private currentContext:  string        = "";
 
   // SFX pool — up to 3 concurrent instances per sound id
   private sfxPool = new Map<string, HTMLAudioElement[]>();
@@ -72,8 +73,13 @@ class AudioManager {
 
   // ── Public: music ───────────────────────────────────────────────────────────
 
-  /** Call whenever the resolved playlist changes (period or weather switch). */
-  playPlaylist(tracks: string[]): void {
+  /**
+   * Call whenever the resolved playlist changes (period or weather switch).
+   * Pass a stable `context` string ("ambient" / "weather:rain" / etc.) so the
+   * manager can detect context switches and hard-cut instead of crossfading —
+   * prevents two completely different musical styles playing simultaneously.
+   */
+  playPlaylist(tracks: string[], context = ""): void {
     if (!tracks.length) return;
     const shuffled = this.shuffle(tracks);
 
@@ -87,8 +93,20 @@ class AudioManager {
     this.currentPlaylist = shuffled;
     this.playlistIndex   = 0;
     const url            = shuffled[0];
-    if (url === this.currentUrl) return; // single-track playlist — keep playing
-    this.crossfadeTo(url);
+    if (url === this.currentUrl) { this.currentContext = context; return; }
+
+    // Context switch (ambient ↔ weather, or weather type change): stop the old
+    // track immediately so two clashing vibes never overlap. Same-context changes
+    // (period change within ambient) keep the smooth crossfade.
+    const isContextSwitch =
+      !!context && !!this.currentContext && context !== this.currentContext;
+    this.currentContext = context;
+
+    if (isContextSwitch) {
+      this.hardCutTo(url);
+    } else {
+      this.crossfadeTo(url);
+    }
   }
 
   setMusicVolume(v: number): void {
@@ -188,6 +206,40 @@ class AudioManager {
   private effectiveMusicVolume()   { return this._musicMuted ? 0 : this._musicVolume;          }
   private effectiveSfxVolume()     { return this._sfxMuted   ? 0 : this._sfxVolume;            }
   private effectiveAmbienceVolume(){ return this._sfxMuted   ? 0 : this._sfxVolume * 0.6;      }
+
+  /**
+   * Immediately silence both elements, then fade in `url` from scratch.
+   * Used for context switches so two clashing playlists never overlap.
+   */
+  private hardCutTo(url: string): void {
+    if (!this.unlocked) { this.pendingUrl = url; return; }
+
+    if (this.fadeTimer) { clearInterval(this.fadeTimer); this.fadeTimer = null; }
+
+    // Kill both elements completely so no ghost audio lingers from a mid-crossfade state
+    this.elA.pause(); this.elA.src = ""; this.elA.volume = 0;
+    this.elB.pause(); this.elB.src = ""; this.elB.volume = 0;
+
+    // Always restart on elA so the active pointer is deterministic
+    this.active     = "A";
+    this.currentUrl = url;
+    this.elA.src    = url;
+    this.elA.volume = 0;
+    void this.elA.play().catch(() => {});
+
+    const target = this.effectiveMusicVolume();
+    const steps  = FADE_DURATION_MS / FADE_STEP_MS;
+    let   step   = 0;
+    this.fadeTimer = setInterval(() => {
+      step++;
+      const t = Math.min(step / steps, 1);
+      this.elA.volume = target * t;
+      if (t >= 1) {
+        clearInterval(this.fadeTimer!);
+        this.fadeTimer = null;
+      }
+    }, FADE_STEP_MS);
+  }
 
   private crossfadeTo(url: string): void {
     if (!this.unlocked) { this.pendingUrl = url; return; }
