@@ -108,7 +108,7 @@ export function SettingsModal({ onClose, onSignOut }: Props) {
                         style={{ backgroundColor: t.swatch[1] }}
                       />
                     </div>
-                    <p className="text-[10px] font-medium leading-none">{t.emoji} {t.name}</p>
+                    <p className="text-[10px] font-medium leading-none">{t.name}</p>
                   </button>
                 );
               })}
