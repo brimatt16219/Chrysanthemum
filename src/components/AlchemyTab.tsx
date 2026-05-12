@@ -6,6 +6,7 @@ import {
   UNIVERSAL_ESSENCE_DISPLAY,
 } from "../data/essences";
 import { EssenceBank } from "./EssenceBank";
+import { FlowerSprite } from "./FlowerSprite";
 import { ItemSprite } from "./ItemSprite";
 import { YieldTableModal } from "./YieldTableModal";
 import { ROMAN } from "../data/consumables";
@@ -319,7 +320,15 @@ export function AlchemyTab({ activeView, onViewChange }: AlchemyTabProps = {}) {
               }
             `}
           >
-            {v === "sacrifice" ? "⚗️ Sacrifice" : "🌿 Attune"}
+            <span className="inline-flex items-center justify-center gap-1">
+              <ItemSprite
+                emoji={v === "sacrifice" ? "⚗️" : "🌿"}
+                sprite={v === "sacrifice" ? "/sprites/ui/sacrifice.png" : "/sprites/ui/attune.png"}
+                name={v === "sacrifice" ? "Sacrifice" : "Attune"}
+                textSize="text-xs" imgSize="w-3.5 h-3.5"
+              />
+              {v === "sacrifice" ? "Sacrifice" : "Attune"}
+            </span>
           </button>
         ))}
       </div>
@@ -341,7 +350,10 @@ export function AlchemyTab({ activeView, onViewChange }: AlchemyTabProps = {}) {
               className="shrink-0 text-xs font-semibold px-2 py-1 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
               title="Show essence yield rates by rarity"
             >
-              📊 Yield rates
+              <span className="inline-flex items-center gap-1">
+                <ItemSprite emoji="📊" sprite="/sprites/ui/chart.png" name="Yield rates" textSize="text-xs" imgSize="w-3.5 h-3.5" />
+                Yield rates
+              </span>
             </button>
           </div>
 
@@ -513,7 +525,7 @@ export function AlchemyTab({ activeView, onViewChange }: AlchemyTabProps = {}) {
                     >
                       {/* Top row */}
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xl">{flower.emoji.bloom}</span>
+                        <FlowerSprite species={flower} stage="bloom" textSize="text-xl" imgSize="w-7 h-7" />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-medium truncate">
                             {mut ? <span className={mut.color}>{mut.emoji} </span> : null}
@@ -534,9 +546,10 @@ export function AlchemyTab({ activeView, onViewChange }: AlchemyTabProps = {}) {
                           return (
                             <span
                               key={t}
-                              className={`text-[10px] px-1.5 py-0.5 rounded-full border font-medium ${tc.bgColor} ${tc.borderColor} ${tc.color}`}
+                              className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full border font-medium ${tc.bgColor} ${tc.borderColor} ${tc.color}`}
                             >
-                              {tc.emoji} {tc.name}
+                              <ItemSprite emoji={tc.emoji} sprite={tc.sprite} name={tc.name} textSize="text-[10px]" imgSize="w-3 h-3" />
+                              {tc.name}
                             </span>
                           );
                         })}
@@ -579,7 +592,7 @@ export function AlchemyTab({ activeView, onViewChange }: AlchemyTabProps = {}) {
           {/* Empty state — no flowers in inventory at all */}
           {filteredItems.length === 0 && (
             <div className="text-center py-6 text-xs text-muted-foreground space-y-1">
-              <p className="text-2xl">⚗️</p>
+              <ItemSprite emoji="⚗️" sprite="/sprites/ui/sacrifice.png" name="Alchemy" textSize="text-2xl" imgSize="w-8 h-8" className="mx-auto" />
               <p>Harvest some flowers to sacrifice them.</p>
             </div>
           )}
@@ -765,7 +778,7 @@ export function AlchemyTab({ activeView, onViewChange }: AlchemyTabProps = {}) {
                 if (!entry && attuneSlots === 0 && i === 0) {
                   return (
                     <div key={`locked-${i}`} className="rounded-xl border border-dashed border-border/60 bg-card/20 px-3 py-2 min-h-[3rem] flex items-center gap-2">
-                      <span className="text-lg leading-none shrink-0 opacity-30">🔒</span>
+                      <ItemSprite emoji="🔒" sprite="/sprites/ui/lock.png" name="Locked" textSize="text-lg" imgSize="w-5 h-5" className="shrink-0 opacity-30" />
                       <p className="text-xs text-muted-foreground italic">Buy your first attunement slot to start</p>
                     </div>
                   );
@@ -773,7 +786,7 @@ export function AlchemyTab({ activeView, onViewChange }: AlchemyTabProps = {}) {
                 if (!entry) {
                   return (
                     <div key={`empty-${i}`} className="rounded-xl border border-dashed border-border/60 bg-card/20 px-3 py-2 min-h-[3rem] flex items-center gap-2">
-                      <span className="text-lg leading-none shrink-0 opacity-30">🌿</span>
+                      <ItemSprite emoji="🌿" sprite="/sprites/ui/attune.png" name="Empty slot" textSize="text-lg" imgSize="w-5 h-5" className="shrink-0 opacity-30" />
                       <p className="text-xs text-muted-foreground italic">Empty slot</p>
                     </div>
                   );
@@ -806,12 +819,15 @@ export function AlchemyTab({ activeView, onViewChange }: AlchemyTabProps = {}) {
                     )}
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-lg leading-none shrink-0">{flower?.emoji.bloom ?? "🌸"}</span>
+                        {flower
+                          ? <FlowerSprite species={flower} stage="bloom" textSize="text-lg" imgSize="w-6 h-6" className="shrink-0" />
+                          : <span className="text-lg leading-none shrink-0">🌸</span>
+                        }
                         <div className="min-w-0">
-                          <p className="text-xs font-semibold text-foreground truncate">
+                          <p className="text-xs font-semibold text-foreground truncate flex items-center gap-1 flex-wrap">
                             {flower?.name ?? entry.speciesId}
-                            <span className="ml-1.5 text-[10px] font-mono text-muted-foreground">
-                              → ❓ Tier {tierLabel}
+                            <span className="text-[10px] font-mono text-muted-foreground flex items-center gap-0.5">
+                              → <ItemSprite emoji="❓" sprite="/sprites/ui/unknown.png" name="Unknown" textSize="text-[10px]" imgSize="w-3 h-3" /> Tier {tierLabel}
                             </span>
                           </p>
                           <p className="text-xs text-muted-foreground">
@@ -860,7 +876,7 @@ export function AlchemyTab({ activeView, onViewChange }: AlchemyTabProps = {}) {
                   `}
                 >
                   <div className="flex items-center gap-2">
-                    <span className="text-lg leading-none shrink-0 opacity-70">➕</span>
+                    <ItemSprite emoji="➕" sprite="/sprites/ui/plus.png" name="Add slot" textSize="text-lg" imgSize="w-5 h-5" className="shrink-0 opacity-70" />
                     <p className="text-xs font-semibold text-amber-400">
                       Unlock attunement slot {nextSlotUpgrade.slots}
                     </p>
@@ -874,7 +890,10 @@ export function AlchemyTab({ activeView, onViewChange }: AlchemyTabProps = {}) {
 
             {/* ── Attune section ─────────────────────────────────────────── */}
             <div className="rounded-xl border border-border bg-card/40 px-4 py-3 space-y-4">
-              <p className="text-xs font-semibold">🌿 Attune a Bloom</p>
+              <p className="text-xs font-semibold flex items-center gap-1">
+                <ItemSprite emoji="🌿" sprite="/sprites/ui/attune.png" name="Attune" textSize="text-xs" imgSize="w-3.5 h-3.5" />
+                Attune a Bloom
+              </p>
 
               {/* Bloom picker */}
               <div>
@@ -907,7 +926,7 @@ export function AlchemyTab({ activeView, onViewChange }: AlchemyTabProps = {}) {
                                   : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"
                               }`}
                             >
-                              <span>{sp.emoji.bloom}</span>
+                              <FlowerSprite species={sp} stage="bloom" textSize="text-xs" imgSize="w-4 h-4" />
                               <span>{sp.name}</span>
                               <span className="text-muted-foreground/60">×{item.quantity}</span>
                             </button>
@@ -1008,8 +1027,9 @@ export function AlchemyTab({ activeView, onViewChange }: AlchemyTabProps = {}) {
 
                     {/* Duration preview */}
                     {previewDurMs > 0 && (
-                      <p className="text-xs text-muted-foreground text-right">
-                        ⏱ Duration: <span className="text-foreground">{fmtDur(previewDurMs)}</span>
+                      <p className="text-xs text-muted-foreground text-right flex items-center justify-end gap-1">
+                        <ItemSprite emoji="⏱" sprite="/sprites/ui/timer.png" name="Duration" textSize="text-xs" imgSize="w-3 h-3" />
+                        Duration: <span className="text-foreground">{fmtDur(previewDurMs)}</span>
                         {!slotsAvailable && (
                           <span className="ml-2 text-amber-400">· no free slot</span>
                         )}
@@ -1029,7 +1049,7 @@ export function AlchemyTab({ activeView, onViewChange }: AlchemyTabProps = {}) {
                         ? "Starting…"
                         : !slotsAvailable
                           ? attuneSlots === 0 ? "Buy a slot to start" : "All slots in use"
-                          : "🌿 Start Attune"}
+                          : <span className="inline-flex items-center justify-center gap-1"><ItemSprite emoji="🌿" sprite="/sprites/ui/attune.png" name="Attune" textSize="text-sm" imgSize="w-4 h-4" /> Start Attune</span>}
                     </button>
                   </div>
                 );
@@ -1068,7 +1088,7 @@ export function AlchemyTab({ activeView, onViewChange }: AlchemyTabProps = {}) {
           `}
         >
           <div className="flex items-center gap-3 bg-card border border-primary/40 rounded-2xl px-5 py-4 shadow-2xl shadow-primary/10 min-w-64">
-            <span className="text-2xl">⚗️</span>
+            <ItemSprite emoji="⚗️" sprite="/sprites/ui/sacrifice.png" name="Alchemy" textSize="text-2xl" imgSize="w-8 h-8" />
             <div>
               <p className="text-sm font-bold text-primary mb-1.5">Sacrifice complete!</p>
               <div className="flex flex-wrap gap-1.5">
