@@ -10,6 +10,8 @@ import type { GearType } from "../data/gear";
 import { CONSUMABLE_RECIPE_MAP } from "../data/consumables";
 import type { ConsumableId } from "../data/consumables";
 import { edgeMarketplaceCancel } from "../lib/edgeFunctions";
+import { FlowerSprite } from "./FlowerSprite";
+import { ItemSprite } from "./ItemSprite";
 
 interface MyListing {
   id:         string;
@@ -213,14 +215,20 @@ function ActiveListingRow({
     <div className={`bg-card/60 border rounded-2xl p-4 space-y-3 transition-all ${rarity?.glow ?? ""} border-border`}>
       <div className="flex items-center gap-3">
         <div className="relative flex-shrink-0">
-          <span className="text-3xl">
-            {isFertilizer  ? (fertDef?.emoji       ?? "🧪")
-             : isGear       ? (gearDef?.emoji        ?? "⚙️")
-             : isConsumable ? (consumableRec?.emoji  ?? "🧪")
-             : listing.is_seed
-               ? (species?.emoji.seed ?? "🌱")
-               : (species?.emoji.bloom ?? "❓")}
-          </span>
+          {isFertilizer && fertDef
+            ? <ItemSprite emoji={fertDef.emoji} sprite={fertDef.sprite} name={fertDef.name} textSize="text-3xl" imgSize="w-8 h-8" />
+            : isGear && gearDef
+            ? <ItemSprite emoji={gearDef.emoji} sprite={gearDef.sprite} name={gearDef.name} textSize="text-3xl" imgSize="w-8 h-8" />
+            : isConsumable && consumableRec
+            ? <ItemSprite emoji={consumableRec.emoji} sprite={consumableRec.sprite} name={consumableRec.name} textSize="text-3xl" imgSize="w-8 h-8" />
+            : listing.is_seed
+            ? species
+              ? <FlowerSprite species={species} stage="seed" textSize="text-3xl" imgSize="w-8 h-8" />
+              : <span className="text-3xl">🌱</span>
+            : species
+              ? <FlowerSprite species={species} stage="bloom" textSize="text-3xl" imgSize="w-8 h-8" />
+              : <ItemSprite emoji="❓" sprite="/sprites/ui/unknown.png" name="Unknown" textSize="text-3xl" imgSize="w-8 h-8" />
+          }
           {!isFertilizer && !isGear && !isConsumable && !listing.is_seed && mut && (
             <span className="absolute -top-1 -right-1 text-sm">{mut.emoji}</span>
           )}
@@ -296,14 +304,20 @@ function HistoryListingRow({ listing }: { listing: MyListing }) {
   return (
     <div className="bg-card/40 border border-border/40 rounded-2xl px-4 py-3 flex items-center gap-3 opacity-70">
       <div className="relative flex-shrink-0">
-        <span className="text-2xl">
-          {isFertilizer  ? (fertDef?.emoji       ?? "🧪")
-           : isGear       ? (gearDef?.emoji        ?? "⚙️")
-           : isConsumable ? (consumableRec?.emoji  ?? "🧪")
-           : listing.is_seed
-             ? (species?.emoji.seed ?? "🌱")
-             : (species?.emoji.bloom ?? "❓")}
-        </span>
+        {isFertilizer && fertDef
+          ? <ItemSprite emoji={fertDef.emoji} sprite={fertDef.sprite} name={fertDef.name} textSize="text-2xl" imgSize="w-7 h-7" />
+          : isGear && gearDef
+          ? <ItemSprite emoji={gearDef.emoji} sprite={gearDef.sprite} name={gearDef.name} textSize="text-2xl" imgSize="w-7 h-7" />
+          : isConsumable && consumableRec
+          ? <ItemSprite emoji={consumableRec.emoji} sprite={consumableRec.sprite} name={consumableRec.name} textSize="text-2xl" imgSize="w-7 h-7" />
+          : listing.is_seed
+          ? species
+            ? <FlowerSprite species={species} stage="seed" textSize="text-2xl" imgSize="w-7 h-7" />
+            : <span className="text-2xl">🌱</span>
+          : species
+            ? <FlowerSprite species={species} stage="bloom" textSize="text-2xl" imgSize="w-7 h-7" />
+            : <ItemSprite emoji="❓" sprite="/sprites/ui/unknown.png" name="Unknown" textSize="text-2xl" imgSize="w-7 h-7" />
+        }
         {!isFertilizer && !isGear && !isConsumable && !listing.is_seed && mut && (
           <span className="absolute -top-1 -right-1 text-xs">{mut.emoji}</span>
         )}

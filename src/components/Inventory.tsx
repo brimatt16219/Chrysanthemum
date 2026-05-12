@@ -7,6 +7,7 @@ import {
   ALL_FLOWER_TYPES, UNIVERSAL_ESSENCE_DISPLAY, UNIVERSAL_ESSENCE_TYPE,
 } from "../data/essences";
 import { FlowerTypeBadges } from "./FlowerTypeBadges";
+import { FlowerSprite } from "./FlowerSprite";
 import { InventoryItemCard } from "./InventoryItemCard";
 import { sellFlower, rollbackSellAll, applyEclipseTonic, type InventoryItem } from "../store/gameStore";
 import { edgeSellAll, edgeUseEclipseTonic, edgeAlchemyCraftSeed, edgeActivateBoost } from "../lib/edgeFunctions";
@@ -757,7 +758,10 @@ function SeedInventoryRow({ item }: { item: InventoryItem }) {
 
   return (
     <div className={`flex items-center gap-4 bg-card/60 border rounded-xl px-4 py-3 ${rarity?.glow ?? ""} border-border`}>
-      <span className="text-3xl flex-shrink-0">{isNew ? "❓" : species.emoji.seed}</span>
+      {isNew
+        ? <ItemSprite emoji="❓" sprite="/sprites/ui/unknown.png" name="Unknown" textSize="text-3xl" imgSize="w-8 h-8" className="flex-shrink-0" />
+        : <FlowerSprite species={species} stage="seed" textSize="text-3xl" imgSize="w-8 h-8" className="flex-shrink-0" />
+      }
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <h3 className="font-semibold text-sm">{isNew ? "??? Seed" : `${species.name} Seed`}</h3>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
 import { ItemSprite } from "./ItemSprite";
+import { FlowerSprite } from "./FlowerSprite";
 import type { MutationType } from "../data/flowers";
 import { FlowerTypeBadges } from "./FlowerTypeBadges";
 import { GEAR } from "../data/gear";
@@ -132,7 +133,10 @@ export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: P
                   onClick={() => onSelect(item.speciesId)}
                   className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 border border-transparent hover:border-primary/30 transition-all text-left"
                 >
-                  <span className="text-xl">{isNew ? "❓" : species.emoji.seed}</span>
+                  {isNew
+                    ? <ItemSprite emoji="❓" sprite="/sprites/ui/unknown.png" name="Unknown" textSize="text-xl" imgSize="w-6 h-6" />
+                    : <FlowerSprite species={species} stage="seed" textSize="text-xl" imgSize="w-6 h-6" />
+                  }
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <p className="text-sm font-medium truncate">{isNew ? "???" : species.name}</p>

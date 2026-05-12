@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import { getFlower, RARITY_CONFIG } from "../data/flowers";
 import { useSettings } from "../store/SettingsContext";
 import { ItemSprite } from "./ItemSprite";
+import { FlowerSprite } from "./FlowerSprite";
 
 const PX = { imageRendering: "pixelated" as const };
 import { FlowerTypeBadges } from "./FlowerTypeBadges";
@@ -349,7 +350,12 @@ export function ShopSlotCard({ slot }: Props) {
       )}
 
       <div className="flex items-start justify-between">
-        <span className="text-4xl">{isNew ? "❓" : species.emoji.bloom}</span>
+        {isNew
+          ? settings.useSprites
+            ? <img src="/sprites/ui/unknown.png" alt="❓" className="w-10 h-10 object-contain" style={PX} draggable={false} />
+            : <span className="text-4xl">❓</span>
+          : <FlowerSprite species={species} stage="bloom" textSize="text-4xl" imgSize="w-10 h-10" />
+        }
         <span
           className={`text-xs font-mono font-medium px-2 py-0.5 rounded-full border ${rarity.color} border-current bg-current/10`}
         >

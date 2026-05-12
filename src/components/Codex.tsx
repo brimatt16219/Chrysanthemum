@@ -2,6 +2,8 @@ import { useState, useMemo, useEffect } from "react";
 import { FLOWERS, MUTATIONS, RARITY_CONFIG, FLOWER_TYPES } from "../data/flowers";
 import type { Rarity, MutationType, FlowerType } from "../data/flowers";
 import { FlowerTypeBadges } from "./FlowerTypeBadges";
+import { FlowerSprite } from "./FlowerSprite";
+import { ItemSprite } from "./ItemSprite";
 import {
   getTotalCodexEntries,
   isDiscovered,
@@ -311,8 +313,11 @@ export function Codex({ discoveredOverride, compact = false, unseenEntries, mark
                 className="w-full flex items-center gap-3 px-4 py-3 text-left"
               >
                 {/* Emoji */}
-                <div className="text-2xl flex-shrink-0 w-8 text-center">
-                  {hasBase ? f.emoji.bloom : "❓"}
+                <div className="flex-shrink-0 w-8 flex items-center justify-center">
+                  {hasBase
+                    ? <FlowerSprite species={f} stage="bloom" textSize="text-2xl" imgSize="w-7 h-7" />
+                    : <ItemSprite emoji="❓" sprite="/sprites/ui/unknown.png" name="Unknown" textSize="text-2xl" imgSize="w-7 h-7" />
+                  }
                 </div>
 
                 {/* Info */}
@@ -386,7 +391,10 @@ export function Codex({ discoveredOverride, compact = false, unseenEntries, mark
                     }`}>
                       {hasBase ? "✓" : "?"}
                     </span>
-                    <span className="text-sm">{hasBase ? f.emoji.bloom : "❓"}</span>
+                    {hasBase
+                      ? <FlowerSprite species={f} stage="bloom" textSize="text-sm" imgSize="w-5 h-5" />
+                      : <ItemSprite emoji="❓" sprite="/sprites/ui/unknown.png" name="Unknown" textSize="text-sm" imgSize="w-5 h-5" />
+                    }
                     <span className="text-xs text-foreground">
                       {hasBase ? f.name : "???"}
                     </span>
@@ -410,7 +418,10 @@ export function Codex({ discoveredOverride, compact = false, unseenEntries, mark
                         }`}>
                           {found ? "✓" : "?"}
                         </span>
-                        <span className="text-sm">{found ? f.emoji.bloom : "❓"}</span>
+                        {found
+                          ? <FlowerSprite species={f} stage="bloom" textSize="text-sm" imgSize="w-5 h-5" />
+                          : <ItemSprite emoji="❓" sprite="/sprites/ui/unknown.png" name="Unknown" textSize="text-sm" imgSize="w-5 h-5" />
+                        }
                         <span className="text-xs">{found ? mut.emoji : "❓"}</span>
                         <span className={`text-xs ${found ? mut.color : "text-muted-foreground"}`}>
                           {found ? mut.name : "???"}

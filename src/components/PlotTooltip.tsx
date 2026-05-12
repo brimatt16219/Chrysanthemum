@@ -1,5 +1,6 @@
 import { useState, useRef, useLayoutEffect } from "react";
 import { ItemSprite } from "./ItemSprite";
+import { FlowerSprite } from "./FlowerSprite";
 import {
   type PlantedFlower,
   getCurrentStage,
@@ -315,7 +316,10 @@ export function PlotTooltip({
 
         {/* Header */}
         <div className="flex items-center gap-2">
-          <span className="text-xl">{!isIdentified ? (isBloomed ? "❓" : "🌱") : species.emoji[stage]}</span>
+          {(!isIdentified && isBloomed)
+            ? <ItemSprite emoji="❓" sprite="/sprites/ui/unknown.png" name="Unknown" textSize="text-xl" imgSize="w-6 h-6" />
+            : <FlowerSprite species={species} stage={!isIdentified ? "seed" : stage} textSize="text-xl" imgSize="w-6 h-6" />
+          }
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold leading-tight">{!isIdentified ? "???" : species.name}</p>
             <p className={`text-[10px] font-mono ${rarity.color}`}>{rarity.label}</p>
