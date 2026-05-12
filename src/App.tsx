@@ -847,7 +847,16 @@ function AppInner() {
                         }
                       `}
                     >
-                      {v === "seeds" ? "🌱 Seeds" : "🧪 Supply"}
+                      <span className="inline-flex items-center justify-center gap-1">
+                        <ItemSprite
+                          emoji={v === "seeds" ? "🌱" : "🧪"}
+                          sprite={v === "seeds" ? "/sprites/flowers/seed.png" : "/sprites/ui/consumables.png"}
+                          textSize="text-xs"
+                          imgSize="w-4 h-4"
+                          name={v}
+                        />
+                        {v === "seeds" ? "Seeds" : "Supply"}
+                      </span>
                       {badge > 0 && shopView !== v && (
                         <span className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
                           {badge}

@@ -20,8 +20,15 @@ import { audioManager } from "../lib/audioManager";
 import { awardXp, SELL_XP_PERCENT } from "../data/gardenerLevel";
 
 type Tab = 0 | 1 | 2 | 3 | 4;
-const TAB_LABELS  = ["Seeds", "Blooms", "Supplies", "Consumables", "Essences"] as const;
-const TAB_EMOJIS  = ["🌱",    "🌸",     "⚙️",       "🧪",          "✨"]       as const;
+const TAB_LABELS   = ["Seeds", "Blooms", "Supplies", "Consumables", "Essences"] as const;
+const TAB_EMOJIS   = ["🌱",    "🌸",     "⚙️",       "🧪",          "✨"]       as const;
+const TAB_SPRITES  = [
+  "/sprites/flowers/seed.png",   // Seeds
+  "/sprites/flowers/bloom.png",  // Blooms
+  "/sprites/ui/gear.png",        // Supplies
+  "/sprites/ui/consumables.png", // Consumables
+  "/sprites/ui/other.png",       // Essences
+] as const;
 
 interface Props {
   newSeeds?:    number;
@@ -281,8 +288,10 @@ export function Inventory({ newSeeds = 0, newBlooms = 0, newSupplies = 0, onSubT
                 }
               `}
             >
-              <span>{TAB_EMOJIS[i]}</span>
-              <span className="hidden sm:inline ml-1">{label}</span>
+              <span className="inline-flex items-center justify-center gap-1">
+                <ItemSprite emoji={TAB_EMOJIS[i]} sprite={TAB_SPRITES[i]} textSize="text-sm" imgSize="w-4 h-4" name={label} />
+                <span className="hidden sm:inline">{label}</span>
+              </span>
               {newCount > 0 && tab !== i && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full text-[10px] text-primary-foreground flex items-center justify-center font-bold">
                   {newCount > 9 ? "9+" : newCount}
