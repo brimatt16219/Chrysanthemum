@@ -347,7 +347,9 @@ export function MarketplacePage({ onViewProfile }: Props) {
       <div className="flex flex-col gap-2">
         {/* Search */}
         <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">🔍</span>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+            <ItemSprite emoji="🔍" sprite="/sprites/ui/search.png" textSize="text-sm" imgSize="w-4 h-4" name="search" />
+          </span>
           <input
             type="text"
             value={search}

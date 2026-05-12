@@ -78,6 +78,28 @@ const TAB_EMOJI: Record<Tab, string> = {
   social:    "👥",
 };
 
+const SOCIAL_EMOJI:  Record<SocialView, string> = {
+  search:      "🔍",
+  friends:     "👥",
+  mailbox:     "📬",
+  marketplace: "🏪",
+  leaderboard: "🏆",
+};
+const SOCIAL_SPRITE: Record<SocialView, string> = {
+  search:      "/sprites/ui/search.png",
+  friends:     "/sprites/ui/social_friends.png",
+  mailbox:     "/sprites/ui/social_mailbox.png",
+  marketplace: "/sprites/ui/social_market.png",
+  leaderboard: "/sprites/ui/social_ranks.png",
+};
+const SOCIAL_LABEL:  Record<SocialView, string> = {
+  search:      "Search",
+  friends:     "Friends",
+  mailbox:     "Mailbox",
+  marketplace: "Market",
+  leaderboard: "Ranks",
+};
+
 
 export default function App() {
   return <SettingsProvider><AppInner /></SettingsProvider>;
@@ -912,19 +934,9 @@ function AppInner() {
                           }
                         `}
                       >
-                        <span>
-                          {v === "search"        ? "🔍"
-                           : v === "friends"     ? "👥"
-                           : v === "mailbox"     ? "📬"
-                           : v === "marketplace" ? "🏪"
-                           : "🏆"}
-                        </span>
-                        <span className="hidden sm:inline ml-1">
-                          {v === "search"        ? "Search"
-                           : v === "friends"     ? "Friends"
-                           : v === "mailbox"     ? "Mailbox"
-                           : v === "marketplace" ? "Market"
-                           : "Ranks"}
+                        <span className="inline-flex items-center justify-center gap-1">
+                          <ItemSprite emoji={SOCIAL_EMOJI[v]} sprite={SOCIAL_SPRITE[v]} textSize="text-base" imgSize="w-5 h-5" name={SOCIAL_LABEL[v]} />
+                          <span className="hidden sm:inline">{SOCIAL_LABEL[v]}</span>
                         </span>
                         {v === "friends" && pendingCount > 0 && (
                           <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
@@ -950,8 +962,10 @@ function AppInner() {
                         }
                       `}
                     >
-                      <span>👤</span>
-                      <span className="hidden sm:inline ml-1">Me</span>
+                      <span className="inline-flex items-center justify-center gap-1">
+                        <ItemSprite emoji="👤" sprite="/sprites/ui/social_me.png" textSize="text-base" imgSize="w-5 h-5" name="Me" />
+                        <span className="hidden sm:inline">Me</span>
+                      </span>
                     </button>
                   )}
                 </div>

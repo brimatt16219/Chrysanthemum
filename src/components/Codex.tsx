@@ -502,8 +502,8 @@ function CompactCodex({
       {preview.length > 0 ? (
         <div className="flex flex-wrap gap-1">
           {preview.map((f) => (
-            <span key={f.id} className="text-xl" title={f.name}>
-              {f.emoji.bloom}
+            <span key={f.id} title={f.name} className="inline-flex">
+              <FlowerSprite species={f} stage="bloom" imgSize="w-6 h-6" textSize="text-xl" />
             </span>
           ))}
           {discoveredSpecies.length > 20 && (

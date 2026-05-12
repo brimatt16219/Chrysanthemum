@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useSettings } from "../store/SettingsContext";
 import { ItemSprite } from "./ItemSprite";
+import { FlowerSprite } from "./FlowerSprite";
 import { getCurrentStage, getStageProgress, getPassiveGrowthMultiplier, getDevShowGrowthDebug } from "../store/gameStore";
 import type { Plot } from "../store/gameStore";
 import { supabase } from "../lib/supabase";
@@ -425,9 +426,10 @@ export function ReadOnlyGarden({ grid, farmSize, farmRows }: Props) {
                 </div>
               )}
 
-              <span className="text-xl leading-none">
-                {species?.emoji[stage!] ?? "🌱"}
-              </span>
+              {species && stage
+                ? <FlowerSprite species={species} stage={stage} imgSize="w-6 h-6" textSize="text-xl" />
+                : <span className="text-xl leading-none">🌱</span>
+              }
 
               {/* Fertilizer — top-left */}
               {settings.plotFertilizerIndicator && hasFert && !isBloomed && (

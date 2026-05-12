@@ -2,6 +2,7 @@ import { useState } from "react";
 import { MarketplacePage } from "./MarketplacePage";
 import { MyListingsPage } from "./MyListingsPage";
 import { useGame } from "../store/GameContext";
+import { ItemSprite } from "./ItemSprite";
 
 type MarketView = "browse" | "my_listings";
 
@@ -46,8 +47,10 @@ export function MarketplaceTab({ onViewProfile, onSignIn }: Props) {
             }
           `}
         >
-          <span>🛍️</span>
-          <span className="hidden sm:inline ml-1">Browse</span>
+          <span className="inline-flex items-center justify-center gap-1">
+            <ItemSprite emoji="🛍️" sprite="/sprites/ui/market_browse.png" textSize="text-base" imgSize="w-5 h-5" name="browse" />
+            <span className="hidden sm:inline">Browse</span>
+          </span>
         </button>
         <button
           onClick={() => setView("my_listings")}
@@ -59,8 +62,10 @@ export function MarketplaceTab({ onViewProfile, onSignIn }: Props) {
             }
           `}
         >
-          <span>📋</span>
-          <span className="hidden sm:inline ml-1">My Listings</span>
+          <span className="inline-flex items-center justify-center gap-1">
+            <ItemSprite emoji="📋" sprite="/sprites/ui/market_listings.png" textSize="text-base" imgSize="w-5 h-5" name="listings" />
+            <span className="hidden sm:inline">My Listings</span>
+          </span>
         </button>
       </div>
 

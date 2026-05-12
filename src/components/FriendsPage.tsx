@@ -8,6 +8,7 @@ import {
 } from "../store/cloudSave";
 import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
 import type { MutationType } from "../data/flowers";
+import { FlowerSprite } from "./FlowerSprite";
 import {
   getPresenceStatus, formatLastSeen,
   STATUS_DOT,
@@ -208,7 +209,7 @@ function FriendRow({
       >
         {/* Avatar with presence dot */}
         <div className={`relative w-10 h-10 rounded-xl border flex items-center justify-center text-xl flex-shrink-0 border-border bg-background ${rarity?.glow ?? ""}`}>
-          {flower?.emoji.bloom ?? "🌱"}
+          {flower ? <FlowerSprite species={flower} stage="bloom" imgSize="w-6 h-6" textSize="text-xl" /> : "🌱"}
           {mutObj && (
             <span className="absolute -top-1 -right-1 text-sm leading-none">{mutObj.emoji}</span>
           )}

@@ -11,6 +11,7 @@ import type { MailboxEntry } from "../store/cloudSave";
 import { edgeClaimMail } from "../lib/edgeFunctions";
 import { supabase } from "../lib/supabase";
 import { ItemSprite } from "./ItemSprite";
+import { FlowerSprite } from "./FlowerSprite";
 
 interface Props {
   onViewProfile:  (username: string) => void;
@@ -270,13 +271,15 @@ function MailCard({
   const isGear       = entry.kind === "gear";
   const isFlower     = entry.kind === "flower" || entry.kind === "seed";
 
-  let attachEmoji = "📦";
-  let attachTitle = "";
-  let attachSub   = "";
+  let attachEmoji   = "📦";
+  let attachSprite: string | undefined = undefined;
+  let attachTitle   = "";
+  let attachSub     = "";
 
   if (isCoins) {
-    attachEmoji = "🟡";
-    attachTitle = `${formatCoins(entry.amount ?? 0)} coins`;
+    attachEmoji  = "🟡";
+    attachSprite = "/sprites/ui/coins.png";
+    attachTitle  = `${formatCoins(entry.amount ?? 0)} coins`;
 
   } else if (isFertilizer && entry.species_id) {
     const fertType = entry.species_id.startsWith("fert:")
@@ -345,9 +348,13 @@ function MailCard({
       >
         {/* Sender avatar: profile flower for friends, 👑 for admin, 🏪 for marketplace */}
         <div className="relative flex-shrink-0 w-7 h-7 flex items-center justify-center">
-          <span className="text-xl leading-none">
-            {sender ? (getFlower(sender.display_flower)?.emoji.bloom ?? "🌱") : isAdmin ? "👑" : "🏪"}
-          </span>
+          {sender ? (
+            (() => { const sf = getFlower(sender.display_flower); return sf ? <FlowerSprite species={sf} stage="bloom" imgSize="w-7 h-7" textSize="text-xl" /> : <span className="text-xl leading-none">🌱</span>; })()
+          ) : isAdmin ? (
+            <span className="text-xl leading-none">👑</span>
+          ) : (
+            <ItemSprite emoji="🏪" sprite="/sprites/ui/social_market.png" textSize="text-xl" imgSize="w-7 h-7" name="marketplace" />
+          )}
           {sender?.display_mutation && (
             <span className="absolute -top-1 -right-1 text-[10px] leading-none">
               {MUTATIONS[sender.display_mutation as MutationType]?.emoji}
@@ -358,7 +365,11 @@ function MailCard({
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold truncate">{subject}</p>
           <p className="text-xs text-muted-foreground truncate">
-            {sender ? `From ${sender.username}` : isAdmin ? "From Admin 👑" : "From Marketplace 🏪"}
+            {sender ? `From ${sender.username}` : isAdmin ? (
+              <>From Admin 👑</>
+            ) : (
+              <>From <ItemSprite emoji="🏪" sprite="/sprites/ui/social_market.png" textSize="text-xs" imgSize="w-3 h-3" name="marketplace" className="inline-flex" /></>
+            )}
             {attachPreview ? ` · ${attachPreview}` : ""}
             {" · "}{timeAgo(entry.created_at)}
           </p>
@@ -402,7 +413,7 @@ function MailCard({
             ) : isAdmin ? (
               <span>From Admin 👑</span>
             ) : (
-              <span>From Marketplace 🏪</span>
+              <span className="inline-flex items-center gap-0.5">From <ItemSprite emoji="🏪" sprite="/sprites/ui/social_market.png" textSize="text-xs" imgSize="w-3.5 h-3.5" name="marketplace" /></span>
             )}
             {" · "}{timeAgo(entry.created_at)}
           </p>
@@ -418,7 +429,7 @@ function MailCard({
           {attachTitle && (
             <div className="flex items-center gap-3 bg-background/60 border border-border/60 rounded-xl px-3 py-2">
               <div className="relative flex-shrink-0 w-9 h-9 flex items-center justify-center">
-                <span className="text-2xl leading-none">{attachEmoji}</span>
+                <ItemSprite emoji={attachEmoji} sprite={attachSprite} textSize="text-2xl" imgSize="w-9 h-9" name={attachTitle} />
                 {isFlower && entry.mutation && (
                   <span className="absolute -top-1 -right-1 text-sm leading-none">
                     {MUTATIONS[entry.mutation as MutationType]?.emoji}
