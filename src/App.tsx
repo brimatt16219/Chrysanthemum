@@ -76,7 +76,7 @@ const TAB_EMOJI: Record<Tab, string> = {
   craft:     "⚒️",
   codex:     "📖",
   events:    "🎉",
-  social:    "👥",
+  social:    "🌍",
 };
 
 const SOCIAL_EMOJI:  Record<SocialView, string> = {
