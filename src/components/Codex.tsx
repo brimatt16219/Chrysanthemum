@@ -419,10 +419,10 @@ export function Codex({ discoveredOverride, compact = false, unseenEntries, mark
                           {found ? "✓" : "?"}
                         </span>
                         {found
-                          ? <FlowerSprite species={f} stage="bloom" textSize="text-sm" imgSize="w-5 h-5" />
+                          ? <FlowerSprite species={f} stage="bloom" textSize="text-sm" imgSize="w-5 h-5" className={mut.vfxClass} />
                           : <ItemSprite emoji="❓" sprite="/sprites/ui/unknown.png" name="Unknown" textSize="text-sm" imgSize="w-5 h-5" />
                         }
-                        <span className="text-xs">{found ? mut.emoji : "❓"}</span>
+                        <ItemSprite emoji={found ? mut.emoji : "❓"} sprite={found ? mut.sprite : undefined} name={found ? mut.emoji : "❓"} textSize="text-xs" imgSize="w-3.5 h-3.5" />
                         <span className={`text-xs ${found ? mut.color : "text-muted-foreground"}`}>
                           {found ? mut.name : "???"}
                         </span>
