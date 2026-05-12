@@ -1,4 +1,5 @@
 import { useState, useRef, useLayoutEffect } from "react";
+import { audioManager } from "../lib/audioManager";
 import { ItemSprite } from "./ItemSprite";
 import { FlowerSprite } from "./FlowerSprite";
 import {
@@ -272,6 +273,11 @@ export function PlotTooltip({
     const optimistic = removePlant(cur, row, col);
     if (!optimistic) return;
     setRemoving(true);
+    // Fire feedback immediately — don't wait for server round-trip
+    audioManager.playSfx("harvest");
+    pushHarvestPopup(plant.speciesId, undefined, true);
+    pushGenericToast("loss:shovel", "🥄", "Shovel", undefined, "loss");
+    onClose?.();
     // Snapshot the cell + consumables for surgical rollback
     const savedCell        = cur.grid[row][col];
     const savedConsumables = cur.consumables;
@@ -284,7 +290,7 @@ export function PlotTooltip({
           setRemoving(false);
         }
       },
-      () => { onClose?.(); pushHarvestPopup(plant.speciesId, undefined, true); pushGenericToast("loss:shovel", "🥄", "Shovel", undefined, "loss"); },
+      () => {},
       {
         rollback: (c) => ({
           ...c,
