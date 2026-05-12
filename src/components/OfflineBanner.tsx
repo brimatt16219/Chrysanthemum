@@ -147,7 +147,7 @@ export function OfflineBanner({ summary, onDismiss, changelog, username }: Props
           onClick={onDismiss}
           className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity text-center shrink-0"
         >
-          Let's go! 🌱
+          <span className="inline-flex items-center justify-center gap-1.5">Let's go! <ItemSprite emoji="🌱" sprite="/sprites/flowers/seed.png" name="🌱" textSize="text-sm" imgSize="w-4 h-4" /></span>
         </button>
       </div>
     </div>
