@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { FLOWERS } from "../data/flowers";
 import { startLoginMusic } from "../lib/loginAudio";
+import { ItemSprite } from "./ItemSprite";
+import { useSettings } from "../store/SettingsContext";
 
 // ── Seeded pseudo-random (stable, no useState needed) ─────────────────────
 function sr(seed: number) {
@@ -8,7 +10,7 @@ function sr(seed: number) {
   return x - Math.floor(x);
 }
 
-const EMOJIS = FLOWERS.map((f) => f.emoji.bloom);
+const FLOWERS_DATA = FLOWERS.map((f) => ({ emoji: f.emoji.bloom, sprite: f.sprite?.bloom }));
 
 // ── Grid parameters ───────────────────────────────────────────────────────
 // 9 columns spread −5 vw … 110 vw (wider than viewport to fill after leftward drift)
@@ -25,6 +27,7 @@ const MOBILE_ROWS  = 4;  // rows visible on mobile per column
 interface Petal {
   id:          number;
   emoji:       string;
+  sprite?:     string;
   left:        string;
   duration:    number;
   delay:       number;
@@ -41,10 +44,12 @@ for (let col = 0; col < COLS; col++) {
   const mobileCol  = col % 2 === 0;               // keep cols 0,2,4,6,8 on mobile
 
   for (let row = 0; row < ROWS_PER_COL; row++) {
-    const idx = col * ROWS_PER_COL + row;
+    const idx    = col * ROWS_PER_COL + row;
+    const flower = FLOWERS_DATA[Math.floor(sr(idx * 7) * FLOWERS_DATA.length)];
     PETALS.push({
       id:         idx,
-      emoji:      EMOJIS[Math.floor(sr(idx * 7) * EMOJIS.length)],
+      emoji:      flower.emoji,
+      sprite:     flower.sprite,
       left:       `${leftPct}vw`,
       duration,
       delay:      -(row / ROWS_PER_COL) * duration,
@@ -55,6 +60,15 @@ for (let col = 0; col < COLS; col++) {
   }
 }
 
+// ── Decorative row sprites ─────────────────────────────────────────────────
+const DECO_FLOWERS = [
+  { emoji: "🌷", sprite: "/sprites/flowers/tulip.png"    },
+  { emoji: "🌼", sprite: "/sprites/flowers/daisy.png"    },
+  { emoji: "🌺", sprite: "/sprites/flowers/orchid.png"   },
+  { emoji: "🌻", sprite: "/sprites/flowers/sunflower.png"},
+  { emoji: "🌹", sprite: "/sprites/flowers/rose.png"     },
+];
+
 // ── Component ─────────────────────────────────────────────────────────────
 
 interface Props {
@@ -62,6 +76,8 @@ interface Props {
 }
 
 export function LoginPage({ onSignIn }: Props) {
+  const { settings } = useSettings();
+
   useEffect(() => {
     // Module-level singleton — persists through React unmounts so music
     // survives the brief component teardown during guest / OAuth flow.
@@ -75,30 +91,43 @@ export function LoginPage({ onSignIn }: Props) {
 
       {/* ── Drifting flower grid ──────────────────────────────────────────── */}
       <div className="absolute inset-0 pointer-events-none select-none">
-        {PETALS.map((p) => (
-          <span
-            key={p.id}
-            className={p.mobileHide ? "hidden sm:inline" : undefined}
-            style={{
-              position:   "absolute",
-              left:       p.left,
-              top:        "-3rem",          // always starts above the viewport
-              fontSize:   `${p.size}rem`,
-              opacity:    p.opacity,
-              lineHeight: 1,
-              rotate:     "12deg",
-              animation:  `flower-drift ${p.duration}s ${p.delay}s linear infinite`,
-              willChange: "translate",
-            }}
-          >
-            {p.emoji}
-          </span>
-        ))}
+        {PETALS.map((p) => {
+          const sharedStyle: React.CSSProperties = {
+            position:   "absolute",
+            left:       p.left,
+            top:        "-3rem",
+            opacity:    p.opacity,
+            rotate:     "12deg",
+            animation:  `flower-drift ${p.duration}s ${p.delay}s linear infinite`,
+            willChange: "translate",
+          };
+          if (settings.useSprites && p.sprite) {
+            return (
+              <img
+                key={p.id}
+                src={p.sprite}
+                alt=""
+                draggable={false}
+                className={p.mobileHide ? "hidden sm:block" : ""}
+                style={{ ...sharedStyle, width: `${p.size}rem`, height: `${p.size}rem`, objectFit: "contain", imageRendering: "pixelated" }}
+              />
+            );
+          }
+          return (
+            <span
+              key={p.id}
+              className={p.mobileHide ? "hidden sm:inline" : undefined}
+              style={{ ...sharedStyle, fontSize: `${p.size}rem`, lineHeight: 1 }}
+            >
+              {p.emoji}
+            </span>
+          );
+        })}
       </div>
 
       {/* ── Branding ─────────────────────────────────────────────────────── */}
       <div className="relative flex flex-col items-center gap-3 text-center">
-        <div className="text-6xl">🌸</div>
+        <ItemSprite emoji="🌸" sprite="/sprites/ui/logo.png" name="Chrysanthemum" textSize="text-6xl" imgSize="w-16 h-16" />
         <h1 className="text-3xl font-bold text-primary tracking-wide">Chrysanthemum</h1>
         <p className="text-sm text-muted-foreground max-w-xs">
           Grow rare flowers, discover mutations, and build the ultimate garden.
@@ -107,7 +136,9 @@ export function LoginPage({ onSignIn }: Props) {
 
       {/* ── Decorative flower row ─────────────────────────────────────────── */}
       <div className="relative flex gap-3 text-3xl select-none">
-        <span>🌷</span><span>🌼</span><span>🌺</span><span>🌻</span><span>🌹</span>
+        {DECO_FLOWERS.map((f) => (
+          <ItemSprite key={f.emoji} emoji={f.emoji} sprite={f.sprite} name={f.emoji} textSize="text-3xl" imgSize="w-8 h-8" />
+        ))}
       </div>
 
       {/* ── Auth buttons ─────────────────────────────────────────────────── */}
