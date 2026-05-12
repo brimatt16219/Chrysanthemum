@@ -219,7 +219,7 @@ export function Codex({ discoveredOverride, compact = false, unseenEntries, mark
                   }
                 `}
               >
-                <span>{cfg.emoji}</span>
+                <ItemSprite emoji={cfg.emoji} sprite={cfg.sprite} name={cfg.name} textSize="text-[10px]" imgSize="w-3.5 h-3.5" />
                 <span>{cfg.name}</span>
               </button>
             );

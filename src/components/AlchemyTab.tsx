@@ -6,6 +6,7 @@ import {
   UNIVERSAL_ESSENCE_DISPLAY,
 } from "../data/essences";
 import { EssenceBank } from "./EssenceBank";
+import { ItemSprite } from "./ItemSprite";
 import { YieldTableModal } from "./YieldTableModal";
 import { ROMAN } from "../data/consumables";
 import { sacrificeFlowers, getBoostMultiplier, type SacrificeEntry } from "../store/gameStore";
@@ -69,7 +70,7 @@ function SacrificePreview({ selections }: { selections: SacrificeMap }) {
               key={type}
               className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-semibold ${cfg.bgColor} ${cfg.borderColor} ${cfg.color}`}
             >
-              {cfg.emoji} {amount}
+              <ItemSprite emoji={cfg.emoji} sprite={(cfg as { sprite?: string }).sprite} name={cfg.name} textSize="text-xs" imgSize="w-3.5 h-3.5" /> {amount}
             </span>
           );
         })}
@@ -445,7 +446,8 @@ export function AlchemyTab({ activeView, onViewChange }: AlchemyTabProps = {}) {
                       }
                     `}
                   >
-                    {cfg.emoji} {cfg.name}
+                    <ItemSprite emoji={cfg.emoji} sprite={cfg.sprite} name={cfg.name} textSize="text-xs" imgSize="w-3.5 h-3.5" />
+                    {cfg.name}
                   </button>
                 );
               })}
@@ -464,7 +466,10 @@ export function AlchemyTab({ activeView, onViewChange }: AlchemyTabProps = {}) {
                           <span key={r} className={`${RARITY_CONFIG[r].color} mr-1`}>{RARITY_CONFIG[r].label}</span>
                         ))}
                         {activeTypes.map((t) => (
-                          <span key={t} className={`${FLOWER_TYPES[t].color} mr-1`}>{FLOWER_TYPES[t].emoji} {FLOWER_TYPES[t].name}</span>
+                          <span key={t} className={`inline-flex items-center gap-0.5 ${FLOWER_TYPES[t].color} mr-1`}>
+                            <ItemSprite emoji={FLOWER_TYPES[t].emoji} sprite={FLOWER_TYPES[t].sprite} name={FLOWER_TYPES[t].name} textSize="text-xs" imgSize="w-3.5 h-3.5" />
+                            {FLOWER_TYPES[t].name}
+                          </span>
                         ))}
                         <span>flowers</span>
                       </>
@@ -927,7 +932,7 @@ export function AlchemyTab({ activeView, onViewChange }: AlchemyTabProps = {}) {
                   ) : (
                     <div className="flex flex-wrap gap-1.5">
                       {ownedEssences.map(({ type, amount }) => {
-                        const cfg        = FLOWER_TYPES[type as never] as { emoji: string; name: string; color: string; bgColor: string; borderColor: string };
+                        const cfg        = FLOWER_TYPES[type as never] as { emoji: string; sprite?: string; name: string; color: string; bgColor: string; borderColor: string };
                         const isMatch    = attuneSpecies.types.includes(type as never);
                         const isSelected = attuneEssType === type;
                         return (
@@ -940,7 +945,8 @@ export function AlchemyTab({ activeView, onViewChange }: AlchemyTabProps = {}) {
                                 : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"
                             }`}
                           >
-                            {cfg.emoji} {cfg.name}
+                            <ItemSprite emoji={cfg.emoji} sprite={cfg.sprite} name={cfg.name} textSize="text-xs" imgSize="w-3.5 h-3.5" />
+                            {cfg.name}
                             {isMatch && <span className="text-[10px] text-primary ml-0.5">✦ match</span>}
                             <span className="text-muted-foreground/60 ml-0.5">×{amount}</span>
                           </button>
@@ -1075,7 +1081,7 @@ export function AlchemyTab({ activeView, onViewChange }: AlchemyTabProps = {}) {
                       key={type}
                       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-semibold ${cfg.bgColor} ${cfg.borderColor} ${cfg.color}`}
                     >
-                      {cfg.emoji} +{amount}
+                      <ItemSprite emoji={cfg.emoji} sprite={(cfg as { sprite?: string }).sprite} name={cfg.name} textSize="text-xs" imgSize="w-3.5 h-3.5" /> +{amount}
                     </span>
                   );
                 })}

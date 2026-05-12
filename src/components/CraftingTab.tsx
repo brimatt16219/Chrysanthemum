@@ -235,6 +235,7 @@ function buildEntries(state: GameState, filter: CraftFilter): CraftEntry[] {
       id:          "essence:universal",
       kind:        "essence",
       emoji:       UNIVERSAL_ESSENCE_DISPLAY.emoji,
+      sprite:      UNIVERSAL_ESSENCE_DISPLAY.sprite,
       name:        "Universal Essence",
       rarity:      "prismatic",
       description: `Combine ${UNIVERSAL_ESSENCE_COST_PER_TYPE} of each elemental essence into a Universal Essence — used in legendary+ cross-breed recipes.`,
@@ -268,15 +269,15 @@ function buildEntries(state: GameState, filter: CraftFilter): CraftEntry[] {
 // ── Popup ingredient display ──────────────────────────────────────────────────
 
 function IngredientRow({
-  label, emoji, need, have, enough, color, border, bg,
+  label, emoji, sprite, need, have, enough, color, border, bg,
 }: {
-  label: string; emoji: string; need: number; have: number; enough: boolean;
+  label: string; emoji: string; sprite?: string; need: number; have: number; enough: boolean;
   color: string; border: string; bg: string;
 }) {
   return (
     <div className={`flex items-center justify-between text-xs px-2.5 py-1.5 rounded-lg border ${border} ${bg}`}>
       <span className={`flex items-center gap-1.5 font-medium ${color}`}>
-        <span>{emoji}</span>
+        <ItemSprite emoji={emoji} sprite={sprite} name={label} textSize="text-sm" imgSize="w-4 h-4" />
         <span>{label}</span>
       </span>
       <span className={`font-mono font-semibold ml-3 ${enough ? "text-green-400" : "text-red-400"}`}>
@@ -304,18 +305,18 @@ function GearIngredients({
           const have  = essences.find((e) => e.type === ing.essenceType)?.amount ?? 0;
           const label = isUniversal ? "Universal Essence" : `${cfg.name} Essence`;
           const need  = ing.amount * quantity;
-          return <IngredientRow key={i} emoji={cfg.emoji} label={label} need={need} have={have} enough={have >= need} {...essenceChip(ing.essenceType)} />;
+          return <IngredientRow key={i} emoji={cfg.emoji} sprite={cfg.sprite} label={label} need={need} have={have} enough={have >= need} {...essenceChip(ing.essenceType)} />;
         }
         if (ing.kind === "gear") {
           const def   = GEAR[ing.gearType as GearType];
           const have  = gearInventory.find((g) => g.gearType === ing.gearType)?.quantity ?? 0;
           const need  = ing.quantity * quantity;
-          return <IngredientRow key={i} emoji={def?.emoji ?? "⚙️"} label={def?.name ?? ing.gearType} need={need} have={have} enough={have >= need} {...rarityChip(def?.rarity ?? "common")} />;
+          return <IngredientRow key={i} emoji={def?.emoji ?? "⚙️"} sprite={def?.sprite} label={def?.name ?? ing.gearType} need={need} have={have} enough={have >= need} {...rarityChip(def?.rarity ?? "common")} />;
         }
         const crec = CONSUMABLE_RECIPE_MAP[ing.consumableId as ConsumableId];
         const have = consumables.find((c) => c.id === ing.consumableId)?.quantity ?? 0;
         const need = ing.quantity * quantity;
-        return <IngredientRow key={i} emoji={crec?.emoji ?? "🧪"} label={crec?.name ?? ing.consumableId} need={need} have={have} enough={have >= need} {...(crec ? rarityChip(crec.rarity) : { color: "text-muted-foreground", border: "border-border", bg: "bg-card/60" })} />;
+        return <IngredientRow key={i} emoji={crec?.emoji ?? "🧪"} sprite={crec?.sprite} label={crec?.name ?? ing.consumableId} need={need} have={have} enough={have >= need} {...(crec ? rarityChip(crec.rarity) : { color: "text-muted-foreground", border: "border-border", bg: "bg-card/60" })} />;
       })}
     </div>
   );
@@ -764,7 +765,7 @@ function CraftPopup({
               const have  = essences.find((e) => e.type === type)?.amount ?? 0;
               const label = isUniversal ? "Universal Essence" : `${cfg.name} Essence`;
               const need  = amount * quantity;
-              return <IngredientRow key={type} emoji={cfg.emoji} label={label} need={need} have={have} enough={have >= need} {...essenceChip(type)} />;
+              return <IngredientRow key={type} emoji={cfg.emoji} sprite={cfg.sprite} label={label} need={need} have={have} enough={have >= need} {...essenceChip(type)} />;
             })}
           </div>
         );
@@ -777,7 +778,7 @@ function CraftPopup({
         const srcRec   = CONSUMABLE_RECIPE_MAP[cost.id as ConsumableId];
         ingredientsSection = (
           <div className="space-y-1">
-            <IngredientRow emoji={fertDef?.emoji ?? "🌱"} label={fertDef?.name ?? cost.id} need={need} have={have} enough={have >= need} {...(srcRec ? rarityChip(srcRec.rarity) : { color: "text-muted-foreground", border: "border-border", bg: "bg-card/60" })} />
+            <IngredientRow emoji={fertDef?.emoji ?? "🌱"} sprite={fertDef?.sprite} label={fertDef?.name ?? cost.id} need={need} have={have} enough={have >= need} {...(srcRec ? rarityChip(srcRec.rarity) : { color: "text-muted-foreground", border: "border-border", bg: "bg-card/60" })} />
           </div>
         );
       } else {
@@ -786,7 +787,7 @@ function CraftPopup({
         const need = cost.quantity * quantity;
         ingredientsSection = (
           <div className="space-y-1">
-            <IngredientRow emoji={src?.emoji ?? "?"} label={src?.name ?? cost.id} need={need} have={have} enough={have >= need} {...(src ? rarityChip(src.rarity) : { color: "text-muted-foreground", border: "border-border", bg: "bg-card/60" })} />
+            <IngredientRow emoji={src?.emoji ?? "?"} sprite={src?.sprite} label={src?.name ?? cost.id} need={need} have={have} enough={have >= need} {...(src ? rarityChip(src.rarity) : { color: "text-muted-foreground", border: "border-border", bg: "bg-card/60" })} />
           </div>
         );
       }
@@ -805,7 +806,7 @@ function CraftPopup({
               const have  = essences.find((e) => e.type === type)?.amount ?? 0;
               const label = isUniversal ? "Universal Essence" : `${cfg.name} Essence`;
               const need  = amount * quantity;
-              return <IngredientRow key={type} emoji={cfg.emoji} label={label} need={need} have={have} enough={have >= need} {...essenceChip(type)} />;
+              return <IngredientRow key={type} emoji={cfg.emoji} sprite={cfg.sprite} label={label} need={need} have={have} enough={have >= need} {...essenceChip(type)} />;
             })}
           </div>
         );
@@ -828,7 +829,7 @@ function CraftPopup({
           const cfg  = FLOWER_TYPES[type];
           const have = essences.find((e) => e.type === type)?.amount ?? 0;
           const need = UNIVERSAL_ESSENCE_COST_PER_TYPE * quantity;
-          return <IngredientRow key={type} emoji={cfg.emoji} label={`${cfg.name} Essence`} need={need} have={have} enough={have >= need} {...essenceChip(type)} />;
+          return <IngredientRow key={type} emoji={cfg.emoji} sprite={cfg.sprite} label={`${cfg.name} Essence`} need={need} have={have} enough={have >= need} {...essenceChip(type)} />;
         })}
       </div>
     );

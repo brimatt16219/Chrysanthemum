@@ -46,24 +46,25 @@ export interface FlowerTypeConfig {
   id:          FlowerType;
   name:        string;
   emoji:       string;
+  sprite?:     string;
   color:       string;
   bgColor:     string;
   borderColor: string;
 }
 
 export const FLOWER_TYPES: Record<FlowerType, FlowerTypeConfig> = {
-  blaze:   { id: "blaze",   name: "Blaze",   emoji: "🔥", color: "text-orange-400", bgColor: "bg-orange-400/10", borderColor: "border-orange-400/30" },
-  tide:    { id: "tide",    name: "Tide",    emoji: "💧", color: "text-blue-400",   bgColor: "bg-blue-400/10",   borderColor: "border-blue-400/30"   },
-  grove:   { id: "grove",   name: "Grove",   emoji: "🌿", color: "text-green-400",  bgColor: "bg-green-400/10",  borderColor: "border-green-400/30"  },
-  frost:   { id: "frost",   name: "Frost",   emoji: "❄️", color: "text-cyan-300",   bgColor: "bg-cyan-300/10",   borderColor: "border-cyan-300/30"   },
-  storm:   { id: "storm",   name: "Storm",   emoji: "⚡", color: "text-yellow-400", bgColor: "bg-yellow-400/10", borderColor: "border-yellow-400/30" },
-  lunar:   { id: "lunar",   name: "Lunar",   emoji: "🌙", color: "text-indigo-300", bgColor: "bg-indigo-300/10", borderColor: "border-indigo-300/30" },
-  solar:   { id: "solar",   name: "Solar",   emoji: "☀️", color: "text-amber-400",  bgColor: "bg-amber-400/10",  borderColor: "border-amber-400/30"  },
-  fairy:   { id: "fairy",   name: "Fairy",   emoji: "🌸", color: "text-pink-400",   bgColor: "bg-pink-400/10",   borderColor: "border-pink-400/30"   },
-  shadow:  { id: "shadow",  name: "Shadow",  emoji: "🌑", color: "text-slate-400",  bgColor: "bg-slate-400/10",  borderColor: "border-slate-400/30"  },
-  arcane:  { id: "arcane",  name: "Arcane",  emoji: "✨", color: "text-violet-400", bgColor: "bg-violet-400/10", borderColor: "border-violet-400/30" },
-  stellar: { id: "stellar", name: "Stellar", emoji: "🌟", color: "text-sky-300",    bgColor: "bg-sky-300/10",    borderColor: "border-sky-300/30"    },
-  zephyr:  { id: "zephyr",  name: "Zephyr",  emoji: "💨", color: "text-teal-300",   bgColor: "bg-teal-300/10",   borderColor: "border-teal-300/30"   },
+  blaze:   { id: "blaze",   name: "Blaze",   emoji: "🔥", sprite: "/sprites/types/blaze.png",   color: "text-orange-400", bgColor: "bg-orange-400/10", borderColor: "border-orange-400/30" },
+  tide:    { id: "tide",    name: "Tide",    emoji: "💧", sprite: "/sprites/types/tide.png",    color: "text-blue-400",   bgColor: "bg-blue-400/10",   borderColor: "border-blue-400/30"   },
+  grove:   { id: "grove",   name: "Grove",   emoji: "🌿", sprite: "/sprites/types/grove.png",   color: "text-green-400",  bgColor: "bg-green-400/10",  borderColor: "border-green-400/30"  },
+  frost:   { id: "frost",   name: "Frost",   emoji: "❄️", sprite: "/sprites/types/frost.png",   color: "text-cyan-300",   bgColor: "bg-cyan-300/10",   borderColor: "border-cyan-300/30"   },
+  storm:   { id: "storm",   name: "Storm",   emoji: "⚡", sprite: "/sprites/types/storm.png",   color: "text-yellow-400", bgColor: "bg-yellow-400/10", borderColor: "border-yellow-400/30" },
+  lunar:   { id: "lunar",   name: "Lunar",   emoji: "🌙", sprite: "/sprites/types/lunar.png",   color: "text-indigo-300", bgColor: "bg-indigo-300/10", borderColor: "border-indigo-300/30" },
+  solar:   { id: "solar",   name: "Solar",   emoji: "☀️", sprite: "/sprites/types/solar.png",   color: "text-amber-400",  bgColor: "bg-amber-400/10",  borderColor: "border-amber-400/30"  },
+  fairy:   { id: "fairy",   name: "Fairy",   emoji: "🌸", sprite: "/sprites/types/fairy.png",   color: "text-pink-400",   bgColor: "bg-pink-400/10",   borderColor: "border-pink-400/30"   },
+  shadow:  { id: "shadow",  name: "Shadow",  emoji: "🌑", sprite: "/sprites/types/shadow.png",  color: "text-slate-400",  bgColor: "bg-slate-400/10",  borderColor: "border-slate-400/30"  },
+  arcane:  { id: "arcane",  name: "Arcane",  emoji: "✨", sprite: "/sprites/types/arcane.png",  color: "text-violet-400", bgColor: "bg-violet-400/10", borderColor: "border-violet-400/30" },
+  stellar: { id: "stellar", name: "Stellar", emoji: "🌟", sprite: "/sprites/types/stellar.png", color: "text-sky-300",    bgColor: "bg-sky-300/10",    borderColor: "border-sky-300/30"    },
+  zephyr:  { id: "zephyr",  name: "Zephyr",  emoji: "💨", sprite: "/sprites/types/zephyr.png",  color: "text-teal-300",   bgColor: "bg-teal-300/10",   borderColor: "border-teal-300/30"   },
 };
 
 // ── Flower species ────────────────────────────────────────────────────────────

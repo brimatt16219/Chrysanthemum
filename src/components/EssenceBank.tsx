@@ -6,6 +6,7 @@ import {
   type EssenceItem,
 } from "../data/essences";
 import type { FlowerType } from "../data/flowers";
+import { ItemSprite } from "./ItemSprite";
 
 interface Props {
   essences: EssenceItem[];
@@ -20,7 +21,7 @@ export function EssenceBank({ essences }: Props) {
   const amountByType = new Map<string, number>(essences.map((e) => [e.type, e.amount]));
 
   // Render order: 12 flower-type essences first (in FLOWER_TYPES order), then Universal last.
-  const ordered: { type: string; amount: number; cfg: { emoji: string; name: string; color: string; bgColor: string; borderColor: string } }[] = [
+  const ordered: { type: string; amount: number; cfg: { emoji: string; sprite?: string; name: string; color: string; bgColor: string; borderColor: string } }[] = [
     ...ALL_FLOWER_TYPES.map((type) => ({
       type,
       amount: amountByType.get(type) ?? 0,
@@ -54,7 +55,7 @@ export function EssenceBank({ essences }: Props) {
               ${empty ? "opacity-40" : ""}
             `}
           >
-            <span className="text-sm shrink-0">{cfg.emoji}</span>
+            <ItemSprite emoji={cfg.emoji} sprite={cfg.sprite} name={cfg.name} textSize="text-sm" imgSize="w-4 h-4" className="shrink-0" />
             <div className="min-w-0">
               <p className={`font-semibold leading-none ${textColorClass}`}>{amount}</p>
               <p className="text-[10px] text-muted-foreground leading-none mt-0.5 truncate">

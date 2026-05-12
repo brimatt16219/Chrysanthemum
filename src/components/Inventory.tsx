@@ -477,6 +477,7 @@ export function Inventory({ newSeeds = 0, newBlooms = 0, newSupplies = 0, onSubT
                   type={r.type}
                   amount={r.amount}
                   emoji={r.cfg.emoji}
+                  sprite={r.cfg.sprite}
                   name={r.cfg.name}
                   color={r.cfg.color}
                   bgColor={r.cfg.bgColor}
@@ -533,9 +534,9 @@ function EmptyTab({ emoji, message, hint }: { emoji: string; message: string; hi
 }
 
 function EssenceInventoryRow({
-  type, amount, emoji, name, color: _color, bgColor, borderColor, isUniversal,
+  type, amount, emoji, sprite, name, color: _color, bgColor, borderColor, isUniversal,
 }: {
-  type: string; amount: number; emoji: string; name: string;
+  type: string; amount: number; emoji: string; sprite?: string; name: string;
   color: string; bgColor: string; borderColor: string; isUniversal: boolean;
 }) {
   const empty = amount <= 0;
@@ -551,7 +552,7 @@ function EssenceInventoryRow({
       key={type}
       className={`flex items-center gap-4 rounded-xl px-4 py-3 transition-opacity ${card} ${bg} ${empty ? "opacity-40" : ""}`}
     >
-      <span className="text-3xl flex-shrink-0">{emoji}</span>
+      <ItemSprite emoji={emoji} sprite={sprite} name={name} textSize="text-3xl" imgSize="w-8 h-8" className="flex-shrink-0" />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <h3 className="font-semibold text-sm">{name} Essence</h3>

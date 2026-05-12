@@ -27,6 +27,7 @@ export const UNIVERSAL_ESSENCE_COST_PER_TYPE = 1;
 /** Display config for Universal Essence — used wherever FLOWER_TYPES[type] would be used. */
 export const UNIVERSAL_ESSENCE_DISPLAY = {
   emoji:       "✦",
+  sprite:      "/sprites/types/universal.png",
   name:        "Universal",
   color:       "text-slate-200",
   bgColor:     "bg-slate-200/10",
