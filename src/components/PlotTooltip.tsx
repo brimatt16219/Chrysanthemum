@@ -345,13 +345,16 @@ export function PlotTooltip({
           {!isBloomed && (
             <p>
               Next stage in:{" "}
-              <span className={`font-mono ${plant.masteredBonus ? "text-yellow-400" : "text-primary"}`}>
-                {plant.masteredBonus ? "⚡ " : ""}{formatMs(msLeft)}
+              <span className={`font-mono inline-flex items-center gap-0.5 ${plant.masteredBonus ? "text-yellow-400" : "text-primary"}`}>
+                {plant.masteredBonus && <ItemSprite emoji="⚡" sprite="/sprites/ui/mastery.png" name="Mastered" textSize="text-xs" imgSize="w-3.5 h-3.5" />}{formatMs(msLeft)}
               </span>
             </p>
           )}
-          {!isBloomed && plant.masteredBonus && (
-            <p className="text-[10px] text-yellow-400/70 font-mono">mastered · 20% faster</p>
+          {plant.masteredBonus && (
+            <p className="text-[10px] font-mono text-yellow-400 inline-flex items-center gap-1">
+              <ItemSprite emoji="⚡" sprite="/sprites/ui/mastery.png" name="Mastered" textSize="text-[10px]" imgSize="w-3.5 h-3.5" />
+              Mastered · 20% faster
+            </p>
           )}
           {isBloomed && (
             <p className="text-primary font-semibold">Ready to harvest!</p>

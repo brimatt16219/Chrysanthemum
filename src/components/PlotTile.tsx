@@ -612,10 +612,10 @@ export function PlotTile({
         {/* ⚡ Mastery bonus indicator — top-right */}
         {settings.plotMasteryIndicator && (plant as PlantedFlower).masteredBonus && (
           <span
-            className="absolute top-0.5 right-0.5 text-[10px] leading-none text-yellow-400"
+            className="absolute top-0.5 right-0.5 leading-none text-yellow-400"
             title="Mastered — grows 20% faster"
           >
-            ⚡
+            <ItemSprite emoji="⚡" sprite="/sprites/ui/mastery.png" name="Mastered" textSize="text-[10px]" imgSize="w-3 h-3" />
           </span>
         )}
 

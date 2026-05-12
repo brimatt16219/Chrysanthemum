@@ -344,7 +344,7 @@ export function Codex({ discoveredOverride, compact = false, unseenEntries, mark
                     {specFound}/{specTotal}
                   </p>
                   {specFound === specTotal && (
-                    <p className="text-[10px] text-primary font-semibold">⚡ Mastered</p>
+                    <p className="text-[10px] text-primary font-semibold inline-flex items-center gap-0.5"><ItemSprite emoji="⚡" sprite="/sprites/ui/mastery.png" name="Mastered" textSize="text-[10px]" imgSize="w-3 h-3" /> Mastered</p>
                   )}
                 </div>
 
@@ -443,7 +443,7 @@ export function Codex({ discoveredOverride, compact = false, unseenEntries, mark
                   {/* Mastery bonus */}
                   {specFound === specTotal && (
                     <div className="mt-1 pt-2 border-t border-border/40 flex items-center gap-2">
-                      <span className="text-sm">⚡</span>
+                      <ItemSprite emoji="⚡" sprite="/sprites/ui/mastery.png" name="Mastered" textSize="text-sm" imgSize="w-4 h-4" />
                       <span className="text-xs text-primary font-semibold">Mastered</span>
                       <span className="text-xs text-muted-foreground ml-auto">grows 20% faster</span>
                     </div>

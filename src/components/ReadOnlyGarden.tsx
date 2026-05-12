@@ -458,8 +458,8 @@ export function ReadOnlyGarden({ grid, farmSize, farmRows }: Props) {
 
               {/* Mastery — top-right */}
               {settings.plotMasteryIndicator && plant.masteredBonus && (
-                <span className="absolute top-0.5 right-0.5 text-[9px] leading-none text-yellow-400" title="Mastered">
-                  ⚡
+                <span className="absolute top-0.5 right-0.5 leading-none text-yellow-400" title="Mastered">
+                  <ItemSprite emoji="⚡" sprite="/sprites/ui/mastery.png" name="Mastered" textSize="text-[9px]" imgSize="w-3 h-3" />
                 </span>
               )}
 

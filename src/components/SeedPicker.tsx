@@ -144,8 +144,8 @@ export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: P
                     <div className="flex items-center gap-1.5">
                       <p className="text-sm font-medium truncate">{isNew ? "???" : species.name}</p>
                       {mastered && (
-                        <span className="text-yellow-400 text-xs leading-none flex-shrink-0" title="Mastered — grows 20% faster">
-                          ⚡
+                        <span className="text-yellow-400 leading-none flex-shrink-0" title="Mastered — grows 20% faster">
+                          <ItemSprite emoji="⚡" sprite="/sprites/ui/mastery.png" name="Mastered" textSize="text-xs" imgSize="w-3.5 h-3.5" />
                         </span>
                       )}
                     </div>
