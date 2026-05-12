@@ -360,8 +360,9 @@ export function PlotTooltip({
           {isBloomed && isIdentified && plant.mutation && (() => {
             const mut = MUTATIONS[plant.mutation];
             return (
-              <p className={`text-[10px] font-mono ${mut.color}`}>
-                {mut.emoji} {mut.name} · ×{mut.valueMultiplier} value
+              <p className={`text-[10px] font-mono ${mut.color} inline-flex items-center gap-1`}>
+                <ItemSprite emoji={mut.emoji} sprite={mut.sprite} name={mut.emoji} textSize="text-[10px]" imgSize="w-3.5 h-3.5" />
+                {mut.name} · ×{mut.valueMultiplier} value
               </p>
             );
           })()}
