@@ -21,7 +21,12 @@ type LeaderboardTab = "global" | "friends";
 type SortBy         = "coins" | "codex";
 
 
-const RANK_MEDALS: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" };
+const RANK_MEDALS: Record<number, string>  = { 1: "🥇", 2: "🥈", 3: "🥉" };
+const RANK_MEDAL_SPRITES: Record<number, string> = {
+  1: "/sprites/ui/medal_gold.png",
+  2: "/sprites/ui/medal_silver.png",
+  3: "/sprites/ui/medal_bronze.png",
+};
 const TOTAL_CODEX = getTotalCodexEntries();
 
 export function LeaderboardPage({ onViewProfile }: Props) {
@@ -230,7 +235,7 @@ export function LeaderboardPage({ onViewProfile }: Props) {
                 {/* Rank */}
                 <div className="w-8 text-center flex-shrink-0">
                   {medal ? (
-                    <span className="text-xl">{medal}</span>
+                    <ItemSprite emoji={medal} sprite={RANK_MEDAL_SPRITES[entry.rank]} name={medal} textSize="text-xl" imgSize="w-6 h-6" />
                   ) : (
                     <span className="text-sm font-mono text-muted-foreground">
                       #{entry.rank}
@@ -280,12 +285,10 @@ export function LeaderboardPage({ onViewProfile }: Props) {
                 {/* Stat — coins or codex depending on sort */}
                 <div className="text-right flex-shrink-0">
                   {sortBy === "coins" ? (
-                    <>
-                      <p className="text-sm font-mono font-semibold">
-                        {entry.coins.toLocaleString()}
-                      </p>
-                      <p className="text-xs text-muted-foreground"><ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /></p>
-                    </>
+                    <p className="text-sm font-mono font-semibold inline-flex items-center gap-1">
+                      <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
+                      {entry.coins.toLocaleString()}
+                    </p>
                   ) : (
                     <>
                       <p className="text-sm font-mono font-semibold">
