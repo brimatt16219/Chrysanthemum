@@ -162,8 +162,8 @@ body {
 
 /* Wet — always blue, ripple brightens */
 @keyframes mut-wet-f {
-  0%, 100% { filter: grayscale(1) sepia(1) hue-rotate(172deg) saturate(2)   brightness(1.0);  }
-  50%       { filter: grayscale(1) sepia(1) hue-rotate(172deg) saturate(3.5) brightness(1.3);  }
+  0%, 100% { filter: grayscale(1) sepia(1) hue-rotate(172deg) saturate(3)   brightness(0.65); }
+  50%       { filter: grayscale(1) sepia(1) hue-rotate(172deg) saturate(4.5) brightness(0.85); }
 }
 .mut-vfx-wet { animation: mut-wet-f 2s ease-in-out infinite; }
 
