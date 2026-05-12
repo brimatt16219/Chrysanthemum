@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useSettings } from "../store/SettingsContext";
 
 const PX = { imageRendering: "pixelated" as const };
@@ -26,8 +27,9 @@ export function ItemSprite({
   className = "",
 }: Props) {
   const { settings } = useSettings();
+  const [imgError, setImgError] = useState(false);
 
-  if (settings.useSprites && sprite) {
+  if (settings.useSprites && sprite && !imgError) {
     return (
       <img
         src={sprite}
@@ -35,6 +37,7 @@ export function ItemSprite({
         className={`${imgSize} object-contain ${className}`}
         style={PX}
         draggable={false}
+        onError={() => setImgError(true)}
       />
     );
   }

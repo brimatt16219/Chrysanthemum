@@ -2,8 +2,6 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useGame } from "../store/GameContext";
 import { useSettings } from "../store/SettingsContext";
 import { ItemSprite } from "./ItemSprite";
-
-const PX = { imageRendering: "pixelated" as const };
 import {
   msUntilSupplyReset,
   buyFromSupplyShop,
@@ -37,7 +35,8 @@ import type { ShopSlot } from "../store/gameStore";
 import { RatesModal } from "./RatesModal";
 import type { RateRow } from "./RatesModal";
 import { audioManager } from "../lib/audioManager";
-import { ItemSprite } from "./ItemSprite";
+
+const PX = { imageRendering: "pixelated" as const };
 
 function formatCountdown(ms: number): string {
   const totalSec = Math.max(0, Math.floor(ms / 1_000));

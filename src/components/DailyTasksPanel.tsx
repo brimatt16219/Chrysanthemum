@@ -1,6 +1,7 @@
 import { useGame } from "../store/GameContext";
 import { TASKS_REQUIRED, type DailyTaskType } from "../lib/dailySeed";
 import { awardXp } from "../data/gardenerLevel";
+import { ItemSprite } from "./ItemSprite";
 
 // ── Task display metadata ─────────────────────────────────────────────────────
 
@@ -13,6 +14,17 @@ const TASK_EMOJI: Record<DailyTaskType, string> = {
   apply_fertilizer:  "💧",
   alchemy_sacrifice: "⚗️",
 };
+
+const TASK_SPRITE: Record<DailyTaskType, string> = {
+  harvest:           "/sprites/ui/task_harvest.png",
+  marketplace_buy:   "/sprites/ui/task_buy.png",
+  marketplace_list:  "/sprites/ui/task_list.png",
+  send_gift:         "/sprites/ui/task_gift.png",
+  shop_buy:          "/sprites/ui/task_shop.png",
+  apply_fertilizer:  "/sprites/ui/task_fertilizer.png",
+  alchemy_sacrifice: "/sprites/ui/task_sacrifice.png",
+};
+
 
 function taskLabel(type: DailyTaskType, target: number): string {
   switch (type) {
@@ -95,8 +107,14 @@ export function DailyTasksPanel() {
                   : "border-border bg-card/60"
               }`}
             >
-              <span className="text-base shrink-0">
-                {TASK_EMOJI[task.type as DailyTaskType] ?? "✦"}
+              <span className="shrink-0">
+                <ItemSprite
+                  emoji={TASK_EMOJI[task.type as DailyTaskType] ?? "✦"}
+                  sprite={TASK_SPRITE[task.type as DailyTaskType]}
+                  textSize="text-base"
+                  imgSize="w-5 h-5"
+                  name={task.type}
+                />
               </span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
@@ -148,8 +166,8 @@ export function DailyTasksPanel() {
               }`}>
                 {collected ? "✓" : i + 1}
               </span>
-              <span className={`flex-1 ${collected ? "line-through" : ""}`}>
-                {reward.xp} XP + {reward.label} + {reward.gems} 💎
+              <span className={`flex-1 inline-flex items-center gap-0.5 ${collected ? "line-through" : ""}`}>
+                {reward.xp} XP + {reward.label} + {reward.gems}<ItemSprite emoji="💎" sprite="/sprites/ui/gems.png" textSize="text-xs" imgSize="w-3.5 h-3.5" name="gems" />
               </span>
               {canCollect && (
                 <button

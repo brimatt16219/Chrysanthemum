@@ -4,6 +4,8 @@ import type { EventEntry } from "../../store/gameStore";
 import { FLOWERS } from "../../data/flowers";
 import { edgeQuestSubmit } from "../../lib/edgeFunctions";
 import { audioManager } from "../../lib/audioManager";
+import { ItemSprite } from "../ItemSprite";
+import { FlowerSprite } from "../FlowerSprite";
 
 interface QuestDef {
   id:              string;
@@ -112,8 +114,8 @@ export function CollectionEventCard({ event }: Props) {
                 <span className="text-xs font-semibold">
                   {done ? "✓ " : `${idx + 1}. `}{quest.name}
                 </span>
-                <span className="text-[10px] text-muted-foreground">
-                  {quest.gems} 💎
+                <span className="text-[10px] text-muted-foreground inline-flex items-center gap-0.5">
+                  {quest.gems}<ItemSprite emoji="💎" sprite="/sprites/ui/gems.png" textSize="text-[10px]" imgSize="w-3 h-3" name="gems" />
                 </span>
               </div>
 
@@ -149,7 +151,10 @@ export function CollectionEventCard({ event }: Props) {
                               }
                             `}
                           >
-                            {flower?.emoji.bloom ?? "🌸"} {flower?.name ?? item.speciesId}
+                            {flower
+                              ? <FlowerSprite species={flower} stage="bloom" textSize="text-[10px]" imgSize="w-4 h-4" />
+                              : <span>🌸</span>
+                            } {flower?.name ?? item.speciesId}
                             {item.mutation ? ` (${item.mutation})` : ""}
                             {item.quantity > 1 ? ` ×${item.quantity}` : ""}
                           </button>
@@ -186,7 +191,10 @@ export function CollectionEventCard({ event }: Props) {
             rounded-xl border p-3 flex items-center gap-3
             ${allDone ? "border-primary/50 bg-primary/10" : "border-border bg-card/30 opacity-60"}
           `}>
-            <span className="text-2xl">{rewardFlower?.emoji.seed ?? "🌱"}</span>
+            {rewardFlower
+              ? <FlowerSprite species={rewardFlower} stage="seed" textSize="text-2xl" imgSize="w-8 h-8" />
+              : <span className="text-2xl">🌱</span>
+            }
             <div>
               <p className="text-xs font-semibold">{rewardFlower?.name ?? "Exclusive Seed"}</p>
               <p className="text-[10px] text-muted-foreground">

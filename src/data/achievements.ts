@@ -42,21 +42,21 @@ export type AchievementStats = Record<string, number>;
 
 // ── Category display metadata ──────────────────────────────────────────────────
 
-export const ACHIEVEMENT_CATEGORY_META: Record<AchievementCategory, { label: string; emoji: string }> = {
-  harvest:             { label: "Discover",        emoji: "🔍" },
-  seeds:               { label: "Planting",        emoji: "🌱" },
-  sacrifice:           { label: "Alchemy",         emoji: "⚗️" },
-  shopping:            { label: "Shopping",        emoji: "🛒" },
-  crafting_consumable: { label: "Crafting",        emoji: "🔨" },
-  crafting_gear:       { label: "Gear Crafting",   emoji: "🔧" },
-  pouches:             { label: "Seed Pouches",    emoji: "🎁" },
-  gear_placed:         { label: "Gear Placed",     emoji: "🚿" },
-  consumables_used:    { label: "Consumables",     emoji: "🧪" },
-  fertilizers:         { label: "Fertilizers",     emoji: "🌾" },
-  daily:               { label: "Daily Tasks",     emoji: "📅" },
-  crossbreeding:       { label: "Cross-Breeding",  emoji: "🥢" },
-  social:              { label: "Social",          emoji: "🌍" },
-  attunement:          { label: "Attunement",      emoji: "✨" },
+export const ACHIEVEMENT_CATEGORY_META: Record<AchievementCategory, { label: string; emoji: string; sprite: string }> = {
+  harvest:             { label: "Discover",        emoji: "🔍", sprite: "/sprites/ui/ach_discover.png"     },
+  seeds:               { label: "Planting",        emoji: "🌱", sprite: "/sprites/ui/ach_planting.png"     },
+  sacrifice:           { label: "Alchemy",         emoji: "⚗️", sprite: "/sprites/ui/ach_alchemy.png"      },
+  shopping:            { label: "Shopping",        emoji: "🛒", sprite: "/sprites/ui/ach_shopping.png"     },
+  crafting_consumable: { label: "Crafting",        emoji: "🔨", sprite: "/sprites/ui/ach_crafting.png"     },
+  crafting_gear:       { label: "Gear Crafting",   emoji: "🔧", sprite: "/sprites/ui/ach_gear_craft.png"   },
+  pouches:             { label: "Seed Pouches",    emoji: "🎁", sprite: "/sprites/ui/ach_pouches.png"      },
+  gear_placed:         { label: "Gear Placed",     emoji: "🚿", sprite: "/sprites/ui/ach_gear_placed.png"  },
+  consumables_used:    { label: "Consumables",     emoji: "🧪", sprite: "/sprites/ui/ach_consumables.png"  },
+  fertilizers:         { label: "Fertilizers",     emoji: "🌾", sprite: "/sprites/ui/ach_fertilizers.png"  },
+  daily:               { label: "Daily Tasks",     emoji: "📅", sprite: "/sprites/ui/ach_daily.png"        },
+  crossbreeding:       { label: "Cross-Breeding",  emoji: "🥢", sprite: "/sprites/ui/ach_crossbreed.png"   },
+  social:              { label: "Social",          emoji: "🌍", sprite: "/sprites/ui/ach_social.png"       },
+  attunement:          { label: "Attunement",      emoji: "✨", sprite: "/sprites/ui/ach_attunement.png"   },
 };
 
 // ── Lookup tables ──────────────────────────────────────────────────────────────

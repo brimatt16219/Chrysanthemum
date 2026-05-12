@@ -8,6 +8,7 @@ import {
 } from "../data/achievements";
 import { edgeAchievementClaim } from "../lib/edgeFunctions";
 import { audioManager } from "../lib/audioManager";
+import { ItemSprite } from "./ItemSprite";
 
 // ── Category display order ─────────────────────────────────────────────────────
 
@@ -145,7 +146,7 @@ export function AchievementsPanel() {
                 }
               `}
             >
-              <span className="text-base">{meta.emoji}</span>
+              <ItemSprite emoji={meta.emoji} sprite={meta.sprite} textSize="text-base" imgSize="w-5 h-5" name={meta.label} />
               <span className="text-[10px] leading-none text-center">{meta.label}</span>
               {badge > 0 && (
                 <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full" />
@@ -189,7 +190,9 @@ export function AchievementsPanel() {
               <div className="flex items-start gap-3">
 
                 {/* Emoji */}
-                <span className="text-xl flex-shrink-0 mt-0.5">{a.emoji}</span>
+                <span className="flex-shrink-0 mt-0.5">
+                  <ItemSprite emoji={a.emoji} sprite={ACHIEVEMENT_CATEGORY_META[a.category].sprite} textSize="text-xl" imgSize="w-6 h-6" name={a.name} />
+                </span>
 
                 {/* Name + description + progress */}
                 <div className="flex-1 min-w-0">
@@ -228,7 +231,7 @@ export function AchievementsPanel() {
                 {/* Reward pill + claim button */}
                 <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
                   <div className="flex items-center gap-1 text-[10px] font-mono text-muted-foreground">
-                    <span>{a.gems}💎</span>
+                    <span className="inline-flex items-center gap-0.5">{a.gems}<ItemSprite emoji="💎" sprite="/sprites/ui/gems.png" textSize="text-[10px]" imgSize="w-3 h-3" name="gems" /></span>
                   </div>
                   {!claimed && (
                     <button
