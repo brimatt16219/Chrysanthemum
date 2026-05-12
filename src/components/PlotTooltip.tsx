@@ -33,7 +33,7 @@ interface Props {
   /** Combined sprinkler × grow-lamp growth multiplier for this cell. */
   gearGrowthMultiplier?: number;
   isUnderSprinkler?:     boolean;
-  sprinklerMutations?:   { emoji: string; label: string }[];
+  sprinklerMutations?:   { emoji: string; label: string; sprite?: string }[];
   isUnderGrowLamp?:      boolean;
   isUnderScarecrow?:     boolean;
   isUnderComposter?:     boolean;
@@ -501,63 +501,63 @@ export function PlotTooltip({
               {isUnderGrowLamp && (
                 <span className="relative inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-amber-400/10 border border-amber-400/30 text-[10px] text-amber-300 overflow-hidden">
                   <div className="absolute inset-0 gear-lamp-glow pointer-events-none" />
-                  <span className="relative">💡</span>
+                  <span className="relative"><ItemSprite emoji="💡" sprite="/sprites/gear/grow_lamp.png" name="Grow lamp" textSize="text-[10px]" imgSize="w-3 h-3" /></span>
                   <span className="relative">Grow lamp</span>
                 </span>
               )}
               {isUnderAqueduct && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-blue-400/10 border border-blue-400/20 text-[10px] text-blue-300">
-                  <span>⛲</span><span>Aqueduct</span>
+                  <ItemSprite emoji="⛲" sprite="/sprites/gear/aqueduct.png" name="Aqueduct" textSize="text-[10px]" imgSize="w-3 h-3" /><span>Aqueduct</span>
                 </span>
               )}
               {isUnderSprinkler && !isUnderAqueduct && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-blue-400/10 border border-blue-400/20 text-[10px] text-blue-300">
-                  <span>💧</span><span>Sprinkler</span>
+                  <ItemSprite emoji="💧" sprite="/sprites/gear/sprinkler.png" name="Sprinkler" textSize="text-[10px]" imgSize="w-3 h-3" /><span>Sprinkler</span>
                 </span>
               )}
-              {sprinklerMutations.map(({ emoji, label }, i) => (
+              {sprinklerMutations.map(({ emoji, label, sprite }, i) => (
                 <span key={i} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-blue-400/10 border border-blue-400/20 text-[10px] text-blue-300">
-                  <span>{emoji}</span><span>{label}</span>
+                  <ItemSprite emoji={emoji} sprite={sprite} name={label} textSize="text-[10px]" imgSize="w-3 h-3" /><span>{label}</span>
                 </span>
               ))}
               {isUnderScarecrow && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-green-400/10 border border-green-400/20 text-[10px] text-green-300">
-                  <span>🧹</span><span>Scarecrow</span>
+                  <ItemSprite emoji="🧹" sprite="/sprites/gear/scarecrow.png" name="Scarecrow" textSize="text-[10px]" imgSize="w-3 h-3" /><span>Scarecrow</span>
                 </span>
               )}
               {isUnderComposter && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-green-400/10 border border-green-400/20 text-[10px] text-green-300">
-                  <span>🧺</span><span>Composter</span>
+                  <ItemSprite emoji="🧺" sprite="/sprites/gear/composter.png" name="Composter" textSize="text-[10px]" imgSize="w-3 h-3" /><span>Composter</span>
                 </span>
               )}
               {isUnderFan && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-stone-400/10 border border-stone-400/20 text-[10px] text-stone-300">
-                  <span>💨</span><span>Fan</span>
+                  <ItemSprite emoji="💨" sprite="/sprites/gear/fan.png" name="Fan" textSize="text-[10px]" imgSize="w-3 h-3" /><span>Fan</span>
                 </span>
               )}
               {isUnderHarvestBell && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-yellow-400/10 border border-yellow-400/20 text-[10px] text-yellow-300">
-                  <span>🔔</span><span>Harvest Bell</span>
+                  <ItemSprite emoji="🔔" sprite="/sprites/gear/harvest_bell.png" name="Harvest Bell" textSize="text-[10px]" imgSize="w-3 h-3" /><span>Harvest Bell</span>
                 </span>
               )}
               {isUnderLawnmower && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-green-400/10 border border-green-400/20 text-[10px] text-green-300">
-                  <span>🦼</span><span>Lawnmower</span>
+                  <ItemSprite emoji="🦼" sprite="/sprites/gear/lawnmower.png" name="Lawnmower" textSize="text-[10px]" imgSize="w-3 h-3" /><span>Lawnmower</span>
                 </span>
               )}
               {balanceScaleSide === "boost" && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-amber-400/10 border border-amber-400/20 text-[10px] text-amber-300">
-                  <span>⚖️</span><span>Scale boost</span>
+                  <ItemSprite emoji="⚖️" sprite="/sprites/gear/balance_scale.png" name="Balance Scale" textSize="text-[10px]" imgSize="w-3 h-3" /><span>Scale boost</span>
                 </span>
               )}
               {balanceScaleSide === "slow" && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-slate-400/10 border border-slate-400/20 text-[10px] text-slate-400">
-                  <span>⚖️</span><span>Scale slow</span>
+                  <ItemSprite emoji="⚖️" sprite="/sprites/gear/balance_scale.png" name="Balance Scale" textSize="text-[10px]" imgSize="w-3 h-3" /><span>Scale slow</span>
                 </span>
               )}
               {isUnderAegis && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-sky-400/10 border border-sky-400/30 text-[10px] text-sky-300">
-                  <span>🛡️</span><span>Aegis</span>
+                  <ItemSprite emoji="🛡️" sprite="/sprites/gear/aegis.png" name="Aegis" textSize="text-[10px]" imgSize="w-3 h-3" /><span>Aegis</span>
                 </span>
               )}
             </div>

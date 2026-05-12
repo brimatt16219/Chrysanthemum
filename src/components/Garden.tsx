@@ -284,7 +284,7 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
     useMemo(() => {
       const regular   = new Set<string>(); // sprinkler_regular only — excludes aqueduct
       const aqueduct  = new Set<string>(); // aqueduct only — displayed separately from sprinkler
-      const mutation  = new Map<string, { emoji: string; label: string }[]>(); // cellKey → unique mutation sprinklers
+      const mutation  = new Map<string, { emoji: string; label: string; sprite?: string }[]>(); // cellKey → unique mutation sprinklers
       const scarecrow = new Set<string>();
       const composter = new Set<string>();
       const growLamp  = new Set<string>();
@@ -307,12 +307,13 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
           } else if (def.passiveSubtype === "aqueduct") {
             keys.forEach((k) => aqueduct.add(k));
           } else if (def.category === "sprinkler_mutation" && def.mutationType) {
-            const emoji = MUTATIONS[def.mutationType as MutationType]?.emoji ?? "✨";
-            const label = def.name;
+            const emoji  = MUTATIONS[def.mutationType as MutationType]?.emoji ?? "✨";
+            const sprite = MUTATIONS[def.mutationType as MutationType]?.sprite;
+            const label  = def.name;
             keys.forEach((k) => {
               const existing = mutation.get(k);
-              if (!existing) mutation.set(k, [{ emoji, label }]);
-              else if (!existing.some((e) => e.emoji === emoji)) existing.push({ emoji, label });
+              if (!existing) mutation.set(k, [{ emoji, label, sprite }]);
+              else if (!existing.some((e) => e.emoji === emoji)) existing.push({ emoji, label, sprite });
             });
           } else if (def.passiveSubtype === "scarecrow") {
             keys.forEach((k) => scarecrow.add(k));
