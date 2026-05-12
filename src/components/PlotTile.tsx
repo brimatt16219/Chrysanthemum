@@ -584,15 +584,15 @@ export function PlotTile({
           <FlowerSprite
             species={species}
             stage={stage!}
-            textSize="text-2xl"
-            imgSize="w-9 h-9"
+            textSize="text-xl sm:text-2xl"
+            imgSize="w-7 h-7 sm:w-9 sm:h-9"
             className={settings.plotMutationVfx && isBloomed && (plant as PlantedFlower).mutation && species?.rarity !== "prismatic"
               ? MUTATIONS[(plant as PlantedFlower).mutation!].vfxClass
               : ""}
           />
         ) : (
           settings.useSprites
-            ? <img src="/sprites/flowers/seed.png" alt="🌱" className="w-9 h-9 object-contain" style={{ imageRendering: "pixelated" }} />
+            ? <img src="/sprites/flowers/seed.png" alt="🌱" className="w-7 h-7 sm:w-9 sm:h-9 object-contain" style={{ imageRendering: "pixelated" }} />
             : <span className="text-2xl leading-none">🌱</span>
         )}
 
