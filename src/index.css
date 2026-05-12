@@ -144,12 +144,12 @@ body {
 }
 .mut-vfx-frozen { animation: mut-frozen-f 2.8s ease-in-out infinite; }
 
-/* Scorched — always orange, brightness flickers rapidly */
+/* Scorched — red-orange fire flicker (hue cycles between deep red and orange) */
 @keyframes mut-scorched-f {
-  0%, 100% { filter: grayscale(1) sepia(1) saturate(2.5) brightness(1.1);  }
-  25%       { filter: grayscale(1) sepia(1) saturate(5.5) brightness(1.75); }
-  55%       { filter: grayscale(1) sepia(1) saturate(1.5) brightness(0.9);  }
-  75%       { filter: grayscale(1) sepia(1) saturate(5)   brightness(1.7);  }
+  0%, 100% { filter: grayscale(1) sepia(1) hue-rotate(-25deg) saturate(4)   brightness(1.1);  }
+  25%       { filter: grayscale(1) sepia(1) hue-rotate(-40deg) saturate(6)   brightness(1.8);  }
+  55%       { filter: grayscale(1) sepia(1) hue-rotate(-10deg) saturate(2.5) brightness(0.88); }
+  75%       { filter: grayscale(1) sepia(1) hue-rotate(-38deg) saturate(5.5) brightness(1.7);  }
 }
 .mut-vfx-scorched { animation: mut-scorched-f 1.1s ease-in-out infinite; }
 
@@ -160,13 +160,12 @@ body {
 }
 .mut-vfx-wet { animation: mut-wet-f 2s ease-in-out infinite; }
 
-/* Windstruck — always gray, sways and dims */
+/* Windstruck — partially desaturated, subtle dim pulse */
 @keyframes mut-windstruck-f {
-  0%, 100% { filter: grayscale(1) sepia(0.15) brightness(0.9);  transform: rotate(0deg);  }
-  25%       { filter: grayscale(1) sepia(0.05) brightness(0.78); transform: rotate(-2deg); }
-  75%       { filter: grayscale(1) sepia(0.05) brightness(0.78); transform: rotate(2deg);  }
+  0%, 100% { filter: grayscale(0.5) sepia(0.1) brightness(0.95); }
+  50%       { filter: grayscale(0.6) sepia(0.1) brightness(0.85); }
 }
-.mut-vfx-windstruck { animation: mut-windstruck-f 0.9s ease-in-out infinite; }
+.mut-vfx-windstruck { animation: mut-windstruck-f 2s ease-in-out infinite; }
 
 /* Shocked — always yellow, rare lightning flash */
 @keyframes mut-shocked-f {
