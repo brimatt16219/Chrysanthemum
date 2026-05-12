@@ -66,7 +66,8 @@ export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: P
             }
           `}
         >
-          🌱 Seeds
+          <ItemSprite emoji="🌱" sprite="/sprites/flowers/seed.png" name="🌱" textSize="text-sm" imgSize="w-4 h-4" />
+          Seeds
           {seeds.length > 0 && (
             <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
               tab === "seeds" ? "bg-primary/20 text-primary" : "bg-border text-muted-foreground"
@@ -85,7 +86,8 @@ export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: P
             }
           `}
         >
-          🌸 Blooms
+          <ItemSprite emoji="🌸" sprite="/sprites/flowers/bloom.png" name="🌸" textSize="text-sm" imgSize="w-4 h-4" />
+          Blooms
           {blooms.length > 0 && (
             <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
               tab === "blooms" ? "bg-primary/20 text-primary" : "bg-border text-muted-foreground"
@@ -104,7 +106,8 @@ export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: P
             }
           `}
         >
-          ⚙️ Gear
+          <ItemSprite emoji="⚙️" sprite="/sprites/ui/gear.png" name="⚙️" textSize="text-sm" imgSize="w-4 h-4" />
+          Gear
           {gear.length > 0 && (
             <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
               tab === "gear" ? "bg-primary/20 text-primary" : "bg-border text-muted-foreground"
