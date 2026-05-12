@@ -1121,14 +1121,14 @@ export function CraftingTab() {
             closePopup();
             for (const { type, amount } of essenceCosts) {
               const ft = FLOWER_TYPES[type as FlowerType];
-              if (ft) pushGenericToast(`loss:craft:essence:${type}`, ft.emoji, `${ft.name} Essence`, ft.color, "loss", amount);
+              if (ft) pushGenericToast(`loss:craft:essence:${type}`, ft.emoji, `${ft.name} Essence`, ft.color, "loss", amount, ft.sprite);
             }
             for (const { gearType: gt, quantity } of gearCosts) {
-              const gd = GEAR[gt]; pushGenericToast(`loss:craft:gear:${gt}`, gd.emoji, gd.name, RARITY_CONFIG[gd.rarity].color, "loss", quantity);
+              const gd = GEAR[gt]; pushGenericToast(`loss:craft:gear:${gt}`, gd.emoji, gd.name, RARITY_CONFIG[gd.rarity].color, "loss", quantity, gd.sprite);
             }
             for (const { id: cid, quantity } of consumableCosts) {
               const r = CONSUMABLE_RECIPE_MAP[cid as ConsumableId];
-              if (r) pushGenericToast(`loss:craft:consumable:${cid}`, r.emoji, r.name, RARITY_CONFIG[r.rarity].color, "loss", quantity);
+              if (r) pushGenericToast(`loss:craft:consumable:${cid}`, r.emoji, r.name, RARITY_CONFIG[r.rarity].color, "loss", quantity, r.sprite);
             }
           },
         );
@@ -1176,7 +1176,7 @@ export function CraftingTab() {
             closePopup();
             for (const { type, amount } of essenceCosts) {
               const ft = FLOWER_TYPES[type as FlowerType];
-              if (ft) pushGenericToast(`loss:craft:essence:${type}`, ft.emoji, `${ft.name} Essence`, ft.color, "loss", amount);
+              if (ft) pushGenericToast(`loss:craft:essence:${type}`, ft.emoji, `${ft.name} Essence`, ft.color, "loss", amount, ft.sprite);
             }
           },
         );
@@ -1255,15 +1255,15 @@ export function CraftingTab() {
             closePopup();
             for (const { type, amount } of essenceCosts) {
               const ft = FLOWER_TYPES[type as FlowerType];
-              if (ft) pushGenericToast(`loss:craft:essence:${type}`, ft.emoji, `${ft.name} Essence`, ft.color, "loss", amount);
+              if (ft) pushGenericToast(`loss:craft:essence:${type}`, ft.emoji, `${ft.name} Essence`, ft.color, "loss", amount, ft.sprite);
             }
             for (const { id: cid, quantity } of consumableCosts) {
               if (cid.startsWith("fertilizer_")) {
                 const f = FERTILIZERS[cid.replace("fertilizer_", "") as import("../data/upgrades").FertilizerType];
-                if (f) pushGenericToast(`loss:craft:fert:${cid}`, f.emoji, f.name, undefined, "loss", quantity);
+                if (f) pushGenericToast(`loss:craft:fert:${cid}`, f.emoji, f.name, undefined, "loss", quantity, f.sprite);
               } else {
                 const r = CONSUMABLE_RECIPE_MAP[cid as ConsumableId];
-                if (r) pushGenericToast(`loss:craft:consumable:${cid}`, r.emoji, r.name, RARITY_CONFIG[r.rarity].color, "loss", quantity);
+                if (r) pushGenericToast(`loss:craft:consumable:${cid}`, r.emoji, r.name, RARITY_CONFIG[r.rarity].color, "loss", quantity, r.sprite);
               }
             }
           },
@@ -1334,7 +1334,7 @@ export function CraftingTab() {
             closePopup();
             for (const { type, amount } of essenceCosts) {
               const ft = FLOWER_TYPES[type as FlowerType];
-              if (ft) pushGenericToast(`loss:craft:essence:${type}`, ft.emoji, `${ft.name} Essence`, ft.color, "loss", amount);
+              if (ft) pushGenericToast(`loss:craft:essence:${type}`, ft.emoji, `${ft.name} Essence`, ft.color, "loss", amount, ft.sprite);
             }
             for (const { rarity, quantity } of attunementCosts) {
               pushGenericToast(`loss:craft:infuser:${rarity}`, "💉", `${RARITY_CONFIG[rarity as Rarity].label} Infuser`, RARITY_CONFIG[rarity as Rarity].color, "loss", quantity);

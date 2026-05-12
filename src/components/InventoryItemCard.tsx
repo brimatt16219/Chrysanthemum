@@ -42,7 +42,7 @@ export function InventoryItemCard({ item }: Props) {
     const prevXp    = cur.gardenerXp;
     const items     = [{ speciesId: item.speciesId, mutation: item.mutation, quantity: 1 }];
     audioManager.playSfx("sell");
-    pushGenericToast(`sell:${item.speciesId}:${item.mutation ?? ""}`, "🟡", "coins", "text-yellow-400", "gain", earned);
+    pushGenericToast(`sell:${item.speciesId}:${item.mutation ?? ""}`, "🟡", "coins", "text-yellow-400", "gain", earned, "/sprites/ui/coins.png");
     perform(
       { ...optimistic, gardenerLevel: newLevel, gardenerXp: newXp },
       async () => { try { return await edgeSellFlower(item.speciesId, item.mutation, 1); } finally { sellingRef.current = false; } },
@@ -72,7 +72,7 @@ export function InventoryItemCard({ item }: Props) {
     const prevXp    = cur.gardenerXp;
     const items     = [{ speciesId: item.speciesId, mutation: item.mutation, quantity: liveQty }];
     audioManager.playSfx("sell");
-    pushGenericToast(`sell:${item.speciesId}:${item.mutation ?? ""}`, "🟡", "coins", "text-yellow-400", "gain", earned);
+    pushGenericToast(`sell:${item.speciesId}:${item.mutation ?? ""}`, "🟡", "coins", "text-yellow-400", "gain", earned, "/sprites/ui/coins.png");
     perform(
       { ...optimistic, gardenerLevel: newLevel, gardenerXp: newXp },
       async () => { try { return await edgeSellFlower(item.speciesId, item.mutation, liveQty); } finally { sellingRef.current = false; } },

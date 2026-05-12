@@ -74,7 +74,7 @@ export function CollectionEventCard({ event }: Props) {
       if (result.finalRewardDelivered) {
         pushGenericToast("quest_final", "🌸", "Sakura seed delivered!", undefined, "gain", 1);
       } else {
-        pushGenericToast("quest_submit", "💎", `Quest complete! +${result.gemsGained}`, undefined, "gain", result.gemsGained);
+        pushGenericToast("quest_submit", "💎", `Quest complete! +${result.gemsGained}`, undefined, "gain", result.gemsGained, "/sprites/ui/gems.png");
       }
       audioManager.playSfx("questComplete");
     } catch (e) {

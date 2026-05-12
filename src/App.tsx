@@ -1019,6 +1019,7 @@ function AppInner() {
             <GenericToastPopup
               key={key}
               emoji={entry.emoji}
+              sprite={entry.sprite}
               label={entry.label}
               count={entry.count}
               color={entry.color}

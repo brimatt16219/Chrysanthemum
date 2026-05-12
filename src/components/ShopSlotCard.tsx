@@ -249,7 +249,7 @@ export function ShopSlotCard({ slot }: Props) {
     const savedInventory = cur.inventory;
     audioManager.playSfx("buy");
     flashBought();
-    pushGenericToast(`gain:seed:${species!.id}`, isNew ? "❓" : species!.emoji.seed, isNew ? "??? Seed" : `${species!.name} Seed`, "text-green-400", "gain");
+    pushGenericToast(`gain:seed:${species!.id}`, isNew ? "❓" : species!.emoji.seed, isNew ? "??? Seed" : `${species!.name} Seed`, "text-green-400", "gain", 1, isNew ? "/sprites/ui/unknown.png" : "/sprites/flowers/seed.png");
     perform(
       optimistic,
       async () => {
@@ -291,7 +291,7 @@ export function ShopSlotCard({ slot }: Props) {
     const savedInventory = cur.inventory;
     audioManager.playSfx("buy");
     flashBought();
-    if (qty > 0) pushGenericToast(`gain:seed:${species!.id}`, isNew ? "❓" : species!.emoji.seed, isNew ? "??? Seed" : `${species!.name} Seed`, "text-green-400", "gain", qty);
+    if (qty > 0) pushGenericToast(`gain:seed:${species!.id}`, isNew ? "❓" : species!.emoji.seed, isNew ? "??? Seed" : `${species!.name} Seed`, "text-green-400", "gain", qty, isNew ? "/sprites/ui/unknown.png" : "/sprites/flowers/seed.png");
     perform(
       optimistic,
       async () => {

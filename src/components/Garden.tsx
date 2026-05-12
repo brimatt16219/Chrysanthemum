@@ -433,10 +433,11 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
     if (optimistic) {
       const sp = getFlower(speciesId);
       const discovered = state.discovered.includes(speciesId);
-      const emoji = discovered && sp ? sp.emoji.seed : "❓";
-      const label = discovered && sp ? `${sp.name} Seed` : "??? Seed";
+      const emoji  = discovered && sp ? sp.emoji.seed : "❓";
+      const label  = discovered && sp ? `${sp.name} Seed` : "??? Seed";
+      const sprite = discovered && sp ? "/sprites/flowers/seed.png" : "/sprites/ui/unknown.png";
       audioManager.playSfx("plant");
-      pushGenericToast(`loss:seed:${speciesId}`, emoji, label, "text-green-400", "loss");
+      pushGenericToast(`loss:seed:${speciesId}`, emoji, label, "text-green-400", "loss", 1, sprite);
       perform(
         optimistic,
         async () => {
@@ -469,7 +470,7 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
     if (optimistic) {
       const sp = getFlower(speciesId);
       audioManager.playSfx("plant");
-      if (sp) pushGenericToast(`loss:bloom:${speciesId}:${mutation ?? ""}`, sp.emoji.bloom, sp.name, RARITY_CONFIG[sp.rarity].color, "loss");
+      if (sp) pushGenericToast(`loss:bloom:${speciesId}:${mutation ?? ""}`, sp.emoji.bloom, sp.name, RARITY_CONFIG[sp.rarity].color, "loss", 1, sp.sprite?.bloom);
       perform(
         optimistic,
         () => edgePlantBloom(row, col, speciesId, mutation),
@@ -507,7 +508,7 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
         }
       },
       () => {
-        pushGenericToast(`loss:gear:${gearType}`, gearDef.emoji, gearDef.name, RARITY_CONFIG[gearDef.rarity].color, "loss");
+        pushGenericToast(`loss:gear:${gearType}`, gearDef.emoji, gearDef.name, RARITY_CONFIG[gearDef.rarity].color, "loss", 1, gearDef.sprite);
         const group = gearTypeToPlacedGroup(gearType);
         if (group) incrementStat(`placed_${group}` as AchievementStatKey);
       },
@@ -635,9 +636,10 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
     for (const { speciesId } of planted) {
       const sp = getFlower(speciesId);
       const disc  = discoveredSet.has(speciesId);
-      const emoji = disc && sp ? sp.emoji.seed : "❓";
-      const label = disc && sp ? `${sp.name} Seed` : "??? Seed";
-      pushGenericToast(`loss:seed:${speciesId}`, emoji, label, "text-green-400", "loss");
+      const emoji  = disc && sp ? sp.emoji.seed : "❓";
+      const label  = disc && sp ? `${sp.name} Seed` : "??? Seed";
+      const sprite = disc && sp ? "/sprites/flowers/seed.png" : "/sprites/ui/unknown.png";
+      pushGenericToast(`loss:seed:${speciesId}`, emoji, label, "text-green-400", "loss", 1, sprite);
     }
 
     perform(

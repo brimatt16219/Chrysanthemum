@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { getFlower, RARITY_CONFIG, MUTATIONS, type MutationType } from "../data/flowers";
+import { FlowerSprite } from "./FlowerSprite";
+import { ItemSprite } from "./ItemSprite";
 
 interface Props {
   speciesId: string;
@@ -44,13 +46,14 @@ export function HarvestPopup({ speciesId, mutation, count, isSeed, onDone }: Pro
         <span className={`text-xs font-bold font-mono ${isSeed ? "text-green-400" : mut ? mut.color : rarity?.color}`}>
           +{count}
         </span>
-        <span className="text-base">{isSeed ? species.emoji.seed : species.emoji.bloom}</span>
+        <FlowerSprite species={species} stage={isSeed ? "seed" : "bloom"} textSize="text-base" imgSize="w-5 h-5" />
         {isSeed && (
           <span className="text-xs font-bold font-mono text-green-400">Seed</span>
         )}
         {!isSeed && mut && (
-          <span className={`text-xs font-bold font-mono ${mut.color}`}>
-            {mut.emoji} {mut.name}
+          <span className={`text-xs font-bold font-mono ${mut.color} inline-flex items-center gap-1`}>
+            <ItemSprite emoji={mut.emoji} sprite={mut.sprite} name={mut.emoji} textSize="text-xs" imgSize="w-3.5 h-3.5" />
+            {mut.name}
           </span>
         )}
       </div>

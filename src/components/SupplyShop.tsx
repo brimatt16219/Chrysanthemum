@@ -105,21 +105,22 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
     if (!user) { requestSignIn("to buy supplies"); return; }
     const optimistic = buyFromSupplyShop(state, slot.speciesId);
     if (!optimistic) return;
-    let toastEmoji = "";
-    let toastLabel = "";
-    let toastColor = "text-primary";
+    let toastEmoji  = "";
+    let toastLabel  = "";
+    let toastColor  = "text-primary";
+    let toastSprite: string | undefined;
     if (slot.isFertilizer && slot.fertilizerType) {
       const f = FERTILIZERS[slot.fertilizerType];
-      toastEmoji = f.emoji; toastLabel = f.name; toastColor = RARITY_CONFIG[f.rarity].color;
+      toastEmoji = f.emoji; toastLabel = f.name; toastColor = RARITY_CONFIG[f.rarity].color; toastSprite = f.sprite;
     } else if (slot.isGear && slot.gearType) {
       const g = GEAR[slot.gearType];
-      toastEmoji = g.emoji; toastLabel = g.name; toastColor = RARITY_CONFIG[g.rarity].color;
+      toastEmoji = g.emoji; toastLabel = g.name; toastColor = RARITY_CONFIG[g.rarity].color; toastSprite = g.sprite;
     } else if (slot.isConsumable && slot.consumableId) {
       const r = CONSUMABLE_RECIPE_MAP[slot.consumableId as ConsumableId];
-      if (r) { toastEmoji = r.emoji; toastLabel = r.name; toastColor = RARITY_CONFIG[r.rarity].color; }
+      if (r) { toastEmoji = r.emoji; toastLabel = r.name; toastColor = RARITY_CONFIG[r.rarity].color; toastSprite = r.sprite; }
     }
     audioManager.playSfx("buy");
-    if (toastEmoji) pushGenericToast(slot.speciesId!, toastEmoji, toastLabel, toastColor);
+    if (toastEmoji) pushGenericToast(slot.speciesId!, toastEmoji, toastLabel, toastColor, undefined, 1, toastSprite);
     perform(
       optimistic,
       () => edgeBuyFromSupplyShop(slot.speciesId),
@@ -568,18 +569,18 @@ export function SupplyShop() {
     // Collect display info for each slot we're about to buy
     const toastItems = (cur.supplyShop ?? [])
       .filter((s) => !s.isEmpty && s.quantity > 0 && cur.coins >= s.price)
-      .map((s): { key: string; emoji: string; label: string; color: string } | null => {
+      .map((s): { key: string; emoji: string; label: string; color: string; sprite?: string } | null => {
         if (s.isFertilizer && s.fertilizerType) {
           const f = FERTILIZERS[s.fertilizerType];
-          return { key: s.speciesId!, emoji: f.emoji, label: f.name, color: RARITY_CONFIG[f.rarity].color };
+          return { key: s.speciesId!, emoji: f.emoji, label: f.name, color: RARITY_CONFIG[f.rarity].color, sprite: f.sprite };
         }
         if (s.isGear && s.gearType) {
           const g = GEAR[s.gearType];
-          return { key: s.speciesId!, emoji: g.emoji, label: g.name, color: RARITY_CONFIG[g.rarity].color };
+          return { key: s.speciesId!, emoji: g.emoji, label: g.name, color: RARITY_CONFIG[g.rarity].color, sprite: g.sprite };
         }
         if (s.isConsumable && s.consumableId) {
           const r = CONSUMABLE_RECIPE_MAP[s.consumableId as ConsumableId];
-          if (r) return { key: s.speciesId!, emoji: r.emoji, label: r.name, color: RARITY_CONFIG[r.rarity].color };
+          if (r) return { key: s.speciesId!, emoji: r.emoji, label: r.name, color: RARITY_CONFIG[r.rarity].color, sprite: r.sprite };
         }
         return null;
       })
@@ -587,8 +588,8 @@ export function SupplyShop() {
     setBuyingAll(true);
     try {
       await perform(optimistic, () => edgeBuyAllFromSupplyShop(), () => {
-        for (const { key, emoji, label, color } of toastItems) {
-          pushGenericToast(key, emoji, label, color);
+        for (const { key, emoji, label, color, sprite } of toastItems) {
+          pushGenericToast(key, emoji, label, color, undefined, 1, sprite);
         }
       });
     } finally {

@@ -43,7 +43,7 @@ export function CheckinEventCard({ event }: Props) {
           e.id === event.id ? { ...e, progress: result.progress } : e
         ),
       });
-      pushGenericToast("checkin_claim", "💎", `Day ${result.claimedDay} claimed!`, undefined, "gain", result.gemsGained);
+      pushGenericToast("checkin_claim", "💎", `Day ${result.claimedDay} claimed!`, undefined, "gain", result.gemsGained, "/sprites/ui/gems.png");
       audioManager.playSfx("checkinClaim");
     } catch (e) {
       console.error("checkin claim failed:", e);

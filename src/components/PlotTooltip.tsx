@@ -223,7 +223,7 @@ export function PlotTooltip({
     if (optimistic) {
       const f = FERTILIZERS[type];
       perform(optimistic, () => edgeApplyFertilizer(row, col, type), () => {
-        pushGenericToast(`loss:fert:${type}`, f.emoji, f.name, undefined, "loss");
+        pushGenericToast(`loss:fert:${type}`, f.emoji, f.name, undefined, "loss", 1, f.sprite);
         void trackProgress("apply_fertilizer");
         incrementStat("fertilizers_applied");
       });
@@ -246,7 +246,7 @@ export function PlotTooltip({
       () => edgeApplyPlantConsumable(row, col, consumableId),
       () => {
         setApplyingConsumable(null);
-        if (recipe) pushGenericToast(`loss:consumable:${consumableId}`, recipe.emoji, recipe.name, undefined, "loss");
+        if (recipe) pushGenericToast(`loss:consumable:${consumableId}`, recipe.emoji, recipe.name, undefined, "loss", 1, recipe.sprite);
         // Strip trailing tier suffix (_1…_5) to get the family key
         const familyKey = consumableId.replace(/_[1-5]$/, "");
         incrementStat(`used_${familyKey}` as AchievementStatKey);

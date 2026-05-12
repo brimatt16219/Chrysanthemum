@@ -82,14 +82,15 @@ export function Shop({ view }: ShopProps) {
           qty:       after - before,
           emoji:     discovered && sp ? sp.emoji.seed : "❓",
           label:     discovered && sp ? `${sp.name} Seed` : "??? Seed",
+          sprite:    discovered && sp ? "/sprites/flowers/seed.png" : "/sprites/ui/unknown.png",
         };
       })
       .filter((d) => d.qty > 0);
     setBuyingAll(true);
     try {
       await perform(optimistic, () => edgeBuyAllSeeds(), () => {
-        for (const { speciesId, qty, emoji, label } of seedDeltas) {
-          pushGenericToast(`gain:seed:${speciesId}`, emoji, label, "text-green-400", "gain", qty);
+        for (const { speciesId, qty, emoji, label, sprite } of seedDeltas) {
+          pushGenericToast(`gain:seed:${speciesId}`, emoji, label, "text-green-400", "gain", qty, sprite);
         }
       });
     } finally {
