@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAchievementStats } from "../hooks/useAchievementStats";
 import { useGame } from "../store/GameContext";
 import { ItemSprite } from "./ItemSprite";
+import { FlowerSprite } from "./FlowerSprite";
 import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
 import type { MutationType } from "../data/flowers";
 import { FERTILIZERS } from "../data/upgrades";
@@ -121,21 +122,21 @@ export function CreateListingModal({ onClose, onListed }: Props) {
       const name = item.kind === "fertilizer"
         ? FERTILIZERS[item.type].name
         : CONSUMABLE_RECIPE_MAP[item.id as ConsumableId]?.name ?? item.id;
-      btnLabel = `List ${name} for ${formatCoins(askPrice)} 🟡`;
+      btnLabel = `List ${name} for ${formatCoins(askPrice)}`;
     } else if (activeTab === "gear") {
       const name = GEAR_CATALOG[(selectedItem as { gearType: GearType }).gearType]?.name ?? "item";
-      btnLabel = `List ${name} for ${formatCoins(askPrice)} 🟡`;
+      btnLabel = `List ${name} for ${formatCoins(askPrice)}`;
     } else {
       const inv = selectedItem as { speciesId: string; isSeed?: boolean };
       const name = getFlower(inv.speciesId)?.name ?? "item";
-      btnLabel = `List ${name} for ${formatCoins(askPrice)} 🟡`;
+      btnLabel = `List ${name} for ${formatCoins(askPrice)}`;
     }
   }
 
-  const TAB_CONFIG: { id: Tab; emoji: string; count: number }[] = [
-    { id: "flowers",     emoji: "🌸", count: flowers.length     },
-    { id: "consumables", emoji: "🧪", count: consumables.length },
-    { id: "gear",        emoji: "⚙️", count: gearItems.length   },
+  const TAB_CONFIG: { id: Tab; emoji: string; sprite: string; count: number }[] = [
+    { id: "flowers",     emoji: "🌸", sprite: "/sprites/flowers/bloom.png",  count: flowers.length     },
+    { id: "consumables", emoji: "🧪", sprite: "/sprites/ui/consumables.png", count: consumables.length },
+    { id: "gear",        emoji: "⚙️", sprite: "/sprites/ui/gear.png",        count: gearItems.length   },
   ];
 
   return (
@@ -166,18 +167,18 @@ export function CreateListingModal({ onClose, onListed }: Props) {
 
         {/* ── Tabs — always visible ── */}
         <div className="flex gap-1.5">
-          {TAB_CONFIG.map(({ id, emoji, count }) => (
+          {TAB_CONFIG.map(({ id, emoji, sprite, count }) => (
             <button
               key={id}
               onClick={() => switchTab(id)}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all text-center ${
+              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all text-center inline-flex items-center justify-center gap-1 ${
                 activeTab === id
                   ? "bg-primary text-primary-foreground"
                   : "bg-background border border-border text-muted-foreground hover:border-primary/40"
               }`}
             >
-              {emoji}
-              <span className={`ml-1 font-mono text-[10px] ${activeTab === id ? "opacity-75" : "opacity-50"}`}>
+              <ItemSprite emoji={emoji} sprite={sprite} name={id} textSize="text-base" imgSize="w-4 h-4" />
+              <span className={`font-mono text-[10px] ${activeTab === id ? "opacity-75" : "opacity-50"}`}>
                 ({count})
               </span>
             </button>
@@ -187,9 +188,12 @@ export function CreateListingModal({ onClose, onListed }: Props) {
         {/* ── Item list — capped height, independently scrollable ── */}
         {tabItems.length === 0 ? (
           <div className="min-h-[18vh] flex flex-col items-center justify-center space-y-1">
-            <p className="text-2xl">
-              {activeTab === "flowers" ? "🌸" : activeTab === "consumables" ? "🧪" : "⚙️"}
-            </p>
+            <ItemSprite
+              emoji={activeTab === "flowers" ? "🌸" : activeTab === "consumables" ? "🧪" : "⚙️"}
+              sprite={activeTab === "flowers" ? "/sprites/flowers/bloom.png" : activeTab === "consumables" ? "/sprites/ui/consumables.png" : "/sprites/ui/gear.png"}
+              name="empty"
+              textSize="text-2xl" imgSize="w-8 h-8"
+            />
             <p className="text-sm text-muted-foreground">
               {activeTab === "flowers"     ? "No flowers to list."
                : activeTab === "consumables" ? "No consumables to list."
@@ -281,20 +285,19 @@ export function CreateListingModal({ onClose, onListed }: Props) {
                     }
                   `}
                 >
-                  <div className="relative flex-shrink-0">
-                    <span className="text-2xl">
-                      {item.isSeed ? (species.emoji.seed ?? "🌱") : species.emoji.bloom}
-                    </span>
-                    {!item.isSeed && mut && (
-                      <span className="absolute -top-1 -right-1 text-xs">{mut.emoji}</span>
-                    )}
-                  </div>
+                  <FlowerSprite
+                    species={species}
+                    stage={item.isSeed ? "seed" : "bloom"}
+                    textSize="text-2xl"
+                    imgSize="w-7 h-7"
+                    className={!item.isSeed && mut ? mut.vfxClass : ""}
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <p className="text-sm font-medium truncate">{species.name}</p>
                       {item.isSeed
                         ? <span className="text-xs font-mono text-muted-foreground">Seed</span>
-                        : mut && <span className={`text-xs font-mono ${mut.color}`}>{mut.name}</span>
+                        : mut && <span className={`text-xs font-mono ${mut.color} inline-flex items-center gap-0.5`}><ItemSprite emoji={mut.emoji} sprite={mut.sprite} name={mut.emoji} textSize="text-xs" imgSize="w-3 h-3" />{mut.name}</span>
                       }
                     </div>
                     <p className={`text-xs font-mono ${rarity?.color}`}>{rarity?.label}</p>
@@ -356,7 +359,12 @@ export function CreateListingModal({ onClose, onListed }: Props) {
             disabled={selectedIdx === null || !validPrice || listing || state.coins < fee}
             className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-40 text-center"
           >
-            {listing ? "Listing..." : btnLabel}
+            {listing ? "Listing..." : (
+              <span className="inline-flex items-center justify-center gap-1.5">
+                {btnLabel}
+                {selectedItem && validPrice && <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-sm" imgSize="w-4 h-4" />}
+              </span>
+            )}
           </button>
 
           {selectedIdx !== null && validPrice && state.coins < fee && (
