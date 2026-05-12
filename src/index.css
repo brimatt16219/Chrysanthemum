@@ -30,6 +30,13 @@
   --color-border:              hsl(var(--border));
 }
 
+/* ── Loading screen progress bar ───────────────────────────────────────── */
+@keyframes loading-slide {
+  0%   { left: -40%; width: 40%; }
+  50%  { left: 40%;  width: 50%; }
+  100% { left: 110%; width: 40%; }
+}
+
 /* ── Login page flower drift ───────────────────────────────────────────── */
 @keyframes flower-drift {
   from { translate:  0 0;           }

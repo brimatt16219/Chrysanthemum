@@ -562,8 +562,15 @@ function AppInner() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <span className="text-4xl animate-pulse">🌱</span>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+        <ItemSprite emoji="🌱" sprite="/sprites/flowers/seed.png" name="🌱" textSize="text-5xl" imgSize="w-14 h-14" />
+        <p className="text-sm text-muted-foreground font-mono animate-pulse">Loading...</p>
+        <div className="relative w-48 h-1.5 bg-muted rounded-full overflow-hidden">
+          <div
+            className="absolute h-full bg-primary rounded-full"
+            style={{ animation: "loading-slide 1.6s ease-in-out infinite" }}
+          />
+        </div>
       </div>
     );
   }
