@@ -226,12 +226,9 @@ function ActiveListingRow({
               ? <FlowerSprite species={species} stage="seed" textSize="text-3xl" imgSize="w-8 h-8" />
               : <span className="text-3xl">🌱</span>
             : species
-              ? <FlowerSprite species={species} stage="bloom" textSize="text-3xl" imgSize="w-8 h-8" />
+              ? <FlowerSprite species={species} stage="bloom" textSize="text-3xl" imgSize="w-8 h-8" className={mut ? mut.vfxClass : ""} />
               : <ItemSprite emoji="❓" sprite="/sprites/ui/unknown.png" name="Unknown" textSize="text-3xl" imgSize="w-8 h-8" />
           }
-          {!isFertilizer && !isGear && !isConsumable && !listing.is_seed && mut && (
-            <span className="absolute -top-1 -right-1 text-sm">{mut.emoji}</span>
-          )}
         </div>
 
         <div className="flex-1 min-w-0">
@@ -256,7 +253,7 @@ function ActiveListingRow({
                 <p className="text-sm font-bold">{species?.name ?? listing.species_id}</p>
                 {listing.is_seed
                   ? <span className="text-xs font-mono text-muted-foreground">Seed</span>
-                  : mut && <span className={`text-xs font-mono font-bold ${mut.color}`}>{mut.name}</span>
+                  : mut && <span className={`text-xs font-mono font-bold ${mut.color} inline-flex items-center gap-0.5`}><ItemSprite emoji={mut.emoji} sprite={mut.sprite} name={mut.emoji} textSize="text-xs" imgSize="w-3 h-3" />{mut.name}</span>
                 }
                 <span className={`text-xs font-mono ${rarity?.color}`}>{rarity?.label}</span>
               </>
@@ -315,12 +312,9 @@ function HistoryListingRow({ listing }: { listing: MyListing }) {
             ? <FlowerSprite species={species} stage="seed" textSize="text-2xl" imgSize="w-7 h-7" />
             : <span className="text-2xl">🌱</span>
           : species
-            ? <FlowerSprite species={species} stage="bloom" textSize="text-2xl" imgSize="w-7 h-7" />
+            ? <FlowerSprite species={species} stage="bloom" textSize="text-2xl" imgSize="w-7 h-7" className={mut ? mut.vfxClass : ""} />
             : <ItemSprite emoji="❓" sprite="/sprites/ui/unknown.png" name="Unknown" textSize="text-2xl" imgSize="w-7 h-7" />
         }
-        {!isFertilizer && !isGear && !isConsumable && !listing.is_seed && mut && (
-          <span className="absolute -top-1 -right-1 text-xs">{mut.emoji}</span>
-        )}
       </div>
 
       <div className="flex-1 min-w-0">
@@ -345,7 +339,7 @@ function HistoryListingRow({ listing }: { listing: MyListing }) {
               <p className="text-sm font-semibold">{species?.name ?? listing.species_id}</p>
               {listing.is_seed
                 ? <span className="text-xs font-mono text-muted-foreground">Seed</span>
-                : mut && <span className={`text-xs font-mono ${mut.color}`}>{mut.name}</span>
+                : mut && <span className={`text-xs font-mono ${mut.color} inline-flex items-center gap-0.5`}><ItemSprite emoji={mut.emoji} sprite={mut.sprite} name={mut.emoji} textSize="text-xs" imgSize="w-3 h-3" />{mut.name}</span>
               }
               <span className={`text-xs font-mono ${rarity?.color}`}>{rarity?.label}</span>
             </>
