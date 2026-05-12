@@ -28,6 +28,8 @@ import { getBoostMultiplier } from "../store/gameStore";
 import { queueEntryDisplay } from "../lib/craftDisplay";
 import { useAchievementStats } from "../hooks/useAchievementStats";
 import type { AchievementStatKey } from "../data/achievements";
+import { useSettings } from "../store/SettingsContext";
+import { ItemSprite } from "./ItemSprite";
 
 // ── Forge Haste / Resonance Draft (Phase 5a) ───────────────────────────────────
 // If the relevant boost is active when a craft starts, halve its durationMs.
@@ -51,6 +53,7 @@ interface CraftEntry {
   id:          string;          // "gear:sprinkler_rare", "consumable:bloom_burst_1", "attunement:1", "essence:universal"
   kind:        "gear" | "consumable" | "attunement" | "essence";
   emoji:       string;
+  sprite?:     string;
   name:        string;
   rarity:      Rarity;
   description: string;
@@ -172,6 +175,7 @@ function buildEntries(state: GameState, filter: CraftFilter): CraftEntry[] {
         id:          `gear:${recipe.outputGearType}`,
         kind:        "gear",
         emoji:       def.emoji,
+        sprite:      def.sprite,
         name:        def.name,
         rarity:      def.rarity,
         description: def.description,
@@ -196,6 +200,7 @@ function buildEntries(state: GameState, filter: CraftFilter): CraftEntry[] {
         id:          `consumable:${recipe.id}`,
         kind:        "consumable",
         emoji:       recipe.emoji,
+        sprite:      recipe.sprite,
         name:        recipe.name,
         rarity:      recipe.rarity,
         description: recipe.description,
@@ -243,6 +248,7 @@ function buildEntries(state: GameState, filter: CraftFilter): CraftEntry[] {
         id:          `consumable:${recipe.id}`,
         kind:        "consumable",
         emoji:       recipe.emoji,
+        sprite:      recipe.sprite,
         name:        recipe.name,
         rarity:      recipe.rarity,
         description: recipe.description,
@@ -841,7 +847,7 @@ function CraftPopup({
         <div className={`px-5 pt-5 pb-4 border-b border-border ${cellBgClass(entry.rarity)}`}>
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
-              <span className="text-4xl leading-none">{entry.emoji}</span>
+              <ItemSprite emoji={entry.emoji} sprite={entry.sprite} name={entry.name} textSize="text-4xl" imgSize="w-10 h-10" />
               <div>
                 <p className="font-bold text-base text-foreground leading-tight">{entry.name}</p>
                 <span className={`text-xs font-semibold ${rc.color}`}>{rc.label}</span>
@@ -956,7 +962,7 @@ function CraftCell({ entry, onClick }: { entry: CraftEntry; onClick: () => void 
         }
       `}
     >
-      <span className="text-xl leading-none select-none">{entry.emoji}</span>
+      <ItemSprite emoji={entry.emoji} sprite={entry.sprite} name={entry.name} textSize="text-xl" imgSize="w-6 h-6" className="select-none" />
       {entry.tier != null && (
         <span className="absolute top-0.5 right-1 text-[9px] font-bold text-muted-foreground leading-none">
           {toRoman(entry.tier)}

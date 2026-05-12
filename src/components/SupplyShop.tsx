@@ -36,6 +36,7 @@ import type { ShopSlot } from "../store/gameStore";
 import { RatesModal } from "./RatesModal";
 import type { RateRow } from "./RatesModal";
 import { audioManager } from "../lib/audioManager";
+import { ItemSprite } from "./ItemSprite";
 
 function formatCountdown(ms: number): string {
   const totalSec = Math.max(0, Math.floor(ms / 1_000));
@@ -192,7 +193,7 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
         `}
       >
         <div className="flex items-start justify-between">
-          <span className="text-3xl">{fert.emoji}</span>
+          <ItemSprite emoji={fert.emoji} sprite={fert.sprite} name={fert.name} textSize="text-3xl" imgSize="w-8 h-8" />
           <span className={`text-xs font-mono px-2 py-0.5 rounded-full border ${fertRarity.color} border-current bg-current/10`}>
             {fertRarity.label}
           </span>
@@ -279,7 +280,7 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
       >
         <div className="flex items-start justify-between">
           <span className="text-3xl relative">
-            {def.emoji}
+            <ItemSprite emoji={def.emoji} sprite={def.sprite} name={def.name} textSize="text-3xl" imgSize="w-8 h-8" />
             {def.category === "sprinkler_mutation" && def.mutationType && (
               <span className="absolute -bottom-0.5 -right-1 text-sm leading-none">
                 {MUTATIONS[def.mutationType].emoji}
@@ -382,7 +383,7 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
         `}
       >
         <div className="flex items-start justify-between">
-          <span className="text-3xl">{recipe.emoji}</span>
+          <ItemSprite emoji={recipe.emoji} sprite={recipe.sprite} name={recipe.name} textSize="text-3xl" imgSize="w-8 h-8" />
           <span className={`text-xs font-mono px-2 py-0.5 rounded-full border ${rarity.color} border-current bg-current/10`}>
             {rarity.label}
           </span>

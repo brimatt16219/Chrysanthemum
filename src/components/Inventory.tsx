@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useGame } from "../store/GameContext";
+import { ItemSprite } from "./ItemSprite";
 import { getFlower, RARITY_CONFIG, MUTATIONS, FLOWER_TYPES } from "../data/flowers";
 import type { FlowerType, MutationType } from "../data/flowers";
 import {
@@ -415,7 +416,7 @@ export function Inventory({ newSeeds = 0, newBlooms = 0, newSupplies = 0, onSubT
                     key={f.type}
                     className={`flex items-center gap-4 bg-card/60 border rounded-xl px-4 py-3 ${fert.cardBorder}`}
                   >
-                    <span className="text-3xl flex-shrink-0">{fert.emoji}</span>
+                    <ItemSprite emoji={fert.emoji} sprite={fert.sprite} name={fert.name} textSize="text-3xl" imgSize="w-8 h-8" className="flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-semibold text-sm">{fert.name}</h3>
@@ -574,7 +575,7 @@ function GearInventoryRow({ item }: { item: GearInventoryItem }) {
   const rarity = RARITY_CONFIG[def.rarity];
   return (
     <div className={`flex items-center gap-4 bg-card/60 border rounded-xl px-4 py-3 ${def.rarity === "prismatic" ? "rainbow-border rainbow-glow" : `${rarity?.glow ?? ""} border-border`}`}>
-      <span className="text-3xl flex-shrink-0">{def.emoji}</span>
+      <ItemSprite emoji={def.emoji} sprite={def.sprite} name={def.name} textSize="text-3xl" imgSize="w-8 h-8" className="flex-shrink-0" />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <h3 className="font-semibold text-sm">{def.name}</h3>
@@ -675,7 +676,7 @@ function ConsumablesTabContent({
               ${isPrismatic ? "rainbow-tile" : `${consRarity?.glow ?? ""} border-border`}
             `}
           >
-            <span className="text-3xl flex-shrink-0">{recipe.emoji}</span>
+            <ItemSprite emoji={recipe.emoji} sprite={recipe.sprite} name={recipe.name} textSize="text-3xl" imgSize="w-8 h-8" className="flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-semibold text-sm">{recipe.name}</h3>

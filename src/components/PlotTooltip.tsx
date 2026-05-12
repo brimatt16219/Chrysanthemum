@@ -1,4 +1,5 @@
 import { useState, useRef, useLayoutEffect } from "react";
+import { ItemSprite } from "./ItemSprite";
 import {
   type PlantedFlower,
   getCurrentStage,
@@ -411,7 +412,7 @@ export function PlotTooltip({
                         : "bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
                     }`}
                   >
-                    <span>{recipe.emoji}</span>
+                    <ItemSprite emoji={recipe.emoji} sprite={recipe.sprite} name={recipe.name} textSize="text-[10px]" imgSize="w-3 h-3" />
                     {recipe.tier !== null && (
                       <span>{ROMAN[recipe.tier as 1|2|3|4|5]}</span>
                     )}
@@ -552,8 +553,14 @@ export function PlotTooltip({
         {!isBloomed && (
           <div className="pt-1 border-t border-border">
             {hasFertilizer ? (
-              <p className="text-[10px] text-green-400 font-mono">
-                {FERTILIZERS[plant.fertilizer!].emoji}{" "}
+              <p className="text-[10px] text-green-400 font-mono flex items-center gap-1">
+                <ItemSprite
+                  emoji={FERTILIZERS[plant.fertilizer!].emoji}
+                  sprite={FERTILIZERS[plant.fertilizer!].sprite}
+                  name={FERTILIZERS[plant.fertilizer!].name}
+                  textSize="text-[10px]"
+                  imgSize="w-3 h-3"
+                />
                 {FERTILIZERS[plant.fertilizer!].name} applied
               </p>
             ) : availableFerts.length > 0 ? (
@@ -572,7 +579,7 @@ export function PlotTooltip({
                         onClick={() => handleApplyFertilizer(f.type)}
                         className="flex items-center gap-1.5 w-full text-left px-2 py-1 rounded-lg hover:bg-primary/10 transition-colors"
                       >
-                        <span>{FERTILIZERS[f.type].emoji}</span>
+                        <ItemSprite emoji={FERTILIZERS[f.type].emoji} sprite={FERTILIZERS[f.type].sprite} name={FERTILIZERS[f.type].name} textSize="text-[10px]" imgSize="w-3 h-3" />
                         <span className="text-[10px] text-foreground">
                           {FERTILIZERS[f.type].name}
                         </span>

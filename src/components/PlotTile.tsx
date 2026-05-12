@@ -17,6 +17,7 @@ import { GEAR, isGearExpired, CROPSTICKS_BREED_DURATION_MS, type FanDirection } 
 import { PlotTooltip } from "./PlotTooltip";
 import { GearTooltip } from "./GearTooltip";
 import { FlowerSprite } from "./FlowerSprite";
+import { ItemSprite } from "./ItemSprite";
 import { useGame } from "../store/GameContext";
 import { useSettings } from "../store/SettingsContext";
 import { edgeHarvest } from "../lib/edgeFunctions";
@@ -312,7 +313,7 @@ export function PlotTile({
           `}
           title={`${def.name} — ${def.rarity} — Click to inspect`}
         >
-          <span className="text-2xl leading-none">{def.emoji}</span>
+          <ItemSprite emoji={def.emoji} sprite={def.sprite} name={def.name} textSize="text-2xl" imgSize="w-7 h-7" />
 
           {/* Mutation emoji overlay */}
           {def.category === "sprinkler_mutation" && def.mutationType && (
@@ -589,8 +590,14 @@ export function PlotTile({
 
         {/* Fertilizer indicator — top-left */}
         {settings.plotFertilizerIndicator && hasFert && !isBloomed && (
-          <span className="absolute top-0.5 left-0.5 text-[10px] leading-none">
-            {FERTILIZERS[(plant as PlantedFlower).fertilizer!].emoji}
+          <span className="absolute top-0.5 left-0.5 leading-none">
+            <ItemSprite
+              emoji={FERTILIZERS[(plant as PlantedFlower).fertilizer!].emoji}
+              sprite={FERTILIZERS[(plant as PlantedFlower).fertilizer!].sprite}
+              name={FERTILIZERS[(plant as PlantedFlower).fertilizer!].name}
+              textSize="text-[10px]"
+              imgSize="w-3 h-3"
+            />
           </span>
         )}
 

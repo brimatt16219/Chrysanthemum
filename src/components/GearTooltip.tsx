@@ -5,6 +5,7 @@ import { FERTILIZERS } from "../data/upgrades";
 import { removeGear, collectFromComposter, setFanDirection, stampStageTransitions } from "../store/gameStore";
 import { useGame } from "../store/GameContext";
 import { edgeRemoveGear, edgeCollectFromComposter, edgeSetFanDirection } from "../lib/edgeFunctions";
+import { ItemSprite } from "./ItemSprite";
 
 interface Props {
   gear:    PlacedGear;
@@ -173,7 +174,7 @@ export function GearTooltip({ gear, row, col, onClose }: Props) {
 
         {/* Header */}
         <div className="flex items-center gap-2">
-          <span className="text-xl">{def.emoji}</span>
+          <ItemSprite emoji={def.emoji} sprite={def.sprite} name={def.name} textSize="text-xl" imgSize="w-6 h-6" />
           {def.category === "sprinkler_mutation" && def.mutationType && (
             <span className="text-base leading-none">{MUTATIONS[def.mutationType].emoji}</span>
           )}
@@ -217,7 +218,9 @@ export function GearTooltip({ gear, row, col, onClose }: Props) {
                     : "bg-white/5 border border-white/10 text-muted-foreground hover:border-primary/30 hover:text-foreground"
                 }`}
               >←</button>
-              <div className="flex items-center justify-center text-base">{def.emoji}</div>
+              <div className="flex items-center justify-center">
+                <ItemSprite emoji={def.emoji} sprite={def.sprite} name={def.name} textSize="text-base" imgSize="w-5 h-5" />
+              </div>
               <button
                 onClick={() => handleFanDirection("right")}
                 className={`py-1 rounded-lg text-xs font-bold transition-all text-center ${
@@ -336,8 +339,14 @@ export function GearTooltip({ gear, row, col, onClose }: Props) {
             {hasStored && (
               <div className="flex flex-wrap gap-1">
                 {stored.map((t, i) => (
-                  <span key={i} className="text-sm" title={FERTILIZERS[t].name}>
-                    {FERTILIZERS[t].emoji}
+                  <span key={i} title={FERTILIZERS[t].name}>
+                    <ItemSprite
+                      emoji={FERTILIZERS[t].emoji}
+                      sprite={FERTILIZERS[t].sprite}
+                      name={FERTILIZERS[t].name}
+                      textSize="text-sm"
+                      imgSize="w-5 h-5"
+                    />
                   </span>
                 ))}
               </div>

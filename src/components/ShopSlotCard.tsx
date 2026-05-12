@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import { getFlower, RARITY_CONFIG } from "../data/flowers";
 import { useSettings } from "../store/SettingsContext";
+import { ItemSprite } from "./ItemSprite";
 
 const PX = { imageRendering: "pixelated" as const };
 import { FlowerTypeBadges } from "./FlowerTypeBadges";
@@ -166,7 +167,7 @@ export function ShopSlotCard({ slot }: Props) {
         `}
       >
         <div className="flex items-start justify-between">
-          <span className="text-4xl">{fert.emoji}</span>
+          <ItemSprite emoji={fert.emoji} sprite={fert.sprite} name={fert.name} textSize="text-4xl" imgSize="w-10 h-10" />
           <span className={`text-xs font-mono px-2 py-0.5 rounded-full border ${fert.color} border-current bg-current/10`}>
             Fertilizer
           </span>

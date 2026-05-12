@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAchievementStats } from "../hooks/useAchievementStats";
 import { useGame } from "../store/GameContext";
+import { ItemSprite } from "./ItemSprite";
 import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
 import type { MutationType } from "../data/flowers";
 import { FERTILIZERS } from "../data/upgrades";
@@ -209,7 +210,7 @@ export function CreateListingModal({ onClose, onListed }: Props) {
                 return (
                   <button key={`fert-${item.type}`} onClick={() => { setSelectedIdx(selected ? null : idx); setError(""); }}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-left ${selected ? "border-primary bg-primary/10" : "border-border bg-background hover:border-primary/40"}`}>
-                    <span className="text-2xl flex-shrink-0">{def.emoji}</span>
+                    <ItemSprite emoji={def.emoji} sprite={def.sprite} name={def.name} textSize="text-2xl" imgSize="w-7 h-7" className="flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm font-medium ${def.color}`}>{def.name}</p>
                       <p className="text-xs text-muted-foreground font-mono">Fertilizer · {def.speedMultiplier}× speed</p>
@@ -226,7 +227,7 @@ export function CreateListingModal({ onClose, onListed }: Props) {
                 return (
                   <button key={`consumable-${item.id}`} onClick={() => { setSelectedIdx(selected ? null : idx); setError(""); }}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-left ${selected ? "border-primary bg-primary/10" : "border-border bg-background hover:border-primary/40"}`}>
-                    <span className="text-2xl flex-shrink-0">{recipe?.emoji ?? "🧪"}</span>
+                    <ItemSprite emoji={recipe?.emoji ?? "🧪"} sprite={recipe?.sprite} name={recipe?.name ?? ""} textSize="text-2xl" imgSize="w-7 h-7" className="flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium">{recipe?.name ?? item.id}</p>
                       <p className={`text-xs font-mono ${rarityDef?.color ?? "text-muted-foreground"}`}>{rarityDef?.label ?? recipe?.rarity}</p>
@@ -247,7 +248,7 @@ export function CreateListingModal({ onClose, onListed }: Props) {
               return (
                 <button key={`gear-${item.gearType}`} onClick={() => { setSelectedIdx(selected ? null : idx); setError(""); }}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-left ${selected ? "border-primary bg-primary/10" : "border-border bg-background hover:border-primary/40"}`}>
-                  <span className="text-2xl flex-shrink-0">{def?.emoji ?? "⚙️"}</span>
+                  <ItemSprite emoji={def?.emoji ?? "⚙️"} sprite={def?.sprite} name={def?.name ?? ""} textSize="text-2xl" imgSize="w-7 h-7" className="flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium">{def?.name ?? item.gearType}</p>
                     <p className={`text-xs font-mono ${rarity?.color}`}>{rarity?.label}</p>

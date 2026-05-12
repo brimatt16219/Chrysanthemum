@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { GEAR } from "../data/gear";
 import { RARITY_CONFIG } from "../data/flowers";
+import { ItemSprite } from "./ItemSprite";
 
 interface Props {
   gearType: string;
@@ -35,7 +36,9 @@ export function GearExpiryBanner({ gearType, onDismiss }: Props) {
       <div className="flex items-center gap-4 bg-card border border-border/60 rounded-2xl px-5 py-4 shadow-2xl min-w-72">
 
         {/* Icon */}
-        <div className="text-3xl flex-shrink-0">{def.emoji}</div>
+        <div className="flex-shrink-0">
+          <ItemSprite emoji={def.emoji} sprite={def.sprite} name={def.name} textSize="text-3xl" imgSize="w-8 h-8" />
+        </div>
 
         {/* Text */}
         <div className="flex-1">

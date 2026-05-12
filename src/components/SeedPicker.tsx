@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
+import { ItemSprite } from "./ItemSprite";
 import type { MutationType } from "../data/flowers";
 import { FlowerTypeBadges } from "./FlowerTypeBadges";
 import { GEAR } from "../data/gear";
@@ -213,7 +214,7 @@ export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: P
                   className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 border border-transparent hover:border-primary/30 transition-all text-left"
                 >
                   <span className="text-xl relative">
-                    {def.emoji}
+                    <ItemSprite emoji={def.emoji} sprite={def.sprite} name={def.name} textSize="text-xl" imgSize="w-6 h-6" />
                     {def.category === "sprinkler_mutation" && def.mutationType && (
                       <span className="absolute -bottom-0.5 -right-1 text-[10px] leading-none">
                         {MUTATIONS[def.mutationType].emoji}

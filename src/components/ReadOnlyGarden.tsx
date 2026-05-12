@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { useSettings } from "../store/SettingsContext";
+import { ItemSprite } from "./ItemSprite";
 import { getCurrentStage, getStageProgress, getPassiveGrowthMultiplier, getDevShowGrowthDebug } from "../store/gameStore";
 import type { Plot } from "../store/gameStore";
 import { supabase } from "../lib/supabase";
@@ -209,7 +210,7 @@ export function ReadOnlyGarden({ grid, farmSize, farmRows }: Props) {
                 `}
                 title={`${def.name} — ${def.rarity}`}
               >
-                <span className="text-xl leading-none">{def.emoji}</span>
+                <ItemSprite emoji={def.emoji} sprite={def.sprite} name={def.name} textSize="text-xl" imgSize="w-6 h-6" />
 
                 {/* Mutation sprinkler overlay */}
                 {def.category === "sprinkler_mutation" && def.mutationType && (
@@ -430,8 +431,14 @@ export function ReadOnlyGarden({ grid, farmSize, farmRows }: Props) {
 
               {/* Fertilizer — top-left */}
               {settings.plotFertilizerIndicator && hasFert && !isBloomed && (
-                <span className="absolute top-0.5 left-0.5 text-[9px] leading-none">
-                  {FERTILIZERS[plant.fertilizer!].emoji}
+                <span className="absolute top-0.5 left-0.5 leading-none">
+                  <ItemSprite
+                    emoji={FERTILIZERS[plant.fertilizer!].emoji}
+                    sprite={FERTILIZERS[plant.fertilizer!].sprite}
+                    name={FERTILIZERS[plant.fertilizer!].name}
+                    textSize="text-[9px]"
+                    imgSize="w-3 h-3"
+                  />
                 </span>
               )}
 
