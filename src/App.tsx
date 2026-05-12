@@ -584,7 +584,7 @@ function AppInner() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className={`min-h-screen bg-background text-foreground flex flex-col${settings.pixelBorders ? " pixel-borders" : ""}`}>
 
       {/* Stale-tab overlay — shown when another tab took over this session */}
       {isStaleTab && (

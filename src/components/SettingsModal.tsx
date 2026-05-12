@@ -16,6 +16,11 @@ const VISUAL_TOGGLES: { key: keyof Settings; label: string; description: string 
     description: "Show pixel art images for flowers and UI icons. Turn off to use classic emoji.",
   },
   {
+    key:         "pixelBorders",
+    label:       "Pixel borders (WIP)",
+    description: "Replace rounded corners with pixel-art style square borders everywhere.",
+  },
+  {
     key:         "plotAnimations",
     label:       "Tile animations",
     description: "Particle effects on tiles (water drops, glow, birds, sparkles)",

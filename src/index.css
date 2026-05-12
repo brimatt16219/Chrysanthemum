@@ -116,6 +116,54 @@ body {
    Result is fully predictable regardless of the flower's base color.
    Animations pulse between a faint tint and the full colorized version.  */
 
+/* ── Pixel borders ───────────────────────────────────────────────────────────
+   When .pixel-borders is active on the root element, strip all border-radius
+   and replace with a multi-step staircase clip-path that mimics pixel-art
+   curved corners — each corner steps in 2 px increments rather than a single
+   diagonal cut, producing the classic RPG-panel "rounded" pixel look.        */
+
+.pixel-borders,
+.pixel-borders * {
+  border-radius: 0 !important;
+}
+
+/* Large panels / cards — 3-step staircase (6 px total corner span)
+   Corner shape (each char = 2 px):
+     ..███   row 0: 4 px cut
+     .████   row 2: 2 px cut
+     █████   row 4+: full                                                      */
+.pixel-borders .rounded-xl,
+.pixel-borders .rounded-2xl,
+.pixel-borders .rounded-3xl {
+  clip-path: polygon(
+    /* top-left staircase */
+    0px 6px, 0px 4px, 2px 4px, 2px 2px, 4px 2px, 4px 0px, 6px 0px,
+    /* top edge */
+    calc(100% - 6px) 0px,
+    /* top-right staircase */
+    calc(100% - 4px) 0px, calc(100% - 4px) 2px,
+    calc(100% - 2px) 2px, calc(100% - 2px) 4px,
+    100% 4px, 100% 6px,
+    /* right edge */
+    100% calc(100% - 6px),
+    /* bottom-right staircase */
+    100% calc(100% - 4px), calc(100% - 2px) calc(100% - 4px),
+    calc(100% - 2px) calc(100% - 2px), calc(100% - 4px) calc(100% - 2px),
+    calc(100% - 4px) 100%, calc(100% - 6px) 100%,
+    /* bottom edge */
+    6px 100%,
+    /* bottom-left staircase */
+    4px 100%, 4px calc(100% - 2px),
+    2px calc(100% - 2px), 2px calc(100% - 4px),
+    0px calc(100% - 4px), 0px calc(100% - 6px)
+  );
+}
+
+/* Medium and small elements (buttons, nav tabs, chips, badges) intentionally
+   use no clip-path — these often contain absolutely-positioned notification
+   badges that would be clipped. Square corners (from border-radius: 0 above)
+   are sufficient for the pixel-art look at this scale.                        */
+
 /* Golden — always gold, brightness pulses */
 @keyframes mut-golden-f {
   0%, 100% { filter: grayscale(1) sepia(1) saturate(2.5) brightness(1.1);  }
