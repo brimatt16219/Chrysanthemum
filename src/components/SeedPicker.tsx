@@ -176,14 +176,13 @@ export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: P
                   onClick={() => onBloomSelect(item.speciesId, mut)}
                   className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 border border-transparent hover:border-primary/30 transition-all text-left"
                 >
-                  <span className="text-xl relative">
-                    {species.emoji.bloom}
-                    {mut && (
-                      <span className="absolute -bottom-0.5 -right-1 text-[10px] leading-none">
-                        {MUTATIONS[mut].emoji}
-                      </span>
-                    )}
-                  </span>
+                  <FlowerSprite
+                    species={species}
+                    stage="bloom"
+                    textSize="text-xl"
+                    imgSize="w-6 h-6"
+                    className={mut ? MUTATIONS[mut].vfxClass : ""}
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <p className="text-sm font-medium truncate">{species.name}</p>
@@ -193,9 +192,13 @@ export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: P
                         </span>
                       )}
                     </div>
-                    <p className={`text-xs ${rarity.color}`}>
-                      {rarity.label}{mut ? ` · ${MUTATIONS[mut].name}` : ""}
-                    </p>
+                    <p className={`text-xs ${rarity.color}`}>{rarity.label}</p>
+                    {mut && (
+                      <p className={`text-xs ${MUTATIONS[mut].color} inline-flex items-center gap-1`}>
+                        <ItemSprite emoji={MUTATIONS[mut].emoji} sprite={MUTATIONS[mut].sprite} name={MUTATIONS[mut].emoji} textSize="text-xs" imgSize="w-3.5 h-3.5" />
+                        {MUTATIONS[mut].name}
+                      </p>
+                    )}
                     <FlowerTypeBadges types={species.types} className="mt-0.5" />
                   </div>
                   <span className="text-xs text-muted-foreground flex-shrink-0">×{item.quantity}</span>
