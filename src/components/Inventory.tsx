@@ -252,7 +252,7 @@ export function Inventory({ newSeeds = 0, newBlooms = 0, newSupplies = 0, onSubT
 
       {/* Coins */}
       <div className="flex items-center gap-2 bg-card/40 border border-border rounded-lg px-4 py-2.5">
-        <span className="text-lg">🟡</span>
+        <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-lg" imgSize="w-5 h-5" />
         <span className="text-sm font-mono font-medium">
           {state.coins.toLocaleString()} coins
         </span>
@@ -340,7 +340,10 @@ export function Inventory({ newSeeds = 0, newBlooms = 0, newSupplies = 0, onSubT
                 onClick={handleSellAll}
                 className="w-full py-2.5 rounded-xl border border-primary text-primary text-sm font-semibold hover:bg-primary/10 transition-colors text-center"
               >
-                Sell All — {totalBloomValue.toLocaleString()} 🟡
+                <span className="inline-flex items-center gap-0.5">
+                  Sell All — {totalBloomValue.toLocaleString()}
+                  <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
+                </span>
               </button>
               {filteredBlooms.length > 0 ? filteredBlooms.map((item, i) => (
                 <InventoryItemCard

@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
 import { FlowerSprite } from "./FlowerSprite";
 import { FlowerTypeBadges } from "./FlowerTypeBadges";
+import { ItemSprite } from "./ItemSprite";
 import { useGame } from "../store/GameContext";
 import { sellFlower, rollbackSellAll } from "../store/gameStore";
 import { edgeSellFlower } from "../lib/edgeFunctions";
@@ -114,7 +115,14 @@ export function InventoryItemCard({ item }: Props) {
         </div>
         <FlowerTypeBadges types={species.types} className="mt-1" />
         <p className="text-xs text-muted-foreground mt-0.5">
-          {item.quantity}× · {valuePerItem} 🟡 each · {totalValue} 🟡 total
+          <span className="inline-flex items-center gap-0.5 flex-wrap">
+            {item.quantity}× ·{" "}
+            {valuePerItem}
+            <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
+            {" "}each · {totalValue}
+            <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
+            {" "}total
+          </span>
         </p>
       </div>
 

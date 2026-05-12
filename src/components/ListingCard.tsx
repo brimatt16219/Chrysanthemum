@@ -115,8 +115,9 @@ export function ListingCard({ listing, currentUserId, currentCoins, onBuy, onVie
           </div>
 
           <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-            <p className="text-sm font-bold font-mono text-primary">
-              {formatCoins(listing.ask_price)} 🟡
+            <p className="text-sm font-bold font-mono text-primary inline-flex items-center gap-0.5">
+              {formatCoins(listing.ask_price)}
+              <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
             </p>
             {listing.base_value > 0 && (
               <p className="text-[10px] text-muted-foreground font-mono">
@@ -189,8 +190,9 @@ export function ListingCard({ listing, currentUserId, currentCoins, onBuy, onVie
           </div>
 
           <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-            <p className="text-sm font-bold font-mono text-primary">
-              {formatCoins(listing.ask_price)} 🟡
+            <p className="text-sm font-bold font-mono text-primary inline-flex items-center gap-0.5">
+              {formatCoins(listing.ask_price)}
+              <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
             </p>
             {listing.base_value > 0 && (
               <p className="text-[10px] text-muted-foreground font-mono">
@@ -263,8 +265,9 @@ export function ListingCard({ listing, currentUserId, currentCoins, onBuy, onVie
           </div>
 
           <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-            <p className="text-sm font-bold font-mono text-primary">
-              {formatCoins(listing.ask_price)} 🟡
+            <p className="text-sm font-bold font-mono text-primary inline-flex items-center gap-0.5">
+              {formatCoins(listing.ask_price)}
+              <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
             </p>
             {isOwnListing ? (
               <span className="text-[10px] text-muted-foreground font-mono bg-border/50 px-2 py-0.5 rounded-full">

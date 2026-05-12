@@ -10,6 +10,7 @@ import { getAllMail, clearClaimedMail } from "../store/cloudSave";
 import type { MailboxEntry } from "../store/cloudSave";
 import { edgeClaimMail } from "../lib/edgeFunctions";
 import { supabase } from "../lib/supabase";
+import { ItemSprite } from "./ItemSprite";
 
 interface Props {
   onViewProfile:  (username: string) => void;
@@ -442,7 +443,7 @@ function MailCard({
               : claiming
                 ? "Collecting..."
                 : isCoins
-                  ? `Collect ${formatCoins(entry.amount ?? 0)} 🟡`
+                  ? <span className="inline-flex items-center gap-0.5">Collect {formatCoins(entry.amount ?? 0)} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /></span>
                   : "Collect"}
           </button>
         </div>

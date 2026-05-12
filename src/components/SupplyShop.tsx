@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useGame } from "../store/GameContext";
 import { useSettings } from "../store/SettingsContext";
+import { ItemSprite } from "./ItemSprite";
 
 const PX = { imageRendering: "pixelated" as const };
 import {
@@ -250,10 +251,7 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
               {justBought ? "✓ Bought!" : (
                 <span className="flex items-center gap-1 justify-center">
                   {slot.price.toLocaleString()}
-                  {settings.useSprites
-                    ? <img src="/sprites/ui/coins.png" alt="🟡" className="w-3.5 h-3.5 object-contain" style={PX} />
-                    : <span>🟡</span>
-                  }
+                  <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-sm" imgSize="w-3.5 h-3.5" />
                 </span>
               )}
             </button>
@@ -353,10 +351,7 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
               {justBought ? "✓ Bought!" : (
                 <span className="flex items-center gap-1 justify-center">
                   {slot.price.toLocaleString()}
-                  {settings.useSprites
-                    ? <img src="/sprites/ui/coins.png" alt="🟡" className="w-3.5 h-3.5 object-contain" style={PX} />
-                    : <span>🟡</span>
-                  }
+                  <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-sm" imgSize="w-3.5 h-3.5" />
                 </span>
               )}
             </button>
@@ -443,10 +438,7 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
               {justBought ? "✓ Bought!" : (
                 <span className="flex items-center gap-1 justify-center">
                   {slot.price.toLocaleString()}
-                  {settings.useSprites
-                    ? <img src="/sprites/ui/coins.png" alt="🟡" className="w-3.5 h-3.5 object-contain" style={PX} />
-                    : <span>🟡</span>
-                  }
+                  <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-sm" imgSize="w-3.5 h-3.5" />
                 </span>
               )}
             </button>
@@ -683,10 +675,7 @@ export function SupplyShop() {
 
       {/* Coins */}
       <div className="flex items-center gap-2 bg-card/40 border border-border rounded-lg px-4 py-2.5">
-        {settings.useSprites
-          ? <img src="/sprites/ui/coins.png" alt="🟡" className="w-5 h-5 object-contain" style={PX} />
-          : <span className="text-lg">🟡</span>
-        }
+        <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-lg" imgSize="w-5 h-5" />
         <span className="text-sm font-mono font-medium">
           {state.coins.toLocaleString()} coins
         </span>
@@ -701,10 +690,7 @@ export function SupplyShop() {
         >
           <span className="flex items-center justify-center gap-1.5">
             {`Buy All — ${buyAllCost.toLocaleString()}`}
-            {settings.useSprites
-              ? <img src="/sprites/ui/coins.png" alt="🟡" className="w-3.5 h-3.5 object-contain" style={PX} />
-              : <span>🟡</span>
-            }
+            <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-sm" imgSize="w-3.5 h-3.5" />
           </span>
         </button>
       )}
@@ -756,10 +742,7 @@ export function SupplyShop() {
               }`}
           >
             <span className="flex items-center gap-1">
-              {settings.useSprites
-                ? <img src="/sprites/ui/coins.png" alt="🟡" className="w-3.5 h-3.5 object-contain" style={PX} />
-                : <span>🟡</span>
-              }
+              <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-sm" imgSize="w-3.5 h-3.5" />
               {nextSlotUpgrade!.cost.toLocaleString()}
             </span>
           </button>

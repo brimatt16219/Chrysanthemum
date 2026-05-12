@@ -217,7 +217,7 @@ export function CreateListingModal({ onClose, onListed }: Props) {
                     </div>
                     <div className="text-right flex-shrink-0">
                       <p className="text-xs text-muted-foreground">×{item.quantity}</p>
-                      <p className="text-[10px] text-muted-foreground/60">{formatCoins(def.shopPrice)} 🟡 shop</p>
+                      <p className="text-[10px] text-muted-foreground/60 inline-flex items-center gap-0.5">{formatCoins(def.shopPrice)} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /> shop</p>
                     </div>
                   </button>
                 );
@@ -255,7 +255,7 @@ export function CreateListingModal({ onClose, onListed }: Props) {
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className="text-xs text-muted-foreground">×{item.quantity}</p>
-                    {def && <p className="text-[10px] text-muted-foreground/60">{formatCoins(def.shopPrice)} 🟡 shop</p>}
+                    {def && <p className="text-[10px] text-muted-foreground/60 inline-flex items-center gap-0.5">{formatCoins(def.shopPrice)} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /> shop</p>}
                   </div>
                 </button>
               );
@@ -301,7 +301,7 @@ export function CreateListingModal({ onClose, onListed }: Props) {
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className="text-xs text-muted-foreground">×{item.quantity}</p>
-                    <p className="text-[10px] text-muted-foreground/60">{formatCoins(Math.floor(species.sellValue * (mut?.valueMultiplier ?? 1)))} 🟡 {mut ? "sell value" : "base"}</p>
+                    <p className="text-[10px] text-muted-foreground/60 inline-flex items-center gap-0.5">{formatCoins(Math.floor(species.sellValue * (mut?.valueMultiplier ?? 1)))} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /> {mut ? "sell value" : "base"}</p>
                   </div>
                 </button>
               );
@@ -314,8 +314,8 @@ export function CreateListingModal({ onClose, onListed }: Props) {
 
           {/* Ask price */}
           <div className="space-y-1.5">
-            <p className="text-xs font-mono text-muted-foreground uppercase tracking-wide">
-              Ask price (🟡 coins)
+            <p className="text-xs font-mono text-muted-foreground uppercase tracking-wide inline-flex items-center gap-0.5">
+              Ask price (<ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3 h-3" /> coins)
             </p>
             <input
               type="number"
@@ -332,18 +332,18 @@ export function CreateListingModal({ onClose, onListed }: Props) {
             <div className="bg-background border border-border rounded-xl px-3 py-2.5 space-y-1 text-xs font-mono">
               <div className="flex justify-between text-muted-foreground">
                 <span>Ask price</span>
-                <span>{formatCoins(askPrice)} 🟡</span>
+                <span className="inline-flex items-center gap-0.5">{formatCoins(askPrice)} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /></span>
               </div>
               <div className="flex justify-between text-muted-foreground">
                 <span>Listing fee (5%)</span>
-                <span className="text-red-400">−{formatCoins(fee)} 🟡</span>
+                <span className="text-red-400 inline-flex items-center gap-0.5">−{formatCoins(fee)} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /></span>
               </div>
               <div className="border-t border-border/60 pt-1 flex justify-between font-bold">
                 <span>You earn (on sale)</span>
-                <span className="text-primary">{formatCoins(askPrice)} 🟡</span>
+                <span className="text-primary inline-flex items-center gap-0.5">{formatCoins(askPrice)} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /></span>
               </div>
-              <p className="text-[10px] text-muted-foreground/60 text-right">
-                Fee of {formatCoins(fee)} 🟡 charged now · non-refundable
+              <p className="text-[10px] text-muted-foreground/60 text-right inline-flex items-center gap-0.5 justify-end">
+                Fee of {formatCoins(fee)} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /> charged now · non-refundable
               </p>
             </div>
           )}
@@ -361,7 +361,7 @@ export function CreateListingModal({ onClose, onListed }: Props) {
 
           {selectedIdx !== null && validPrice && state.coins < fee && (
             <p className="text-xs text-red-400 font-mono text-center">
-              Not enough coins for the listing fee ({formatCoins(fee)} 🟡 needed)
+              <span className="inline-flex items-center gap-0.5">Not enough coins for the listing fee ({formatCoins(fee)} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /> needed)</span>
             </p>
           )}
         </div>

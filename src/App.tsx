@@ -61,6 +61,7 @@ import { LoginPage } from "./components/LoginPage";
 import { useAudio } from "./hooks/useAudio";
 import { audioManager } from "./lib/audioManager";
 import { SettingsModal } from "./components/SettingsModal";
+import { ItemSprite } from "./components/ItemSprite";
 
 type Tab = "garden" | "shop" | "inventory" | "social" | "codex" | "alchemy" | "craft" | "events";
 type ShopView   = "seeds" | "supply";
@@ -719,10 +720,7 @@ function AppInner() {
             </button>
             <ActiveBoostsHUD activeBoosts={state.activeBoosts} />
             <span className="flex items-center gap-1 text-sm font-mono" title={state.coins.toLocaleString()}>
-              {settings.useSprites
-                ? <img src="/sprites/ui/coins.png" alt="coins" className="w-4 h-4 object-contain" style={{ imageRendering: "pixelated" }} />
-                : <span>🟡</span>
-              }
+              <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-4 h-4" />
               {formatCoins(state.coins)}
             </span>
             <span className="flex items-center gap-1 text-sm font-mono" title={state.gems.toLocaleString()}>

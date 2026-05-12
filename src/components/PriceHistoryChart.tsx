@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ItemSprite } from "./ItemSprite";
 import {
   LineChart,
   Line,
@@ -38,7 +39,7 @@ function ChartTooltip({ active, payload }: { active?: boolean; payload?: { value
   const { value, payload: point } = payload[0];
   return (
     <div className="bg-card border border-border rounded-lg px-3 py-1.5 text-xs shadow-md">
-      <p className="font-mono font-bold text-primary">{formatCoins(value)} 🟡</p>
+      <p className="font-mono font-bold text-primary inline-flex items-center gap-0.5">{formatCoins(value)} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /></p>
       <p className="text-muted-foreground">{formatDate(point.soldAt)}</p>
     </div>
   );
@@ -93,7 +94,7 @@ export function PriceHistoryChart({ speciesId, mutation, baseValue }: Props) {
     return (
       <div className="flex flex-col items-center justify-center h-20 gap-1">
         <p className="text-xs text-muted-foreground">No sales recorded yet</p>
-        <p className="text-[10px] text-muted-foreground/60">Base sell value: {formatCoins(baseValue)} 🟡</p>
+        <p className="text-[10px] text-muted-foreground/60 inline-flex items-center gap-0.5">Base sell value: {formatCoins(baseValue)} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /></p>
       </div>
     );
   }
@@ -114,7 +115,7 @@ export function PriceHistoryChart({ speciesId, mutation, baseValue }: Props) {
           Price history · last {points.length} sale{points.length !== 1 ? "s" : ""}
         </p>
         <p className="text-[10px] text-muted-foreground font-mono">
-          avg {formatCoins(avgPrice)} 🟡
+          <span className="inline-flex items-center gap-0.5">avg {formatCoins(avgPrice)} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /></span>
         </p>
       </div>
 
@@ -156,7 +157,7 @@ export function PriceHistoryChart({ speciesId, mutation, baseValue }: Props) {
       </ResponsiveContainer>
 
       <p className="text-[10px] text-muted-foreground/50 text-right">
-        — base sell value {formatCoins(baseValue)} 🟡
+        <span className="inline-flex items-center gap-0.5">— base sell value {formatCoins(baseValue)} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /></span>
       </p>
     </div>
   );

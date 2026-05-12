@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useGame } from "../store/GameContext";
 import { useSettings } from "../store/SettingsContext";
+import { ItemSprite } from "./ItemSprite";
 
 const PX = { imageRendering: "pixelated" as const };
 import { useGrowthTick } from "../hooks/useGrowthTick";
@@ -810,10 +811,7 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
           >
             <span className="flex items-center gap-1.5">
               {`Upgrade to ${nextUpgrade.label} — ${nextUpgrade.cost.toLocaleString()}`}
-              {settings.useSprites
-                ? <img src="/sprites/ui/coins.png" alt="🟡" className="w-3.5 h-3.5 object-contain" style={PX} />
-                : <span>🟡</span>
-              }
+              <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-sm" imgSize="w-3.5 h-3.5" />
             </span>
           </button>
           <p className="text-xs text-muted-foreground">{nextUpgrade.description}</p>

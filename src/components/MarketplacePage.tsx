@@ -18,6 +18,7 @@ import {
 import { edgeMarketplaceUpgradeSlots } from "../lib/edgeFunctions";
 import { useDailyProgress } from "../hooks/useDailyProgress";
 import { audioManager } from "../lib/audioManager";
+import { ItemSprite } from "./ItemSprite";
 
 const PAGE_SIZE = 20;
 
@@ -266,12 +267,12 @@ export function MarketplacePage({ onViewProfile }: Props) {
         <div className="bg-card/60 border border-border rounded-2xl p-4 w-full max-w-xs space-y-3">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">First slot</span>
-            <span className="font-mono font-bold">{(firstSlot.cost / 1_000).toFixed(0)}k 🟡</span>
+            <span className="font-mono font-bold inline-flex items-center gap-0.5">{(firstSlot.cost / 1_000).toFixed(0)}k <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /></span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Your coins</span>
-            <span className={`font-mono font-bold ${canAfford ? "text-primary" : "text-red-400"}`}>
-              {state.coins.toLocaleString()} 🟡
+            <span className={`font-mono font-bold inline-flex items-center gap-0.5 ${canAfford ? "text-primary" : "text-red-400"}`}>
+              {state.coins.toLocaleString()} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
             </span>
           </div>
           <button
@@ -279,7 +280,11 @@ export function MarketplacePage({ onViewProfile }: Props) {
             disabled={!canAfford || upgrading}
             className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-40"
           >
-            {upgrading ? "Unlocking..." : canAfford ? "Unlock Marketplace — 10k 🟡" : "Not enough coins"}
+            {upgrading ? "Unlocking..." : canAfford ? (
+              <span className="inline-flex items-center gap-0.5">
+                Unlock Marketplace — 10k <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
+              </span>
+            ) : "Not enough coins"}
           </button>
         </div>
       </div>
@@ -305,7 +310,12 @@ export function MarketplacePage({ onViewProfile }: Props) {
               disabled={state.coins < nextUpgrade.cost || upgrading}
               className="px-3 py-1.5 border border-primary/40 text-primary text-xs font-semibold rounded-xl hover:bg-primary/10 transition-all disabled:opacity-40 disabled:border-border disabled:text-muted-foreground whitespace-nowrap"
             >
-              {upgrading ? "..." : `+1 slot — ${nextUpgrade.cost >= 1_000_000 ? `${(nextUpgrade.cost/1_000_000).toFixed(1)}M` : `${(nextUpgrade.cost/1_000).toFixed(0)}k`} 🟡`}
+              {upgrading ? "..." : (
+                <span className="inline-flex items-center gap-0.5">
+                  +1 slot — {nextUpgrade.cost >= 1_000_000 ? `${(nextUpgrade.cost/1_000_000).toFixed(1)}M` : `${(nextUpgrade.cost/1_000).toFixed(0)}k`}
+                  <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
+                </span>
+              )}
             </button>
           )}
           <button

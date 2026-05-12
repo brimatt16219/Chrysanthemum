@@ -379,7 +379,7 @@ export function Codex({ discoveredOverride, compact = false, unseenEntries, mark
                       </div>
                       <div className="flex items-center justify-between pt-0.5 border-t border-border/40 mt-0.5">
                         <span>Sell value</span>
-                        <span className="text-foreground">{f.sellValue.toLocaleString()} 🟡</span>
+                        <span className="text-foreground inline-flex items-center gap-0.5">{f.sellValue.toLocaleString()} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /></span>
                       </div>
                     </div>
                   )}

@@ -881,8 +881,9 @@ export function AlchemyTab({ activeView, onViewChange }: AlchemyTabProps = {}) {
                       Unlock attunement slot {nextSlotUpgrade.slots}
                     </p>
                   </div>
-                  <span className="text-xs font-mono text-amber-400">
-                    {nextSlotUpgrade.cost.toLocaleString()} 🟡
+                  <span className="inline-flex items-center gap-0.5 text-xs font-mono text-amber-400">
+                    {nextSlotUpgrade.cost.toLocaleString()}
+                    <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
                   </span>
                 </button>
               )}
@@ -1018,8 +1019,9 @@ export function AlchemyTab({ activeView, onViewChange }: AlchemyTabProps = {}) {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Gold cost</span>
-                        <span className={`font-mono ${canAfford ? "" : "text-destructive"}`}>
-                          {goldCostPreview.toLocaleString()} 🟡
+                        <span className={`inline-flex items-center gap-0.5 font-mono ${canAfford ? "" : "text-destructive"}`}>
+                          {goldCostPreview.toLocaleString()}
+                          <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
                           {!canAfford && " (insufficient)"}
                         </span>
                       </div>

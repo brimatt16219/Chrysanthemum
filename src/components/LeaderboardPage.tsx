@@ -10,6 +10,7 @@ import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
 import type { MutationType } from "../data/flowers";
 import { getTotalCodexEntries } from "../store/gameStore";
 import { formatLastSeen, getPresenceStatus, STATUS_DOT } from "../lib/presence";
+import { ItemSprite } from "./ItemSprite";
 
 interface Props {
   onViewProfile: (username: string) => void;
@@ -124,7 +125,12 @@ export function LeaderboardPage({ onViewProfile }: Props) {
                 }
               `}
             >
-              {s === "coins" ? "🟡 Coins" : "📖 Codex"}
+              {s === "coins" ? (
+                <span className="inline-flex items-center gap-0.5">
+                  <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
+                  Coins
+                </span>
+              ) : "📖 Codex"}
             </button>
           ))}
         </div>
@@ -140,11 +146,12 @@ export function LeaderboardPage({ onViewProfile }: Props) {
             <p className="text-xs text-muted-foreground font-mono">Your rank</p>
             <p className="text-sm font-bold">
               {myEntry ? `#${myEntry.rank}` : myRank ? `#${myRank}` : "Unranked"}{" "}
-              <span className="text-muted-foreground font-normal">
-                {sortBy === "coins"
-                  ? `· ${state.coins.toLocaleString()} 🟡`
-                  : `· ${myCodexCount}/${TOTAL_CODEX} 📖`
-                }
+              <span className="text-muted-foreground font-normal inline-flex items-center gap-0.5">
+                {sortBy === "coins" ? (
+                  <>· {state.coins.toLocaleString()} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /></>
+                ) : (
+                  `· ${myCodexCount}/${TOTAL_CODEX} 📖`
+                )}
               </span>
             </p>
           </div>
@@ -263,7 +270,7 @@ export function LeaderboardPage({ onViewProfile }: Props) {
                       <p className="text-sm font-mono font-semibold">
                         {entry.coins.toLocaleString()}
                       </p>
-                      <p className="text-xs text-muted-foreground">🟡</p>
+                      <p className="text-xs text-muted-foreground"><ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /></p>
                     </>
                   ) : (
                     <>

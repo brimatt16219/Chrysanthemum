@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useGame } from "../store/GameContext";
 import {
   GEAR_RECIPES, CRAFTING_SLOT_UPGRADES, canCraftGear,
@@ -328,7 +328,7 @@ function GearIngredients({
 
 // ── Collect toast ─────────────────────────────────────────────────────────────
 
-function CollectToast({ emoji, name, onDone }: { emoji: string; name: string; onDone: () => void }) {
+function CollectToast({ emoji, sprite, name, onDone }: { emoji: string; sprite?: string; name: string; onDone: () => void }) {
   // Empty deps on purpose — `onDone` is a fresh closure on every parent render
   // (CraftingTab re-renders every second from setNow), so depending on it would
   // reset the timeout repeatedly and the toast would never dismiss.
@@ -339,7 +339,7 @@ function CollectToast({ emoji, name, onDone }: { emoji: string; name: string; on
 
   return (
     <div className="flex items-center gap-2 bg-card/95 border border-green-500/40 text-green-400 rounded-xl px-4 py-2.5 shadow-xl text-sm font-semibold backdrop-blur-sm">
-      <span className="text-xl leading-none">{emoji}</span>
+      <ItemSprite emoji={emoji} sprite={sprite} name={name} textSize="text-xl" imgSize="w-6 h-6" />
       <span>{name} collected!</span>
       <span className="text-green-500 text-base leading-none">✓</span>
     </div>
@@ -359,7 +359,7 @@ function QueueEntryRow({
   isCanceling:  boolean;
   isBoosted:    boolean;
 }) {
-  const { emoji, name } = queueEntryDisplay(entry);
+  const { emoji, sprite, name } = queueEntryDisplay(entry);
   const startedAt = new Date(entry.startedAt).getTime();
   const elapsed   = now - startedAt;
   // Clamp progress to [0, 1]. Without Math.max(0, …) a stale `now` (the 1s-tick
@@ -382,7 +382,7 @@ function QueueEntryRow({
       )}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="text-lg leading-none shrink-0">{emoji}</span>
+          <ItemSprite emoji={emoji} sprite={sprite} name={name} textSize="text-lg" imgSize="w-6 h-6" className="shrink-0" />
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               <p className="text-xs font-semibold text-foreground truncate">{name}</p>
@@ -443,7 +443,7 @@ function QueueEntryRow({
 function EmptySlotRow() {
   return (
     <div className="rounded-xl border border-dashed border-border/60 bg-card/20 px-3 py-2 min-h-[3rem] flex items-center gap-2">
-      <span className="text-lg leading-none shrink-0 opacity-30">⚒️</span>
+      <ItemSprite emoji="⚒️" sprite="/sprites/ui/craft.png" name="Empty slot" textSize="text-lg" imgSize="w-5 h-5" className="shrink-0 opacity-30" />
       <p className="text-xs text-muted-foreground italic">Empty slot</p>
     </div>
   );
@@ -473,13 +473,14 @@ function UpgradeSlotRow({
       "
     >
       <div className="flex items-center gap-2">
-        <span className="text-lg leading-none shrink-0 opacity-70">➕</span>
+        <ItemSprite emoji="➕" sprite="/sprites/ui/plus.png" name="Add slot" textSize="text-lg" imgSize="w-5 h-5" className="shrink-0 opacity-70" />
         <p className="text-xs font-semibold text-amber-400">
           {upgrading ? "Unlocking…" : `Unlock slot ${upgrade.slots}`}
         </p>
       </div>
-      <span className="text-[11px] font-mono text-amber-400">
-        {upgrade.cost.toLocaleString()} 🟡
+      <span className="inline-flex items-center gap-0.5 text-[11px] font-mono text-amber-400">
+        {upgrade.cost.toLocaleString()}
+        <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
       </span>
     </button>
   );
@@ -712,12 +713,12 @@ function CraftPopup({
     return `Need ${missing[0]} + ${missing.length - 1} more`;
   }, [entry, gearRecipe, gearInv, essences, consum, ferts, infusers, quantity, state.coins]);
 
-  let buttonLabel: string;
+  let buttonLabel: React.ReactNode;
   if (isCrafting)           buttonLabel = "Starting…";
   else if (!slotsAvailable) buttonLabel = "No crafting slots available";
   else if (!entry.canCraft) buttonLabel = craftBlockReason;
-  else if (quantity > 1)    buttonLabel = `⏳ Craft ×${quantity}`;
-  else                      buttonLabel = "⏳ Start Crafting";
+  else if (quantity > 1)    buttonLabel = <span className="inline-flex items-center justify-center gap-1"><ItemSprite emoji="⏳" sprite="/sprites/ui/hourglass.png" name="Craft" textSize="text-sm" imgSize="w-4 h-4" />Craft ×{quantity}</span>;
+  else                      buttonLabel = <span className="inline-flex items-center justify-center gap-1"><ItemSprite emoji="⏳" sprite="/sprites/ui/hourglass.png" name="Craft" textSize="text-sm" imgSize="w-4 h-4" />Start Crafting</span>;
 
   // Duration for display (multiplied by quantity)
   let baseDurationMs = 0;
@@ -741,6 +742,7 @@ function CraftPopup({
       <div className="space-y-1">
         <IngredientRow
           emoji="🟡"
+          sprite="/sprites/ui/coins.png"
           label="Coin Cost"
           need={totalCoinCost}
           have={state.coins}
@@ -912,8 +914,9 @@ function CraftPopup({
           </p>
           {ingredientsSection}
           {totalDurationMs > 0 && (
-            <p className="text-[10px] text-muted-foreground pt-1 px-0.5">
-              ⏱ Duration: <span className="text-foreground">{formatDurationLabel(totalDurationMs)}</span>
+            <p className="text-[10px] text-muted-foreground pt-1 px-0.5 flex items-center gap-1">
+              <ItemSprite emoji="⏱" sprite="/sprites/ui/timer.png" name="Duration" textSize="text-[10px]" imgSize="w-3 h-3" />
+              Duration: <span className="text-foreground">{formatDurationLabel(totalDurationMs)}</span>
               {quantity > 1 && (
                 <span className="text-muted-foreground/70"> ({formatDurationLabel(baseDurationMs)} × {quantity})</span>
               )}
@@ -981,11 +984,11 @@ function CraftCell({ entry, onClick }: { entry: CraftEntry; onClick: () => void 
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 
-const FILTER_LABELS: { id: CraftFilter; label: string; emoji: string }[] = [
-  { id: "all",         label: "All",         emoji: "✦"  },
-  { id: "gear",        label: "Gear",        emoji: "⚙️" },
-  { id: "consumables", label: "Consumables", emoji: "🧪" },
-  { id: "other",       label: "Other",       emoji: "✨" },
+const FILTER_LABELS: { id: CraftFilter; label: string; emoji: string; sprite?: string }[] = [
+  { id: "all",         label: "All",         emoji: "✦",  sprite: "/sprites/ui/all.png" },
+  { id: "gear",        label: "Gear",        emoji: "⚙️", sprite: "/sprites/ui/gear.png" },
+  { id: "consumables", label: "Consumables", emoji: "🧪", sprite: "/sprites/ui/consumables.png" },
+  { id: "other",       label: "Other",       emoji: "✨", sprite: "/sprites/ui/other.png" },
 ];
 
 export function CraftingTab() {
@@ -1000,7 +1003,7 @@ export function CraftingTab() {
   const [cancelingId,  setCancelingId]  = useState<string | null>(null);
   const [upgradingSlots, setUpgradingSlots] = useState(false);
 
-  const [collectToasts, setCollectToasts] = useState<{ id: string; emoji: string; name: string }[]>([]);
+  const [collectToasts, setCollectToasts] = useState<{ id: string; emoji: string; sprite?: string; name: string }[]>([]);
 
   // Tick once per second to drive queue progress bars + countdowns
   const [now, setNow] = useState(() => Date.now());
@@ -1397,7 +1400,7 @@ export function CraftingTab() {
         : [...ess, { type: outputId as EssenceType, amount: qty }];
     }
 
-    const { emoji, name } = queueEntryDisplay(entry);
+    const { emoji, sprite, name } = queueEntryDisplay(entry);
 
     try {
       await perform(
@@ -1417,7 +1420,7 @@ export function CraftingTab() {
           });
           // Show collect notification
           const toastId = crypto.randomUUID();
-          setCollectToasts((prev) => [...prev, { id: toastId, emoji, name }]);
+          setCollectToasts((prev) => [...prev, { id: toastId, emoji, sprite, name }]);
           // Achievement stats
           if (kind === "gear") {
             incrementStat(`crafted_gear_${outputId}` as AchievementStatKey, qty);
@@ -1558,7 +1561,10 @@ export function CraftingTab() {
             slots themselves. The header now just frames the tab. */}
         <div className="px-4 py-3 bg-gradient-to-r from-amber-950/50 to-card/80 border-b border-amber-800/25 flex items-center justify-between gap-3">
           <div>
-            <h2 className="font-bold text-base text-foreground">⚒️ Craft</h2>
+            <h2 className="font-bold text-base text-foreground flex items-center gap-1.5">
+              <ItemSprite emoji="⚒️" sprite="/sprites/ui/craft.png" name="Craft" textSize="text-base" imgSize="w-5 h-5" />
+              Craft
+            </h2>
             <p className="text-[11px] text-muted-foreground mt-0.5">
               {craftableCount > 0
                 ? <><span className="text-amber-400 font-semibold">{craftableCount}</span> item{craftableCount !== 1 ? "s" : ""} ready to craft</>
@@ -1610,19 +1616,21 @@ export function CraftingTab() {
 
         {/* Category filter */}
         <div className="px-4 pt-3 pb-2 bg-card/60 flex gap-2">
-          {FILTER_LABELS.map(({ id, label, emoji }) => (
+          {FILTER_LABELS.map(({ id, label, emoji, sprite }) => (
             <button
               key={id}
               onClick={() => setFilter(id)}
               className={`
                 flex-1 py-1.5 rounded-lg text-[11px] font-semibold transition-all text-center
+                inline-flex items-center justify-center gap-1
                 ${filter === id
                   ? "bg-amber-500/20 border border-amber-500/40 text-amber-300"
                   : "bg-card/40 border border-border text-muted-foreground hover:border-amber-800/40"
                 }
               `}
             >
-              {emoji} {label}
+              <ItemSprite emoji={emoji} sprite={sprite} name={label} textSize="text-[11px]" imgSize="w-3.5 h-3.5" />
+              {label}
             </button>
           ))}
         </div>
@@ -1630,7 +1638,7 @@ export function CraftingTab() {
         {/* Search */}
         <div className="px-4 pb-2 bg-card/60">
           <div className="relative">
-            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">🔍</span>
+            <ItemSprite emoji="🔍" sprite="/sprites/ui/search.png" name="Search" textSize="text-xs" imgSize="w-3.5 h-3.5" className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <input
               type="text"
               value={search}
@@ -1691,6 +1699,7 @@ export function CraftingTab() {
             <CollectToast
               key={t.id}
               emoji={t.emoji}
+              sprite={t.sprite}
               name={t.name}
               onDone={() => setCollectToasts((prev) => prev.filter((x) => x.id !== t.id))}
             />

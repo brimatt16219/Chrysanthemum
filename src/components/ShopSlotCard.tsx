@@ -210,10 +210,7 @@ export function ShopSlotCard({ slot }: Props) {
               {justBought ? "✓ Bought!" : (
                 <span className="flex items-center gap-1 justify-center">
                   {slot.price}
-                  {settings.useSprites
-                    ? <img src="/sprites/ui/coins.png" alt="🟡" className="w-3.5 h-3.5 object-contain" style={PX} />
-                    : <span>🟡</span>
-                  }
+                  <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-sm" imgSize="w-3.5 h-3.5" />
                 </span>
               )}
             </button>
@@ -378,10 +375,7 @@ export function ShopSlotCard({ slot }: Props) {
         <p>Sprout → Bloom: {formatDuration(species.growthTime.sprout)}</p>
         <p className="text-foreground/60 flex items-center gap-1">
           Sells for: {species.sellValue}
-          {settings.useSprites
-            ? <img src="/sprites/ui/coins.png" alt="🟡" className="w-3 h-3 object-contain" style={PX} />
-            : <span>🟡</span>
-          }
+          <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-sm" imgSize="w-3 h-3" />
         </p>
         <p className={`mt-1 ${ownedSeeds > 0 || ownedBlooms > 0 ? "text-primary/70" : "text-muted-foreground/50"}`}>
           You own: {ownedSeeds} seed{ownedSeeds !== 1 ? "s" : ""}
@@ -418,10 +412,7 @@ export function ShopSlotCard({ slot }: Props) {
             {justBought ? "✓ Bought!" : (
               <span className="flex items-center gap-1 justify-center">
                 {slot.price}
-                {settings.useSprites
-                  ? <img src="/sprites/ui/coins.png" alt="🟡" className="w-3.5 h-3.5 object-contain" style={PX} />
-                  : <span>🟡</span>
-                }
+                <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-sm" imgSize="w-3.5 h-3.5" />
               </span>
             )}
           </button>

@@ -4,6 +4,7 @@ import type { WeatherType } from "../data/weather";
 import { useGame } from "../store/GameContext";
 import { FORECAST_SLOT_COSTS, MAX_FORECAST_SLOTS } from "../store/gameStore";
 import { useSettings } from "../store/SettingsContext";
+import { ItemSprite } from "./ItemSprite";
 
 const PX: React.CSSProperties = { imageRendering: "pixelated" };
 
@@ -239,19 +240,13 @@ export function WeatherForecastPanel({ onClose }: Props) {
             >
               <span className="flex items-center justify-center gap-1.5">
                 {`Unlock slot ${slots + 1} — ${nextCost!.toLocaleString()}`}
-                {settings.useSprites
-                  ? <img src="/sprites/ui/coins.png" alt="coins" className="w-4 h-4 object-contain" style={PX} />
-                  : <span>🟡</span>
-                }
+                <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-sm" imgSize="w-4 h-4" />
               </span>
             </button>
             {!canAfford && (
               <p className="text-xs text-muted-foreground/60 text-center">
                 You have {state.coins.toLocaleString()}{" "}
-                {settings.useSprites
-                  ? <img src="/sprites/ui/coins.png" alt="coins" className="w-3.5 h-3.5 object-contain inline" style={PX} />
-                  : <span>🟡</span>
-                }
+                <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
               </p>
             )}
           </div>

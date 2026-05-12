@@ -268,7 +268,7 @@ function ActiveListingRow({
         </div>
 
         <div className="text-right flex-shrink-0 space-y-1">
-          <p className="text-sm font-bold font-mono text-primary">{formatCoins(listing.ask_price)} 🟡</p>
+          <p className="text-sm font-bold font-mono text-primary inline-flex items-center gap-0.5">{formatCoins(listing.ask_price)} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /></p>
           <button
             onClick={onCancel}
             disabled={cancelling}
@@ -357,7 +357,7 @@ function HistoryListingRow({ listing }: { listing: MyListing }) {
       </div>
 
       <div className="text-right flex-shrink-0 space-y-0.5">
-        <p className="text-sm font-mono font-semibold">{formatCoins(listing.ask_price)} 🟡</p>
+        <p className="text-sm font-mono font-semibold inline-flex items-center gap-0.5">{formatCoins(listing.ask_price)} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /></p>
         <p className={`text-xs font-mono ${STATUS_COLOR[listing.status]}`}>
           {STATUS_LABEL[listing.status]}
         </p>
