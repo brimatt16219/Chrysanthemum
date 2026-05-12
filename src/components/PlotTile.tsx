@@ -586,7 +586,7 @@ export function PlotTile({
             stage={stage!}
             textSize="text-2xl"
             imgSize="w-9 h-9"
-            className={isBloomed && (plant as PlantedFlower).mutation && species?.rarity !== "prismatic"
+            className={settings.plotMutationVfx && isBloomed && (plant as PlantedFlower).mutation && species?.rarity !== "prismatic"
               ? MUTATIONS[(plant as PlantedFlower).mutation!].vfxClass
               : ""}
           />

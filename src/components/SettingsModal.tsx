@@ -28,7 +28,12 @@ const VISUAL_TOGGLES: { key: keyof Settings; label: string; description: string 
   {
     key:         "plotMutationIndicator",
     label:       "Mutation badge",
-    description: "Mutation emoji shown on bloomed tiles",
+    description: "Mutation sprite shown on bloomed tiles",
+  },
+  {
+    key:         "plotMutationVfx",
+    label:       "Mutation VFX",
+    description: "Color sheen animation on bloomed mutated tiles",
   },
   {
     key:         "plotMasteryIndicator",

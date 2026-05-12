@@ -438,7 +438,7 @@ export function ReadOnlyGarden({ grid, farmSize, farmRows }: Props) {
                     stage={stage}
                     imgSize="w-6 h-6"
                     textSize="text-xl"
-                    className={isBloomed && mut && species?.rarity !== "prismatic" ? mut.vfxClass : ""}
+                    className={settings.plotMutationVfx && isBloomed && mut && species?.rarity !== "prismatic" ? mut.vfxClass : ""}
                   />
                 : <span className="text-xl leading-none">🌱</span>
               }

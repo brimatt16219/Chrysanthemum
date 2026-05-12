@@ -5,6 +5,7 @@ export interface Settings {
   plotAnimations:          boolean;
   plotGearIndicator:       boolean;
   plotMutationIndicator:   boolean;
+  plotMutationVfx:         boolean;
   plotMasteryIndicator:    boolean;
   plotFertilizerIndicator: boolean;
   useSprites:              boolean;
@@ -20,6 +21,7 @@ const DEFAULTS: Settings = {
   plotAnimations:          true,
   plotGearIndicator:       true,
   plotMutationIndicator:   true,
+  plotMutationVfx:         true,
   plotMasteryIndicator:    true,
   plotFertilizerIndicator: true,
   useSprites:              true,
