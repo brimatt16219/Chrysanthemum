@@ -110,8 +110,8 @@ interface GameContextValue {
   harvestPopups: Map<string, { speciesId: string; mutation?: MutationType; count: number; isSeed?: boolean }>;
   pushHarvestPopup: (speciesId: string, mutation?: MutationType, isSeed?: boolean, qty?: number) => void;
   dismissHarvestPopup: (key: string) => void;
-  genericToasts: Map<string, { emoji: string; label: string; count: number; color?: string; variant?: "gain" | "loss" }>;
-  pushGenericToast: (key: string, emoji: string, label: string, color?: string, variant?: "gain" | "loss", qty?: number) => void;
+  genericToasts: Map<string, { emoji: string; label: string; count: number; color?: string; variant?: "gain" | "loss"; sprite?: string }>;
+  pushGenericToast: (key: string, emoji: string, label: string, color?: string, variant?: "gain" | "loss", qty?: number, sprite?: string) => void;
   dismissGenericToast: (key: string) => void;
 }
 
@@ -151,13 +151,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       return next;
     });
   }
-  type GenericToastEntry = { emoji: string; label: string; count: number; color?: string; variant?: "gain" | "loss" };
+  type GenericToastEntry = { emoji: string; label: string; count: number; color?: string; variant?: "gain" | "loss"; sprite?: string };
   const [genericToasts, setGenericToasts] = useState<Map<string, GenericToastEntry>>(new Map());
-  function pushGenericToast(key: string, emoji: string, label: string, color?: string, variant?: "gain" | "loss", qty = 1) {
+  function pushGenericToast(key: string, emoji: string, label: string, color?: string, variant?: "gain" | "loss", qty = 1, sprite?: string) {
     setGenericToasts((prev) => {
       const next = new Map(prev);
       const existing = next.get(key);
-      next.set(key, existing ? { ...existing, count: existing.count + qty } : { emoji, label, count: qty, color, variant });
+      next.set(key, existing ? { ...existing, count: existing.count + qty } : { emoji, label, count: qty, color, variant, sprite });
       return next;
     });
   }

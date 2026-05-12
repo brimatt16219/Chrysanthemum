@@ -1,6 +1,8 @@
 import { useRef } from "react";
 import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
+import { FlowerSprite } from "./FlowerSprite";
 import { FlowerTypeBadges } from "./FlowerTypeBadges";
+import { ItemSprite } from "./ItemSprite";
 import { useGame } from "../store/GameContext";
 import { sellFlower, rollbackSellAll } from "../store/gameStore";
 import { edgeSellFlower } from "../lib/edgeFunctions";
@@ -40,7 +42,7 @@ export function InventoryItemCard({ item }: Props) {
     const prevXp    = cur.gardenerXp;
     const items     = [{ speciesId: item.speciesId, mutation: item.mutation, quantity: 1 }];
     audioManager.playSfx("sell");
-    pushGenericToast(`sell:${item.speciesId}:${item.mutation ?? ""}`, "🟡", "coins", "text-yellow-400", "gain", earned);
+    pushGenericToast(`sell:${item.speciesId}:${item.mutation ?? ""}`, "🟡", "coins", "text-yellow-400", "gain", earned, "/sprites/ui/coins.png");
     perform(
       { ...optimistic, gardenerLevel: newLevel, gardenerXp: newXp },
       async () => { try { return await edgeSellFlower(item.speciesId, item.mutation, 1); } finally { sellingRef.current = false; } },
@@ -70,7 +72,7 @@ export function InventoryItemCard({ item }: Props) {
     const prevXp    = cur.gardenerXp;
     const items     = [{ speciesId: item.speciesId, mutation: item.mutation, quantity: liveQty }];
     audioManager.playSfx("sell");
-    pushGenericToast(`sell:${item.speciesId}:${item.mutation ?? ""}`, "🟡", "coins", "text-yellow-400", "gain", earned);
+    pushGenericToast(`sell:${item.speciesId}:${item.mutation ?? ""}`, "🟡", "coins", "text-yellow-400", "gain", earned, "/sprites/ui/coins.png");
     perform(
       { ...optimistic, gardenerLevel: newLevel, gardenerXp: newXp },
       async () => { try { return await edgeSellFlower(item.speciesId, item.mutation, liveQty); } finally { sellingRef.current = false; } },
@@ -90,9 +92,9 @@ export function InventoryItemCard({ item }: Props) {
         ${rarity.glow}
       `}
     >
-      {/* Emoji */}
+      {/* Sprite / Emoji */}
       <div className="relative flex-shrink-0">
-        <span className="text-3xl">{species.emoji.bloom}</span>
+        <FlowerSprite species={species} stage="bloom" textSize="text-3xl" imgSize="w-10 h-10" />
         {mut && (
           <span className="absolute -top-1 -right-1 text-sm">{mut.emoji}</span>
         )}
@@ -113,7 +115,14 @@ export function InventoryItemCard({ item }: Props) {
         </div>
         <FlowerTypeBadges types={species.types} className="mt-1" />
         <p className="text-xs text-muted-foreground mt-0.5">
-          {item.quantity}× · {valuePerItem} 🟡 each · {totalValue} 🟡 total
+          <span className="inline-flex items-center gap-0.5 flex-wrap">
+            {item.quantity}× ·{" "}
+            {valuePerItem}
+            <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
+            {" "}each · {totalValue}
+            <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
+            {" "}total
+          </span>
         </p>
       </div>
 

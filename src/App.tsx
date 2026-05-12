@@ -41,13 +41,14 @@ import { WeatherForecastPanel } from "./components/WeatherForecastPanel";
 import { DayNightOverlay } from "./components/DayNightOverlay";
 import { useGame } from "./store/GameContext";
 import { supabase } from "./lib/supabase";
-import { SettingsProvider } from "./store/SettingsContext";
+import { SettingsProvider, useSettings } from "./store/SettingsContext";
 import { useFriendRequests } from "./hooks/useFriendRequests";
 import { useGiftNotifications } from "./hooks/useGiftNotifications";
 import { useMailbox } from "./hooks/useMailbox";
 import { useDayNight } from "./hooks/useDayNight";
 import { getFlower, MUTATIONS } from "./data/flowers";
 import type { MutationType } from "./data/flowers";
+import { FlowerSprite } from "./components/FlowerSprite";
 import { useVersionCheck } from "./hooks/useVersionCheck";
 import { usePresence } from "./hooks/usePresence";
 import { UpdateBanner } from "./components/UpdateBanner";
@@ -61,10 +62,44 @@ import { LoginPage } from "./components/LoginPage";
 import { useAudio } from "./hooks/useAudio";
 import { audioManager } from "./lib/audioManager";
 import { SettingsModal } from "./components/SettingsModal";
+import { ItemSprite } from "./components/ItemSprite";
 
 type Tab = "garden" | "shop" | "inventory" | "social" | "codex" | "alchemy" | "craft" | "events";
 type ShopView   = "seeds" | "supply";
 type SocialView = "search" | "friends" | "mailbox" | "leaderboard" | "marketplace";
+
+const TAB_EMOJI: Record<Tab, string> = {
+  garden:    "🌱",
+  shop:      "🛒",
+  inventory: "🎒",
+  alchemy:   "⚗️",
+  craft:     "⚒️",
+  codex:     "📖",
+  events:    "🎉",
+  social:    "🌍",
+};
+
+const SOCIAL_EMOJI:  Record<SocialView, string> = {
+  search:      "🔍",
+  friends:     "👥",
+  mailbox:     "📬",
+  marketplace: "🏪",
+  leaderboard: "🏆",
+};
+const SOCIAL_SPRITE: Record<SocialView, string> = {
+  search:      "/sprites/ui/search.png",
+  friends:     "/sprites/ui/social_friends.png",
+  mailbox:     "/sprites/ui/social_mailbox.png",
+  marketplace: "/sprites/ui/social_market.png",
+  leaderboard: "/sprites/ui/social_ranks.png",
+};
+const SOCIAL_LABEL:  Record<SocialView, string> = {
+  search:      "Search",
+  friends:     "Friends",
+  mailbox:     "Mailbox",
+  marketplace: "Market",
+  leaderboard: "Ranks",
+};
 
 
 export default function App() {
@@ -86,6 +121,8 @@ function AppInner() {
     signInPromptReason, dismissSignInPrompt,
     activeWeather, weatherMsLeft, weatherIsActive,
   } = useGame();
+
+  const { settings } = useSettings();
 
   useAudio(!!user);
 
@@ -525,8 +562,15 @@ function AppInner() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <span className="text-4xl animate-pulse">🌱</span>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+        <ItemSprite emoji="🌱" sprite="/sprites/flowers/seed.png" name="🌱" textSize="text-5xl" imgSize="w-14 h-14" />
+        <p className="text-sm text-muted-foreground font-mono animate-pulse">Loading...</p>
+        <div className="relative w-48 h-1.5 bg-muted rounded-full overflow-hidden">
+          <div
+            className="absolute h-full bg-primary rounded-full"
+            style={{ animation: "loading-slide 1.6s ease-in-out infinite" }}
+          />
+        </div>
       </div>
     );
   }
@@ -681,7 +725,10 @@ function AppInner() {
             className="font-bold text-primary tracking-wide cursor-pointer flex items-center gap-1"
             onClick={() => handleTabChange("garden")}
           >
-            <span className="text-lg">🌸</span>
+            {settings.useSprites
+              ? <img src="/sprites/ui/logo.png" alt="🌸" className="w-6 h-6 object-contain" style={{ imageRendering: "pixelated" }} />
+              : <span>🌸</span>
+            }
             <span className="hidden sm:block text-lg">Chrysanthemum</span>
           </h1>
           <div className="flex items-center gap-2 sm:gap-3">
@@ -702,8 +749,17 @@ function AppInner() {
               />
             </button>
             <ActiveBoostsHUD activeBoosts={state.activeBoosts} />
-            <span className="text-sm font-mono" title={state.coins.toLocaleString()}>🟡 {formatCoins(state.coins)}</span>
-            <span className="text-sm font-mono" title={state.gems.toLocaleString()}>💎 {state.gems.toLocaleString()}</span>
+            <span className="flex items-center gap-1 text-sm font-mono" title={state.coins.toLocaleString()}>
+              <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-4 h-4" />
+              {formatCoins(state.coins)}
+            </span>
+            <span className="flex items-center gap-1 text-sm font-mono" title={state.gems.toLocaleString()}>
+              {settings.useSprites
+                ? <img src="/sprites/ui/gems.png" alt="gems" className="w-4 h-4 object-contain" style={{ imageRendering: "pixelated" }} />
+                : <span>💎</span>
+              }
+              {state.gems.toLocaleString()}
+            </span>
             {!authLoading && (
               user ? (
                 <div className="flex items-center gap-2">
@@ -711,14 +767,13 @@ function AppInner() {
                     onClick={() => handleViewProfile(profile?.username ?? "")}
                     className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5"
                   >
-                    <span className="relative text-base leading-none">
-                      {getFlower(profile?.display_flower ?? "daisy")?.emoji.bloom ?? "🌸"}
-                      {profile?.display_mutation && (
-                        <span className="absolute -top-1 -right-1 text-xs leading-none">
-                          {MUTATIONS[profile.display_mutation as MutationType]?.emoji}
-                        </span>
-                      )}
-                    </span>
+                    {(() => {
+                      const f   = getFlower(profile?.display_flower ?? "daisy");
+                      const mut = profile?.display_mutation ? MUTATIONS[profile.display_mutation as MutationType] : null;
+                      return f
+                        ? <FlowerSprite species={f} stage="bloom" imgSize="w-5 h-5" textSize="text-base" className={mut?.vfxClass ?? ""} />
+                        : <span className="text-base leading-none">🌸</span>;
+                    })()}
                     <span className="hidden sm:inline">{profile?.username ?? "..."}</span>
                   </button>
                 </div>
@@ -736,7 +791,10 @@ function AppInner() {
               className="text-xs px-2 py-1.5 rounded-lg border border-border text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
               title="Settings"
             >
-              ⚙️
+              {settings.useSprites
+                ? <img src="/sprites/ui/settings.png" alt="⚙️" className="w-4 h-4 object-contain" style={{ imageRendering: "pixelated" }} />
+                : <span>⚙️</span>
+              }
             </button>
           </div>
         </div>
@@ -759,15 +817,16 @@ function AppInner() {
                 }
               `}
             >
-              {t === "garden"      ? "🌱"
-               : t === "shop"      ? "🛒"
-               : t === "inventory" ? "🎒"
-               : t === "alchemy"   ? "⚗️"
-               : t === "craft"     ? "⚒️"
-               : t === "codex"     ? "📖"
-               : t === "events"    ? "🎉"
-               : "🌍"}
-              <span className="ml-1 hidden sm:inline capitalize">{t}</span>
+              {settings.useSprites
+                ? <img
+                    src={`/sprites/ui/tab_${t}.png`}
+                    alt={t}
+                    className="w-5 h-5 sm:w-6 sm:h-6 object-contain"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                : <span className="text-lg sm:text-xl leading-none">{TAB_EMOJI[t]}</span>
+              }
+              <span className="hidden sm:inline text-xs capitalize">{t}</span>
 
               {t === "garden"    && gardenNewBlooms > 0                              && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary rounded-full" />}
               {t === "shop"      && (newSeedsShopBadge + newSupplyShopBadge) > 0      && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary rounded-full" />}
@@ -817,7 +876,16 @@ function AppInner() {
                         }
                       `}
                     >
-                      {v === "seeds" ? "🌱 Seeds" : "🧪 Supply"}
+                      <span className="inline-flex items-center justify-center gap-1">
+                        <ItemSprite
+                          emoji={v === "seeds" ? "🌱" : "🧪"}
+                          sprite={v === "seeds" ? "/sprites/flowers/seed.png" : "/sprites/ui/consumables.png"}
+                          textSize="text-xs"
+                          imgSize="w-4 h-4"
+                          name={v}
+                        />
+                        {v === "seeds" ? "Seeds" : "Supply"}
+                      </span>
                       {badge > 0 && shopView !== v && (
                         <span className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
                           {badge}
@@ -873,19 +941,9 @@ function AppInner() {
                           }
                         `}
                       >
-                        <span>
-                          {v === "search"        ? "🔍"
-                           : v === "friends"     ? "👥"
-                           : v === "mailbox"     ? "📬"
-                           : v === "marketplace" ? "🏪"
-                           : "🏆"}
-                        </span>
-                        <span className="hidden sm:inline ml-1">
-                          {v === "search"        ? "Search"
-                           : v === "friends"     ? "Friends"
-                           : v === "mailbox"     ? "Mailbox"
-                           : v === "marketplace" ? "Market"
-                           : "Ranks"}
+                        <span className="inline-flex items-center justify-center gap-1">
+                          <ItemSprite emoji={SOCIAL_EMOJI[v]} sprite={SOCIAL_SPRITE[v]} textSize="text-base" imgSize="w-5 h-5" name={SOCIAL_LABEL[v]} />
+                          <span className="hidden sm:inline">{SOCIAL_LABEL[v]}</span>
                         </span>
                         {v === "friends" && pendingCount > 0 && (
                           <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
@@ -911,8 +969,10 @@ function AppInner() {
                         }
                       `}
                     >
-                      <span>👤</span>
-                      <span className="hidden sm:inline ml-1">Me</span>
+                      <span className="inline-flex items-center justify-center gap-1">
+                        <ItemSprite emoji="👤" sprite="/sprites/ui/social_me.png" textSize="text-base" imgSize="w-5 h-5" name="Me" />
+                        <span className="hidden sm:inline">Me</span>
+                      </span>
                     </button>
                   )}
                 </div>
@@ -966,6 +1026,7 @@ function AppInner() {
             <GenericToastPopup
               key={key}
               emoji={entry.emoji}
+              sprite={entry.sprite}
               label={entry.label}
               count={entry.count}
               color={entry.color}

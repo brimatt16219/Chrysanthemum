@@ -1,5 +1,7 @@
-import { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useGame } from "../store/GameContext";
+import { useSettings } from "../store/SettingsContext";
+import { ItemSprite } from "./ItemSprite";
 import {
   msUntilSupplyReset,
   buyFromSupplyShop,
@@ -34,6 +36,8 @@ import { RatesModal } from "./RatesModal";
 import type { RateRow } from "./RatesModal";
 import { audioManager } from "../lib/audioManager";
 
+const PX = { imageRendering: "pixelated" as const };
+
 function formatCountdown(ms: number): string {
   const totalSec = Math.max(0, Math.floor(ms / 1_000));
   const m = Math.floor(totalSec / 60).toString().padStart(2, "0");
@@ -54,6 +58,7 @@ function formatDuration(ms: number): string {
 
 function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolean }) {
   const { state, perform, getState, user, requestSignIn, pushGenericToast } = useGame();
+  const { settings } = useSettings();
   const [justBought,  setJustBought]  = useState(false);
   const [lockingSlot, setLockingSlot] = useState(false);
 
@@ -61,7 +66,10 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
   if (slot.isEmpty) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 bg-card/20 border border-dashed border-border/50 rounded-xl p-4 min-h-[140px] opacity-60">
-        <span className="text-2xl">🧪</span>
+        {settings.useSprites
+          ? <img src="/sprites/ui/shop_empty_supply.png" alt="🧪" className="w-8 h-8 object-contain" style={PX} />
+          : <span className="text-2xl">🧪</span>
+        }
         <p className="text-xs text-muted-foreground text-center">New slot — fills on next restock</p>
       </div>
     );
@@ -97,21 +105,22 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
     if (!user) { requestSignIn("to buy supplies"); return; }
     const optimistic = buyFromSupplyShop(state, slot.speciesId);
     if (!optimistic) return;
-    let toastEmoji = "";
-    let toastLabel = "";
-    let toastColor = "text-primary";
+    let toastEmoji  = "";
+    let toastLabel  = "";
+    let toastColor  = "text-primary";
+    let toastSprite: string | undefined;
     if (slot.isFertilizer && slot.fertilizerType) {
       const f = FERTILIZERS[slot.fertilizerType];
-      toastEmoji = f.emoji; toastLabel = f.name; toastColor = RARITY_CONFIG[f.rarity].color;
+      toastEmoji = f.emoji; toastLabel = f.name; toastColor = RARITY_CONFIG[f.rarity].color; toastSprite = f.sprite;
     } else if (slot.isGear && slot.gearType) {
       const g = GEAR[slot.gearType];
-      toastEmoji = g.emoji; toastLabel = g.name; toastColor = RARITY_CONFIG[g.rarity].color;
+      toastEmoji = g.emoji; toastLabel = g.name; toastColor = RARITY_CONFIG[g.rarity].color; toastSprite = g.sprite;
     } else if (slot.isConsumable && slot.consumableId) {
       const r = CONSUMABLE_RECIPE_MAP[slot.consumableId as ConsumableId];
-      if (r) { toastEmoji = r.emoji; toastLabel = r.name; toastColor = RARITY_CONFIG[r.rarity].color; }
+      if (r) { toastEmoji = r.emoji; toastLabel = r.name; toastColor = RARITY_CONFIG[r.rarity].color; toastSprite = r.sprite; }
     }
     audioManager.playSfx("buy");
-    if (toastEmoji) pushGenericToast(slot.speciesId!, toastEmoji, toastLabel, toastColor);
+    if (toastEmoji) pushGenericToast(slot.speciesId!, toastEmoji, toastLabel, toastColor, undefined, 1, toastSprite);
     perform(
       optimistic,
       () => edgeBuyFromSupplyShop(slot.speciesId),
@@ -185,7 +194,7 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
         `}
       >
         <div className="flex items-start justify-between">
-          <span className="text-3xl">{fert.emoji}</span>
+          <ItemSprite emoji={fert.emoji} sprite={fert.sprite} name={fert.name} textSize="text-3xl" imgSize="w-8 h-8" />
           <span className={`text-xs font-mono px-2 py-0.5 rounded-full border ${fertRarity.color} border-current bg-current/10`}>
             {fertRarity.label}
           </span>
@@ -201,7 +210,13 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
           <div className="flex items-center gap-1.5">
             {/* Slot Lock button */}
             {slot.locked ? (
-              <span className="text-[10px] text-amber-400 font-mono">📌 Locked</span>
+              <span className="text-[10px] text-amber-400 font-mono flex items-center gap-0.5">
+                {settings.useSprites
+                  ? <img src="/sprites/ui/shop_slot_lock.png" alt="📌" className="w-3 h-3 object-contain" style={PX} />
+                  : "📌"
+                }
+                {" "}Locked
+              </span>
             ) : hasSlotLock ? (
               <button
                 onClick={handleLockSlot}
@@ -209,7 +224,15 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
                 title="Slot Lock — keeps this slot through the next restock"
                 className="px-2 py-1 rounded-lg text-[10px] bg-amber-400/10 border border-amber-400/30 text-amber-400 hover:bg-amber-400/20 transition-colors disabled:opacity-50"
               >
-                {lockingSlot ? "…" : "📌 Lock"}
+                {lockingSlot ? "…" : (
+                  <span className="flex items-center gap-0.5">
+                    {settings.useSprites
+                      ? <img src="/sprites/ui/shop_slot_lock.png" alt="📌" className="w-3 h-3 object-contain" style={PX} />
+                      : "📌"
+                    }
+                    {" "}Lock
+                  </span>
+                )}
               </button>
             ) : null}
             <button
@@ -225,7 +248,12 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
                 }
               `}
             >
-              {justBought ? "✓ Bought!" : `${slot.price.toLocaleString()} 🟡`}
+              {justBought ? "✓ Bought!" : (
+                <span className="flex items-center gap-1 justify-center">
+                  {slot.price.toLocaleString()}
+                  <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-sm" imgSize="w-3.5 h-3.5" />
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -250,10 +278,10 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
       >
         <div className="flex items-start justify-between">
           <span className="text-3xl relative">
-            {def.emoji}
+            <ItemSprite emoji={def.emoji} sprite={def.sprite} name={def.name} textSize="text-3xl" imgSize="w-8 h-8" />
             {def.category === "sprinkler_mutation" && def.mutationType && (
-              <span className="absolute -bottom-0.5 -right-1 text-sm leading-none">
-                {MUTATIONS[def.mutationType].emoji}
+              <span className="absolute -bottom-0.5 -right-1 leading-none">
+                <ItemSprite emoji={MUTATIONS[def.mutationType].emoji} sprite={MUTATIONS[def.mutationType].sprite} name={MUTATIONS[def.mutationType].emoji} textSize="text-sm" imgSize="w-4 h-4" />
               </span>
             )}
           </span>
@@ -282,7 +310,13 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
           </span>
           <div className="flex items-center gap-1.5">
             {slot.locked ? (
-              <span className="text-[10px] text-amber-400 font-mono">📌 Locked</span>
+              <span className="text-[10px] text-amber-400 font-mono flex items-center gap-0.5">
+                {settings.useSprites
+                  ? <img src="/sprites/ui/shop_slot_lock.png" alt="📌" className="w-3 h-3 object-contain" style={PX} />
+                  : "📌"
+                }
+                {" "}Locked
+              </span>
             ) : hasSlotLock ? (
               <button
                 onClick={handleLockSlot}
@@ -290,7 +324,15 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
                 title="Slot Lock — keeps this slot through the next restock"
                 className="px-2 py-1 rounded-lg text-[10px] bg-amber-400/10 border border-amber-400/30 text-amber-400 hover:bg-amber-400/20 transition-colors disabled:opacity-50"
               >
-                {lockingSlot ? "…" : "📌 Lock"}
+                {lockingSlot ? "…" : (
+                  <span className="flex items-center gap-0.5">
+                    {settings.useSprites
+                      ? <img src="/sprites/ui/shop_slot_lock.png" alt="📌" className="w-3 h-3 object-contain" style={PX} />
+                      : "📌"
+                    }
+                    {" "}Lock
+                  </span>
+                )}
               </button>
             ) : null}
             <button
@@ -306,7 +348,12 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
                 }
               `}
             >
-              {justBought ? "✓ Bought!" : `${slot.price.toLocaleString()} 🟡`}
+              {justBought ? "✓ Bought!" : (
+                <span className="flex items-center gap-1 justify-center">
+                  {slot.price.toLocaleString()}
+                  <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-sm" imgSize="w-3.5 h-3.5" />
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -331,7 +378,7 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
         `}
       >
         <div className="flex items-start justify-between">
-          <span className="text-3xl">{recipe.emoji}</span>
+          <ItemSprite emoji={recipe.emoji} sprite={recipe.sprite} name={recipe.name} textSize="text-3xl" imgSize="w-8 h-8" />
           <span className={`text-xs font-mono px-2 py-0.5 rounded-full border ${rarity.color} border-current bg-current/10`}>
             {rarity.label}
           </span>
@@ -350,7 +397,13 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
           </span>
           <div className="flex items-center gap-1.5">
             {slot.locked ? (
-              <span className="text-[10px] text-amber-400 font-mono">📌 Locked</span>
+              <span className="text-[10px] text-amber-400 font-mono flex items-center gap-0.5">
+                {settings.useSprites
+                  ? <img src="/sprites/ui/shop_slot_lock.png" alt="📌" className="w-3 h-3 object-contain" style={PX} />
+                  : "📌"
+                }
+                {" "}Locked
+              </span>
             ) : hasSlotLock ? (
               <button
                 onClick={handleLockSlot}
@@ -358,7 +411,15 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
                 title="Slot Lock — keeps this slot through the next restock"
                 className="px-2 py-1 rounded-lg text-[10px] bg-amber-400/10 border border-amber-400/30 text-amber-400 hover:bg-amber-400/20 transition-colors disabled:opacity-50"
               >
-                {lockingSlot ? "…" : "📌 Lock"}
+                {lockingSlot ? "…" : (
+                  <span className="flex items-center gap-0.5">
+                    {settings.useSprites
+                      ? <img src="/sprites/ui/shop_slot_lock.png" alt="📌" className="w-3 h-3 object-contain" style={PX} />
+                      : "📌"
+                    }
+                    {" "}Lock
+                  </span>
+                )}
               </button>
             ) : null}
             <button
@@ -374,7 +435,12 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
                 }
               `}
             >
-              {justBought ? "✓ Bought!" : `${slot.price.toLocaleString()} 🟡`}
+              {justBought ? "✓ Bought!" : (
+                <span className="flex items-center gap-1 justify-center">
+                  {slot.price.toLocaleString()}
+                  <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-sm" imgSize="w-3.5 h-3.5" />
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -397,6 +463,7 @@ function supplyUnlockSlots(rarity: Rarity): number | null {
 
 export function SupplyShop() {
   const { state, perform, getState, user, requestSignIn, pushGenericToast } = useGame();
+  const { settings } = useSettings();
   const [countdown,     setCountdown]     = useState(() => msUntilSupplyReset(state));
   const [showRates,     setShowRates]     = useState(false);
   const [usingWindShear,setUsingWindShear]= useState(false);
@@ -502,18 +569,18 @@ export function SupplyShop() {
     // Collect display info for each slot we're about to buy
     const toastItems = (cur.supplyShop ?? [])
       .filter((s) => !s.isEmpty && s.quantity > 0 && cur.coins >= s.price)
-      .map((s): { key: string; emoji: string; label: string; color: string } | null => {
+      .map((s): { key: string; emoji: string; label: string; color: string; sprite?: string } | null => {
         if (s.isFertilizer && s.fertilizerType) {
           const f = FERTILIZERS[s.fertilizerType];
-          return { key: s.speciesId!, emoji: f.emoji, label: f.name, color: RARITY_CONFIG[f.rarity].color };
+          return { key: s.speciesId!, emoji: f.emoji, label: f.name, color: RARITY_CONFIG[f.rarity].color, sprite: f.sprite };
         }
         if (s.isGear && s.gearType) {
           const g = GEAR[s.gearType];
-          return { key: s.speciesId!, emoji: g.emoji, label: g.name, color: RARITY_CONFIG[g.rarity].color };
+          return { key: s.speciesId!, emoji: g.emoji, label: g.name, color: RARITY_CONFIG[g.rarity].color, sprite: g.sprite };
         }
         if (s.isConsumable && s.consumableId) {
           const r = CONSUMABLE_RECIPE_MAP[s.consumableId as ConsumableId];
-          if (r) return { key: s.speciesId!, emoji: r.emoji, label: r.name, color: RARITY_CONFIG[r.rarity].color };
+          if (r) return { key: s.speciesId!, emoji: r.emoji, label: r.name, color: RARITY_CONFIG[r.rarity].color, sprite: r.sprite };
         }
         return null;
       })
@@ -521,8 +588,8 @@ export function SupplyShop() {
     setBuyingAll(true);
     try {
       await perform(optimistic, () => edgeBuyAllFromSupplyShop(), () => {
-        for (const { key, emoji, label, color } of toastItems) {
-          pushGenericToast(key, emoji, label, color);
+        for (const { key, emoji, label, color, sprite } of toastItems) {
+          pushGenericToast(key, emoji, label, color, undefined, 1, sprite);
         }
       });
     } finally {
@@ -570,9 +637,18 @@ export function SupplyShop() {
                   : "border-sky-400/30 text-sky-400 bg-sky-400/5 hover:bg-sky-400/10"
               }`}
             >
-              {usingWindShear ? "🌀…" : windShearOnCooldown
-                ? `🌀 ${Math.ceil(windShearCooldownRemaining / 60_000)}m`
-                : `🌀 ×${windShearItem.quantity}`}
+              {settings.useSprites ? (
+                <span className="flex items-center gap-1">
+                  <img src="/sprites/ui/shop_wind_shear.png" alt="🌀" className="w-3.5 h-3.5 object-contain" style={PX} />
+                  {usingWindShear ? "…" : windShearOnCooldown
+                    ? `${Math.ceil(windShearCooldownRemaining / 60_000)}m`
+                    : `×${windShearItem.quantity}`}
+                </span>
+              ) : (
+                usingWindShear ? "🌀…" : windShearOnCooldown
+                  ? `🌀 ${Math.ceil(windShearCooldownRemaining / 60_000)}m`
+                  : `🌀 ×${windShearItem.quantity}`
+              )}
             </button>
           )}
           <button
@@ -580,7 +656,13 @@ export function SupplyShop() {
             className="text-xs text-muted-foreground hover:text-primary transition-colors px-2 py-1 rounded-lg border border-border hover:border-primary/40"
             title="View drop rates"
           >
-            📊 Rates
+            <span className="flex items-center gap-1">
+              {settings.useSprites
+                ? <img src="/sprites/ui/shop_rates.png" alt="📊" className="w-3.5 h-3.5 object-contain" style={PX} />
+                : <span>📊</span>
+              }
+              Rates
+            </span>
           </button>
           <div className="text-right">
             <p className="text-xs text-muted-foreground font-mono">Restocks in</p>
@@ -593,7 +675,7 @@ export function SupplyShop() {
 
       {/* Coins */}
       <div className="flex items-center gap-2 bg-card/40 border border-border rounded-lg px-4 py-2.5">
-        <span className="text-lg">🟡</span>
+        <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-lg" imgSize="w-5 h-5" />
         <span className="text-sm font-mono font-medium">
           {state.coins.toLocaleString()} coins
         </span>
@@ -606,7 +688,10 @@ export function SupplyShop() {
           disabled={buyingAll}
           className="w-full py-2.5 rounded-xl border border-primary text-primary text-sm font-semibold hover:bg-primary/10 transition-colors text-center disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Buy All — {buyAllCost.toLocaleString()} 🟡
+          <span className="flex items-center justify-center gap-1.5">
+            {`Buy All — ${buyAllCost.toLocaleString()}`}
+            <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-sm" imgSize="w-3.5 h-3.5" />
+          </span>
         </button>
       )}
 
@@ -656,7 +741,10 @@ export function SupplyShop() {
                 : "bg-card border border-border text-muted-foreground cursor-not-allowed opacity-50"
               }`}
           >
-            🟡 {nextSlotUpgrade!.cost.toLocaleString()}
+            <span className="flex items-center gap-1">
+              <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-sm" imgSize="w-3.5 h-3.5" />
+              {nextSlotUpgrade!.cost.toLocaleString()}
+            </span>
           </button>
         )}
       </div>

@@ -10,6 +10,8 @@ import type { GearType } from "../data/gear";
 import { CONSUMABLE_RECIPE_MAP } from "../data/consumables";
 import type { ConsumableId } from "../data/consumables";
 import { edgeMarketplaceCancel } from "../lib/edgeFunctions";
+import { FlowerSprite } from "./FlowerSprite";
+import { ItemSprite } from "./ItemSprite";
 
 interface MyListing {
   id:         string;
@@ -213,17 +215,20 @@ function ActiveListingRow({
     <div className={`bg-card/60 border rounded-2xl p-4 space-y-3 transition-all ${rarity?.glow ?? ""} border-border`}>
       <div className="flex items-center gap-3">
         <div className="relative flex-shrink-0">
-          <span className="text-3xl">
-            {isFertilizer  ? (fertDef?.emoji       ?? "🧪")
-             : isGear       ? (gearDef?.emoji        ?? "⚙️")
-             : isConsumable ? (consumableRec?.emoji  ?? "🧪")
-             : listing.is_seed
-               ? (species?.emoji.seed ?? "🌱")
-               : (species?.emoji.bloom ?? "❓")}
-          </span>
-          {!isFertilizer && !isGear && !isConsumable && !listing.is_seed && mut && (
-            <span className="absolute -top-1 -right-1 text-sm">{mut.emoji}</span>
-          )}
+          {isFertilizer && fertDef
+            ? <ItemSprite emoji={fertDef.emoji} sprite={fertDef.sprite} name={fertDef.name} textSize="text-3xl" imgSize="w-8 h-8" />
+            : isGear && gearDef
+            ? <ItemSprite emoji={gearDef.emoji} sprite={gearDef.sprite} name={gearDef.name} textSize="text-3xl" imgSize="w-8 h-8" />
+            : isConsumable && consumableRec
+            ? <ItemSprite emoji={consumableRec.emoji} sprite={consumableRec.sprite} name={consumableRec.name} textSize="text-3xl" imgSize="w-8 h-8" />
+            : listing.is_seed
+            ? species
+              ? <FlowerSprite species={species} stage="seed" textSize="text-3xl" imgSize="w-8 h-8" />
+              : <span className="text-3xl">🌱</span>
+            : species
+              ? <FlowerSprite species={species} stage="bloom" textSize="text-3xl" imgSize="w-8 h-8" className={mut ? mut.vfxClass : ""} />
+              : <ItemSprite emoji="❓" sprite="/sprites/ui/unknown.png" name="Unknown" textSize="text-3xl" imgSize="w-8 h-8" />
+          }
         </div>
 
         <div className="flex-1 min-w-0">
@@ -248,7 +253,7 @@ function ActiveListingRow({
                 <p className="text-sm font-bold">{species?.name ?? listing.species_id}</p>
                 {listing.is_seed
                   ? <span className="text-xs font-mono text-muted-foreground">Seed</span>
-                  : mut && <span className={`text-xs font-mono font-bold ${mut.color}`}>{mut.name}</span>
+                  : mut && <span className={`text-xs font-mono font-bold ${mut.color} inline-flex items-center gap-0.5`}><ItemSprite emoji={mut.emoji} sprite={mut.sprite} name={mut.emoji} textSize="text-xs" imgSize="w-3 h-3" />{mut.name}</span>
                 }
                 <span className={`text-xs font-mono ${rarity?.color}`}>{rarity?.label}</span>
               </>
@@ -260,7 +265,7 @@ function ActiveListingRow({
         </div>
 
         <div className="text-right flex-shrink-0 space-y-1">
-          <p className="text-sm font-bold font-mono text-primary">{formatCoins(listing.ask_price)} 🟡</p>
+          <p className="text-sm font-bold font-mono text-primary inline-flex items-center gap-0.5">{formatCoins(listing.ask_price)} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /></p>
           <button
             onClick={onCancel}
             disabled={cancelling}
@@ -296,17 +301,20 @@ function HistoryListingRow({ listing }: { listing: MyListing }) {
   return (
     <div className="bg-card/40 border border-border/40 rounded-2xl px-4 py-3 flex items-center gap-3 opacity-70">
       <div className="relative flex-shrink-0">
-        <span className="text-2xl">
-          {isFertilizer  ? (fertDef?.emoji       ?? "🧪")
-           : isGear       ? (gearDef?.emoji        ?? "⚙️")
-           : isConsumable ? (consumableRec?.emoji  ?? "🧪")
-           : listing.is_seed
-             ? (species?.emoji.seed ?? "🌱")
-             : (species?.emoji.bloom ?? "❓")}
-        </span>
-        {!isFertilizer && !isGear && !isConsumable && !listing.is_seed && mut && (
-          <span className="absolute -top-1 -right-1 text-xs">{mut.emoji}</span>
-        )}
+        {isFertilizer && fertDef
+          ? <ItemSprite emoji={fertDef.emoji} sprite={fertDef.sprite} name={fertDef.name} textSize="text-2xl" imgSize="w-7 h-7" />
+          : isGear && gearDef
+          ? <ItemSprite emoji={gearDef.emoji} sprite={gearDef.sprite} name={gearDef.name} textSize="text-2xl" imgSize="w-7 h-7" />
+          : isConsumable && consumableRec
+          ? <ItemSprite emoji={consumableRec.emoji} sprite={consumableRec.sprite} name={consumableRec.name} textSize="text-2xl" imgSize="w-7 h-7" />
+          : listing.is_seed
+          ? species
+            ? <FlowerSprite species={species} stage="seed" textSize="text-2xl" imgSize="w-7 h-7" />
+            : <span className="text-2xl">🌱</span>
+          : species
+            ? <FlowerSprite species={species} stage="bloom" textSize="text-2xl" imgSize="w-7 h-7" className={mut ? mut.vfxClass : ""} />
+            : <ItemSprite emoji="❓" sprite="/sprites/ui/unknown.png" name="Unknown" textSize="text-2xl" imgSize="w-7 h-7" />
+        }
       </div>
 
       <div className="flex-1 min-w-0">
@@ -331,7 +339,7 @@ function HistoryListingRow({ listing }: { listing: MyListing }) {
               <p className="text-sm font-semibold">{species?.name ?? listing.species_id}</p>
               {listing.is_seed
                 ? <span className="text-xs font-mono text-muted-foreground">Seed</span>
-                : mut && <span className={`text-xs font-mono ${mut.color}`}>{mut.name}</span>
+                : mut && <span className={`text-xs font-mono ${mut.color} inline-flex items-center gap-0.5`}><ItemSprite emoji={mut.emoji} sprite={mut.sprite} name={mut.emoji} textSize="text-xs" imgSize="w-3 h-3" />{mut.name}</span>
               }
               <span className={`text-xs font-mono ${rarity?.color}`}>{rarity?.label}</span>
             </>
@@ -343,7 +351,7 @@ function HistoryListingRow({ listing }: { listing: MyListing }) {
       </div>
 
       <div className="text-right flex-shrink-0 space-y-0.5">
-        <p className="text-sm font-mono font-semibold">{formatCoins(listing.ask_price)} 🟡</p>
+        <p className="text-sm font-mono font-semibold inline-flex items-center gap-0.5">{formatCoins(listing.ask_price)} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /></p>
         <p className={`text-xs font-mono ${STATUS_COLOR[listing.status]}`}>
           {STATUS_LABEL[listing.status]}
         </p>

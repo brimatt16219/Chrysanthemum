@@ -1,5 +1,10 @@
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { getFlower, RARITY_CONFIG } from "../data/flowers";
+import { useSettings } from "../store/SettingsContext";
+import { ItemSprite } from "./ItemSprite";
+import { FlowerSprite } from "./FlowerSprite";
+
+const PX = { imageRendering: "pixelated" as const };
 import { FlowerTypeBadges } from "./FlowerTypeBadges";
 import { FERTILIZERS } from "../data/upgrades";
 import { useGame } from "../store/GameContext";
@@ -43,6 +48,7 @@ function rarityBadgeClass(rarity: Rarity): string {
 
 export function ShopSlotCard({ slot }: Props) {
   const { state, getState, perform, user, requestSignIn, pushGenericToast } = useGame();
+  const { settings } = useSettings();
   const [justBought, setJustBought] = useState(false);
   // Absolute per-card gate: blocks any buy while a server call is in-flight,
   // even if stateRef or queuing somehow lets a second request slip through.
@@ -59,7 +65,10 @@ export function ShopSlotCard({ slot }: Props) {
   if (slot.isEmpty) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 bg-card/20 border border-dashed border-border/50 rounded-xl p-4 min-h-[160px] opacity-60">
-        <span className="text-2xl">🌱</span>
+        {settings.useSprites
+          ? <img src="/sprites/ui/shop_empty_seed.png" alt="🌱" className="w-8 h-8 object-contain" style={PX} />
+          : <span className="text-2xl">🌱</span>
+        }
         <p className="text-xs text-muted-foreground text-center">New slot — fills on next restock</p>
       </div>
     );
@@ -159,7 +168,7 @@ export function ShopSlotCard({ slot }: Props) {
         `}
       >
         <div className="flex items-start justify-between">
-          <span className="text-4xl">{fert.emoji}</span>
+          <ItemSprite emoji={fert.emoji} sprite={fert.sprite} name={fert.name} textSize="text-4xl" imgSize="w-10 h-10" />
           <span className={`text-xs font-mono px-2 py-0.5 rounded-full border ${fert.color} border-current bg-current/10`}>
             Fertilizer
           </span>
@@ -198,7 +207,12 @@ export function ShopSlotCard({ slot }: Props) {
                 }
               `}
             >
-              {justBought ? "✓ Bought!" : `${slot.price} 🟡`}
+              {justBought ? "✓ Bought!" : (
+                <span className="flex items-center gap-1 justify-center">
+                  {slot.price}
+                  <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-sm" imgSize="w-3.5 h-3.5" />
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -235,7 +249,7 @@ export function ShopSlotCard({ slot }: Props) {
     const savedInventory = cur.inventory;
     audioManager.playSfx("buy");
     flashBought();
-    pushGenericToast(`gain:seed:${species!.id}`, isNew ? "❓" : species!.emoji.seed, isNew ? "??? Seed" : `${species!.name} Seed`, "text-green-400", "gain");
+    pushGenericToast(`gain:seed:${species!.id}`, isNew ? "❓" : species!.emoji.seed, isNew ? "??? Seed" : `${species!.name} Seed`, "text-green-400", "gain", 1, isNew ? "/sprites/ui/unknown.png" : "/sprites/flowers/seed.png");
     perform(
       optimistic,
       async () => {
@@ -277,7 +291,7 @@ export function ShopSlotCard({ slot }: Props) {
     const savedInventory = cur.inventory;
     audioManager.playSfx("buy");
     flashBought();
-    if (qty > 0) pushGenericToast(`gain:seed:${species!.id}`, isNew ? "❓" : species!.emoji.seed, isNew ? "??? Seed" : `${species!.name} Seed`, "text-green-400", "gain", qty);
+    if (qty > 0) pushGenericToast(`gain:seed:${species!.id}`, isNew ? "❓" : species!.emoji.seed, isNew ? "??? Seed" : `${species!.name} Seed`, "text-green-400", "gain", qty, isNew ? "/sprites/ui/unknown.png" : "/sprites/flowers/seed.png");
     perform(
       optimistic,
       async () => {
@@ -333,7 +347,12 @@ export function ShopSlotCard({ slot }: Props) {
       )}
 
       <div className="flex items-start justify-between">
-        <span className="text-4xl">{isNew ? "❓" : species.emoji.bloom}</span>
+        {isNew
+          ? settings.useSprites
+            ? <img src="/sprites/ui/unknown.png" alt="❓" className="w-10 h-10 object-contain" style={PX} draggable={false} />
+            : <span className="text-4xl">❓</span>
+          : <FlowerSprite species={species} stage="bloom" textSize="text-4xl" imgSize="w-10 h-10" />
+        }
         <span
           className={`text-xs font-mono font-medium px-2 py-0.5 rounded-full border ${rarity.color} border-current bg-current/10`}
         >
@@ -354,7 +373,10 @@ export function ShopSlotCard({ slot }: Props) {
       <div className="text-xs text-muted-foreground font-mono space-y-0.5">
         <p>Seed → Sprout: {formatDuration(species.growthTime.seed)}</p>
         <p>Sprout → Bloom: {formatDuration(species.growthTime.sprout)}</p>
-        <p className="text-foreground/60">Sells for: {species.sellValue} 🟡</p>
+        <p className="text-foreground/60 flex items-center gap-1">
+          Sells for: {species.sellValue}
+          <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-sm" imgSize="w-3 h-3" />
+        </p>
         <p className={`mt-1 ${ownedSeeds > 0 || ownedBlooms > 0 ? "text-primary/70" : "text-muted-foreground/50"}`}>
           You own: {ownedSeeds} seed{ownedSeeds !== 1 ? "s" : ""}
           {ownedBlooms > 0 && ` · ${ownedBlooms} bloom${ownedBlooms !== 1 ? "s" : ""}`}
@@ -387,7 +409,12 @@ export function ShopSlotCard({ slot }: Props) {
               }
             `}
           >
-            {justBought ? "✓ Bought!" : `${slot.price} 🟡`}
+            {justBought ? "✓ Bought!" : (
+              <span className="flex items-center gap-1 justify-center">
+                {slot.price}
+                <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-sm" imgSize="w-3.5 h-3.5" />
+              </span>
+            )}
           </button>
         </div>
       </div>

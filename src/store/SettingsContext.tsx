@@ -5,8 +5,10 @@ export interface Settings {
   plotAnimations:          boolean;
   plotGearIndicator:       boolean;
   plotMutationIndicator:   boolean;
+  plotMutationVfx:         boolean;
   plotMasteryIndicator:    boolean;
   plotFertilizerIndicator: boolean;
+  useSprites:              boolean;
   theme:                   string;
   // ── Audio ──────────────────────────────────────────────
   musicVolume:             number;   // 0–1
@@ -19,8 +21,10 @@ const DEFAULTS: Settings = {
   plotAnimations:          true,
   plotGearIndicator:       true,
   plotMutationIndicator:   true,
+  plotMutationVfx:         true,
   plotMasteryIndicator:    true,
   plotFertilizerIndicator: true,
+  useSprites:              true,
   theme:                   "garden",
   // ── Audio ──────────────────────────────────────────────
   musicVolume:             0.5,

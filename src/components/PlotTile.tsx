@@ -16,6 +16,8 @@ import type { WeatherType } from "../data/weather";
 import { GEAR, isGearExpired, CROPSTICKS_BREED_DURATION_MS, type FanDirection } from "../data/gear";
 import { PlotTooltip } from "./PlotTooltip";
 import { GearTooltip } from "./GearTooltip";
+import { FlowerSprite } from "./FlowerSprite";
+import { ItemSprite } from "./ItemSprite";
 import { useGame } from "../store/GameContext";
 import { useSettings } from "../store/SettingsContext";
 import { edgeHarvest } from "../lib/edgeFunctions";
@@ -51,7 +53,7 @@ interface Props {
   /** True when this cell is covered by an active Aqueduct (displayed instead of sprinkler 💧). */
   isUnderAqueduct?: boolean;
   /** Mutation sprinklers covering this cell — emoji for display, label for tooltip. */
-  sprinklerMutations?: { emoji: string; label: string }[];
+  sprinklerMutations?: { emoji: string; label: string; sprite?: string }[];
   /** True when this cell is within a scarecrow's radius. */
   isUnderScarecrow?: boolean;
   /** True when this cell is within a composter's radius. */
@@ -311,12 +313,17 @@ export function PlotTile({
           `}
           title={`${def.name} — ${def.rarity} — Click to inspect`}
         >
-          <span className="text-2xl leading-none">{def.emoji}</span>
+          <ItemSprite emoji={def.emoji} sprite={def.sprite} name={def.name} textSize="text-2xl" imgSize="w-7 h-7" />
 
-          {/* Mutation emoji overlay */}
+          {/* Mutation badge overlay */}
           {def.category === "sprinkler_mutation" && def.mutationType && (
-            <span className="absolute -bottom-1 -right-1 text-sm leading-none">
-              {MUTATIONS[def.mutationType].emoji}
+            <span className="absolute -bottom-1 -right-1 leading-none">
+              <ItemSprite
+                emoji={MUTATIONS[def.mutationType].emoji}
+                sprite={MUTATIONS[def.mutationType].sprite}
+                name={MUTATIONS[def.mutationType].emoji}
+                textSize="text-sm" imgSize="w-4 h-4"
+              />
             </span>
           )}
 
@@ -457,10 +464,10 @@ export function PlotTile({
                 <span className="gear-drop" style={{ left: "74%", animationDelay: "0s"    }}>💧</span>
               </>
             )}
-            {/* Mutation sprinkler: emoji floating up, 2 per mutation type */}
-            {sprinklerMutations.flatMap(({ emoji }, mi) => [
-              <span key={`m${mi}a`} className="gear-float" style={{ left: `${16 + mi * 28}%`, animationDelay: `${mi * 0.5 - 2}s`   }}>{emoji}</span>,
-              <span key={`m${mi}b`} className="gear-float" style={{ left: `${40 + mi * 28}%`, animationDelay: `${mi * 0.5 - 0.9}s` }}>{emoji}</span>,
+            {/* Mutation sprinkler: mutation sprite floating up, 2 per mutation type */}
+            {sprinklerMutations.flatMap(({ emoji, sprite }, mi) => [
+              <span key={`m${mi}a`} className="gear-float" style={{ left: `${16 + mi * 28}%`, animationDelay: `${mi * 0.5 - 2}s`   }}><ItemSprite emoji={emoji} sprite={sprite} name={emoji} textSize="text-sm" imgSize="w-4 h-4" /></span>,
+              <span key={`m${mi}b`} className="gear-float" style={{ left: `${40 + mi * 28}%`, animationDelay: `${mi * 0.5 - 0.9}s` }}><ItemSprite emoji={emoji} sprite={sprite} name={emoji} textSize="text-sm" imgSize="w-4 h-4" /></span>,
             ])}
             {/* Scarecrow: 🐦 birds fluttering away */}
             {isUnderScarecrow && (
@@ -480,17 +487,17 @@ export function PlotTile({
             {/* Auto-Planter: 🌱 seeds gently drifting down */}
             {isUnderAutoPlanter && (
               <>
-                <span className="gear-planter-seed" style={{ left: "20%", animationDelay: "-1.6s" }}>🌱</span>
-                <span className="gear-planter-seed" style={{ left: "52%", animationDelay: "-0.8s" }}>🌱</span>
-                <span className="gear-planter-seed" style={{ left: "76%", animationDelay: "0s"    }}>🌱</span>
+                <span className="gear-planter-seed" style={{ left: "20%", animationDelay: "-1.6s" }}><ItemSprite emoji="🌱" sprite="/sprites/flowers/seed.png" name="seed" textSize="text-sm" imgSize="w-4 h-4" /></span>
+                <span className="gear-planter-seed" style={{ left: "52%", animationDelay: "-0.8s" }}><ItemSprite emoji="🌱" sprite="/sprites/flowers/seed.png" name="seed" textSize="text-sm" imgSize="w-4 h-4" /></span>
+                <span className="gear-planter-seed" style={{ left: "76%", animationDelay: "0s"    }}><ItemSprite emoji="🌱" sprite="/sprites/flowers/seed.png" name="seed" textSize="text-sm" imgSize="w-4 h-4" /></span>
               </>
             )}
             {/* Harvest Bell: 🔔 bell sways upward hinting at auto-harvest */}
             {isUnderHarvestBell && (
               <>
-                <span className="gear-bell" style={{ left: "18%", animationDelay: "-2.2s" }}>🔔</span>
-                <span className="gear-bell" style={{ left: "52%", animationDelay: "-1.1s" }}>🔔</span>
-                <span className="gear-bell" style={{ left: "74%", animationDelay: "0s"    }}>🔔</span>
+                <span className="gear-bell" style={{ left: "18%", animationDelay: "-2.2s" }}><ItemSprite emoji="🔔" sprite="/sprites/gear/harvest_bell.png" name="Harvest Bell" textSize="text-sm" imgSize="w-4 h-4" /></span>
+                <span className="gear-bell" style={{ left: "52%", animationDelay: "-1.1s" }}><ItemSprite emoji="🔔" sprite="/sprites/gear/harvest_bell.png" name="Harvest Bell" textSize="text-sm" imgSize="w-4 h-4" /></span>
+                <span className="gear-bell" style={{ left: "74%", animationDelay: "0s"    }}><ItemSprite emoji="🔔" sprite="/sprites/gear/harvest_bell.png" name="Harvest Bell" textSize="text-sm" imgSize="w-4 h-4" /></span>
               </>
             )}
             {/* Lawnmower: 🍃 clippings tumble in the mower's direction */}
@@ -518,12 +525,12 @@ export function PlotTile({
                 <span className="gear-scale-slow" style={{ left: "76%", animationDelay: "0s"    }}>▾</span>
               </>
             )}
-            {/* Aegis: 🛡️ shields rising — weather mutations blocked */}
+            {/* Aegis: shields rising — weather mutations blocked */}
             {isUnderAegis && (
               <>
-                <span className="gear-aegis-shield" style={{ left: "15%", animationDelay: "-1.8s" }}>🛡️</span>
-                <span className="gear-aegis-shield" style={{ left: "50%", animationDelay: "-0.9s" }}>🛡️</span>
-                <span className="gear-aegis-shield" style={{ left: "76%", animationDelay: "0s"    }}>🛡️</span>
+                <span className="gear-aegis-shield" style={{ left: "15%", animationDelay: "-1.8s" }}><ItemSprite emoji="🛡️" sprite="/sprites/gear/aegis.png" name="Aegis" textSize="text-sm" imgSize="w-4 h-4" /></span>
+                <span className="gear-aegis-shield" style={{ left: "50%", animationDelay: "-0.9s" }}><ItemSprite emoji="🛡️" sprite="/sprites/gear/aegis.png" name="Aegis" textSize="text-sm" imgSize="w-4 h-4" /></span>
+                <span className="gear-aegis-shield" style={{ left: "76%", animationDelay: "0s"    }}><ItemSprite emoji="🛡️" sprite="/sprites/gear/aegis.png" name="Aegis" textSize="text-sm" imgSize="w-4 h-4" /></span>
               </>
             )}
             {/* Fan: 💨 gusts drifting in the fan's direction */}
@@ -573,47 +580,65 @@ export function PlotTile({
           </div>
         )}
 
-        <span className="text-2xl leading-none">
-          {(isIdentified || isBloomed) ? (species?.emoji[stage!] ?? "🌱") : "🌱"}
-        </span>
+        {species && (isIdentified || isBloomed) ? (
+          <FlowerSprite
+            species={species}
+            stage={stage!}
+            textSize="text-xl sm:text-2xl"
+            imgSize="w-7 h-7 sm:w-9 sm:h-9"
+            className={settings.plotMutationVfx && isBloomed && (plant as PlantedFlower).mutation && species?.rarity !== "prismatic"
+              ? MUTATIONS[(plant as PlantedFlower).mutation!].vfxClass
+              : ""}
+          />
+        ) : (
+          settings.useSprites
+            ? <img src="/sprites/flowers/seed.png" alt="🌱" className="w-7 h-7 sm:w-9 sm:h-9 object-contain" style={{ imageRendering: "pixelated" }} />
+            : <span className="text-2xl leading-none">🌱</span>
+        )}
 
         {/* Fertilizer indicator — top-left */}
         {settings.plotFertilizerIndicator && hasFert && !isBloomed && (
-          <span className="absolute top-0.5 left-0.5 text-[10px] leading-none">
-            {FERTILIZERS[(plant as PlantedFlower).fertilizer!].emoji}
+          <span className="absolute top-0.5 left-0.5 leading-none">
+            <ItemSprite
+              emoji={FERTILIZERS[(plant as PlantedFlower).fertilizer!].emoji}
+              sprite={FERTILIZERS[(plant as PlantedFlower).fertilizer!].sprite}
+              name={FERTILIZERS[(plant as PlantedFlower).fertilizer!].name}
+              textSize="text-[10px]"
+              imgSize="w-3 h-3"
+            />
           </span>
         )}
 
         {/* ⚡ Mastery bonus indicator — top-right */}
         {settings.plotMasteryIndicator && (plant as PlantedFlower).masteredBonus && (
           <span
-            className="absolute top-0.5 right-0.5 text-[10px] leading-none text-yellow-400"
+            className="absolute top-0.5 right-0.5 leading-none text-yellow-400"
             title="Mastered — grows 20% faster"
           >
-            ⚡
+            <ItemSprite emoji="⚡" sprite="/sprites/ui/mastery.png" name="Mastered" textSize="text-[10px]" imgSize="w-3 h-3" />
           </span>
         )}
 
         {/* Gear effect indicators — bottom-left row */}
         {settings.plotGearIndicator && (isUnderSprinkler || isUnderAqueduct || sprinklerMutations.length > 0 || isUnderScarecrow || isUnderComposter || isUnderGrowLamp || isUnderFan || isUnderHarvestBell || isUnderLawnmower || !!balanceScaleSide || isUnderAegis || plant.infused || plant.revealed || plant.showMultiplier) && (
           <div className={`absolute left-0.5 flex leading-none ${isBloomed ? "bottom-1" : "bottom-2.5"}`}>
-            {isUnderAqueduct && <span className="text-[9px]" title="Under aqueduct">⛲</span>}
-            {isUnderSprinkler && !isUnderAqueduct && <span className="text-[9px]" title="Under sprinkler">💧</span>}
-            {sprinklerMutations.map(({ emoji, label }, i) => (
-              <span key={i} className="text-[9px]" title={label}>{emoji}</span>
+            {isUnderAqueduct && <ItemSprite emoji="⛲" sprite="/sprites/gear/aqueduct.png" name="Under aqueduct" textSize="text-[9px]" imgSize="w-3 h-3" />}
+            {isUnderSprinkler && !isUnderAqueduct && <ItemSprite emoji="💧" sprite="/sprites/gear/sprinkler.png" name="Under sprinkler" textSize="text-[9px]" imgSize="w-3 h-3" />}
+            {sprinklerMutations.map(({ emoji, label, sprite }, i) => (
+              <ItemSprite key={i} emoji={emoji} sprite={sprite} name={label} textSize="text-[9px]" imgSize="w-3 h-3" />
             ))}
-            {isUnderScarecrow && <span className="text-[9px]" title="Under scarecrow">🧹</span>}
-            {isUnderComposter && <span className="text-[9px]" title="Near composter">🧺</span>}
-            {isUnderGrowLamp && <span className="text-[9px]" title="Under grow lamp">💡</span>}
-            {isUnderFan && <span className="text-[9px]" title="In fan range">💨</span>}
-            {isUnderHarvestBell && <span className="text-[9px]" title="Auto-harvest active">🔔</span>}
-            {isUnderLawnmower && <span className="text-[9px]" title="Lawnmower — directional auto-harvest">🦼</span>}
-            {isUnderAegis && <span className="text-[9px]" title="Aegis — weather mutations blocked">🛡️</span>}
-            {balanceScaleSide === "boost" && <span className="text-[9px]" title="Balance Scale — 3× growth boost">⚖️</span>}
-            {balanceScaleSide === "slow"  && <span className="text-[9px]" title="Balance Scale — 0.5× growth penalty">⚖️</span>}
-            {plant.infused && <span className="text-[9px]" title="Infused — cross-breeding active">💉</span>}
-            {plant.revealed && <span className="text-[9px]" title="Species revealed — Magnifying Glass used">🔎</span>}
-            {plant.showMultiplier && <span className="text-[9px]" title={`Ruler — ${rulerMult.toFixed(2)}× total growth (gear × fert × weather × mastered)`}>📏</span>}
+            {isUnderScarecrow && <ItemSprite emoji="🧹" sprite="/sprites/gear/scarecrow.png" name="Under scarecrow" textSize="text-[9px]" imgSize="w-3 h-3" />}
+            {isUnderComposter && <ItemSprite emoji="🧺" sprite="/sprites/gear/composter.png" name="Near composter" textSize="text-[9px]" imgSize="w-3 h-3" />}
+            {isUnderGrowLamp && <ItemSprite emoji="💡" sprite="/sprites/gear/grow_lamp.png" name="Under grow lamp" textSize="text-[9px]" imgSize="w-3 h-3" />}
+            {isUnderFan && <ItemSprite emoji="💨" sprite="/sprites/gear/fan.png" name="In fan range" textSize="text-[9px]" imgSize="w-3 h-3" />}
+            {isUnderHarvestBell && <ItemSprite emoji="🔔" sprite="/sprites/gear/harvest_bell.png" name="Auto-harvest active" textSize="text-[9px]" imgSize="w-3 h-3" />}
+            {isUnderLawnmower && <ItemSprite emoji="🦼" sprite="/sprites/gear/lawnmower.png" name="Lawnmower" textSize="text-[9px]" imgSize="w-3 h-3" />}
+            {isUnderAegis && <ItemSprite emoji="🛡️" sprite="/sprites/gear/aegis.png" name="Aegis" textSize="text-[9px]" imgSize="w-3 h-3" />}
+            {balanceScaleSide === "boost" && <ItemSprite emoji="⚖️" sprite="/sprites/gear/balance_scale.png" name="Balance Scale — 3× growth boost" textSize="text-[9px]" imgSize="w-3 h-3" />}
+            {balanceScaleSide === "slow"  && <ItemSprite emoji="⚖️" sprite="/sprites/gear/balance_scale.png" name="Balance Scale — 0.5× growth penalty" textSize="text-[9px]" imgSize="w-3 h-3" />}
+            {plant.infused && <ItemSprite emoji="💉" sprite="/sprites/consumables/infuser.png" name="Infused" textSize="text-[9px]" imgSize="w-3 h-3" />}
+            {plant.revealed && <ItemSprite emoji="🔎" sprite="/sprites/consumables/magnifying_glass.png" name="Species revealed" textSize="text-[9px]" imgSize="w-3 h-3" />}
+            {plant.showMultiplier && <ItemSprite emoji="📏" sprite="/sprites/consumables/ruler.png" name={`Ruler — ${rulerMult.toFixed(2)}× total growth`} textSize="text-[9px]" imgSize="w-3 h-3" />}
           </div>
         )}
 
@@ -664,10 +689,15 @@ export function PlotTile({
           <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full animate-pulse" />
         ) : null}
 
-        {/* Mutation emoji — bottom-right */}
+        {/* Mutation badge — bottom-right */}
         {settings.plotMutationIndicator && isBloomed && (plant as PlantedFlower).mutation && (
-          <span className="absolute -bottom-1 -right-1 text-sm leading-none">
-            {MUTATIONS[(plant as PlantedFlower).mutation!].emoji}
+          <span className="absolute -bottom-1 -right-1 leading-none">
+            <ItemSprite
+              emoji={MUTATIONS[(plant as PlantedFlower).mutation!].emoji}
+              sprite={MUTATIONS[(plant as PlantedFlower).mutation!].sprite}
+              name={MUTATIONS[(plant as PlantedFlower).mutation!].emoji}
+              textSize="text-sm" imgSize="w-4 h-4"
+            />
           </span>
         )}
 

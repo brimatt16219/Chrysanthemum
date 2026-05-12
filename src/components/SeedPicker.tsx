@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
+import { ItemSprite } from "./ItemSprite";
+import { FlowerSprite } from "./FlowerSprite";
 import type { MutationType } from "../data/flowers";
 import { FlowerTypeBadges } from "./FlowerTypeBadges";
 import { GEAR } from "../data/gear";
@@ -64,7 +66,8 @@ export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: P
             }
           `}
         >
-          🌱 Seeds
+          <ItemSprite emoji="🌱" sprite="/sprites/flowers/seed.png" name="🌱" textSize="text-sm" imgSize="w-4 h-4" />
+          Seeds
           {seeds.length > 0 && (
             <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
               tab === "seeds" ? "bg-primary/20 text-primary" : "bg-border text-muted-foreground"
@@ -83,7 +86,8 @@ export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: P
             }
           `}
         >
-          🌸 Blooms
+          <ItemSprite emoji="🌸" sprite="/sprites/flowers/bloom.png" name="🌸" textSize="text-sm" imgSize="w-4 h-4" />
+          Blooms
           {blooms.length > 0 && (
             <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
               tab === "blooms" ? "bg-primary/20 text-primary" : "bg-border text-muted-foreground"
@@ -102,7 +106,8 @@ export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: P
             }
           `}
         >
-          ⚙️ Gear
+          <ItemSprite emoji="⚙️" sprite="/sprites/ui/gear.png" name="⚙️" textSize="text-sm" imgSize="w-4 h-4" />
+          Gear
           {gear.length > 0 && (
             <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
               tab === "gear" ? "bg-primary/20 text-primary" : "bg-border text-muted-foreground"
@@ -131,13 +136,16 @@ export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: P
                   onClick={() => onSelect(item.speciesId)}
                   className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 border border-transparent hover:border-primary/30 transition-all text-left"
                 >
-                  <span className="text-xl">{isNew ? "❓" : species.emoji.seed}</span>
+                  {isNew
+                    ? <ItemSprite emoji="❓" sprite="/sprites/ui/unknown.png" name="Unknown" textSize="text-xl" imgSize="w-6 h-6" />
+                    : <FlowerSprite species={species} stage="seed" textSize="text-xl" imgSize="w-6 h-6" />
+                  }
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <p className="text-sm font-medium truncate">{isNew ? "???" : species.name}</p>
                       {mastered && (
-                        <span className="text-yellow-400 text-xs leading-none flex-shrink-0" title="Mastered — grows 20% faster">
-                          ⚡
+                        <span className="text-yellow-400 leading-none flex-shrink-0" title="Mastered — grows 20% faster">
+                          <ItemSprite emoji="⚡" sprite="/sprites/ui/mastery.png" name="Mastered" textSize="text-xs" imgSize="w-3.5 h-3.5" />
                         </span>
                       )}
                     </div>
@@ -168,14 +176,13 @@ export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: P
                   onClick={() => onBloomSelect(item.speciesId, mut)}
                   className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 border border-transparent hover:border-primary/30 transition-all text-left"
                 >
-                  <span className="text-xl relative">
-                    {species.emoji.bloom}
-                    {mut && (
-                      <span className="absolute -bottom-0.5 -right-1 text-[10px] leading-none">
-                        {MUTATIONS[mut].emoji}
-                      </span>
-                    )}
-                  </span>
+                  <FlowerSprite
+                    species={species}
+                    stage="bloom"
+                    textSize="text-xl"
+                    imgSize="w-6 h-6"
+                    className={mut ? MUTATIONS[mut].vfxClass : ""}
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <p className="text-sm font-medium truncate">{species.name}</p>
@@ -185,9 +192,13 @@ export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: P
                         </span>
                       )}
                     </div>
-                    <p className={`text-xs ${rarity.color}`}>
-                      {rarity.label}{mut ? ` · ${MUTATIONS[mut].name}` : ""}
-                    </p>
+                    <p className={`text-xs ${rarity.color}`}>{rarity.label}</p>
+                    {mut && (
+                      <p className={`text-xs ${MUTATIONS[mut].color} inline-flex items-center gap-1`}>
+                        <ItemSprite emoji={MUTATIONS[mut].emoji} sprite={MUTATIONS[mut].sprite} name={MUTATIONS[mut].emoji} textSize="text-xs" imgSize="w-3.5 h-3.5" />
+                        {MUTATIONS[mut].name}
+                      </p>
+                    )}
                     <FlowerTypeBadges types={species.types} className="mt-0.5" />
                   </div>
                   <span className="text-xs text-muted-foreground flex-shrink-0">×{item.quantity}</span>
@@ -213,10 +224,10 @@ export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: P
                   className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 border border-transparent hover:border-primary/30 transition-all text-left"
                 >
                   <span className="text-xl relative">
-                    {def.emoji}
+                    <ItemSprite emoji={def.emoji} sprite={def.sprite} name={def.name} textSize="text-xl" imgSize="w-6 h-6" />
                     {def.category === "sprinkler_mutation" && def.mutationType && (
-                      <span className="absolute -bottom-0.5 -right-1 text-[10px] leading-none">
-                        {MUTATIONS[def.mutationType].emoji}
+                      <span className="absolute -bottom-0.5 -right-1 leading-none">
+                        <ItemSprite emoji={MUTATIONS[def.mutationType].emoji} sprite={MUTATIONS[def.mutationType].sprite} name={MUTATIONS[def.mutationType].emoji} textSize="text-[10px]" imgSize="w-3 h-3" />
                       </span>
                     )}
                   </span>

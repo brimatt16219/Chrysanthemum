@@ -6,6 +6,7 @@ import { CollectionEventCard } from "./events/CollectionEventCard";
 import { DailyTasksPanel }    from "./DailyTasksPanel";
 import { AchievementsPanel }  from "./AchievementsPanel";
 import { ACHIEVEMENTS }       from "../data/achievements";
+import { ItemSprite }         from "./ItemSprite";
 
 // Maps event type string → card component. Unknown types render nothing.
 const EVENT_CARD_REGISTRY: Record<string, ComponentType<{ event: EventEntry }>> = {
@@ -69,11 +70,17 @@ export function EventsTab() {
               }
             `}
           >
-            <span>
-              {v === "events" ? "🌸" : v === "daily" ? "📅" : "🏆"}
-            </span>
-            <span className="hidden sm:inline ml-1">
-              {v === "events" ? "Events" : v === "daily" ? "Daily Tasks" : "Achievements"}
+            <span className="inline-flex items-center justify-center gap-1">
+              <ItemSprite
+                emoji={v === "events" ? "🌸" : v === "daily" ? "📅" : "🏆"}
+                sprite={v === "events" ? "/sprites/ui/events.png" : v === "daily" ? "/sprites/ui/daily.png" : "/sprites/ui/achievements.png"}
+                textSize="text-base"
+                imgSize="w-5 h-5"
+                name={v}
+              />
+              <span className="hidden sm:inline">
+                {v === "events" ? "Events" : v === "daily" ? "Daily Tasks" : "Achievements"}
+              </span>
             </span>
             {badgeFor[v] && (
               <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />

@@ -9,6 +9,8 @@ import { CONSUMABLE_RECIPE_MAP } from "../data/consumables";
 import type { ConsumableId } from "../data/consumables";
 import { FlowerTypeBadges } from "./FlowerTypeBadges";
 import { PriceHistoryChart } from "./PriceHistoryChart";
+import { FlowerSprite } from "./FlowerSprite";
+import { ItemSprite } from "./ItemSprite";
 
 export interface Listing {
   id:               string;
@@ -87,7 +89,7 @@ export function ListingCard({ listing, currentUserId, currentCoins, onBuy, onVie
           className="flex items-center gap-3 px-4 py-3 cursor-pointer"
           onClick={() => setExpanded((v) => !v)}
         >
-          <span className="text-3xl flex-shrink-0">{fertDef.emoji}</span>
+          <ItemSprite emoji={fertDef.emoji} sprite={fertDef.sprite} name={fertDef.name} textSize="text-3xl" imgSize="w-8 h-8" className="flex-shrink-0" />
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
@@ -113,8 +115,9 @@ export function ListingCard({ listing, currentUserId, currentCoins, onBuy, onVie
           </div>
 
           <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-            <p className="text-sm font-bold font-mono text-primary">
-              {formatCoins(listing.ask_price)} 🟡
+            <p className="text-sm font-bold font-mono text-primary inline-flex items-center gap-0.5">
+              {formatCoins(listing.ask_price)}
+              <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
             </p>
             {listing.base_value > 0 && (
               <p className="text-[10px] text-muted-foreground font-mono">
@@ -162,7 +165,7 @@ export function ListingCard({ listing, currentUserId, currentCoins, onBuy, onVie
           className="flex items-center gap-3 px-4 py-3 cursor-pointer"
           onClick={() => setExpanded((v) => !v)}
         >
-          <span className="text-3xl flex-shrink-0">{gearDef.emoji}</span>
+          <ItemSprite emoji={gearDef.emoji} sprite={gearDef.sprite} name={gearDef.name} textSize="text-3xl" imgSize="w-8 h-8" className="flex-shrink-0" />
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
@@ -187,8 +190,9 @@ export function ListingCard({ listing, currentUserId, currentCoins, onBuy, onVie
           </div>
 
           <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-            <p className="text-sm font-bold font-mono text-primary">
-              {formatCoins(listing.ask_price)} 🟡
+            <p className="text-sm font-bold font-mono text-primary inline-flex items-center gap-0.5">
+              {formatCoins(listing.ask_price)}
+              <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
             </p>
             {listing.base_value > 0 && (
               <p className="text-[10px] text-muted-foreground font-mono">
@@ -236,7 +240,7 @@ export function ListingCard({ listing, currentUserId, currentCoins, onBuy, onVie
           className="flex items-center gap-3 px-4 py-3 cursor-pointer"
           onClick={() => setExpanded((v) => !v)}
         >
-          <span className="text-3xl flex-shrink-0">{consumableRec.emoji}</span>
+          <ItemSprite emoji={consumableRec.emoji} sprite={consumableRec.sprite} name={consumableRec.name} textSize="text-3xl" imgSize="w-8 h-8" className="flex-shrink-0" />
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
@@ -261,8 +265,9 @@ export function ListingCard({ listing, currentUserId, currentCoins, onBuy, onVie
           </div>
 
           <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-            <p className="text-sm font-bold font-mono text-primary">
-              {formatCoins(listing.ask_price)} 🟡
+            <p className="text-sm font-bold font-mono text-primary inline-flex items-center gap-0.5">
+              {formatCoins(listing.ask_price)}
+              <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
             </p>
             {isOwnListing ? (
               <span className="text-[10px] text-muted-foreground font-mono bg-border/50 px-2 py-0.5 rounded-full">
@@ -307,15 +312,15 @@ export function ListingCard({ listing, currentUserId, currentCoins, onBuy, onVie
       >
 
         {/* Flower / Seed */}
-        <div className="relative flex-shrink-0">
-          <span className="text-3xl">
-            {listing.is_seed
-              ? (species?.emoji.seed ?? "🌱")
-              : (species?.emoji.bloom ?? "❓")}
-          </span>
-          {!listing.is_seed && mut && (
-            <span className="absolute -top-1 -right-1 text-sm">{mut.emoji}</span>
-          )}
+        <div className="flex-shrink-0">
+          {listing.is_seed
+            ? species
+              ? <FlowerSprite species={species} stage="seed" textSize="text-3xl" imgSize="w-8 h-8" />
+              : <span className="text-3xl">🌱</span>
+            : species
+              ? <FlowerSprite species={species} stage="bloom" textSize="text-3xl" imgSize="w-8 h-8" className={mut ? mut.vfxClass : ""} />
+              : <ItemSprite emoji="❓" sprite="/sprites/ui/unknown.png" name="Unknown" textSize="text-3xl" imgSize="w-8 h-8" />
+          }
         </div>
 
         {/* Info */}
@@ -324,7 +329,7 @@ export function ListingCard({ listing, currentUserId, currentCoins, onBuy, onVie
             <p className="text-sm font-bold">{species?.name ?? listing.species_id}</p>
             {listing.is_seed
               ? <span className="text-xs font-mono text-muted-foreground">Seed</span>
-              : mut && <span className={`text-xs font-mono font-bold ${mut.color}`}>{mut.name}</span>
+              : mut && <span className={`text-xs font-mono font-bold ${mut.color} inline-flex items-center gap-0.5`}><ItemSprite emoji={mut.emoji} sprite={mut.sprite} name={mut.emoji} textSize="text-xs" imgSize="w-3 h-3" />{mut.name}</span>
             }
             <span className={`text-xs font-mono ${rarity?.color}`}>{rarity?.label}</span>
           </div>
@@ -348,8 +353,9 @@ export function ListingCard({ listing, currentUserId, currentCoins, onBuy, onVie
 
         {/* Price + actions */}
         <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-          <p className="text-sm font-bold font-mono text-primary">
-            {formatCoins(listing.ask_price)} 🟡
+          <p className="text-sm font-bold font-mono text-primary inline-flex items-center gap-0.5">
+            {formatCoins(listing.ask_price)}
+            <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
           </p>
           {listing.base_value > 0 && (
             <p className="text-[10px] text-muted-foreground font-mono">

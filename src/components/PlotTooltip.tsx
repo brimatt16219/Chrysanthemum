@@ -1,4 +1,7 @@
 import { useState, useRef, useLayoutEffect } from "react";
+import { audioManager } from "../lib/audioManager";
+import { ItemSprite } from "./ItemSprite";
+import { FlowerSprite } from "./FlowerSprite";
 import {
   type PlantedFlower,
   getCurrentStage,
@@ -30,7 +33,7 @@ interface Props {
   /** Combined sprinkler × grow-lamp growth multiplier for this cell. */
   gearGrowthMultiplier?: number;
   isUnderSprinkler?:     boolean;
-  sprinklerMutations?:   { emoji: string; label: string }[];
+  sprinklerMutations?:   { emoji: string; label: string; sprite?: string }[];
   isUnderGrowLamp?:      boolean;
   isUnderScarecrow?:     boolean;
   isUnderComposter?:     boolean;
@@ -221,7 +224,7 @@ export function PlotTooltip({
     if (optimistic) {
       const f = FERTILIZERS[type];
       perform(optimistic, () => edgeApplyFertilizer(row, col, type), () => {
-        pushGenericToast(`loss:fert:${type}`, f.emoji, f.name, undefined, "loss");
+        pushGenericToast(`loss:fert:${type}`, f.emoji, f.name, undefined, "loss", 1, f.sprite);
         void trackProgress("apply_fertilizer");
         incrementStat("fertilizers_applied");
       });
@@ -244,7 +247,7 @@ export function PlotTooltip({
       () => edgeApplyPlantConsumable(row, col, consumableId),
       () => {
         setApplyingConsumable(null);
-        if (recipe) pushGenericToast(`loss:consumable:${consumableId}`, recipe.emoji, recipe.name, undefined, "loss");
+        if (recipe) pushGenericToast(`loss:consumable:${consumableId}`, recipe.emoji, recipe.name, undefined, "loss", 1, recipe.sprite);
         // Strip trailing tier suffix (_1…_5) to get the family key
         const familyKey = consumableId.replace(/_[1-5]$/, "");
         incrementStat(`used_${familyKey}` as AchievementStatKey);
@@ -270,6 +273,11 @@ export function PlotTooltip({
     const optimistic = removePlant(cur, row, col);
     if (!optimistic) return;
     setRemoving(true);
+    // Fire feedback immediately — don't wait for server round-trip
+    audioManager.playSfx("harvest");
+    pushHarvestPopup(plant.speciesId, undefined, true);
+    pushGenericToast("loss:shovel", "🥄", "Shovel", undefined, "loss");
+    onClose?.();
     // Snapshot the cell + consumables for surgical rollback
     const savedCell        = cur.grid[row][col];
     const savedConsumables = cur.consumables;
@@ -282,7 +290,7 @@ export function PlotTooltip({
           setRemoving(false);
         }
       },
-      () => { onClose?.(); pushHarvestPopup(plant.speciesId, undefined, true); pushGenericToast("loss:shovel", "🥄", "Shovel", undefined, "loss"); },
+      () => {},
       {
         rollback: (c) => ({
           ...c,
@@ -314,7 +322,10 @@ export function PlotTooltip({
 
         {/* Header */}
         <div className="flex items-center gap-2">
-          <span className="text-xl">{!isIdentified ? (isBloomed ? "❓" : "🌱") : species.emoji[stage]}</span>
+          {(!isIdentified && isBloomed)
+            ? <ItemSprite emoji="❓" sprite="/sprites/ui/unknown.png" name="Unknown" textSize="text-xl" imgSize="w-6 h-6" />
+            : <FlowerSprite species={species} stage={!isIdentified ? "seed" : stage} textSize="text-xl" imgSize="w-6 h-6" />
+          }
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold leading-tight">{!isIdentified ? "???" : species.name}</p>
             <p className={`text-[10px] font-mono ${rarity.color}`}>{rarity.label}</p>
@@ -340,13 +351,16 @@ export function PlotTooltip({
           {!isBloomed && (
             <p>
               Next stage in:{" "}
-              <span className={`font-mono ${plant.masteredBonus ? "text-yellow-400" : "text-primary"}`}>
-                {plant.masteredBonus ? "⚡ " : ""}{formatMs(msLeft)}
+              <span className={`font-mono inline-flex items-center gap-0.5 ${plant.masteredBonus ? "text-yellow-400" : "text-primary"}`}>
+                {plant.masteredBonus && <ItemSprite emoji="⚡" sprite="/sprites/ui/mastery.png" name="Mastered" textSize="text-xs" imgSize="w-3.5 h-3.5" />}{formatMs(msLeft)}
               </span>
             </p>
           )}
-          {!isBloomed && plant.masteredBonus && (
-            <p className="text-[10px] text-yellow-400/70 font-mono">mastered · 20% faster</p>
+          {plant.masteredBonus && (
+            <p className="text-[10px] font-mono text-yellow-400 inline-flex items-center gap-1">
+              <ItemSprite emoji="⚡" sprite="/sprites/ui/mastery.png" name="Mastered" textSize="text-[10px]" imgSize="w-3.5 h-3.5" />
+              Mastered · 20% faster
+            </p>
           )}
           {isBloomed && (
             <p className="text-primary font-semibold">Ready to harvest!</p>
@@ -355,8 +369,9 @@ export function PlotTooltip({
           {isBloomed && isIdentified && plant.mutation && (() => {
             const mut = MUTATIONS[plant.mutation];
             return (
-              <p className={`text-[10px] font-mono ${mut.color}`}>
-                {mut.emoji} {mut.name} · ×{mut.valueMultiplier} value
+              <p className={`text-[10px] font-mono ${mut.color} inline-flex items-center gap-1`}>
+                <ItemSprite emoji={mut.emoji} sprite={mut.sprite} name={mut.emoji} textSize="text-[10px]" imgSize="w-3.5 h-3.5" />
+                {mut.name} · ×{mut.valueMultiplier} value
               </p>
             );
           })()}
@@ -377,8 +392,9 @@ export function PlotTooltip({
               return g?.gearType === "cropsticks" && g.crossbreedStartedAt != null;
             });
             return (
-              <p className="text-[10px] font-mono text-emerald-400">
-                {crossbreedActive ? "💉 Cross-breeding…" : "💉 Infused · awaiting Cropsticks"}
+              <p className="text-[10px] font-mono text-emerald-400 flex items-center gap-0.5">
+                <ItemSprite emoji="💉" sprite="/sprites/consumables/infuser.png" name="Infuser" textSize="text-[10px]" imgSize="w-3 h-3" />
+                {crossbreedActive ? "Cross-breeding…" : "Infused · awaiting Cropsticks"}
               </p>
             );
           })()}
@@ -411,7 +427,7 @@ export function PlotTooltip({
                         : "bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
                     }`}
                   >
-                    <span>{recipe.emoji}</span>
+                    <ItemSprite emoji={recipe.emoji} sprite={recipe.sprite} name={recipe.name} textSize="text-[10px]" imgSize="w-3 h-3" />
                     {recipe.tier !== null && (
                       <span>{ROMAN[recipe.tier as 1|2|3|4|5]}</span>
                     )}
@@ -433,7 +449,7 @@ export function PlotTooltip({
                         : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20"
                     }`}
                   >
-                    <span>💉</span>
+                    <ItemSprite emoji="💉" sprite="/sprites/consumables/infuser.png" name="Infuser" textSize="text-[10px]" imgSize="w-3 h-3" />
                     <span>{roman}</span>
                     <span className="text-muted-foreground ml-0.5">×{matchingInfuser.quantity}</span>
                   </button>
@@ -485,63 +501,63 @@ export function PlotTooltip({
               {isUnderGrowLamp && (
                 <span className="relative inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-amber-400/10 border border-amber-400/30 text-[10px] text-amber-300 overflow-hidden">
                   <div className="absolute inset-0 gear-lamp-glow pointer-events-none" />
-                  <span className="relative">💡</span>
+                  <span className="relative"><ItemSprite emoji="💡" sprite="/sprites/gear/grow_lamp.png" name="Grow lamp" textSize="text-[10px]" imgSize="w-3 h-3" /></span>
                   <span className="relative">Grow lamp</span>
                 </span>
               )}
               {isUnderAqueduct && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-blue-400/10 border border-blue-400/20 text-[10px] text-blue-300">
-                  <span>⛲</span><span>Aqueduct</span>
+                  <ItemSprite emoji="⛲" sprite="/sprites/gear/aqueduct.png" name="Aqueduct" textSize="text-[10px]" imgSize="w-3 h-3" /><span>Aqueduct</span>
                 </span>
               )}
               {isUnderSprinkler && !isUnderAqueduct && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-blue-400/10 border border-blue-400/20 text-[10px] text-blue-300">
-                  <span>💧</span><span>Sprinkler</span>
+                  <ItemSprite emoji="💧" sprite="/sprites/gear/sprinkler.png" name="Sprinkler" textSize="text-[10px]" imgSize="w-3 h-3" /><span>Sprinkler</span>
                 </span>
               )}
-              {sprinklerMutations.map(({ emoji, label }, i) => (
+              {sprinklerMutations.map(({ emoji, label, sprite }, i) => (
                 <span key={i} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-blue-400/10 border border-blue-400/20 text-[10px] text-blue-300">
-                  <span>{emoji}</span><span>{label}</span>
+                  <ItemSprite emoji={emoji} sprite={sprite} name={label} textSize="text-[10px]" imgSize="w-3 h-3" /><span>{label}</span>
                 </span>
               ))}
               {isUnderScarecrow && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-green-400/10 border border-green-400/20 text-[10px] text-green-300">
-                  <span>🧹</span><span>Scarecrow</span>
+                  <ItemSprite emoji="🧹" sprite="/sprites/gear/scarecrow.png" name="Scarecrow" textSize="text-[10px]" imgSize="w-3 h-3" /><span>Scarecrow</span>
                 </span>
               )}
               {isUnderComposter && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-green-400/10 border border-green-400/20 text-[10px] text-green-300">
-                  <span>🧺</span><span>Composter</span>
+                  <ItemSprite emoji="🧺" sprite="/sprites/gear/composter.png" name="Composter" textSize="text-[10px]" imgSize="w-3 h-3" /><span>Composter</span>
                 </span>
               )}
               {isUnderFan && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-stone-400/10 border border-stone-400/20 text-[10px] text-stone-300">
-                  <span>💨</span><span>Fan</span>
+                  <ItemSprite emoji="💨" sprite="/sprites/gear/fan.png" name="Fan" textSize="text-[10px]" imgSize="w-3 h-3" /><span>Fan</span>
                 </span>
               )}
               {isUnderHarvestBell && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-yellow-400/10 border border-yellow-400/20 text-[10px] text-yellow-300">
-                  <span>🔔</span><span>Harvest Bell</span>
+                  <ItemSprite emoji="🔔" sprite="/sprites/gear/harvest_bell.png" name="Harvest Bell" textSize="text-[10px]" imgSize="w-3 h-3" /><span>Harvest Bell</span>
                 </span>
               )}
               {isUnderLawnmower && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-green-400/10 border border-green-400/20 text-[10px] text-green-300">
-                  <span>🦼</span><span>Lawnmower</span>
+                  <ItemSprite emoji="🦼" sprite="/sprites/gear/lawnmower.png" name="Lawnmower" textSize="text-[10px]" imgSize="w-3 h-3" /><span>Lawnmower</span>
                 </span>
               )}
               {balanceScaleSide === "boost" && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-amber-400/10 border border-amber-400/20 text-[10px] text-amber-300">
-                  <span>⚖️</span><span>Scale boost</span>
+                  <ItemSprite emoji="⚖️" sprite="/sprites/gear/balance_scale.png" name="Balance Scale" textSize="text-[10px]" imgSize="w-3 h-3" /><span>Scale boost</span>
                 </span>
               )}
               {balanceScaleSide === "slow" && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-slate-400/10 border border-slate-400/20 text-[10px] text-slate-400">
-                  <span>⚖️</span><span>Scale slow</span>
+                  <ItemSprite emoji="⚖️" sprite="/sprites/gear/balance_scale.png" name="Balance Scale" textSize="text-[10px]" imgSize="w-3 h-3" /><span>Scale slow</span>
                 </span>
               )}
               {isUnderAegis && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-sky-400/10 border border-sky-400/30 text-[10px] text-sky-300">
-                  <span>🛡️</span><span>Aegis</span>
+                  <ItemSprite emoji="🛡️" sprite="/sprites/gear/aegis.png" name="Aegis" textSize="text-[10px]" imgSize="w-3 h-3" /><span>Aegis</span>
                 </span>
               )}
             </div>
@@ -552,8 +568,14 @@ export function PlotTooltip({
         {!isBloomed && (
           <div className="pt-1 border-t border-border">
             {hasFertilizer ? (
-              <p className="text-[10px] text-green-400 font-mono">
-                {FERTILIZERS[plant.fertilizer!].emoji}{" "}
+              <p className="text-[10px] text-green-400 font-mono flex items-center gap-1">
+                <ItemSprite
+                  emoji={FERTILIZERS[plant.fertilizer!].emoji}
+                  sprite={FERTILIZERS[plant.fertilizer!].sprite}
+                  name={FERTILIZERS[plant.fertilizer!].name}
+                  textSize="text-[10px]"
+                  imgSize="w-3 h-3"
+                />
                 {FERTILIZERS[plant.fertilizer!].name} applied
               </p>
             ) : availableFerts.length > 0 ? (
@@ -572,7 +594,7 @@ export function PlotTooltip({
                         onClick={() => handleApplyFertilizer(f.type)}
                         className="flex items-center gap-1.5 w-full text-left px-2 py-1 rounded-lg hover:bg-primary/10 transition-colors"
                       >
-                        <span>{FERTILIZERS[f.type].emoji}</span>
+                        <ItemSprite emoji={FERTILIZERS[f.type].emoji} sprite={FERTILIZERS[f.type].sprite} name={FERTILIZERS[f.type].name} textSize="text-[10px]" imgSize="w-3 h-3" />
                         <span className="text-[10px] text-foreground">
                           {FERTILIZERS[f.type].name}
                         </span>

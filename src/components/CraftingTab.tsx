@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useGame } from "../store/GameContext";
 import {
   GEAR_RECIPES, CRAFTING_SLOT_UPGRADES, canCraftGear,
@@ -28,6 +28,8 @@ import { getBoostMultiplier } from "../store/gameStore";
 import { queueEntryDisplay } from "../lib/craftDisplay";
 import { useAchievementStats } from "../hooks/useAchievementStats";
 import type { AchievementStatKey } from "../data/achievements";
+import { useSettings } from "../store/SettingsContext";
+import { ItemSprite } from "./ItemSprite";
 
 // ── Forge Haste / Resonance Draft (Phase 5a) ───────────────────────────────────
 // If the relevant boost is active when a craft starts, halve its durationMs.
@@ -51,6 +53,7 @@ interface CraftEntry {
   id:          string;          // "gear:sprinkler_rare", "consumable:bloom_burst_1", "attunement:1", "essence:universal"
   kind:        "gear" | "consumable" | "attunement" | "essence";
   emoji:       string;
+  sprite?:     string;
   name:        string;
   rarity:      Rarity;
   description: string;
@@ -172,6 +175,7 @@ function buildEntries(state: GameState, filter: CraftFilter): CraftEntry[] {
         id:          `gear:${recipe.outputGearType}`,
         kind:        "gear",
         emoji:       def.emoji,
+        sprite:      def.sprite,
         name:        def.name,
         rarity:      def.rarity,
         description: def.description,
@@ -196,6 +200,7 @@ function buildEntries(state: GameState, filter: CraftFilter): CraftEntry[] {
         id:          `consumable:${recipe.id}`,
         kind:        "consumable",
         emoji:       recipe.emoji,
+        sprite:      recipe.sprite,
         name:        recipe.name,
         rarity:      recipe.rarity,
         description: recipe.description,
@@ -212,6 +217,7 @@ function buildEntries(state: GameState, filter: CraftFilter): CraftEntry[] {
         id:          `attunement:${recipe.tier}`,
         kind:        "attunement",
         emoji:       "💉",
+        sprite:      "/sprites/consumables/infuser.png",
         name:        recipe.name,
         rarity:      recipe.rarity,
         description: recipe.description,
@@ -230,6 +236,7 @@ function buildEntries(state: GameState, filter: CraftFilter): CraftEntry[] {
       id:          "essence:universal",
       kind:        "essence",
       emoji:       UNIVERSAL_ESSENCE_DISPLAY.emoji,
+      sprite:      UNIVERSAL_ESSENCE_DISPLAY.sprite,
       name:        "Universal Essence",
       rarity:      "prismatic",
       description: `Combine ${UNIVERSAL_ESSENCE_COST_PER_TYPE} of each elemental essence into a Universal Essence — used in legendary+ cross-breed recipes.`,
@@ -243,6 +250,7 @@ function buildEntries(state: GameState, filter: CraftFilter): CraftEntry[] {
         id:          `consumable:${recipe.id}`,
         kind:        "consumable",
         emoji:       recipe.emoji,
+        sprite:      recipe.sprite,
         name:        recipe.name,
         rarity:      recipe.rarity,
         description: recipe.description,
@@ -262,15 +270,15 @@ function buildEntries(state: GameState, filter: CraftFilter): CraftEntry[] {
 // ── Popup ingredient display ──────────────────────────────────────────────────
 
 function IngredientRow({
-  label, emoji, need, have, enough, color, border, bg,
+  label, emoji, sprite, need, have, enough, color, border, bg,
 }: {
-  label: string; emoji: string; need: number; have: number; enough: boolean;
+  label: string; emoji: string; sprite?: string; need: number; have: number; enough: boolean;
   color: string; border: string; bg: string;
 }) {
   return (
     <div className={`flex items-center justify-between text-xs px-2.5 py-1.5 rounded-lg border ${border} ${bg}`}>
       <span className={`flex items-center gap-1.5 font-medium ${color}`}>
-        <span>{emoji}</span>
+        <ItemSprite emoji={emoji} sprite={sprite} name={label} textSize="text-sm" imgSize="w-4 h-4" />
         <span>{label}</span>
       </span>
       <span className={`font-mono font-semibold ml-3 ${enough ? "text-green-400" : "text-red-400"}`}>
@@ -298,18 +306,18 @@ function GearIngredients({
           const have  = essences.find((e) => e.type === ing.essenceType)?.amount ?? 0;
           const label = isUniversal ? "Universal Essence" : `${cfg.name} Essence`;
           const need  = ing.amount * quantity;
-          return <IngredientRow key={i} emoji={cfg.emoji} label={label} need={need} have={have} enough={have >= need} {...essenceChip(ing.essenceType)} />;
+          return <IngredientRow key={i} emoji={cfg.emoji} sprite={cfg.sprite} label={label} need={need} have={have} enough={have >= need} {...essenceChip(ing.essenceType)} />;
         }
         if (ing.kind === "gear") {
           const def   = GEAR[ing.gearType as GearType];
           const have  = gearInventory.find((g) => g.gearType === ing.gearType)?.quantity ?? 0;
           const need  = ing.quantity * quantity;
-          return <IngredientRow key={i} emoji={def?.emoji ?? "⚙️"} label={def?.name ?? ing.gearType} need={need} have={have} enough={have >= need} {...rarityChip(def?.rarity ?? "common")} />;
+          return <IngredientRow key={i} emoji={def?.emoji ?? "⚙️"} sprite={def?.sprite} label={def?.name ?? ing.gearType} need={need} have={have} enough={have >= need} {...rarityChip(def?.rarity ?? "common")} />;
         }
         const crec = CONSUMABLE_RECIPE_MAP[ing.consumableId as ConsumableId];
         const have = consumables.find((c) => c.id === ing.consumableId)?.quantity ?? 0;
         const need = ing.quantity * quantity;
-        return <IngredientRow key={i} emoji={crec?.emoji ?? "🧪"} label={crec?.name ?? ing.consumableId} need={need} have={have} enough={have >= need} {...(crec ? rarityChip(crec.rarity) : { color: "text-muted-foreground", border: "border-border", bg: "bg-card/60" })} />;
+        return <IngredientRow key={i} emoji={crec?.emoji ?? "🧪"} sprite={crec?.sprite} label={crec?.name ?? ing.consumableId} need={need} have={have} enough={have >= need} {...(crec ? rarityChip(crec.rarity) : { color: "text-muted-foreground", border: "border-border", bg: "bg-card/60" })} />;
       })}
     </div>
   );
@@ -320,7 +328,7 @@ function GearIngredients({
 
 // ── Collect toast ─────────────────────────────────────────────────────────────
 
-function CollectToast({ emoji, name, onDone }: { emoji: string; name: string; onDone: () => void }) {
+function CollectToast({ emoji, sprite, name, onDone }: { emoji: string; sprite?: string; name: string; onDone: () => void }) {
   // Empty deps on purpose — `onDone` is a fresh closure on every parent render
   // (CraftingTab re-renders every second from setNow), so depending on it would
   // reset the timeout repeatedly and the toast would never dismiss.
@@ -331,7 +339,7 @@ function CollectToast({ emoji, name, onDone }: { emoji: string; name: string; on
 
   return (
     <div className="flex items-center gap-2 bg-card/95 border border-green-500/40 text-green-400 rounded-xl px-4 py-2.5 shadow-xl text-sm font-semibold backdrop-blur-sm">
-      <span className="text-xl leading-none">{emoji}</span>
+      <ItemSprite emoji={emoji} sprite={sprite} name={name} textSize="text-xl" imgSize="w-6 h-6" />
       <span>{name} collected!</span>
       <span className="text-green-500 text-base leading-none">✓</span>
     </div>
@@ -351,7 +359,7 @@ function QueueEntryRow({
   isCanceling:  boolean;
   isBoosted:    boolean;
 }) {
-  const { emoji, name } = queueEntryDisplay(entry);
+  const { emoji, sprite, name } = queueEntryDisplay(entry);
   const startedAt = new Date(entry.startedAt).getTime();
   const elapsed   = now - startedAt;
   // Clamp progress to [0, 1]. Without Math.max(0, …) a stale `now` (the 1s-tick
@@ -374,7 +382,7 @@ function QueueEntryRow({
       )}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="text-lg leading-none shrink-0">{emoji}</span>
+          <ItemSprite emoji={emoji} sprite={sprite} name={name} textSize="text-lg" imgSize="w-6 h-6" className="shrink-0" />
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               <p className="text-xs font-semibold text-foreground truncate">{name}</p>
@@ -435,7 +443,7 @@ function QueueEntryRow({
 function EmptySlotRow() {
   return (
     <div className="rounded-xl border border-dashed border-border/60 bg-card/20 px-3 py-2 min-h-[3rem] flex items-center gap-2">
-      <span className="text-lg leading-none shrink-0 opacity-30">⚒️</span>
+      <ItemSprite emoji="⚒️" sprite="/sprites/ui/craft.png" name="Empty slot" textSize="text-lg" imgSize="w-5 h-5" className="shrink-0 opacity-30" />
       <p className="text-xs text-muted-foreground italic">Empty slot</p>
     </div>
   );
@@ -465,13 +473,14 @@ function UpgradeSlotRow({
       "
     >
       <div className="flex items-center gap-2">
-        <span className="text-lg leading-none shrink-0 opacity-70">➕</span>
+        <ItemSprite emoji="➕" sprite="/sprites/ui/plus.png" name="Add slot" textSize="text-lg" imgSize="w-5 h-5" className="shrink-0 opacity-70" />
         <p className="text-xs font-semibold text-amber-400">
           {upgrading ? "Unlocking…" : `Unlock slot ${upgrade.slots}`}
         </p>
       </div>
-      <span className="text-[11px] font-mono text-amber-400">
-        {upgrade.cost.toLocaleString()} 🟡
+      <span className="inline-flex items-center gap-0.5 text-[11px] font-mono text-amber-400">
+        {upgrade.cost.toLocaleString()}
+        <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
       </span>
     </button>
   );
@@ -704,12 +713,12 @@ function CraftPopup({
     return `Need ${missing[0]} + ${missing.length - 1} more`;
   }, [entry, gearRecipe, gearInv, essences, consum, ferts, infusers, quantity, state.coins]);
 
-  let buttonLabel: string;
+  let buttonLabel: React.ReactNode;
   if (isCrafting)           buttonLabel = "Starting…";
   else if (!slotsAvailable) buttonLabel = "No crafting slots available";
   else if (!entry.canCraft) buttonLabel = craftBlockReason;
-  else if (quantity > 1)    buttonLabel = `⏳ Craft ×${quantity}`;
-  else                      buttonLabel = "⏳ Start Crafting";
+  else if (quantity > 1)    buttonLabel = <span className="inline-flex items-center justify-center gap-1"><ItemSprite emoji="⏳" sprite="/sprites/ui/hourglass.png" name="Craft" textSize="text-sm" imgSize="w-4 h-4" />Craft ×{quantity}</span>;
+  else                      buttonLabel = <span className="inline-flex items-center justify-center gap-1"><ItemSprite emoji="⏳" sprite="/sprites/ui/hourglass.png" name="Craft" textSize="text-sm" imgSize="w-4 h-4" />Start Crafting</span>;
 
   // Duration for display (multiplied by quantity)
   let baseDurationMs = 0;
@@ -733,6 +742,7 @@ function CraftPopup({
       <div className="space-y-1">
         <IngredientRow
           emoji="🟡"
+          sprite="/sprites/ui/coins.png"
           label="Coin Cost"
           need={totalCoinCost}
           have={state.coins}
@@ -758,7 +768,7 @@ function CraftPopup({
               const have  = essences.find((e) => e.type === type)?.amount ?? 0;
               const label = isUniversal ? "Universal Essence" : `${cfg.name} Essence`;
               const need  = amount * quantity;
-              return <IngredientRow key={type} emoji={cfg.emoji} label={label} need={need} have={have} enough={have >= need} {...essenceChip(type)} />;
+              return <IngredientRow key={type} emoji={cfg.emoji} sprite={cfg.sprite} label={label} need={need} have={have} enough={have >= need} {...essenceChip(type)} />;
             })}
           </div>
         );
@@ -771,7 +781,7 @@ function CraftPopup({
         const srcRec   = CONSUMABLE_RECIPE_MAP[cost.id as ConsumableId];
         ingredientsSection = (
           <div className="space-y-1">
-            <IngredientRow emoji={fertDef?.emoji ?? "🌱"} label={fertDef?.name ?? cost.id} need={need} have={have} enough={have >= need} {...(srcRec ? rarityChip(srcRec.rarity) : { color: "text-muted-foreground", border: "border-border", bg: "bg-card/60" })} />
+            <IngredientRow emoji={fertDef?.emoji ?? "🌱"} sprite={fertDef?.sprite} label={fertDef?.name ?? cost.id} need={need} have={have} enough={have >= need} {...(srcRec ? rarityChip(srcRec.rarity) : { color: "text-muted-foreground", border: "border-border", bg: "bg-card/60" })} />
           </div>
         );
       } else {
@@ -780,7 +790,7 @@ function CraftPopup({
         const need = cost.quantity * quantity;
         ingredientsSection = (
           <div className="space-y-1">
-            <IngredientRow emoji={src?.emoji ?? "?"} label={src?.name ?? cost.id} need={need} have={have} enough={have >= need} {...(src ? rarityChip(src.rarity) : { color: "text-muted-foreground", border: "border-border", bg: "bg-card/60" })} />
+            <IngredientRow emoji={src?.emoji ?? "?"} sprite={src?.sprite} label={src?.name ?? cost.id} need={need} have={have} enough={have >= need} {...(src ? rarityChip(src.rarity) : { color: "text-muted-foreground", border: "border-border", bg: "bg-card/60" })} />
           </div>
         );
       }
@@ -799,7 +809,7 @@ function CraftPopup({
               const have  = essences.find((e) => e.type === type)?.amount ?? 0;
               const label = isUniversal ? "Universal Essence" : `${cfg.name} Essence`;
               const need  = amount * quantity;
-              return <IngredientRow key={type} emoji={cfg.emoji} label={label} need={need} have={have} enough={have >= need} {...essenceChip(type)} />;
+              return <IngredientRow key={type} emoji={cfg.emoji} sprite={cfg.sprite} label={label} need={need} have={have} enough={have >= need} {...essenceChip(type)} />;
             })}
           </div>
         );
@@ -809,7 +819,7 @@ function CraftPopup({
         const need = cost.quantity * quantity;
         ingredientsSection = (
           <div className="space-y-1">
-            <IngredientRow emoji="💉" label={`Infuser ${toRoman(cost.tier)}`} need={need} have={have} enough={have >= need} {...rarityChip(prevRarity)} />
+            <IngredientRow emoji="💉" sprite="/sprites/consumables/infuser.png" label={`Infuser ${toRoman(cost.tier)}`} need={need} have={have} enough={have >= need} {...rarityChip(prevRarity)} />
           </div>
         );
       }
@@ -822,7 +832,7 @@ function CraftPopup({
           const cfg  = FLOWER_TYPES[type];
           const have = essences.find((e) => e.type === type)?.amount ?? 0;
           const need = UNIVERSAL_ESSENCE_COST_PER_TYPE * quantity;
-          return <IngredientRow key={type} emoji={cfg.emoji} label={`${cfg.name} Essence`} need={need} have={have} enough={have >= need} {...essenceChip(type)} />;
+          return <IngredientRow key={type} emoji={cfg.emoji} sprite={cfg.sprite} label={`${cfg.name} Essence`} need={need} have={have} enough={have >= need} {...essenceChip(type)} />;
         })}
       </div>
     );
@@ -841,7 +851,7 @@ function CraftPopup({
         <div className={`px-5 pt-5 pb-4 border-b border-border ${cellBgClass(entry.rarity)}`}>
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
-              <span className="text-4xl leading-none">{entry.emoji}</span>
+              <ItemSprite emoji={entry.emoji} sprite={entry.sprite} name={entry.name} textSize="text-4xl" imgSize="w-10 h-10" />
               <div>
                 <p className="font-bold text-base text-foreground leading-tight">{entry.name}</p>
                 <span className={`text-xs font-semibold ${rc.color}`}>{rc.label}</span>
@@ -904,8 +914,9 @@ function CraftPopup({
           </p>
           {ingredientsSection}
           {totalDurationMs > 0 && (
-            <p className="text-[10px] text-muted-foreground pt-1 px-0.5">
-              ⏱ Duration: <span className="text-foreground">{formatDurationLabel(totalDurationMs)}</span>
+            <p className="text-[10px] text-muted-foreground pt-1 px-0.5 flex items-center gap-1">
+              <ItemSprite emoji="⏱" sprite="/sprites/ui/timer.png" name="Duration" textSize="text-[10px]" imgSize="w-3 h-3" />
+              Duration: <span className="text-foreground">{formatDurationLabel(totalDurationMs)}</span>
               {quantity > 1 && (
                 <span className="text-muted-foreground/70"> ({formatDurationLabel(baseDurationMs)} × {quantity})</span>
               )}
@@ -956,7 +967,7 @@ function CraftCell({ entry, onClick }: { entry: CraftEntry; onClick: () => void 
         }
       `}
     >
-      <span className="text-xl leading-none select-none">{entry.emoji}</span>
+      <ItemSprite emoji={entry.emoji} sprite={entry.sprite} name={entry.name} textSize="text-xl" imgSize="w-6 h-6" className="select-none" />
       {entry.tier != null && (
         <span className="absolute top-0.5 right-1 text-[9px] font-bold text-muted-foreground leading-none">
           {toRoman(entry.tier)}
@@ -973,11 +984,11 @@ function CraftCell({ entry, onClick }: { entry: CraftEntry; onClick: () => void 
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 
-const FILTER_LABELS: { id: CraftFilter; label: string; emoji: string }[] = [
-  { id: "all",         label: "All",         emoji: "✦"  },
-  { id: "gear",        label: "Gear",        emoji: "⚙️" },
-  { id: "consumables", label: "Consumables", emoji: "🧪" },
-  { id: "other",       label: "Other",       emoji: "✨" },
+const FILTER_LABELS: { id: CraftFilter; label: string; emoji: string; sprite?: string }[] = [
+  { id: "all",         label: "All",         emoji: "✦",  sprite: "/sprites/ui/all.png" },
+  { id: "gear",        label: "Gear",        emoji: "⚙️", sprite: "/sprites/ui/gear.png" },
+  { id: "consumables", label: "Consumables", emoji: "🧪", sprite: "/sprites/ui/consumables.png" },
+  { id: "other",       label: "Other",       emoji: "✨", sprite: "/sprites/ui/other.png" },
 ];
 
 export function CraftingTab() {
@@ -992,7 +1003,7 @@ export function CraftingTab() {
   const [cancelingId,  setCancelingId]  = useState<string | null>(null);
   const [upgradingSlots, setUpgradingSlots] = useState(false);
 
-  const [collectToasts, setCollectToasts] = useState<{ id: string; emoji: string; name: string }[]>([]);
+  const [collectToasts, setCollectToasts] = useState<{ id: string; emoji: string; sprite?: string; name: string }[]>([]);
 
   // Tick once per second to drive queue progress bars + countdowns
   const [now, setNow] = useState(() => Date.now());
@@ -1110,14 +1121,14 @@ export function CraftingTab() {
             closePopup();
             for (const { type, amount } of essenceCosts) {
               const ft = FLOWER_TYPES[type as FlowerType];
-              if (ft) pushGenericToast(`loss:craft:essence:${type}`, ft.emoji, `${ft.name} Essence`, ft.color, "loss", amount);
+              if (ft) pushGenericToast(`loss:craft:essence:${type}`, ft.emoji, `${ft.name} Essence`, ft.color, "loss", amount, ft.sprite);
             }
             for (const { gearType: gt, quantity } of gearCosts) {
-              const gd = GEAR[gt]; pushGenericToast(`loss:craft:gear:${gt}`, gd.emoji, gd.name, RARITY_CONFIG[gd.rarity].color, "loss", quantity);
+              const gd = GEAR[gt]; pushGenericToast(`loss:craft:gear:${gt}`, gd.emoji, gd.name, RARITY_CONFIG[gd.rarity].color, "loss", quantity, gd.sprite);
             }
             for (const { id: cid, quantity } of consumableCosts) {
               const r = CONSUMABLE_RECIPE_MAP[cid as ConsumableId];
-              if (r) pushGenericToast(`loss:craft:consumable:${cid}`, r.emoji, r.name, RARITY_CONFIG[r.rarity].color, "loss", quantity);
+              if (r) pushGenericToast(`loss:craft:consumable:${cid}`, r.emoji, r.name, RARITY_CONFIG[r.rarity].color, "loss", quantity, r.sprite);
             }
           },
         );
@@ -1165,7 +1176,7 @@ export function CraftingTab() {
             closePopup();
             for (const { type, amount } of essenceCosts) {
               const ft = FLOWER_TYPES[type as FlowerType];
-              if (ft) pushGenericToast(`loss:craft:essence:${type}`, ft.emoji, `${ft.name} Essence`, ft.color, "loss", amount);
+              if (ft) pushGenericToast(`loss:craft:essence:${type}`, ft.emoji, `${ft.name} Essence`, ft.color, "loss", amount, ft.sprite);
             }
           },
         );
@@ -1244,15 +1255,15 @@ export function CraftingTab() {
             closePopup();
             for (const { type, amount } of essenceCosts) {
               const ft = FLOWER_TYPES[type as FlowerType];
-              if (ft) pushGenericToast(`loss:craft:essence:${type}`, ft.emoji, `${ft.name} Essence`, ft.color, "loss", amount);
+              if (ft) pushGenericToast(`loss:craft:essence:${type}`, ft.emoji, `${ft.name} Essence`, ft.color, "loss", amount, ft.sprite);
             }
             for (const { id: cid, quantity } of consumableCosts) {
               if (cid.startsWith("fertilizer_")) {
                 const f = FERTILIZERS[cid.replace("fertilizer_", "") as import("../data/upgrades").FertilizerType];
-                if (f) pushGenericToast(`loss:craft:fert:${cid}`, f.emoji, f.name, undefined, "loss", quantity);
+                if (f) pushGenericToast(`loss:craft:fert:${cid}`, f.emoji, f.name, undefined, "loss", quantity, f.sprite);
               } else {
                 const r = CONSUMABLE_RECIPE_MAP[cid as ConsumableId];
-                if (r) pushGenericToast(`loss:craft:consumable:${cid}`, r.emoji, r.name, RARITY_CONFIG[r.rarity].color, "loss", quantity);
+                if (r) pushGenericToast(`loss:craft:consumable:${cid}`, r.emoji, r.name, RARITY_CONFIG[r.rarity].color, "loss", quantity, r.sprite);
               }
             }
           },
@@ -1323,7 +1334,7 @@ export function CraftingTab() {
             closePopup();
             for (const { type, amount } of essenceCosts) {
               const ft = FLOWER_TYPES[type as FlowerType];
-              if (ft) pushGenericToast(`loss:craft:essence:${type}`, ft.emoji, `${ft.name} Essence`, ft.color, "loss", amount);
+              if (ft) pushGenericToast(`loss:craft:essence:${type}`, ft.emoji, `${ft.name} Essence`, ft.color, "loss", amount, ft.sprite);
             }
             for (const { rarity, quantity } of attunementCosts) {
               pushGenericToast(`loss:craft:infuser:${rarity}`, "💉", `${RARITY_CONFIG[rarity as Rarity].label} Infuser`, RARITY_CONFIG[rarity as Rarity].color, "loss", quantity);
@@ -1389,7 +1400,7 @@ export function CraftingTab() {
         : [...ess, { type: outputId as EssenceType, amount: qty }];
     }
 
-    const { emoji, name } = queueEntryDisplay(entry);
+    const { emoji, sprite, name } = queueEntryDisplay(entry);
 
     try {
       await perform(
@@ -1409,7 +1420,7 @@ export function CraftingTab() {
           });
           // Show collect notification
           const toastId = crypto.randomUUID();
-          setCollectToasts((prev) => [...prev, { id: toastId, emoji, name }]);
+          setCollectToasts((prev) => [...prev, { id: toastId, emoji, sprite, name }]);
           // Achievement stats
           if (kind === "gear") {
             incrementStat(`crafted_gear_${outputId}` as AchievementStatKey, qty);
@@ -1550,7 +1561,10 @@ export function CraftingTab() {
             slots themselves. The header now just frames the tab. */}
         <div className="px-4 py-3 bg-gradient-to-r from-amber-950/50 to-card/80 border-b border-amber-800/25 flex items-center justify-between gap-3">
           <div>
-            <h2 className="font-bold text-base text-foreground">⚒️ Craft</h2>
+            <h2 className="font-bold text-base text-foreground flex items-center gap-1.5">
+              <ItemSprite emoji="⚒️" sprite="/sprites/ui/craft.png" name="Craft" textSize="text-base" imgSize="w-5 h-5" />
+              Craft
+            </h2>
             <p className="text-[11px] text-muted-foreground mt-0.5">
               {craftableCount > 0
                 ? <><span className="text-amber-400 font-semibold">{craftableCount}</span> item{craftableCount !== 1 ? "s" : ""} ready to craft</>
@@ -1602,19 +1616,21 @@ export function CraftingTab() {
 
         {/* Category filter */}
         <div className="px-4 pt-3 pb-2 bg-card/60 flex gap-2">
-          {FILTER_LABELS.map(({ id, label, emoji }) => (
+          {FILTER_LABELS.map(({ id, label, emoji, sprite }) => (
             <button
               key={id}
               onClick={() => setFilter(id)}
               className={`
                 flex-1 py-1.5 rounded-lg text-[11px] font-semibold transition-all text-center
+                inline-flex items-center justify-center gap-1
                 ${filter === id
                   ? "bg-amber-500/20 border border-amber-500/40 text-amber-300"
                   : "bg-card/40 border border-border text-muted-foreground hover:border-amber-800/40"
                 }
               `}
             >
-              {emoji} {label}
+              <ItemSprite emoji={emoji} sprite={sprite} name={label} textSize="text-[11px]" imgSize="w-3.5 h-3.5" />
+              {label}
             </button>
           ))}
         </div>
@@ -1622,7 +1638,7 @@ export function CraftingTab() {
         {/* Search */}
         <div className="px-4 pb-2 bg-card/60">
           <div className="relative">
-            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs pointer-events-none">🔍</span>
+            <ItemSprite emoji="🔍" sprite="/sprites/ui/search.png" name="Search" textSize="text-xs" imgSize="w-3.5 h-3.5" className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <input
               type="text"
               value={search}
@@ -1683,6 +1699,7 @@ export function CraftingTab() {
             <CollectToast
               key={t.id}
               emoji={t.emoji}
+              sprite={t.sprite}
               name={t.name}
               onDone={() => setCollectToasts((prev) => prev.filter((x) => x.id !== t.id))}
             />

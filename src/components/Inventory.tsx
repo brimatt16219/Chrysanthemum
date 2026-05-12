@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { useGame } from "../store/GameContext";
+import { ItemSprite } from "./ItemSprite";
 import { getFlower, RARITY_CONFIG, MUTATIONS, FLOWER_TYPES } from "../data/flowers";
 import type { FlowerType, MutationType } from "../data/flowers";
 import {
   ALL_FLOWER_TYPES, UNIVERSAL_ESSENCE_DISPLAY, UNIVERSAL_ESSENCE_TYPE,
 } from "../data/essences";
 import { FlowerTypeBadges } from "./FlowerTypeBadges";
+import { FlowerSprite } from "./FlowerSprite";
 import { InventoryItemCard } from "./InventoryItemCard";
 import { sellFlower, rollbackSellAll, applyEclipseTonic, type InventoryItem } from "../store/gameStore";
 import { edgeSellAll, edgeUseEclipseTonic, edgeAlchemyCraftSeed, edgeActivateBoost } from "../lib/edgeFunctions";
@@ -18,8 +20,15 @@ import { audioManager } from "../lib/audioManager";
 import { awardXp, SELL_XP_PERCENT } from "../data/gardenerLevel";
 
 type Tab = 0 | 1 | 2 | 3 | 4;
-const TAB_LABELS  = ["Seeds", "Blooms", "Supplies", "Consumables", "Essences"] as const;
-const TAB_EMOJIS  = ["🌱",    "🌸",     "⚙️",       "🧪",          "✨"]       as const;
+const TAB_LABELS   = ["Seeds", "Blooms", "Supplies", "Consumables", "Essences"] as const;
+const TAB_EMOJIS   = ["🌱",    "🌸",     "⚙️",       "🧪",          "✨"]       as const;
+const TAB_SPRITES  = [
+  "/sprites/flowers/seed.png",   // Seeds
+  "/sprites/flowers/bloom.png",  // Blooms
+  "/sprites/ui/gear.png",        // Supplies
+  "/sprites/ui/consumables.png", // Consumables
+  "/sprites/ui/other.png",       // Essences
+] as const;
 
 interface Props {
   newSeeds?:    number;
@@ -130,7 +139,7 @@ export function Inventory({ newSeeds = 0, newBlooms = 0, newSupplies = 0, onSubT
     // and other changes intact.
     const totalSold = currentBlooms.reduce((sum, i) => sum + i.quantity, 0);
     audioManager.playSfx("sell");
-    pushGenericToast("sell:all", "🟡", "coins", "text-yellow-400", "gain", earned);
+    pushGenericToast("sell:all", "🟡", "coins", "text-yellow-400", "gain", earned, "/sprites/ui/coins.png");
     await perform(
       { ...optimistic, gardenerLevel: newLevel, gardenerXp: newXp },
       () => edgeSellAll(items),
@@ -250,7 +259,7 @@ export function Inventory({ newSeeds = 0, newBlooms = 0, newSupplies = 0, onSubT
 
       {/* Coins */}
       <div className="flex items-center gap-2 bg-card/40 border border-border rounded-lg px-4 py-2.5">
-        <span className="text-lg">🟡</span>
+        <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-lg" imgSize="w-5 h-5" />
         <span className="text-sm font-mono font-medium">
           {state.coins.toLocaleString()} coins
         </span>
@@ -279,8 +288,10 @@ export function Inventory({ newSeeds = 0, newBlooms = 0, newSupplies = 0, onSubT
                 }
               `}
             >
-              <span>{TAB_EMOJIS[i]}</span>
-              <span className="hidden sm:inline ml-1">{label}</span>
+              <span className="inline-flex items-center justify-center gap-1">
+                <ItemSprite emoji={TAB_EMOJIS[i]} sprite={TAB_SPRITES[i]} textSize="text-sm" imgSize="w-4 h-4" name={label} />
+                <span className="hidden sm:inline">{label}</span>
+              </span>
               {newCount > 0 && tab !== i && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full text-[10px] text-primary-foreground flex items-center justify-center font-bold">
                   {newCount > 9 ? "9+" : newCount}
@@ -338,7 +349,10 @@ export function Inventory({ newSeeds = 0, newBlooms = 0, newSupplies = 0, onSubT
                 onClick={handleSellAll}
                 className="w-full py-2.5 rounded-xl border border-primary text-primary text-sm font-semibold hover:bg-primary/10 transition-colors text-center"
               >
-                Sell All — {totalBloomValue.toLocaleString()} 🟡
+                <span className="inline-flex items-center gap-0.5">
+                  Sell All — {totalBloomValue.toLocaleString()}
+                  <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
+                </span>
               </button>
               {filteredBlooms.length > 0 ? filteredBlooms.map((item, i) => (
                 <InventoryItemCard
@@ -365,7 +379,7 @@ export function Inventory({ newSeeds = 0, newBlooms = 0, newSupplies = 0, onSubT
                     key={inf.rarity}
                     className={`flex items-center gap-4 bg-card/60 border rounded-xl px-4 py-3 border-border ${rarity?.glow ?? ""}`}
                   >
-                    <span className="text-3xl flex-shrink-0">💉</span>
+                    <ItemSprite emoji="💉" sprite="/sprites/consumables/infuser.png" name="Infuser" textSize="text-3xl" imgSize="w-8 h-8" className="flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-semibold text-sm">{rarity?.label ?? inf.rarity} Infuser</h3>
@@ -415,7 +429,7 @@ export function Inventory({ newSeeds = 0, newBlooms = 0, newSupplies = 0, onSubT
                     key={f.type}
                     className={`flex items-center gap-4 bg-card/60 border rounded-xl px-4 py-3 ${fert.cardBorder}`}
                   >
-                    <span className="text-3xl flex-shrink-0">{fert.emoji}</span>
+                    <ItemSprite emoji={fert.emoji} sprite={fert.sprite} name={fert.name} textSize="text-3xl" imgSize="w-8 h-8" className="flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-semibold text-sm">{fert.name}</h3>
@@ -475,6 +489,7 @@ export function Inventory({ newSeeds = 0, newBlooms = 0, newSupplies = 0, onSubT
                   type={r.type}
                   amount={r.amount}
                   emoji={r.cfg.emoji}
+                  sprite={r.cfg.sprite}
                   name={r.cfg.name}
                   color={r.cfg.color}
                   bgColor={r.cfg.bgColor}
@@ -531,9 +546,9 @@ function EmptyTab({ emoji, message, hint }: { emoji: string; message: string; hi
 }
 
 function EssenceInventoryRow({
-  type, amount, emoji, name, color: _color, bgColor, borderColor, isUniversal,
+  type, amount, emoji, sprite, name, color: _color, bgColor, borderColor, isUniversal,
 }: {
-  type: string; amount: number; emoji: string; name: string;
+  type: string; amount: number; emoji: string; sprite?: string; name: string;
   color: string; bgColor: string; borderColor: string; isUniversal: boolean;
 }) {
   const empty = amount <= 0;
@@ -549,7 +564,7 @@ function EssenceInventoryRow({
       key={type}
       className={`flex items-center gap-4 rounded-xl px-4 py-3 transition-opacity ${card} ${bg} ${empty ? "opacity-40" : ""}`}
     >
-      <span className="text-3xl flex-shrink-0">{emoji}</span>
+      <ItemSprite emoji={emoji} sprite={sprite} name={name} textSize="text-3xl" imgSize="w-8 h-8" className="flex-shrink-0" />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <h3 className="font-semibold text-sm">{name} Essence</h3>
@@ -574,7 +589,7 @@ function GearInventoryRow({ item }: { item: GearInventoryItem }) {
   const rarity = RARITY_CONFIG[def.rarity];
   return (
     <div className={`flex items-center gap-4 bg-card/60 border rounded-xl px-4 py-3 ${def.rarity === "prismatic" ? "rainbow-border rainbow-glow" : `${rarity?.glow ?? ""} border-border`}`}>
-      <span className="text-3xl flex-shrink-0">{def.emoji}</span>
+      <ItemSprite emoji={def.emoji} sprite={def.sprite} name={def.name} textSize="text-3xl" imgSize="w-8 h-8" className="flex-shrink-0" />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <h3 className="font-semibold text-sm">{def.name}</h3>
@@ -675,7 +690,7 @@ function ConsumablesTabContent({
               ${isPrismatic ? "rainbow-tile" : `${consRarity?.glow ?? ""} border-border`}
             `}
           >
-            <span className="text-3xl flex-shrink-0">{recipe.emoji}</span>
+            <ItemSprite emoji={recipe.emoji} sprite={recipe.sprite} name={recipe.name} textSize="text-3xl" imgSize="w-8 h-8" className="flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-semibold text-sm">{recipe.name}</h3>
@@ -756,7 +771,10 @@ function SeedInventoryRow({ item }: { item: InventoryItem }) {
 
   return (
     <div className={`flex items-center gap-4 bg-card/60 border rounded-xl px-4 py-3 ${rarity?.glow ?? ""} border-border`}>
-      <span className="text-3xl flex-shrink-0">{isNew ? "❓" : species.emoji.seed}</span>
+      {isNew
+        ? <ItemSprite emoji="❓" sprite="/sprites/ui/unknown.png" name="Unknown" textSize="text-3xl" imgSize="w-8 h-8" className="flex-shrink-0" />
+        : <FlowerSprite species={species} stage="seed" textSize="text-3xl" imgSize="w-8 h-8" className="flex-shrink-0" />
+      }
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <h3 className="font-semibold text-sm">{isNew ? "??? Seed" : `${species.name} Seed`}</h3>

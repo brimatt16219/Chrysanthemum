@@ -1,5 +1,9 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useGame } from "../store/GameContext";
+import { useSettings } from "../store/SettingsContext";
+import { ItemSprite } from "./ItemSprite";
+
+const PX = { imageRendering: "pixelated" as const };
 import { useGrowthTick } from "../hooks/useGrowthTick";
 import { PlotTile } from "./PlotTile";
 import { SeedPicker } from "./SeedPicker";
@@ -34,6 +38,7 @@ import { audioManager } from "../lib/audioManager";
 
 export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string, mutation?: MutationType, isSeed?: boolean) => void }) {
   const { state, update, perform, getState, awaitHarvests, activeWeather, reloadFromCloud, saveGridNow, user, requestSignIn, pushGenericToast } = useGame();
+  const { settings } = useSettings();
   useGrowthTick(5_000);
 
   const [showGrowthDebug, setShowGrowthDebug] = useState(getDevShowGrowthDebug());
@@ -279,7 +284,7 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
     useMemo(() => {
       const regular   = new Set<string>(); // sprinkler_regular only — excludes aqueduct
       const aqueduct  = new Set<string>(); // aqueduct only — displayed separately from sprinkler
-      const mutation  = new Map<string, { emoji: string; label: string }[]>(); // cellKey → unique mutation sprinklers
+      const mutation  = new Map<string, { emoji: string; label: string; sprite?: string }[]>(); // cellKey → unique mutation sprinklers
       const scarecrow = new Set<string>();
       const composter = new Set<string>();
       const growLamp  = new Set<string>();
@@ -302,12 +307,13 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
           } else if (def.passiveSubtype === "aqueduct") {
             keys.forEach((k) => aqueduct.add(k));
           } else if (def.category === "sprinkler_mutation" && def.mutationType) {
-            const emoji = MUTATIONS[def.mutationType as MutationType]?.emoji ?? "✨";
-            const label = def.name;
+            const emoji  = MUTATIONS[def.mutationType as MutationType]?.emoji ?? "✨";
+            const sprite = MUTATIONS[def.mutationType as MutationType]?.sprite;
+            const label  = def.name;
             keys.forEach((k) => {
               const existing = mutation.get(k);
-              if (!existing) mutation.set(k, [{ emoji, label }]);
-              else if (!existing.some((e) => e.emoji === emoji)) existing.push({ emoji, label });
+              if (!existing) mutation.set(k, [{ emoji, label, sprite }]);
+              else if (!existing.some((e) => e.emoji === emoji)) existing.push({ emoji, label, sprite });
             });
           } else if (def.passiveSubtype === "scarecrow") {
             keys.forEach((k) => scarecrow.add(k));
@@ -428,10 +434,11 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
     if (optimistic) {
       const sp = getFlower(speciesId);
       const discovered = state.discovered.includes(speciesId);
-      const emoji = discovered && sp ? sp.emoji.seed : "❓";
-      const label = discovered && sp ? `${sp.name} Seed` : "??? Seed";
+      const emoji  = discovered && sp ? sp.emoji.seed : "❓";
+      const label  = discovered && sp ? `${sp.name} Seed` : "??? Seed";
+      const sprite = discovered && sp ? "/sprites/flowers/seed.png" : "/sprites/ui/unknown.png";
       audioManager.playSfx("plant");
-      pushGenericToast(`loss:seed:${speciesId}`, emoji, label, "text-green-400", "loss");
+      pushGenericToast(`loss:seed:${speciesId}`, emoji, label, "text-green-400", "loss", 1, sprite);
       perform(
         optimistic,
         async () => {
@@ -464,7 +471,7 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
     if (optimistic) {
       const sp = getFlower(speciesId);
       audioManager.playSfx("plant");
-      if (sp) pushGenericToast(`loss:bloom:${speciesId}:${mutation ?? ""}`, sp.emoji.bloom, sp.name, RARITY_CONFIG[sp.rarity].color, "loss");
+      if (sp) pushGenericToast(`loss:bloom:${speciesId}:${mutation ?? ""}`, sp.emoji.bloom, sp.name, RARITY_CONFIG[sp.rarity].color, "loss", 1, sp.sprite?.bloom);
       perform(
         optimistic,
         () => edgePlantBloom(row, col, speciesId, mutation),
@@ -502,7 +509,7 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
         }
       },
       () => {
-        pushGenericToast(`loss:gear:${gearType}`, gearDef.emoji, gearDef.name, RARITY_CONFIG[gearDef.rarity].color, "loss");
+        pushGenericToast(`loss:gear:${gearType}`, gearDef.emoji, gearDef.name, RARITY_CONFIG[gearDef.rarity].color, "loss", 1, gearDef.sprite);
         const group = gearTypeToPlacedGroup(gearType);
         if (group) incrementStat(`placed_${group}` as AchievementStatKey);
       },
@@ -630,9 +637,10 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
     for (const { speciesId } of planted) {
       const sp = getFlower(speciesId);
       const disc  = discoveredSet.has(speciesId);
-      const emoji = disc && sp ? sp.emoji.seed : "❓";
-      const label = disc && sp ? `${sp.name} Seed` : "??? Seed";
-      pushGenericToast(`loss:seed:${speciesId}`, emoji, label, "text-green-400", "loss");
+      const emoji  = disc && sp ? sp.emoji.seed : "❓";
+      const label  = disc && sp ? `${sp.name} Seed` : "??? Seed";
+      const sprite = disc && sp ? "/sprites/flowers/seed.png" : "/sprites/ui/unknown.png";
+      pushGenericToast(`loss:seed:${speciesId}`, emoji, label, "text-green-400", "loss", 1, sprite);
     }
 
     perform(
@@ -689,7 +697,13 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
                 onClick={handlePlantAll}
                 className="px-3 py-1 rounded-full text-xs font-semibold bg-card border border-border text-muted-foreground hover:border-primary/50 hover:text-primary transition-all"
               >
-                🌱 Plant All
+                <span className="flex items-center gap-1">
+                  {settings.useSprites
+                    ? <img src="/sprites/flowers/seed.png" alt="🌱" className="w-3.5 h-3.5 object-contain" style={PX} />
+                    : <span>🌱</span>
+                  }
+                  Plant All
+                </span>
               </button>
             )}
           </div>
@@ -798,7 +812,10 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
               }
             `}
           >
-            Upgrade to {nextUpgrade.label} — {nextUpgrade.cost.toLocaleString()} 🟡
+            <span className="flex items-center gap-1.5">
+              {`Upgrade to ${nextUpgrade.label} — ${nextUpgrade.cost.toLocaleString()}`}
+              <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-sm" imgSize="w-3.5 h-3.5" />
+            </span>
           </button>
           <p className="text-xs text-muted-foreground">{nextUpgrade.description}</p>
         </div>

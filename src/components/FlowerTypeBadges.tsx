@@ -1,5 +1,6 @@
 import { FLOWER_TYPES } from "../data/flowers";
 import type { FlowerType } from "../data/flowers";
+import { ItemSprite } from "./ItemSprite";
 
 interface Props {
   types: FlowerType[];
@@ -22,7 +23,7 @@ export function FlowerTypeBadges({ types, className = "" }: Props) {
             key={t}
             className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] ${tc.bgColor} border ${tc.borderColor} ${tc.color}`}
           >
-            <span>{tc.emoji}</span>
+            <ItemSprite emoji={tc.emoji} sprite={tc.sprite} name={tc.name} textSize="text-[10px]" imgSize="w-3 h-3" />
             <span>{tc.name}</span>
           </span>
         );

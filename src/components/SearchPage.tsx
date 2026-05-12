@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
 import { searchUsers } from "../store/cloudSave";
 import type { CloudProfile } from "../store/cloudSave";
-import { getFlower, RARITY_CONFIG } from "../data/flowers";
+import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
+import type { MutationType } from "../data/flowers";
 import { useGame } from "../store/GameContext";
+import { ItemSprite } from "./ItemSprite";
+import { FlowerSprite } from "./FlowerSprite";
 
 interface Props {
   onViewProfile: (username: string) => void;
@@ -45,8 +48,8 @@ export function SearchPage({ onViewProfile }: Props) {
 
       {/* Search input */}
       <div className="relative">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-          🔍
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+          <ItemSprite emoji="🔍" sprite="/sprites/ui/search.png" textSize="text-sm" imgSize="w-4 h-4" name="search" />
         </span>
         <input
           type="text"
@@ -89,7 +92,7 @@ export function SearchPage({ onViewProfile }: Props) {
                   w-12 h-12 rounded-xl border flex items-center justify-center text-2xl flex-shrink-0
                   ${rarity?.glow ?? ""} border-border bg-background
                 `}>
-                  {flower?.emoji.bloom ?? "🌱"}
+                  {flower ? <FlowerSprite species={flower} stage="bloom" imgSize="w-8 h-8" textSize="text-2xl" className={p.display_mutation ? (MUTATIONS[p.display_mutation as MutationType]?.vfxClass ?? "") : ""} /> : "🌱"}
                 </div>
 
                 {/* Info */}
@@ -105,8 +108,9 @@ export function SearchPage({ onViewProfile }: Props) {
                     )}
                   </div>
                   {flower && (
-                    <p className={`text-xs font-mono mt-0.5 ${rarity?.color}`}>
-                      {flower.emoji.bloom} {flower.name}
+                    <p className={`text-xs font-mono mt-0.5 ${rarity?.color} flex items-center gap-1`}>
+                      <FlowerSprite species={flower} stage="bloom" imgSize="w-3.5 h-3.5" textSize="text-xs" />
+                      {flower.name}
                     </p>
                   )}
                 </div>
@@ -122,7 +126,9 @@ export function SearchPage({ onViewProfile }: Props) {
 
       {!searched && !loading && (
         <div className="text-center py-12 space-y-2">
-          <p className="text-4xl">🌍</p>
+          <p className="flex justify-center">
+            <ItemSprite emoji="🌍" sprite="/sprites/ui/ach_social.png" textSize="text-4xl" imgSize="w-10 h-10" name="search" />
+          </p>
           <p className="text-muted-foreground text-sm">
             Search for a player to view their garden
           </p>

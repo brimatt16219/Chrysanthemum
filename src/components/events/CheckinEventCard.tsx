@@ -3,6 +3,7 @@ import { useGame } from "../../store/GameContext";
 import type { EventEntry } from "../../store/gameStore";
 import { edgeCheckinClaim } from "../../lib/edgeFunctions";
 import { audioManager } from "../../lib/audioManager";
+import { ItemSprite } from "../ItemSprite";
 
 interface CheckinConfig {
   days: { day: number; gems: number }[];
@@ -42,7 +43,7 @@ export function CheckinEventCard({ event }: Props) {
           e.id === event.id ? { ...e, progress: result.progress } : e
         ),
       });
-      pushGenericToast("checkin_claim", "💎", `Day ${result.claimedDay} claimed!`, undefined, "gain", result.gemsGained);
+      pushGenericToast("checkin_claim", "💎", `Day ${result.claimedDay} claimed!`, undefined, "gain", result.gemsGained, "/sprites/ui/gems.png");
       audioManager.playSfx("checkinClaim");
     } catch (e) {
       console.error("checkin claim failed:", e);
@@ -77,7 +78,10 @@ export function CheckinEventCard({ event }: Props) {
               `}
             >
               <span className="font-semibold">Day {day}</span>
-              <span>{claimed ? "✓" : `${gems} 💎`}</span>
+              {claimed
+                ? <span>✓</span>
+                : <span className="inline-flex items-center gap-0.5">{gems}<ItemSprite emoji="💎" sprite="/sprites/ui/gems.png" textSize="text-[10px]" imgSize="w-3 h-3" name="gems" /></span>
+              }
             </div>
           );
         })}
@@ -102,7 +106,7 @@ export function CheckinEventCard({ event }: Props) {
             ? "Claiming…"
             : alreadyClaimedToday
             ? "Come back tomorrow"
-            : `Claim Day ${nextDay} (+${config.days[nextDay - 1]?.gems ?? 0} 💎)`}
+            : `Claim Day ${nextDay}`}
         </button>
       )}
     </div>

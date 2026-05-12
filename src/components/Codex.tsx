@@ -2,6 +2,8 @@ import { useState, useMemo, useEffect } from "react";
 import { FLOWERS, MUTATIONS, RARITY_CONFIG, FLOWER_TYPES } from "../data/flowers";
 import type { Rarity, MutationType, FlowerType } from "../data/flowers";
 import { FlowerTypeBadges } from "./FlowerTypeBadges";
+import { FlowerSprite } from "./FlowerSprite";
+import { ItemSprite } from "./ItemSprite";
 import {
   getTotalCodexEntries,
   isDiscovered,
@@ -157,7 +159,7 @@ export function Codex({ discoveredOverride, compact = false, unseenEntries, mark
       <div className="flex flex-col gap-2">
         {/* Search */}
         <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">🔍</span>
+          <ItemSprite emoji="🔍" sprite="/sprites/ui/search.png" name="Search" textSize="text-sm" imgSize="w-3.5 h-3.5" className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
           <input
             type="text"
             value={search}
@@ -217,7 +219,7 @@ export function Codex({ discoveredOverride, compact = false, unseenEntries, mark
                   }
                 `}
               >
-                <span>{cfg.emoji}</span>
+                <ItemSprite emoji={cfg.emoji} sprite={cfg.sprite} name={cfg.name} textSize="text-[10px]" imgSize="w-3.5 h-3.5" />
                 <span>{cfg.name}</span>
               </button>
             );
@@ -311,8 +313,11 @@ export function Codex({ discoveredOverride, compact = false, unseenEntries, mark
                 className="w-full flex items-center gap-3 px-4 py-3 text-left"
               >
                 {/* Emoji */}
-                <div className="text-2xl flex-shrink-0 w-8 text-center">
-                  {hasBase ? f.emoji.bloom : "❓"}
+                <div className="flex-shrink-0 w-8 flex items-center justify-center">
+                  {hasBase
+                    ? <FlowerSprite species={f} stage="bloom" textSize="text-2xl" imgSize="w-7 h-7" />
+                    : <ItemSprite emoji="❓" sprite="/sprites/ui/unknown.png" name="Unknown" textSize="text-2xl" imgSize="w-7 h-7" />
+                  }
                 </div>
 
                 {/* Info */}
@@ -339,7 +344,7 @@ export function Codex({ discoveredOverride, compact = false, unseenEntries, mark
                     {specFound}/{specTotal}
                   </p>
                   {specFound === specTotal && (
-                    <p className="text-[10px] text-primary font-semibold">⚡ Mastered</p>
+                    <p className="text-[10px] text-primary font-semibold inline-flex items-center gap-0.5"><ItemSprite emoji="⚡" sprite="/sprites/ui/mastery.png" name="Mastered" textSize="text-[10px]" imgSize="w-3 h-3" /> Mastered</p>
                   )}
                 </div>
 
@@ -374,7 +379,7 @@ export function Codex({ discoveredOverride, compact = false, unseenEntries, mark
                       </div>
                       <div className="flex items-center justify-between pt-0.5 border-t border-border/40 mt-0.5">
                         <span>Sell value</span>
-                        <span className="text-foreground">{f.sellValue.toLocaleString()} 🟡</span>
+                        <span className="text-foreground inline-flex items-center gap-0.5">{f.sellValue.toLocaleString()} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /></span>
                       </div>
                     </div>
                   )}
@@ -386,7 +391,10 @@ export function Codex({ discoveredOverride, compact = false, unseenEntries, mark
                     }`}>
                       {hasBase ? "✓" : "?"}
                     </span>
-                    <span className="text-sm">{hasBase ? f.emoji.bloom : "❓"}</span>
+                    {hasBase
+                      ? <FlowerSprite species={f} stage="bloom" textSize="text-sm" imgSize="w-5 h-5" />
+                      : <ItemSprite emoji="❓" sprite="/sprites/ui/unknown.png" name="Unknown" textSize="text-sm" imgSize="w-5 h-5" />
+                    }
                     <span className="text-xs text-foreground">
                       {hasBase ? f.name : "???"}
                     </span>
@@ -410,8 +418,11 @@ export function Codex({ discoveredOverride, compact = false, unseenEntries, mark
                         }`}>
                           {found ? "✓" : "?"}
                         </span>
-                        <span className="text-sm">{found ? f.emoji.bloom : "❓"}</span>
-                        <span className="text-xs">{found ? mut.emoji : "❓"}</span>
+                        {found
+                          ? <FlowerSprite species={f} stage="bloom" textSize="text-sm" imgSize="w-5 h-5" className={mut.vfxClass} />
+                          : <ItemSprite emoji="❓" sprite="/sprites/ui/unknown.png" name="Unknown" textSize="text-sm" imgSize="w-5 h-5" />
+                        }
+                        <ItemSprite emoji={found ? mut.emoji : "❓"} sprite={found ? mut.sprite : undefined} name={found ? mut.emoji : "❓"} textSize="text-xs" imgSize="w-3.5 h-3.5" />
                         <span className={`text-xs ${found ? mut.color : "text-muted-foreground"}`}>
                           {found ? mut.name : "???"}
                         </span>
@@ -432,7 +443,7 @@ export function Codex({ discoveredOverride, compact = false, unseenEntries, mark
                   {/* Mastery bonus */}
                   {specFound === specTotal && (
                     <div className="mt-1 pt-2 border-t border-border/40 flex items-center gap-2">
-                      <span className="text-sm">⚡</span>
+                      <ItemSprite emoji="⚡" sprite="/sprites/ui/mastery.png" name="Mastered" textSize="text-sm" imgSize="w-4 h-4" />
                       <span className="text-xs text-primary font-semibold">Mastered</span>
                       <span className="text-xs text-muted-foreground ml-auto">grows 20% faster</span>
                     </div>
@@ -491,8 +502,8 @@ function CompactCodex({
       {preview.length > 0 ? (
         <div className="flex flex-wrap gap-1">
           {preview.map((f) => (
-            <span key={f.id} className="text-xl" title={f.name}>
-              {f.emoji.bloom}
+            <span key={f.id} title={f.name} className="inline-flex">
+              <FlowerSprite species={f} stage="bloom" imgSize="w-6 h-6" textSize="text-xl" />
             </span>
           ))}
           {discoveredSpecies.length > 20 && (
