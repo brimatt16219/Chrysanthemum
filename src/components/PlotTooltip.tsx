@@ -382,8 +382,9 @@ export function PlotTooltip({
               return g?.gearType === "cropsticks" && g.crossbreedStartedAt != null;
             });
             return (
-              <p className="text-[10px] font-mono text-emerald-400">
-                {crossbreedActive ? "💉 Cross-breeding…" : "💉 Infused · awaiting Cropsticks"}
+              <p className="text-[10px] font-mono text-emerald-400 flex items-center gap-0.5">
+                <ItemSprite emoji="💉" sprite="/sprites/consumables/infuser.png" name="Infuser" textSize="text-[10px]" imgSize="w-3 h-3" />
+                {crossbreedActive ? "Cross-breeding…" : "Infused · awaiting Cropsticks"}
               </p>
             );
           })()}
@@ -438,7 +439,7 @@ export function PlotTooltip({
                         : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20"
                     }`}
                   >
-                    <span>💉</span>
+                    <ItemSprite emoji="💉" sprite="/sprites/consumables/infuser.png" name="Infuser" textSize="text-[10px]" imgSize="w-3 h-3" />
                     <span>{roman}</span>
                     <span className="text-muted-foreground ml-0.5">×{matchingInfuser.quantity}</span>
                   </button>

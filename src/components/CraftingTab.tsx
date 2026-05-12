@@ -217,6 +217,7 @@ function buildEntries(state: GameState, filter: CraftFilter): CraftEntry[] {
         id:          `attunement:${recipe.tier}`,
         kind:        "attunement",
         emoji:       "💉",
+        sprite:      "/sprites/consumables/infuser.png",
         name:        recipe.name,
         rarity:      recipe.rarity,
         description: recipe.description,
@@ -816,7 +817,7 @@ function CraftPopup({
         const need = cost.quantity * quantity;
         ingredientsSection = (
           <div className="space-y-1">
-            <IngredientRow emoji="💉" label={`Infuser ${toRoman(cost.tier)}`} need={need} have={have} enough={have >= need} {...rarityChip(prevRarity)} />
+            <IngredientRow emoji="💉" sprite="/sprites/consumables/infuser.png" label={`Infuser ${toRoman(cost.tier)}`} need={need} have={have} enough={have >= need} {...rarityChip(prevRarity)} />
           </div>
         );
       }

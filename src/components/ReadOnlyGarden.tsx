@@ -466,7 +466,7 @@ export function ReadOnlyGarden({ grid, farmSize, farmRows }: Props) {
                   {balanceScaleSide === "boost" && <span className="text-[9px]" title="Balance Scale — 3× boost">⚖️</span>}
                   {balanceScaleSide === "slow"  && <span className="text-[9px]" title="Balance Scale — 0.5× slow">⚖️</span>}
                   {underAegis && <span className="text-[9px]" title="Aegis — weather mutations blocked">🛡️</span>}
-                  {plant.infused && <span className="text-[9px]" title="Infused — cross-breeding active">💉</span>}
+                  {plant.infused && <ItemSprite emoji="💉" sprite="/sprites/consumables/infuser.png" name="Infused" textSize="text-[9px]" imgSize="w-3 h-3" />}
                   {plant.revealed && <span className="text-[9px]" title="Species revealed — Magnifying Glass used">🔎</span>}
                 </div>
               )}

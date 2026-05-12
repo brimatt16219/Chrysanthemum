@@ -367,7 +367,7 @@ export function Inventory({ newSeeds = 0, newBlooms = 0, newSupplies = 0, onSubT
                     key={inf.rarity}
                     className={`flex items-center gap-4 bg-card/60 border rounded-xl px-4 py-3 border-border ${rarity?.glow ?? ""}`}
                   >
-                    <span className="text-3xl flex-shrink-0">💉</span>
+                    <ItemSprite emoji="💉" sprite="/sprites/consumables/infuser.png" name="Infuser" textSize="text-3xl" imgSize="w-8 h-8" className="flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-semibold text-sm">{rarity?.label ?? inf.rarity} Infuser</h3>

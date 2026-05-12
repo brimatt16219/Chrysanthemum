@@ -628,7 +628,7 @@ export function PlotTile({
             {isUnderAegis && <span className="text-[9px]" title="Aegis — weather mutations blocked">🛡️</span>}
             {balanceScaleSide === "boost" && <span className="text-[9px]" title="Balance Scale — 3× growth boost">⚖️</span>}
             {balanceScaleSide === "slow"  && <span className="text-[9px]" title="Balance Scale — 0.5× growth penalty">⚖️</span>}
-            {plant.infused && <span className="text-[9px]" title="Infused — cross-breeding active">💉</span>}
+            {plant.infused && <ItemSprite emoji="💉" sprite="/sprites/consumables/infuser.png" name="Infused" textSize="text-[9px]" imgSize="w-3 h-3" />}
             {plant.revealed && <span className="text-[9px]" title="Species revealed — Magnifying Glass used">🔎</span>}
             {plant.showMultiplier && <span className="text-[9px]" title={`Ruler — ${rulerMult.toFixed(2)}× total growth (gear × fert × weather × mastered)`}>📏</span>}
           </div>
