@@ -419,9 +419,8 @@ export function ProfilePage({ username }: Props) {
                         : "border-border hover:border-primary/50 bg-background"
                       }`}
                   >
-                    <div className="relative w-9 flex items-center justify-center flex-shrink-0">
-                      {(() => { const pf = getFlower(pendingSpecies!); return pf ? <FlowerSprite species={pf} stage="bloom" imgSize="w-8 h-8" textSize="text-2xl" /> : null; })()}
-                      <span className="absolute -top-1 -right-0 text-sm leading-none">{mut.emoji}</span>
+                    <div className="w-9 flex items-center justify-center flex-shrink-0">
+                      {(() => { const pf = getFlower(pendingSpecies!); return pf ? <FlowerSprite species={pf} stage="bloom" imgSize="w-8 h-8" textSize="text-2xl" className={mut.vfxClass} /> : null; })()}
                     </div>
                     <div>
                       <p className={`text-sm font-medium ${mut.color}`}>{mut.name}</p>
@@ -527,8 +526,7 @@ export function ProfilePage({ username }: Props) {
                   className={`relative flex items-center gap-1.5 bg-background border border-border rounded-lg px-2.5 py-1.5 ${rarity?.glow}`}
                   title={`${species.name}${mut ? ` (${mut.name})` : ""}`}
                 >
-                  <FlowerSprite species={species} stage="bloom" imgSize="w-5 h-5" textSize="text-base" />
-                  {mut && <span className="absolute -top-1 -right-1 text-xs">{mut.emoji}</span>}
+                  <FlowerSprite species={species} stage="bloom" imgSize="w-5 h-5" textSize="text-base" className={mut ? mut.vfxClass : ""} />
                   <span className="text-xs text-muted-foreground">×{item.quantity}</span>
                 </div>
               );
