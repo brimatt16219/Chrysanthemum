@@ -275,6 +275,8 @@ function MailCard({
   let attachSprite: string | undefined = undefined;
   let attachTitle   = "";
   let attachSub     = "";
+  let attachFlowerSpecies: ReturnType<typeof getFlower> = undefined;
+  let attachFlowerStage: "seed" | "bloom" = "bloom";
 
   if (isCoins) {
     attachEmoji  = "🟡";
@@ -287,9 +289,10 @@ function MailCard({
       : entry.species_id as FertilizerType;
     const def = FERTILIZERS[fertType];
     if (def) {
-      attachEmoji = def.emoji;
-      attachTitle = def.name;
-      attachSub   = `${def.speedMultiplier}× growth`;
+      attachEmoji  = def.emoji;
+      attachSprite = def.sprite;
+      attachTitle  = def.name;
+      attachSub    = `${def.speedMultiplier}× growth`;
     }
 
   } else if (isGear && entry.species_id) {
@@ -299,9 +302,10 @@ function MailCard({
     const def    = GEAR_CATALOG[gearType];
     const rarity = def ? RARITY_CONFIG[def.rarity] : null;
     if (def) {
-      attachEmoji = def.emoji;
-      attachTitle = def.name;
-      attachSub   = rarity?.label ?? "Gear";
+      attachEmoji  = def.emoji;
+      attachSprite = def.sprite;
+      attachTitle  = def.name;
+      attachSub    = rarity?.label ?? "Gear";
     }
 
   } else if (isFlower && entry.species_id) {
@@ -309,6 +313,8 @@ function MailCard({
     const mut     = entry.mutation ? MUTATIONS[entry.mutation as MutationType] : null;
     const rarity  = species ? RARITY_CONFIG[species.rarity] : null;
     if (species) {
+      attachFlowerSpecies = species;
+      attachFlowerStage   = entry.kind === "seed" ? "seed" : "bloom";
       attachEmoji = entry.kind === "seed"
         ? (species.emoji.seed ?? "🌱")
         : (species.emoji.bloom ?? "🌸");
@@ -351,9 +357,9 @@ function MailCard({
           {sender ? (
             (() => { const sf = getFlower(sender.display_flower); return sf ? <FlowerSprite species={sf} stage="bloom" imgSize="w-7 h-7" textSize="text-xl" /> : <span className="text-xl leading-none">🌱</span>; })()
           ) : isAdmin ? (
-            <span className="text-xl leading-none">👑</span>
+            <ItemSprite emoji="👑" sprite="/sprites/ui/admin.png" textSize="text-xl" imgSize="w-7 h-7" name="👑" />
           ) : (
-            <ItemSprite emoji="🏪" sprite="/sprites/ui/social_market.png" textSize="text-xl" imgSize="w-7 h-7" name="marketplace" />
+            <ItemSprite emoji="🏪" sprite="/sprites/ui/social_market.png" textSize="text-xl" imgSize="w-7 h-7" name="🏪" />
           )}
           {sender?.display_mutation && (
             <span className="absolute -top-1 -right-1 text-[10px] leading-none">
@@ -363,16 +369,41 @@ function MailCard({
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold truncate">{subject}</p>
-          <p className="text-xs text-muted-foreground truncate">
-            {sender ? `From ${sender.username}` : isAdmin ? (
-              <>From Admin 👑</>
-            ) : (
-              <>From <ItemSprite emoji="🏪" sprite="/sprites/ui/social_market.png" textSize="text-xs" imgSize="w-3 h-3" name="marketplace" className="inline-flex" /></>
+          {/* Subject line — strip trailing gift emoji and re-render as sprite */}
+          <div className="flex items-center gap-1 min-w-0">
+            <p className="text-sm font-semibold truncate">
+              {subject.endsWith(" 🎁") ? subject.slice(0, -2).trimEnd() : subject}
+            </p>
+            {subject.endsWith(" 🎁") && (
+              <ItemSprite emoji="🎁" sprite="/sprites/ui/task_gift.png" textSize="text-sm" imgSize="w-4 h-4" name="🎁" className="flex-shrink-0" />
             )}
-            {attachPreview ? ` · ${attachPreview}` : ""}
-            {" · "}{timeAgo(entry.created_at)}
-          </p>
+          </div>
+          {/* From line — all inline-flex so sprites sit tight beside text */}
+          <div className="flex items-center gap-0.5 text-xs text-muted-foreground overflow-hidden whitespace-nowrap">
+            <span className="flex-shrink-0">
+              {sender ? `From ${sender.username}` : isAdmin ? "From Admin" : "From Marketplace"}
+            </span>
+            {!sender && (
+              <ItemSprite
+                emoji={isAdmin ? "👑" : "🏪"}
+                sprite={isAdmin ? "/sprites/ui/admin.png" : "/sprites/ui/social_market.png"}
+                textSize="text-[10px]" imgSize="w-3 h-3"
+                name={isAdmin ? "👑" : "🏪"}
+                className="flex-shrink-0"
+              />
+            )}
+            {attachTitle && (
+              <>
+                <span className="flex-shrink-0"> · </span>
+                {attachFlowerSpecies
+                  ? <FlowerSprite species={attachFlowerSpecies} stage={attachFlowerStage} imgSize="w-3 h-3" textSize="text-[10px]" />
+                  : <ItemSprite emoji={attachEmoji} sprite={attachSprite} textSize="text-[10px]" imgSize="w-3 h-3" name={attachEmoji} className="flex-shrink-0" />
+                }
+                <span className="flex-shrink-0"> {attachTitle}</span>
+              </>
+            )}
+            <span className="flex-shrink-0"> · {timeAgo(entry.created_at)}</span>
+          </div>
         </div>
 
         {/* Chevron / dismiss */}
@@ -411,9 +442,9 @@ function MailCard({
                 </button>
               </>
             ) : isAdmin ? (
-              <span>From Admin 👑</span>
+              <span className="inline-flex items-center gap-0.5">From Admin <ItemSprite emoji="👑" sprite="/sprites/ui/admin.png" textSize="text-xs" imgSize="w-3.5 h-3.5" name="👑" /></span>
             ) : (
-              <span className="inline-flex items-center gap-0.5">From <ItemSprite emoji="🏪" sprite="/sprites/ui/social_market.png" textSize="text-xs" imgSize="w-3.5 h-3.5" name="marketplace" /></span>
+              <span className="inline-flex items-center gap-0.5">From Marketplace <ItemSprite emoji="🏪" sprite="/sprites/ui/social_market.png" textSize="text-xs" imgSize="w-3.5 h-3.5" name="🏪" /></span>
             )}
             {" · "}{timeAgo(entry.created_at)}
           </p>
@@ -429,7 +460,10 @@ function MailCard({
           {attachTitle && (
             <div className="flex items-center gap-3 bg-background/60 border border-border/60 rounded-xl px-3 py-2">
               <div className="relative flex-shrink-0 w-9 h-9 flex items-center justify-center">
-                <ItemSprite emoji={attachEmoji} sprite={attachSprite} textSize="text-2xl" imgSize="w-9 h-9" name={attachTitle} />
+                {attachFlowerSpecies
+                  ? <FlowerSprite species={attachFlowerSpecies} stage={attachFlowerStage} imgSize="w-9 h-9" textSize="text-2xl" />
+                  : <ItemSprite emoji={attachEmoji} sprite={attachSprite} textSize="text-2xl" imgSize="w-9 h-9" name={attachTitle} />
+                }
                 {isFlower && entry.mutation && (
                   <span className="absolute -top-1 -right-1 text-sm leading-none">
                     {MUTATIONS[entry.mutation as MutationType]?.emoji}
