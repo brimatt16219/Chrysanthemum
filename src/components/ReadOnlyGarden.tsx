@@ -303,9 +303,6 @@ export function ReadOnlyGarden({ grid, farmSize, farmRows }: Props) {
               ? { animation: "rainbow-border-cycle 3s linear infinite, rainbow-bg-cycle 3s linear infinite, rainbow-glow-cycle 3s linear infinite" }
               : undefined;
 
-          const mutVfxClass = isBloomed && mut && species?.rarity !== "prismatic"
-            ? mut.vfxClass
-            : "";
 
           return (
             <div
@@ -318,7 +315,6 @@ export function ReadOnlyGarden({ grid, farmSize, farmRows }: Props) {
                   : `${rarity?.borderGrowing ?? "border-border/60"} bg-card/60`
                 }
                 ${plant.infused ? "ring-2 ring-emerald-400/60" : ""}
-                ${mutVfxClass}
               `}
               title={isBloomed ? `${species?.name} — bloomed` : "??? — growing"}
             >
@@ -437,7 +433,13 @@ export function ReadOnlyGarden({ grid, farmSize, farmRows }: Props) {
               )}
 
               {species && stage
-                ? <FlowerSprite species={species} stage={stage} imgSize="w-6 h-6" textSize="text-xl" />
+                ? <FlowerSprite
+                    species={species}
+                    stage={stage}
+                    imgSize="w-6 h-6"
+                    textSize="text-xl"
+                    className={isBloomed && mut && species?.rarity !== "prismatic" ? mut.vfxClass : ""}
+                  />
                 : <span className="text-xl leading-none">🌱</span>
               }
 

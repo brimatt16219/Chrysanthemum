@@ -434,9 +434,6 @@ export function PlotTile({
             : `${rarity?.borderGrowing ?? "border-border/60"} bg-card/60 hover:bg-card/80 cursor-pointer`
           }
           ${plant.infused ? "ring-2 ring-emerald-400/60" : isHighlighted ? "ring-2 ring-primary/40" : ""}
-          ${isBloomed && (plant as PlantedFlower).mutation && species?.rarity !== "prismatic"
-            ? MUTATIONS[(plant as PlantedFlower).mutation!].vfxClass
-            : ""}
         `}
         title={
           isBloomed
@@ -589,6 +586,9 @@ export function PlotTile({
             stage={stage!}
             textSize="text-2xl"
             imgSize="w-9 h-9"
+            className={isBloomed && (plant as PlantedFlower).mutation && species?.rarity !== "prismatic"
+              ? MUTATIONS[(plant as PlantedFlower).mutation!].vfxClass
+              : ""}
           />
         ) : (
           settings.useSprites
