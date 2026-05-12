@@ -159,7 +159,7 @@ export function Codex({ discoveredOverride, compact = false, unseenEntries, mark
       <div className="flex flex-col gap-2">
         {/* Search */}
         <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">🔍</span>
+          <ItemSprite emoji="🔍" sprite="/sprites/ui/search.png" name="Search" textSize="text-sm" imgSize="w-3.5 h-3.5" className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
           <input
             type="text"
             value={search}
