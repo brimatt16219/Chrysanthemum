@@ -48,6 +48,7 @@ import { useMailbox } from "./hooks/useMailbox";
 import { useDayNight } from "./hooks/useDayNight";
 import { getFlower, MUTATIONS } from "./data/flowers";
 import type { MutationType } from "./data/flowers";
+import { FlowerSprite } from "./components/FlowerSprite";
 import { useVersionCheck } from "./hooks/useVersionCheck";
 import { usePresence } from "./hooks/usePresence";
 import { UpdateBanner } from "./components/UpdateBanner";
@@ -759,14 +760,13 @@ function AppInner() {
                     onClick={() => handleViewProfile(profile?.username ?? "")}
                     className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5"
                   >
-                    <span className="relative text-base leading-none">
-                      {getFlower(profile?.display_flower ?? "daisy")?.emoji.bloom ?? "🌸"}
-                      {profile?.display_mutation && (
-                        <span className="absolute -top-1 -right-1 text-xs leading-none">
-                          {MUTATIONS[profile.display_mutation as MutationType]?.emoji}
-                        </span>
-                      )}
-                    </span>
+                    {(() => {
+                      const f   = getFlower(profile?.display_flower ?? "daisy");
+                      const mut = profile?.display_mutation ? MUTATIONS[profile.display_mutation as MutationType] : null;
+                      return f
+                        ? <FlowerSprite species={f} stage="bloom" imgSize="w-5 h-5" textSize="text-base" className={mut?.vfxClass ?? ""} />
+                        : <span className="text-base leading-none">🌸</span>;
+                    })()}
                     <span className="hidden sm:inline">{profile?.username ?? "..."}</span>
                   </button>
                 </div>

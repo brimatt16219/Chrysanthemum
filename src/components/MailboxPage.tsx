@@ -355,20 +355,18 @@ function MailCard({
         {/* Sender avatar: profile flower for friends, 👑 for admin, 🏪 for marketplace */}
         <div className="relative flex-shrink-0 w-7 h-7 flex items-center justify-center">
           {sender ? (
-            (() => { const sf = getFlower(sender.display_flower); return sf ? <FlowerSprite species={sf} stage="bloom" imgSize="w-7 h-7" textSize="text-xl" /> : <span className="text-xl leading-none">🌱</span>; })()
+            (() => {
+              const sf  = getFlower(sender.display_flower);
+              const sm  = sender.display_mutation ? MUTATIONS[sender.display_mutation as MutationType] : null;
+              return sf
+                ? <FlowerSprite species={sf} stage="bloom" imgSize="w-7 h-7" textSize="text-xl" className={sm?.vfxClass ?? ""} />
+                : <span className="text-xl leading-none">🌱</span>;
+            })()
           ) : isAdmin ? (
             <ItemSprite emoji="👑" sprite="/sprites/ui/admin.png" textSize="text-xl" imgSize="w-7 h-7" name="👑" />
           ) : (
             <ItemSprite emoji="🏪" sprite="/sprites/ui/social_market.png" textSize="text-xl" imgSize="w-7 h-7" name="🏪" />
           )}
-          {sender?.display_mutation && (() => {
-            const sm = MUTATIONS[sender.display_mutation as MutationType];
-            return sm ? (
-              <span className="absolute -top-1 -right-1 leading-none">
-                <ItemSprite emoji={sm.emoji} sprite={sm.sprite} name={sm.emoji} textSize="text-[10px]" imgSize="w-3 h-3" />
-              </span>
-            ) : null;
-          })()}
         </div>
 
         <div className="flex-1 min-w-0">

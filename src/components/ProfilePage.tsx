@@ -214,12 +214,7 @@ export function ProfilePage({ username }: Props) {
                 ${flowerOpen ? "ring-2 ring-primary/50" : ""}
               `}
             >
-              {displayFlower ? <FlowerSprite species={displayFlower} stage="bloom" imgSize="w-10 h-10" textSize="text-4xl" /> : "🌱"}
-              {mutObj && (
-                <span className="absolute -top-1 -right-1 leading-none">
-                  <ItemSprite emoji={mutObj.emoji} sprite={mutObj.sprite} name={mutObj.emoji} textSize="text-lg" imgSize="w-5 h-5" />
-                </span>
-              )}
+              {displayFlower ? <FlowerSprite species={displayFlower} stage="bloom" imgSize="w-10 h-10" textSize="text-4xl" className={mutObj?.vfxClass ?? ""} /> : "🌱"}
               <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-card border border-border flex items-center justify-center text-[10px] text-muted-foreground">
                 ✎
               </span>
@@ -229,12 +224,7 @@ export function ProfilePage({ username }: Props) {
               relative w-16 h-16 rounded-2xl border-2 flex items-center justify-center text-4xl flex-shrink-0
               ${displayRarity?.glow ?? ""} ${avatarBorderClass}
             `}>
-              {displayFlower ? <FlowerSprite species={displayFlower} stage="bloom" imgSize="w-10 h-10" textSize="text-4xl" /> : "🌱"}
-              {mutObj && (
-                <span className="absolute -top-1 -right-1 leading-none">
-                  <ItemSprite emoji={mutObj.emoji} sprite={mutObj.sprite} name={mutObj.emoji} textSize="text-lg" imgSize="w-5 h-5" />
-                </span>
-              )}
+              {displayFlower ? <FlowerSprite species={displayFlower} stage="bloom" imgSize="w-10 h-10" textSize="text-4xl" className={mutObj?.vfxClass ?? ""} /> : "🌱"}
               {presenceStatus && (
                 <span className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-background ${STATUS_DOT[presenceStatus]}`} />
               )}

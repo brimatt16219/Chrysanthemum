@@ -156,7 +156,7 @@ export function LeaderboardPage({ onViewProfile }: Props) {
           <span className="text-2xl flex-shrink-0">
             {myEntry && myEntry.rank <= 3
               ? RANK_MEDALS[myEntry.rank]
-              : (() => { const f = myEntry ? getFlower(myEntry.display_flower) : null; return f ? <FlowerSprite species={f} stage="bloom" imgSize="w-8 h-8" textSize="text-2xl" /> : "🌸"; })()
+              : (() => { const f = myEntry ? getFlower(myEntry.display_flower) : null; const mut = myEntry?.display_mutation ? MUTATIONS[myEntry.display_mutation as MutationType] : null; return f ? <FlowerSprite species={f} stage="bloom" imgSize="w-8 h-8" textSize="text-2xl" className={mut?.vfxClass ?? ""} /> : "🌸"; })()
             }
           </span>
           <div className="flex-1">
@@ -244,12 +244,7 @@ export function LeaderboardPage({ onViewProfile }: Props) {
                   text-xl flex-shrink-0 border-border bg-background
                   ${rarity?.glow ?? ""}
                 `}>
-                  {flower ? <FlowerSprite species={flower} stage="bloom" imgSize="w-6 h-6" textSize="text-xl" /> : "🌱"}
-                  {mutObj && (
-                    <span className="absolute -top-1 -right-1 leading-none">
-                      <ItemSprite emoji={mutObj.emoji} sprite={mutObj.sprite} name={mutObj.emoji} textSize="text-sm" imgSize="w-4 h-4" />
-                    </span>
-                  )}
+                  {flower ? <FlowerSprite species={flower} stage="bloom" imgSize="w-6 h-6" textSize="text-xl" className={mutObj?.vfxClass ?? ""} /> : "🌱"}
                   <span
                     className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background ${STATUS_DOT[status]}`}
                     title={status === "offline"

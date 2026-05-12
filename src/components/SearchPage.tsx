@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { searchUsers } from "../store/cloudSave";
 import type { CloudProfile } from "../store/cloudSave";
-import { getFlower, RARITY_CONFIG } from "../data/flowers";
+import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
+import type { MutationType } from "../data/flowers";
 import { useGame } from "../store/GameContext";
 import { ItemSprite } from "./ItemSprite";
 import { FlowerSprite } from "./FlowerSprite";
@@ -91,7 +92,7 @@ export function SearchPage({ onViewProfile }: Props) {
                   w-12 h-12 rounded-xl border flex items-center justify-center text-2xl flex-shrink-0
                   ${rarity?.glow ?? ""} border-border bg-background
                 `}>
-                  {flower ? <FlowerSprite species={flower} stage="bloom" imgSize="w-8 h-8" textSize="text-2xl" /> : "🌱"}
+                  {flower ? <FlowerSprite species={flower} stage="bloom" imgSize="w-8 h-8" textSize="text-2xl" className={p.display_mutation ? (MUTATIONS[p.display_mutation as MutationType]?.vfxClass ?? "") : ""} /> : "🌱"}
                 </div>
 
                 {/* Info */}
