@@ -17,6 +17,10 @@ export interface Mutation {
   id: MutationType;
   name: string;
   emoji: string;
+  /** Optional pixel-art badge sprite. Falls back to emoji when absent or when sprites are off. */
+  sprite?: string;
+  /** CSS class that applies a VFX animation to a bloomed plot cell. */
+  vfxClass: string;
   description: string;
   valueMultiplier: number;
   chance: number;
@@ -24,15 +28,15 @@ export interface Mutation {
 }
 
 export const MUTATIONS: Record<MutationType, Mutation> = {
-  golden:   { id: "golden",   name: "Golden",   emoji: "✨", description: "Shimmers with golden light.",       valueMultiplier: 4.0, chance: 0.05, color: "text-yellow-400" },
-  rainbow:  { id: "rainbow",  name: "Rainbow",  emoji: "🌈", description: "Every color at once.",              valueMultiplier: 5.0, chance: 0.06, color: "text-pink-400"   },
-  giant:    { id: "giant",    name: "Giant",    emoji: "⬆️", description: "Twice the size of a normal bloom.", valueMultiplier: 2.0, chance: 0.08, color: "text-green-400"  },
-  moonlit:  { id: "moonlit",  name: "Moonlit",  emoji: "🌙", description: "Glows faintly in the dark.",        valueMultiplier: 2.5, chance: 0.07, color: "text-blue-300"   },
-  frozen:   { id: "frozen",   name: "Frozen",   emoji: "❄️", description: "Crystallized mid-bloom.",           valueMultiplier: 2.0, chance: 0.10, color: "text-cyan-400"   },
-  scorched: { id: "scorched", name: "Scorched", emoji: "🔥", description: "Survived extreme heat.",            valueMultiplier: 2.0, chance: 0.10, color: "text-orange-400" },
-  wet:        { id: "wet",        name: "Wet",        emoji: "💧", description: "Soaked by the rain at peak bloom.",          valueMultiplier: 1.1, chance: 0.10, color: "text-blue-400"    },
-  windstruck: { id: "windstruck", name: "Windstruck", emoji: "🌪️", description: "Battered by wind — sells for less.",                    valueMultiplier: 0.7, chance: 1.0,  color: "text-stone-400"   },
-  shocked:    { id: "shocked",    name: "Shocked",    emoji: "⚡", description: "Struck by lightning — or upgraded from a wet bloom.", valueMultiplier: 2.5, chance: 0.10, color: "text-yellow-300"  },
+  golden:     { id: "golden",     name: "Golden",     emoji: "✨", sprite: "/sprites/mutations/golden.png",     vfxClass: "mut-vfx-golden",     description: "Shimmers with golden light.",                                        valueMultiplier: 4.0, chance: 0.05, color: "text-yellow-400" },
+  rainbow:    { id: "rainbow",    name: "Rainbow",    emoji: "🌈", sprite: "/sprites/mutations/rainbow.png",    vfxClass: "mut-vfx-rainbow",    description: "Every color at once.",                                               valueMultiplier: 5.0, chance: 0.06, color: "text-pink-400"   },
+  giant:      { id: "giant",      name: "Giant",      emoji: "⬆️", sprite: "/sprites/mutations/giant.png",      vfxClass: "mut-vfx-giant",      description: "Twice the size of a normal bloom.",                                  valueMultiplier: 2.0, chance: 0.08, color: "text-green-400"  },
+  moonlit:    { id: "moonlit",    name: "Moonlit",    emoji: "🌙", sprite: "/sprites/mutations/moonlit.png",    vfxClass: "mut-vfx-moonlit",    description: "Glows faintly in the dark.",                                         valueMultiplier: 2.5, chance: 0.07, color: "text-blue-300"   },
+  frozen:     { id: "frozen",     name: "Frozen",     emoji: "❄️", sprite: "/sprites/mutations/frozen.png",     vfxClass: "mut-vfx-frozen",     description: "Crystallized mid-bloom.",                                            valueMultiplier: 2.0, chance: 0.10, color: "text-cyan-400"   },
+  scorched:   { id: "scorched",   name: "Scorched",   emoji: "🔥", sprite: "/sprites/mutations/scorched.png",   vfxClass: "mut-vfx-scorched",   description: "Survived extreme heat.",                                             valueMultiplier: 2.0, chance: 0.10, color: "text-orange-400" },
+  wet:        { id: "wet",        name: "Wet",        emoji: "💧", sprite: "/sprites/mutations/wet.png",        vfxClass: "mut-vfx-wet",        description: "Soaked by the rain at peak bloom.",                                  valueMultiplier: 1.1, chance: 0.10, color: "text-blue-400"   },
+  windstruck: { id: "windstruck", name: "Windstruck", emoji: "🌪️", sprite: "/sprites/mutations/windstruck.png", vfxClass: "mut-vfx-windstruck", description: "Battered by wind — sells for less.",                                 valueMultiplier: 0.7, chance: 1.0,  color: "text-stone-400"  },
+  shocked:    { id: "shocked",    name: "Shocked",    emoji: "⚡", sprite: "/sprites/mutations/shocked.png",    vfxClass: "mut-vfx-shocked",    description: "Struck by lightning — or upgraded from a wet bloom.",               valueMultiplier: 2.5, chance: 0.10, color: "text-yellow-300" },
 };
 
 // ── Flower types ─────────────────────────────────────────────────────────────

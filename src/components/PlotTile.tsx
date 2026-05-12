@@ -315,10 +315,15 @@ export function PlotTile({
         >
           <ItemSprite emoji={def.emoji} sprite={def.sprite} name={def.name} textSize="text-2xl" imgSize="w-7 h-7" />
 
-          {/* Mutation emoji overlay */}
+          {/* Mutation badge overlay */}
           {def.category === "sprinkler_mutation" && def.mutationType && (
-            <span className="absolute -bottom-1 -right-1 text-sm leading-none">
-              {MUTATIONS[def.mutationType].emoji}
+            <span className="absolute -bottom-1 -right-1 leading-none">
+              <ItemSprite
+                emoji={MUTATIONS[def.mutationType].emoji}
+                sprite={MUTATIONS[def.mutationType].sprite}
+                name={MUTATIONS[def.mutationType].emoji}
+                textSize="text-sm" imgSize="w-4 h-4"
+              />
             </span>
           )}
 
@@ -429,6 +434,9 @@ export function PlotTile({
             : `${rarity?.borderGrowing ?? "border-border/60"} bg-card/60 hover:bg-card/80 cursor-pointer`
           }
           ${plant.infused ? "ring-2 ring-emerald-400/60" : isHighlighted ? "ring-2 ring-primary/40" : ""}
+          ${isBloomed && (plant as PlantedFlower).mutation && species?.rarity !== "prismatic"
+            ? MUTATIONS[(plant as PlantedFlower).mutation!].vfxClass
+            : ""}
         `}
         title={
           isBloomed
@@ -681,10 +689,15 @@ export function PlotTile({
           <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full animate-pulse" />
         ) : null}
 
-        {/* Mutation emoji — bottom-right */}
+        {/* Mutation badge — bottom-right */}
         {settings.plotMutationIndicator && isBloomed && (plant as PlantedFlower).mutation && (
-          <span className="absolute -bottom-1 -right-1 text-sm leading-none">
-            {MUTATIONS[(plant as PlantedFlower).mutation!].emoji}
+          <span className="absolute -bottom-1 -right-1 leading-none">
+            <ItemSprite
+              emoji={MUTATIONS[(plant as PlantedFlower).mutation!].emoji}
+              sprite={MUTATIONS[(plant as PlantedFlower).mutation!].sprite}
+              name={MUTATIONS[(plant as PlantedFlower).mutation!].emoji}
+              textSize="text-sm" imgSize="w-4 h-4"
+            />
           </span>
         )}
 

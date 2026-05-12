@@ -279,8 +279,8 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
           <span className="text-3xl relative">
             <ItemSprite emoji={def.emoji} sprite={def.sprite} name={def.name} textSize="text-3xl" imgSize="w-8 h-8" />
             {def.category === "sprinkler_mutation" && def.mutationType && (
-              <span className="absolute -bottom-0.5 -right-1 text-sm leading-none">
-                {MUTATIONS[def.mutationType].emoji}
+              <span className="absolute -bottom-0.5 -right-1 leading-none">
+                <ItemSprite emoji={MUTATIONS[def.mutationType].emoji} sprite={MUTATIONS[def.mutationType].sprite} name={MUTATIONS[def.mutationType].emoji} textSize="text-sm" imgSize="w-4 h-4" />
               </span>
             )}
           </span>

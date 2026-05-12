@@ -213,10 +213,15 @@ export function ReadOnlyGarden({ grid, farmSize, farmRows }: Props) {
               >
                 <ItemSprite emoji={def.emoji} sprite={def.sprite} name={def.name} textSize="text-xl" imgSize="w-6 h-6" />
 
-                {/* Mutation sprinkler overlay */}
+                {/* Mutation sprinkler badge */}
                 {def.category === "sprinkler_mutation" && def.mutationType && (
-                  <span className="absolute -bottom-0.5 -right-1 text-xs leading-none">
-                    {MUTATIONS[def.mutationType].emoji}
+                  <span className="absolute -bottom-0.5 -right-1 leading-none">
+                    <ItemSprite
+                      emoji={MUTATIONS[def.mutationType].emoji}
+                      sprite={MUTATIONS[def.mutationType].sprite}
+                      name={MUTATIONS[def.mutationType].emoji}
+                      textSize="text-xs" imgSize="w-3.5 h-3.5"
+                    />
                   </span>
                 )}
 
@@ -298,6 +303,10 @@ export function ReadOnlyGarden({ grid, farmSize, farmRows }: Props) {
               ? { animation: "rainbow-border-cycle 3s linear infinite, rainbow-bg-cycle 3s linear infinite, rainbow-glow-cycle 3s linear infinite" }
               : undefined;
 
+          const mutVfxClass = isBloomed && mut && species?.rarity !== "prismatic"
+            ? mut.vfxClass
+            : "";
+
           return (
             <div
               key={plot.id}
@@ -309,6 +318,7 @@ export function ReadOnlyGarden({ grid, farmSize, farmRows }: Props) {
                   : `${rarity?.borderGrowing ?? "border-border/60"} bg-card/60`
                 }
                 ${plant.infused ? "ring-2 ring-emerald-400/60" : ""}
+                ${mutVfxClass}
               `}
               title={isBloomed ? `${species?.name} — bloomed` : "??? — growing"}
             >
@@ -509,10 +519,15 @@ export function ReadOnlyGarden({ grid, farmSize, farmRows }: Props) {
                 <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full animate-pulse" />
               ) : null}
 
-              {/* Mutation emoji */}
+              {/* Mutation badge */}
               {settings.plotMutationIndicator && mut && (
-                <span className="absolute -bottom-1 -right-1 text-sm leading-none">
-                  {mut.emoji}
+                <span className="absolute -bottom-1 -right-1 leading-none">
+                  <ItemSprite
+                    emoji={mut.emoji}
+                    sprite={mut.sprite}
+                    name={mut.emoji}
+                    textSize="text-sm" imgSize="w-4 h-4"
+                  />
                 </span>
               )}
             </div>

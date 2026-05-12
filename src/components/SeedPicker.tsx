@@ -220,8 +220,8 @@ export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: P
                   <span className="text-xl relative">
                     <ItemSprite emoji={def.emoji} sprite={def.sprite} name={def.name} textSize="text-xl" imgSize="w-6 h-6" />
                     {def.category === "sprinkler_mutation" && def.mutationType && (
-                      <span className="absolute -bottom-0.5 -right-1 text-[10px] leading-none">
-                        {MUTATIONS[def.mutationType].emoji}
+                      <span className="absolute -bottom-0.5 -right-1 leading-none">
+                        <ItemSprite emoji={MUTATIONS[def.mutationType].emoji} sprite={MUTATIONS[def.mutationType].sprite} name={MUTATIONS[def.mutationType].emoji} textSize="text-[10px]" imgSize="w-3 h-3" />
                       </span>
                     )}
                   </span>

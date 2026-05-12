@@ -176,7 +176,9 @@ export function GearTooltip({ gear, row, col, onClose }: Props) {
         <div className="flex items-center gap-2">
           <ItemSprite emoji={def.emoji} sprite={def.sprite} name={def.name} textSize="text-xl" imgSize="w-6 h-6" />
           {def.category === "sprinkler_mutation" && def.mutationType && (
-            <span className="text-base leading-none">{MUTATIONS[def.mutationType].emoji}</span>
+            <span className="leading-none">
+              <ItemSprite emoji={MUTATIONS[def.mutationType].emoji} sprite={MUTATIONS[def.mutationType].sprite} name={MUTATIONS[def.mutationType].emoji} textSize="text-base" imgSize="w-5 h-5" />
+            </span>
           )}
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold leading-tight">{def.name}</p>

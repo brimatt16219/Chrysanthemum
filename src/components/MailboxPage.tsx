@@ -361,11 +361,14 @@ function MailCard({
           ) : (
             <ItemSprite emoji="🏪" sprite="/sprites/ui/social_market.png" textSize="text-xl" imgSize="w-7 h-7" name="🏪" />
           )}
-          {sender?.display_mutation && (
-            <span className="absolute -top-1 -right-1 text-[10px] leading-none">
-              {MUTATIONS[sender.display_mutation as MutationType]?.emoji}
-            </span>
-          )}
+          {sender?.display_mutation && (() => {
+            const sm = MUTATIONS[sender.display_mutation as MutationType];
+            return sm ? (
+              <span className="absolute -top-1 -right-1 leading-none">
+                <ItemSprite emoji={sm.emoji} sprite={sm.sprite} name={sm.emoji} textSize="text-[10px]" imgSize="w-3 h-3" />
+              </span>
+            ) : null;
+          })()}
         </div>
 
         <div className="flex-1 min-w-0">
@@ -464,11 +467,14 @@ function MailCard({
                   ? <FlowerSprite species={attachFlowerSpecies} stage={attachFlowerStage} imgSize="w-9 h-9" textSize="text-2xl" />
                   : <ItemSprite emoji={attachEmoji} sprite={attachSprite} textSize="text-2xl" imgSize="w-9 h-9" name={attachTitle} />
                 }
-                {isFlower && entry.mutation && (
-                  <span className="absolute -top-1 -right-1 text-sm leading-none">
-                    {MUTATIONS[entry.mutation as MutationType]?.emoji}
-                  </span>
-                )}
+                {isFlower && entry.mutation && (() => {
+                  const em = MUTATIONS[entry.mutation as MutationType];
+                  return em ? (
+                    <span className="absolute -top-1 -right-1 leading-none">
+                      <ItemSprite emoji={em.emoji} sprite={em.sprite} name={em.emoji} textSize="text-sm" imgSize="w-4 h-4" />
+                    </span>
+                  ) : null;
+                })()}
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold">{attachTitle}</p>

@@ -216,7 +216,9 @@ export function ProfilePage({ username }: Props) {
             >
               {displayFlower ? <FlowerSprite species={displayFlower} stage="bloom" imgSize="w-10 h-10" textSize="text-4xl" /> : "🌱"}
               {mutObj && (
-                <span className="absolute -top-1 -right-1 text-lg">{mutObj.emoji}</span>
+                <span className="absolute -top-1 -right-1 leading-none">
+                  <ItemSprite emoji={mutObj.emoji} sprite={mutObj.sprite} name={mutObj.emoji} textSize="text-lg" imgSize="w-5 h-5" />
+                </span>
               )}
               <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-card border border-border flex items-center justify-center text-[10px] text-muted-foreground">
                 ✎
@@ -229,7 +231,9 @@ export function ProfilePage({ username }: Props) {
             `}>
               {displayFlower ? <FlowerSprite species={displayFlower} stage="bloom" imgSize="w-10 h-10" textSize="text-4xl" /> : "🌱"}
               {mutObj && (
-                <span className="absolute -top-1 -right-1 text-lg">{mutObj.emoji}</span>
+                <span className="absolute -top-1 -right-1 leading-none">
+                  <ItemSprite emoji={mutObj.emoji} sprite={mutObj.sprite} name={mutObj.emoji} textSize="text-lg" imgSize="w-5 h-5" />
+                </span>
               )}
               {presenceStatus && (
                 <span className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-background ${STATUS_DOT[presenceStatus]}`} />
@@ -306,8 +310,8 @@ export function ProfilePage({ username }: Props) {
                 <FlowerSprite species={displayFlower} stage="bloom" imgSize="w-3.5 h-3.5" textSize="text-xs" />
                 {displayFlower.name}
                 {mutObj && (
-                  <span className={`ml-1 ${MUTATIONS[displayMutation as MutationType].color}`}>
-                    · {mutObj.emoji} {mutObj.name}
+                  <span className={`ml-1 inline-flex items-center gap-0.5 ${MUTATIONS[displayMutation as MutationType].color}`}>
+                    · <ItemSprite emoji={mutObj.emoji} sprite={mutObj.sprite} name={mutObj.emoji} textSize="text-xs" imgSize="w-3.5 h-3.5" /> {mutObj.name}
                   </span>
                 )}
                 {" · "}{displayRarity?.label}

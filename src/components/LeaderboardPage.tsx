@@ -246,7 +246,9 @@ export function LeaderboardPage({ onViewProfile }: Props) {
                 `}>
                   {flower ? <FlowerSprite species={flower} stage="bloom" imgSize="w-6 h-6" textSize="text-xl" /> : "🌱"}
                   {mutObj && (
-                    <span className="absolute -top-1 -right-1 text-sm leading-none">{mutObj.emoji}</span>
+                    <span className="absolute -top-1 -right-1 leading-none">
+                      <ItemSprite emoji={mutObj.emoji} sprite={mutObj.sprite} name={mutObj.emoji} textSize="text-sm" imgSize="w-4 h-4" />
+                    </span>
                   )}
                   <span
                     className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background ${STATUS_DOT[status]}`}
