@@ -318,9 +318,25 @@ export function ShopSlotCard({ slot }: Props) {
   }
 
   return (
+    <div className="relative">
+      {/* NEW / DONE tags — on the wrapper so pixel-border clip-path on the card doesn't cut them off */}
+      {isNew && !outOfStock && (
+        <div className="absolute -top-3 -right-2 z-10">
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md ${rarityBadgeClass(species.rarity)}`}>
+            ✦ NEW
+          </span>
+        </div>
+      )}
+      {isComplete && !outOfStock && (
+        <div className="absolute -top-3 -right-2 z-10">
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md ${rarityBadgeClass(species.rarity)}`}>
+            ✦ DONE
+          </span>
+        </div>
+      )}
     <div
       className={`
-        relative flex flex-col gap-3 bg-card/60 border rounded-xl p-4 transition-all duration-200
+        flex flex-col gap-3 bg-card/60 border rounded-xl p-4 transition-all duration-200
         ${outOfStock
           ? "border-border opacity-50"
           : justBought
@@ -329,22 +345,6 @@ export function ShopSlotCard({ slot }: Props) {
         }
       `}
     >
-      {/* Undiscovered badge — solid rarity color, no transparency */}
-      {isNew && !outOfStock && (
-        <div className="absolute -top-3 -right-2 z-10">
-          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md ${rarityBadgeClass(species.rarity)}`}>
-            ✦ NEW
-          </span>
-        </div>
-      )}
-      
-      {isComplete && !outOfStock && (
-        <div className="absolute -top-3 -right-2 z-10">
-          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md ${rarityBadgeClass(species.rarity)}`}>
-            ✦ DONE
-          </span>
-        </div>
-      )}
 
       <div className="flex items-start justify-between">
         {isNew
@@ -418,6 +418,7 @@ export function ShopSlotCard({ slot }: Props) {
           </button>
         </div>
       </div>
+    </div>
     </div>
   );
 }
