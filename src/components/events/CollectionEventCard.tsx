@@ -91,6 +91,11 @@ export function CollectionEventCard({ event }: Props) {
       <div>
         <h3 className="font-bold text-sm">{event.name}</h3>
         <p className="text-xs text-muted-foreground mt-0.5">{event.description}</p>
+        <p className="text-[10px] text-muted-foreground/60 mt-1">
+          {new Date(event.startsAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+          {" – "}
+          {new Date(event.endsAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+        </p>
       </div>
 
       {/* Quest list */}
