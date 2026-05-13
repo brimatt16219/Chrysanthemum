@@ -29,7 +29,9 @@ import { edgePlantSeed, edgePlantBloom, edgeUpgradeFarm, edgeHarvest, edgeHarves
 import { getNextUpgrade, getCurrentTier } from "../data/upgrades";
 import { getAffectedCells, GEAR, isGearExpired } from "../data/gear";
 import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
-import type { MutationType } from "../data/flowers";
+import type { MutationType, Rarity, FlowerType } from "../data/flowers";
+import { BulkActionModal } from "./BulkActionModal";
+import type { BulkPoolItem } from "./BulkActionModal";
 import type { GearType, FanDirection } from "../data/gear";
 import { useDailyProgress } from "../hooks/useDailyProgress";
 import { useAchievementStats } from "../hooks/useAchievementStats";
@@ -234,6 +236,8 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
   const [highlightSource, setHighlightSource] = useState<{ row: number; col: number; gearType: GearType } | null>(null);
   /** Pending fan placement — waits for the player to choose a direction */
   const [pendingFan, setPendingFan] = useState<{ gearType: GearType; row: number; col: number } | null>(null);
+  /** Bulk-action modal: "plant" or "harvest" filter sheet, null = closed */
+  const [bulkModal, setBulkModal] = useState<"plant" | "harvest" | null>(null);
 
   // Track plots with a harvest in-flight so we don't open the seed picker
   // before the server has removed the plant from the DB.
@@ -540,7 +544,41 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
     if (optimistic) perform(optimistic, () => edgeUpgradeFarm());
   }
 
-  function handleCollectAll() {
+  // ── Bulk-action modal item pools ──────────────────────────────────────────
+  // bloomedPool: one entry per unique species currently at bloom stage.
+  // seedPool:    one entry per seed species in inventory with quantity > 0.
+  // Both are used by BulkActionModal to drive its rarity/type filter chips.
+
+  const bloomedPool = useMemo<BulkPoolItem[]>(() => {
+    const map = new Map<string, BulkPoolItem>();
+    for (let ri = 0; ri < state.grid.length; ri++) {
+      for (let ci = 0; ci < state.grid[ri].length; ci++) {
+        const p = state.grid[ri][ci];
+        if (!p.plant || crossbreedSourceCells.has(`${ri}-${ci}`)) continue;
+        if (getCurrentStage(p.plant, Date.now(), activeWeather) !== "bloom") continue;
+        const flower = getFlower(p.plant.speciesId);
+        if (!flower) continue;
+        const existing = map.get(p.plant.speciesId);
+        if (existing) existing.count++;
+        else map.set(p.plant.speciesId, { speciesId: p.plant.speciesId, flower, count: 1 });
+      }
+    }
+    return Array.from(map.values());
+  }, [state.grid, activeWeather, crossbreedSourceCells]);
+
+  const seedPool = useMemo<BulkPoolItem[]>(() =>
+    state.inventory.flatMap((i) => {
+      if (!i.isSeed || i.quantity <= 0) return [];
+      const flower = getFlower(i.speciesId);
+      if (!flower) return [];
+      return [{ speciesId: i.speciesId, flower, count: i.quantity }];
+    }),
+    [state.inventory],
+  );
+
+  // ── Bulk handlers (accept optional rarity/type filter from the modal) ──────
+
+  function handleCollectAll(filter?: { rarities: Rarity[]; types: FlowerType[] }) {
     const currentState = getState();
 
     // Collect all bloomed plots and their harvest metadata upfront.
@@ -556,6 +594,14 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
         if (!p.plant || crossbreedSourceCells.has(`${ri}-${ci}`)) continue;
         if (getCurrentStage(p.plant, Date.now(), activeWeather) !== "bloom") continue;
         if (harvestingPlots.current.has(`${ri}-${ci}`)) continue;
+
+        // Apply rarity / type filter from the BulkActionModal (empty = all)
+        if (filter && (filter.rarities.length > 0 || filter.types.length > 0)) {
+          const flower = getFlower(p.plant.speciesId);
+          if (!flower) continue;
+          if (filter.rarities.length > 0 && !filter.rarities.includes(flower.rarity)) continue;
+          if (filter.types.length > 0 && !flower.types.some((t) => filter.types.includes(t))) continue;
+        }
 
         const next = harvestPlant(optState, ri, ci, activeWeather);
         if (!next) continue;
@@ -620,11 +666,14 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
     );
   }
 
-  async function handlePlantAll() {
+  async function handlePlantAll(filter?: { rarities: Rarity[]; types: FlowerType[] }) {
     await awaitHarvests();
 
     const currentState = getState();
-    const optimistic = plantAll(currentState);
+    const optimistic = plantAll(
+      currentState,
+      filter && (filter.rarities.length > 0 || filter.types.length > 0) ? filter : undefined,
+    );
     if (optimistic === currentState) return;
 
     const planted: { row: number; col: number; speciesId: string }[] = [];
@@ -690,7 +739,7 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
                   {bloomedCount} flower{bloomedCount > 1 ? "s" : ""} ready!
                 </p>
                 <button
-                  onClick={handleCollectAll}
+                  onClick={() => setBulkModal("harvest")}
                   className="px-3 py-1 rounded-full text-xs font-semibold bg-primary/20 border border-primary/50 text-primary hover:bg-primary/30 transition-all"
                 >
                   Collect All
@@ -699,7 +748,7 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
             )}
             {emptyPlotCount > 0 && availSeedCount > 0 && (
               <button
-                onClick={handlePlantAll}
+                onClick={() => setBulkModal("plant")}
                 className="px-3 py-1 rounded-full text-xs font-semibold bg-card border border-border text-muted-foreground hover:border-primary/50 hover:text-primary transition-all"
               >
                 <span className="flex items-center gap-1">
@@ -765,6 +814,22 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
             );
           })}
         </div>
+
+        {/* Bulk plant / harvest filter modal */}
+        {bulkModal && (
+          <BulkActionModal
+            mode={bulkModal}
+            items={bulkModal === "harvest" ? bloomedPool : seedPool}
+            emptyPlots={bulkModal === "plant" ? emptyPlotCount : undefined}
+            onClose={() => setBulkModal(null)}
+            onExecute={(rarities, types) => {
+              const mode = bulkModal;
+              setBulkModal(null);
+              if (mode === "harvest") handleCollectAll({ rarities, types });
+              else void handlePlantAll({ rarities, types });
+            }}
+          />
+        )}
 
         {/* Seed + Gear picker modal */}
         {selectedPlot && (

@@ -2108,12 +2108,21 @@ const RARITY_PRIORITY: Record<Rarity, number> = {
   common:    6,
 };
 
-export function plantAll(state: GameState): GameState {
-  // Build sorted seed list: highest rarity first, then highest sell value
+export function plantAll(
+  state: GameState,
+  filter?: { rarities?: Rarity[]; types?: FlowerType[] },
+): GameState {
+  // Build sorted seed list: highest rarity first, then highest sell value.
+  // When a filter is provided only seeds matching ALL specified criteria are planted.
   const seeds = state.inventory
     .filter((i) => i.isSeed && i.quantity > 0)
     .map((i) => ({ ...i, species: getFlower(i.speciesId) }))
-    .filter((i) => i.species)
+    .filter((i) => {
+      if (!i.species) return false;
+      if (filter?.rarities?.length && !filter.rarities.includes(i.species.rarity)) return false;
+      if (filter?.types?.length && !i.species.types.some((t) => filter.types!.includes(t))) return false;
+      return true;
+    })
     .sort((a, b) => {
       const rarityDiff = RARITY_PRIORITY[a.species!.rarity] - RARITY_PRIORITY[b.species!.rarity];
       if (rarityDiff !== 0) return rarityDiff;
