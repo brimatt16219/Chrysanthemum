@@ -830,14 +830,14 @@ function AppInner() {
               }
               <span className="hidden sm:inline text-xs capitalize">{t}</span>
 
-              {t === "garden"    && gardenNewBlooms > 0                              && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary rounded-full" />}
-              {t === "shop"      && (newSeedsShopBadge + newSupplyShopBadge) > 0      && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary rounded-full" />}
-              {t === "inventory" && newInvTotal > 0                                   && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary rounded-full" />}
-              {t === "craft"     && claimableCraftsCount > 0                          && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary rounded-full" />}
-              {t === "alchemy"   && claimableAttunementsCount > 0                     && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary rounded-full" />}
-              {t === "codex"     && unseenCodex.size > 0                              && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary rounded-full" />}
-              {t === "events"    && eventsBadge                                        && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary rounded-full" />}
-              {t === "social"    && socialBadgeCount > 0                              && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary rounded-full" />}
+              {t === "garden"    && gardenNewBlooms > 0                              && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary" style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }} />}
+              {t === "shop"      && (newSeedsShopBadge + newSupplyShopBadge) > 0      && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary" style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }} />}
+              {t === "inventory" && newInvTotal > 0                                   && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary" style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }} />}
+              {t === "craft"     && claimableCraftsCount > 0                          && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary" style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }} />}
+              {t === "alchemy"   && claimableAttunementsCount > 0                     && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary" style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }} />}
+              {t === "codex"     && unseenCodex.size > 0                              && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary" style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }} />}
+              {t === "events"    && eventsBadge                                        && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary" style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }} />}
+              {t === "social"    && socialBadgeCount > 0                              && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary" style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }} />}
             </button>
           ))}
         </div>
@@ -867,33 +867,32 @@ function AppInner() {
                 {(["seeds", "supply"] as ShopView[]).map((v) => {
                   const badge = v === "seeds" ? newSeedsShopBadge : newSupplyShopBadge;
                   return (
-                    <button
-                      key={v}
-                      onClick={() => handleShopViewChange(v)}
-                      className={`
-                        flex-1 py-2 rounded-xl text-xs font-semibold transition-all text-center relative
-                        ${shopView === v
-                          ? "bg-primary/20 border border-primary/50 text-primary"
-                          : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
-                        }
-                      `}
-                    >
-                      <span className="inline-flex items-center justify-center gap-1">
-                        <ItemSprite
-                          emoji={v === "seeds" ? "🌱" : "🧪"}
-                          sprite={v === "seeds" ? "/sprites/flowers/seed.png" : "/sprites/ui/consumables.png"}
-                          textSize="text-xs"
-                          imgSize="w-4 h-4"
-                          name={v}
-                        />
-                        {v === "seeds" ? "Seeds" : "Supply"}
-                      </span>
-                      {badge > 0 && shopView !== v && (
-                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
-                          {badge}
+                    <div key={v} className="relative flex-1">
+                      <button
+                        onClick={() => handleShopViewChange(v)}
+                        className={`
+                          w-full py-2 rounded-xl text-xs font-semibold transition-all text-center
+                          ${shopView === v
+                            ? "bg-primary/20 border border-primary/50 text-primary"
+                            : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
+                          }
+                        `}
+                      >
+                        <span className="inline-flex items-center justify-center gap-1">
+                          <ItemSprite
+                            emoji={v === "seeds" ? "🌱" : "🧪"}
+                            sprite={v === "seeds" ? "/sprites/flowers/seed.png" : "/sprites/ui/consumables.png"}
+                            textSize="text-xs"
+                            imgSize="w-4 h-4"
+                            name={v}
+                          />
+                          {v === "seeds" ? "Seeds" : "Supply"}
                         </span>
+                      </button>
+                      {badge > 0 && shopView !== v && (
+                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary" style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }} />
                       )}
-                    </button>
+                    </div>
                   );
                 })}
               </div>
@@ -932,32 +931,35 @@ function AppInner() {
                   {(["search", "friends", "mailbox", "marketplace", "leaderboard"] as SocialView[]).map((v) => {
                     const mailboxBadge = mailboxUnreadCount;
                     return (
-                      <button
-                        key={v}
-                        onClick={() => handleSocialViewChange(v)}
-                        className={`
-                          flex-1 py-2 rounded-xl text-xs font-semibold transition-all relative text-center
-                          ${socialView === v && !profileUsername
-                            ? "bg-primary/20 border border-primary/50 text-primary"
-                            : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
-                          }
-                        `}
-                      >
-                        <span className="inline-flex items-center justify-center gap-1">
-                          <ItemSprite emoji={SOCIAL_EMOJI[v]} sprite={SOCIAL_SPRITE[v]} textSize="text-base" imgSize="w-5 h-5" name={SOCIAL_LABEL[v]} />
-                          <span className="hidden sm:inline">{SOCIAL_LABEL[v]}</span>
-                        </span>
-                        {v === "friends" && pendingCount > 0 && (
-                          <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
-                            {pendingCount}
+                      <div key={v} className="relative flex-1">
+                        <button
+                          onClick={() => handleSocialViewChange(v)}
+                          className={`
+                            w-full py-2 rounded-xl text-xs font-semibold transition-all text-center
+                            ${socialView === v && !profileUsername
+                              ? "bg-primary/20 border border-primary/50 text-primary"
+                              : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
+                            }
+                          `}
+                        >
+                          <span className="inline-flex items-center justify-center gap-1">
+                            <ItemSprite emoji={SOCIAL_EMOJI[v]} sprite={SOCIAL_SPRITE[v]} textSize="text-base" imgSize="w-5 h-5" name={SOCIAL_LABEL[v]} />
+                            <span className="hidden sm:inline">{SOCIAL_LABEL[v]}</span>
                           </span>
+                        </button>
+                        {v === "friends" && pendingCount > 0 && (
+                          <span
+                            className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary"
+                            style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }}
+                          />
                         )}
                         {v === "mailbox" && mailboxBadge > 0 && (
-                          <span className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
-                            {mailboxBadge > 9 ? "9+" : mailboxBadge}
-                          </span>
+                          <span
+                            className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary"
+                            style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }}
+                          />
                         )}
-                      </button>
+                      </div>
                     );
                   })}
                   {user && (

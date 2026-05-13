@@ -245,7 +245,7 @@ export function Codex({ discoveredOverride, compact = false, unseenEntries, mark
           ))}
           <div className="relative">
             {(unseenEntries?.size ?? 0) > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 z-10 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-card shadow-[0_0_8px_rgba(239,68,68,0.6)]" />    
+              <span className="absolute -top-1 -right-1 z-10 w-2.5 h-2.5 bg-primary" style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }} />    
               )}
               <button
                 disabled={(unseenEntries?.size ?? 0) === 0}
@@ -298,7 +298,8 @@ export function Codex({ discoveredOverride, compact = false, unseenEntries, mark
                   is expanded (markSeen marks every entry of this species). */}
               {cardHasUnseen && (
                 <span
-                  className="absolute top-2 right-2 z-10 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-card shadow-[0_0_8px_rgba(239,68,68,0.6)]"
+                  className="absolute top-2 right-2 z-10 w-2.5 h-2.5 bg-primary"
+                  style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }}
                   aria-label="New discovery"
                 />
               )}

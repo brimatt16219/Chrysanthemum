@@ -274,30 +274,29 @@ export function Inventory({ newSeeds = 0, newBlooms = 0, newSupplies = 0, onSubT
                          : 0;
           const subKey = (i === 0 ? "seeds" : i === 1 ? "blooms" : "supplies") as "seeds" | "blooms" | "supplies";
           return (
-            <button
-              key={label}
-              onClick={() => {
-                setTab(i as Tab);
-                if (i < 3) onSubTabView?.(subKey);
-              }}
-              className={`
-                flex-1 py-2 rounded-xl text-xs font-semibold transition-all relative text-center
-                ${tab === i
-                  ? "bg-primary/20 border border-primary/50 text-primary"
-                  : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30 hover:text-foreground"
-                }
-              `}
-            >
-              <span className="inline-flex items-center justify-center gap-1">
-                <ItemSprite emoji={TAB_EMOJIS[i]} sprite={TAB_SPRITES[i]} textSize="text-sm" imgSize="w-4 h-4" name={label} />
-                <span className="hidden sm:inline">{label}</span>
-              </span>
-              {newCount > 0 && tab !== i && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full text-[10px] text-primary-foreground flex items-center justify-center font-bold">
-                  {newCount > 9 ? "9+" : newCount}
+            <div key={label} className="relative flex-1">
+              <button
+                onClick={() => {
+                  setTab(i as Tab);
+                  if (i < 3) onSubTabView?.(subKey);
+                }}
+                className={`
+                  w-full py-2 rounded-xl text-xs font-semibold transition-all text-center
+                  ${tab === i
+                    ? "bg-primary/20 border border-primary/50 text-primary"
+                    : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30 hover:text-foreground"
+                  }
+                `}
+              >
+                <span className="inline-flex items-center justify-center gap-1">
+                  <ItemSprite emoji={TAB_EMOJIS[i]} sprite={TAB_SPRITES[i]} textSize="text-sm" imgSize="w-4 h-4" name={label} />
+                  <span className="hidden sm:inline">{label}</span>
                 </span>
+              </button>
+              {newCount > 0 && tab !== i && (
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary" style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }} />
               )}
-            </button>
+            </div>
           );
         })}
       </div>

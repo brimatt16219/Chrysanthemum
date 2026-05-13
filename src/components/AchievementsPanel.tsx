@@ -134,24 +134,25 @@ export function AchievementsPanel() {
           const badge    = claimableCounts[cat] ?? 0;
           const isActive = activeCategory === cat;
           return (
-            <button
-              key={cat}
-              onClick={() => { setActiveCategory(cat); setClaimError(null); }}
-              className={`
-                relative flex flex-col items-center gap-0.5
-                px-2 py-2 rounded-xl border text-xs font-semibold transition-all
-                ${isActive
-                  ? "bg-primary/20 border-primary/50 text-primary"
-                  : "bg-card/60 border-border text-muted-foreground hover:border-primary/30"
-                }
-              `}
-            >
-              <ItemSprite emoji={meta.emoji} sprite={meta.sprite} textSize="text-base" imgSize="w-5 h-5" name={meta.label} />
-              <span className="text-[10px] leading-none text-center">{meta.label}</span>
+            <div key={cat} className="relative">
+              <button
+                onClick={() => { setActiveCategory(cat); setClaimError(null); }}
+                className={`
+                  w-full flex flex-col items-center gap-0.5
+                  px-2 py-2 rounded-xl border text-xs font-semibold transition-all
+                  ${isActive
+                    ? "bg-primary/20 border-primary/50 text-primary"
+                    : "bg-card/60 border-border text-muted-foreground hover:border-primary/30"
+                  }
+                `}
+              >
+                <ItemSprite emoji={meta.emoji} sprite={meta.sprite} textSize="text-base" imgSize="w-5 h-5" name={meta.label} />
+                <span className="text-[10px] leading-none text-center">{meta.label}</span>
+              </button>
               {badge > 0 && (
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full" />
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary" style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }} />
               )}
-            </button>
+            </div>
           );
         })}
       </div>

@@ -83,7 +83,7 @@ export function EventsTab() {
               </span>
             </span>
             {badgeFor[v] && (
-              <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
+              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-primary" style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }} />
             )}
           </button>
         ))}
