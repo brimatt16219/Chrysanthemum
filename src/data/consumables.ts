@@ -144,11 +144,11 @@ export function consumableShopPrice(recipe: ConsumableRecipe): number {
 // "Attunement" name.
 
 export const ATTUNEMENT_RECIPES: AttunementRecipe[] = [
-  { tier: 1, rarity: "rare",      name: "Infuser I",   description: "Apply to a Rare bloomed flower to mark it as a cross-breeding participant.",      cost: { kind: "essence",    amounts: [{ type: "universal", amount: 2 }] } },
-  { tier: 2, rarity: "legendary", name: "Infuser II",  description: "Apply to a Legendary bloomed flower to mark it as a cross-breeding participant.", cost: { kind: "attunement", tier: 1, quantity: 2 } },
-  { tier: 3, rarity: "mythic",    name: "Infuser III", description: "Apply to a Mythic bloomed flower to mark it as a cross-breeding participant.",    cost: { kind: "attunement", tier: 2, quantity: 2 } },
-  { tier: 4, rarity: "exalted",   name: "Infuser IV",  description: "Apply to an Exalted bloomed flower to mark it as a cross-breeding participant.",  cost: { kind: "attunement", tier: 3, quantity: 2 } },
-  { tier: 5, rarity: "prismatic", name: "Infuser V",   description: "Apply to a Prismatic bloomed flower to mark it as a cross-breeding participant.", cost: { kind: "attunement", tier: 4, quantity: 2 } },
+  { tier: 1, rarity: "rare",      name: "Infuser I",   description: "Apply to a Rare bloomed flower to mark it as a cross-breeding participant.",      cost: { kind: "essence",    amounts: [{ type: "universal", amount: 3 }] } },
+  { tier: 2, rarity: "legendary", name: "Infuser II",  description: "Apply to a Legendary bloomed flower to mark it as a cross-breeding participant.", cost: { kind: "attunement", tier: 1, quantity: 3 } },
+  { tier: 3, rarity: "mythic",    name: "Infuser III", description: "Apply to a Mythic bloomed flower to mark it as a cross-breeding participant.",    cost: { kind: "attunement", tier: 2, quantity: 3 } },
+  { tier: 4, rarity: "exalted",   name: "Infuser IV",  description: "Apply to an Exalted bloomed flower to mark it as a cross-breeding participant.",  cost: { kind: "attunement", tier: 3, quantity: 3 } },
+  { tier: 5, rarity: "prismatic", name: "Infuser V",   description: "Apply to a Prismatic bloomed flower to mark it as a cross-breeding participant.", cost: { kind: "attunement", tier: 4, quantity: 3 } },
 ];
 
 // ── Consumable recipes ─────────────────────────────────────────────────────
@@ -178,16 +178,16 @@ export const CONSUMABLE_RECIPES: ConsumableRecipe[] = [
     cost: { kind: "essence", amounts: [{ type: "fairy", amount: 8 }, { type: "stellar", amount: 4 }, { type: "arcane", amount: 4 }] } },
   { id: "heirloom_charm_2", name: "Heirloom Charm II",   emoji: "🔮", sprite: "/sprites/consumables/heirloom_charm.png", tier: 2, rarity: "legendary", category: "growth",
     description: `Harvest a ${r(2)} bloom without consuming it — the seed is returned to your inventory.`,
-    cost: { kind: "consumable", id: "heirloom_charm_1", quantity: 2 } },
+    cost: { kind: "consumable", id: "heirloom_charm_1", quantity: 3 } },
   { id: "heirloom_charm_3", name: "Heirloom Charm III",  emoji: "🔮", sprite: "/sprites/consumables/heirloom_charm.png", tier: 3, rarity: "mythic",    category: "growth",
     description: `Harvest a ${r(3)} bloom without consuming it — the seed is returned to your inventory.`,
-    cost: { kind: "consumable", id: "heirloom_charm_2", quantity: 2 } },
+    cost: { kind: "consumable", id: "heirloom_charm_2", quantity: 3 } },
   { id: "heirloom_charm_4", name: "Heirloom Charm IV",   emoji: "🔮", sprite: "/sprites/consumables/heirloom_charm.png", tier: 4, rarity: "exalted",   category: "growth",
     description: `Harvest a ${r(4)} bloom without consuming it — the seed is returned to your inventory.`,
-    cost: { kind: "consumable", id: "heirloom_charm_3", quantity: 2 } },
+    cost: { kind: "consumable", id: "heirloom_charm_3", quantity: 3 } },
   { id: "heirloom_charm_5", name: "Heirloom Charm V",    emoji: "🔮", sprite: "/sprites/consumables/heirloom_charm.png", tier: 5, rarity: "prismatic", category: "growth",
     description: `Harvest a ${r(5)} bloom without consuming it — the seed is returned to your inventory.`,
-    cost: { kind: "consumable", id: "heirloom_charm_4", quantity: 2 } },
+    cost: { kind: "consumable", id: "heirloom_charm_4", quantity: 3 } },
 
   // ── Eclipse Tonic (I–V) — utility ────────────────────────────────────────
   { id: "eclipse_tonic_1", name: "Eclipse Tonic I",    emoji: "🌒", sprite: "/sprites/consumables/eclipse_tonic.png", tier: 1, rarity: "rare",      category: "utility", advanceHours: 1,
@@ -462,16 +462,16 @@ export const CONSUMABLE_RECIPES: ConsumableRecipe[] = [
     cost: { kind: "essence", amounts: [{ type: "universal", amount: 1 }] } },
   { id: "seed_pouch_2", name: "Seed Pouch II",   emoji: "🎁", sprite: "/sprites/consumables/seed_pouch.png", tier: 2, rarity: "legendary", category: "seed_pouch",
     description: "Open from your inventory for a random seed of any rarity — higher tiers roll better odds.",
-    cost: { kind: "consumable", id: "seed_pouch_1", quantity: 2 } },
+    cost: { kind: "consumable", id: "seed_pouch_1", quantity: 3 } },
   { id: "seed_pouch_3", name: "Seed Pouch III",  emoji: "🎁", sprite: "/sprites/consumables/seed_pouch.png", tier: 3, rarity: "mythic",    category: "seed_pouch",
     description: "Open from your inventory for a random seed of any rarity — higher tiers roll better odds.",
-    cost: { kind: "consumable", id: "seed_pouch_2", quantity: 2 } },
+    cost: { kind: "consumable", id: "seed_pouch_2", quantity: 3 } },
   { id: "seed_pouch_4", name: "Seed Pouch IV",   emoji: "🎁", sprite: "/sprites/consumables/seed_pouch.png", tier: 4, rarity: "exalted",   category: "seed_pouch",
     description: "Open from your inventory for a random seed of any rarity — higher tiers roll better odds.",
-    cost: { kind: "consumable", id: "seed_pouch_3", quantity: 2 } },
+    cost: { kind: "consumable", id: "seed_pouch_3", quantity: 3 } },
   { id: "seed_pouch_5", name: "Seed Pouch V",    emoji: "🎁", sprite: "/sprites/consumables/seed_pouch.png", tier: 5, rarity: "prismatic", category: "seed_pouch",
     description: "Open from your inventory for a random seed of any rarity — higher tiers roll better odds.",
-    cost: { kind: "consumable", id: "seed_pouch_4", quantity: 2 } },
+    cost: { kind: "consumable", id: "seed_pouch_4", quantity: 3 } },
 ];
 
 // ── Typed Seed Pouches (per-type I–V) ─────────────────────────────────────
@@ -505,7 +505,7 @@ for (const t of TYPED_POUCH_TYPES) {
       description: `Open for a random ${label} seed of any rarity — higher tiers roll better odds.`,
       cost: tier === 1
         ? { kind: "essence", amounts: [{ type: t as EssenceType, amount: 16 }] }
-        : { kind: "consumable", id: prevId!, quantity: 2 },
+        : { kind: "consumable", id: prevId!, quantity: 3 },
     });
   }
 }

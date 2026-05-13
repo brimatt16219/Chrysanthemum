@@ -42,10 +42,10 @@ const CONSUMABLE_RECIPES: ConsumableRecipeDef[] = [
   { id: "bloom_burst_5", cost: U("bloom_burst_4", 2) },
   // Heirloom Charm
   { id: "heirloom_charm_1", cost: E([{ type: "fairy", amount: 8 }, { type: "stellar", amount: 4 }, { type: "arcane", amount: 4 }]) },
-  { id: "heirloom_charm_2", cost: U("heirloom_charm_1", 2) },
-  { id: "heirloom_charm_3", cost: U("heirloom_charm_2", 2) },
-  { id: "heirloom_charm_4", cost: U("heirloom_charm_3", 2) },
-  { id: "heirloom_charm_5", cost: U("heirloom_charm_4", 2) },
+  { id: "heirloom_charm_2", cost: U("heirloom_charm_1", 3) },
+  { id: "heirloom_charm_3", cost: U("heirloom_charm_2", 3) },
+  { id: "heirloom_charm_4", cost: U("heirloom_charm_3", 3) },
+  { id: "heirloom_charm_5", cost: U("heirloom_charm_4", 3) },
   // Eclipse Tonic
   { id: "eclipse_tonic_1", cost: E([{ type: "solar", amount: 4 }, { type: "lunar", amount: 4 }]) },
   { id: "eclipse_tonic_2", cost: U("eclipse_tonic_1", 2) },
@@ -126,10 +126,10 @@ const CONSUMABLE_RECIPES: ConsumableRecipeDef[] = [
   { id: "garden_pin",      cost: E([{ type: "arcane", amount: 4 }, { type: "fairy",   amount: 4 }]) },
   // Generic Seed Pouches (I–V)
   { id: "seed_pouch_1", cost: E([{ type: "universal", amount: 1 }]) },
-  { id: "seed_pouch_2", cost: U("seed_pouch_1", 2) },
-  { id: "seed_pouch_3", cost: U("seed_pouch_2", 2) },
-  { id: "seed_pouch_4", cost: U("seed_pouch_3", 2) },
-  { id: "seed_pouch_5", cost: U("seed_pouch_4", 2) },
+  { id: "seed_pouch_2", cost: U("seed_pouch_1", 3) },
+  { id: "seed_pouch_3", cost: U("seed_pouch_2", 3) },
+  { id: "seed_pouch_4", cost: U("seed_pouch_3", 3) },
+  { id: "seed_pouch_5", cost: U("seed_pouch_4", 3) },
 ];
 
 // Typed Seed Pouches (12 element types × 5 tiers = 60 recipes)
@@ -139,7 +139,7 @@ for (const t of ["blaze","tide","grove","frost","storm","lunar","solar","fairy",
       id: `seed_pouch_${t}_${tier}`,
       cost: tier === 1
         ? E([{ type: t, amount: 16 }])
-        : U(`seed_pouch_${t}_${tier - 1}`, 2),
+        : U(`seed_pouch_${t}_${tier - 1}`, 3),
     });
   }
 }
@@ -147,11 +147,11 @@ for (const t of ["blaze","tide","grove","frost","storm","lunar","solar","fairy",
 const CONSUMABLE_RECIPE_MAP = Object.fromEntries(CONSUMABLE_RECIPES.map((r) => [r.id, r]));
 
 const ATTUNEMENT_RECIPES: AttunementRecipeDef[] = [
-  { tier: 1, rarity: "rare",      cost: { kind: "essence",    amounts: [{ type: "universal", amount: 2 }] } },
-  { tier: 2, rarity: "legendary", cost: { kind: "attunement", tier: 1, quantity: 2 } },
-  { tier: 3, rarity: "mythic",    cost: { kind: "attunement", tier: 2, quantity: 2 } },
-  { tier: 4, rarity: "exalted",   cost: { kind: "attunement", tier: 3, quantity: 2 } },
-  { tier: 5, rarity: "prismatic", cost: { kind: "attunement", tier: 4, quantity: 2 } },
+  { tier: 1, rarity: "rare",      cost: { kind: "essence",    amounts: [{ type: "universal", amount: 3 }] } },
+  { tier: 2, rarity: "legendary", cost: { kind: "attunement", tier: 1, quantity: 3 } },
+  { tier: 3, rarity: "mythic",    cost: { kind: "attunement", tier: 2, quantity: 3 } },
+  { tier: 4, rarity: "exalted",   cost: { kind: "attunement", tier: 3, quantity: 3 } },
+  { tier: 5, rarity: "prismatic", cost: { kind: "attunement", tier: 4, quantity: 3 } },
 ];
 
 // ── Handlers ─────────────────────────────────────────────────────────────────
