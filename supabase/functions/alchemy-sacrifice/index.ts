@@ -351,10 +351,28 @@ Deno.serve(async (req: Request) => {
       const save          = saveResult.data;
       const priorUpdatedAt = save.updated_at as string;
 
-      let inventory = (save.inventory ?? []) as InventoryItem[];
-      let essences  = (save.essences  ?? []) as EssenceItem[];
+      // Consolidate duplicate inventory entries (same speciesId + mutation + isSeed)
+      // that can accumulate due to null/undefined mutation mismatches in harvest.
+      // Without this, inventory.find() hits only the first entry and reports
+      // "insufficient inventory" even when the combined quantity is sufficient.
+      const rawInventory = (save.inventory ?? []) as InventoryItem[];
+      const dedupMap = new Map<string, InventoryItem>();
+      for (const item of rawInventory) {
+        const key = `${item.speciesId}:${item.mutation ?? ""}:${item.isSeed ? "1" : "0"}`;
+        const existing = dedupMap.get(key);
+        if (existing) {
+          existing.quantity += item.quantity;
+        } else {
+          dedupMap.set(key, { ...item, mutation: item.mutation ?? null });
+        }
+      }
+      let inventory = Array.from(dedupMap.values());
+      let essences  = (save.essences ?? []) as EssenceItem[];
 
       // ── Validate each sacrifice entry ─────────────────────────────────────────
+      // Use a running working copy so multiple entries for the same species are
+      // cross-validated against the true remaining quantity, not the original stock.
+      const workingInventory = inventory.map((i) => ({ ...i }));
       for (const { speciesId, mutation, quantity } of sacrifices) {
         if (!Number.isInteger(quantity) || quantity < 1) {
           return new Response(JSON.stringify({ error: `Invalid quantity for ${speciesId}` }), {
@@ -367,14 +385,17 @@ Deno.serve(async (req: Request) => {
             status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
-        const invItem = inventory.find(
-          (i) => i.speciesId === speciesId && (i.mutation ?? undefined) === (mutation ?? undefined) && !i.isSeed
+        const invItem = workingInventory.find(
+          (i) => i.speciesId === speciesId && (i.mutation ?? null) === (mutation ?? null) && !i.isSeed
         );
         if (!invItem || invItem.quantity < quantity) {
           return new Response(JSON.stringify({ error: `Insufficient inventory for ${speciesId}` }), {
             status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
+        // Deduct from working copy so subsequent entries for the same species
+        // see the reduced quantity.
+        invItem.quantity -= quantity;
       }
 
       // ── Apply sacrifices ──────────────────────────────────────────────────────
@@ -384,7 +405,7 @@ Deno.serve(async (req: Request) => {
         // Consume flowers from inventory
         inventory = inventory
           .map((i) =>
-            i.speciesId === speciesId && (i.mutation ?? undefined) === (mutation ?? undefined) && !i.isSeed
+            i.speciesId === speciesId && (i.mutation ?? null) === (mutation ?? null) && !i.isSeed
               ? { ...i, quantity: i.quantity - quantity }
               : i
           )

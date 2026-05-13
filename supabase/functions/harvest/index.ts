@@ -368,12 +368,15 @@ Deno.serve(async (req: Request) => {
       speciesId: string; quantity: number; mutation?: string; isSeed?: boolean;
     }[];
 
+    // Normalise mutation to null so null/undefined mismatches never create
+    // duplicate inventory entries for the same species (root cause of #250).
+    const normMutation = mutation ?? null;
     const existingIdx = inventory.findIndex(
-      (i) => i.speciesId === speciesId && i.mutation === mutation && !i.isSeed
+      (i) => i.speciesId === speciesId && (i.mutation ?? null) === normMutation && !i.isSeed
     );
     let newInventory = existingIdx >= 0
       ? inventory.map((i, idx) => idx === existingIdx ? { ...i, quantity: i.quantity + 1 } : i)
-      : [...inventory, { speciesId, quantity: 1, mutation, isSeed: false }];
+      : [...inventory, { speciesId, quantity: 1, mutation: normMutation, isSeed: false }];
 
     // ── Consumable flag: Heirloom Charm (heirloomActive) ─────────────────────
     // Return the seed to inventory in addition to the normal bloom harvest.
