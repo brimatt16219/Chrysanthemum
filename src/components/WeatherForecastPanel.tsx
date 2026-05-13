@@ -244,8 +244,8 @@ export function WeatherForecastPanel({ onClose }: Props) {
               </span>
             </button>
             {!canAfford && (
-              <p className="text-xs text-muted-foreground/60 text-center">
-                You have {state.coins.toLocaleString()}{" "}
+              <p className="text-xs text-muted-foreground/60 text-center inline-flex items-center justify-center gap-1 w-full">
+                You have {state.coins.toLocaleString()}
                 <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
               </p>
             )}
