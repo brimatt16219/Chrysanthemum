@@ -231,6 +231,31 @@ export function AlchemyTab({ activeView, onViewChange }: AlchemyTabProps = {}) {
     setSelections(next);
   }
 
+  /** Select the maximum quantity of every flower of a specific rarity,
+   *  regardless of the active rarity / type filter. */
+  function handleSelectByRarity(rarity: Rarity) {
+    const items = sacrificableByRarity.get(rarity) ?? [];
+    setSelections((prev) => {
+      const next = new Map(prev);
+      for (const item of items) {
+        next.set(mapKey(item.speciesId, item.mutation), item.quantity);
+      }
+      return next;
+    });
+  }
+
+  /** Clear every selection belonging to a specific rarity. */
+  function handleClearByRarity(rarity: Rarity) {
+    const items = sacrificableByRarity.get(rarity) ?? [];
+    setSelections((prev) => {
+      const next = new Map(prev);
+      for (const item of items) {
+        next.delete(mapKey(item.speciesId, item.mutation));
+      }
+      return next;
+    });
+  }
+
   async function handleSacrifice() {
     if (sacrificing || totalSelected === 0) return;
     setSacrificing(true);
@@ -418,6 +443,50 @@ export function AlchemyTab({ activeView, onViewChange }: AlchemyTabProps = {}) {
               })}
             </div>
           </div>
+
+          {/* Per-rarity select-all / clear quick actions.
+              Shows one pill per rarity that has at least one flower in inventory.
+              Clicking selects all of that rarity (across all filters); clicking
+              again when every flower of that rarity is at max clears them. */}
+          {rarityOrder.some((r) => (sacrificableByRarity.get(r)?.length ?? 0) > 0) && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest shrink-0">
+                Select all:
+              </span>
+              {rarityOrder.map((rarity) => {
+                const items = sacrificableByRarity.get(rarity);
+                if (!items?.length) return null;
+                const cfg         = RARITY_CONFIG[rarity];
+                const totalQty    = items.reduce((s, i) => s + i.quantity, 0);
+                const selectedQty = items.reduce(
+                  (s, i) => s + getQty(i.speciesId, i.mutation as MutationType | undefined), 0
+                );
+                const allSelected = selectedQty >= totalQty;
+                return (
+                  <button
+                    key={rarity}
+                    onClick={() =>
+                      allSelected ? handleClearByRarity(rarity) : handleSelectByRarity(rarity)
+                    }
+                    title={
+                      allSelected
+                        ? `Clear all ${cfg.label} flowers`
+                        : `Select all ${cfg.label} flowers (${totalQty} total)`
+                    }
+                    className={`
+                      px-2.5 py-1 rounded-lg text-[11px] font-semibold capitalize transition-all border
+                      ${allSelected
+                        ? "bg-primary/15 border-primary/40 text-primary"
+                        : `bg-card/40 border-border/60 ${cfg.color} hover:bg-card hover:border-border`
+                      }
+                    `}
+                  >
+                    {allSelected ? `${cfg.label} ✕` : `${cfg.label} (${totalQty})`}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {/* Type filter */}
           <div>
