@@ -50,6 +50,11 @@ const VISUAL_TOGGLES: { key: keyof Settings; label: string; description: string 
     label:       "Fertilizer badge",
     description: "Fertilizer emoji shown on tiles with an active fertilizer",
   },
+  {
+    key:         "weatherEffects",
+    label:       "Weather effects",
+    description: "Visual overlays for rain, storms, golden hour, and other weather events.",
+  },
 ];
 
 // ── Main component ────────────────────────────────────────────────────────────

@@ -717,7 +717,7 @@ function AppInner() {
       <DayNightOverlay period={dayPeriod} />
 
       {/* Weather overlay — z-20, above day/night */}
-      <WeatherOverlay weatherType={activeWeather} isActive={weatherIsActive} />
+      <WeatherOverlay weatherType={activeWeather} isActive={weatherIsActive && settings.weatherEffects} />
 
       {/* HUD + Tab bar — sticky together so both stay pinned while scrolling */}
       <div className="sticky top-0 z-30" data-sticky-nav>

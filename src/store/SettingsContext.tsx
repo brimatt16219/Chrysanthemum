@@ -11,6 +11,7 @@ export interface Settings {
   useSprites:              boolean;
   pixelBorders:            boolean;
   theme:                   string;
+  weatherEffects:          boolean;
   // ── Audio ──────────────────────────────────────────────
   musicVolume:             number;   // 0–1
   sfxVolume:               number;   // 0–1
@@ -28,6 +29,7 @@ const DEFAULTS: Settings = {
   useSprites:              true,
   pixelBorders:            true,
   theme:                   "garden",
+  weatherEffects:          true,
   // ── Audio ──────────────────────────────────────────────
   musicVolume:             0.5,
   sfxVolume:               0.7,
