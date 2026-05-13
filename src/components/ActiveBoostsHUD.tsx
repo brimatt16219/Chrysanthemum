@@ -1,11 +1,12 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { ActiveBoost } from "../store/gameStore";
+import { ItemSprite } from "./ItemSprite";
 
-const BOOST_DISPLAY: Record<ActiveBoost["type"], { emoji: string; label: string }> = {
-  growth:     { emoji: "🌿", label: "Verdant Rush" },
-  craft:      { emoji: "⚒️", label: "Forge Haste" },
-  attunement: { emoji: "🌀", label: "Resonance Draft" },
+const BOOST_DISPLAY: Record<ActiveBoost["type"], { emoji: string; sprite: string; label: string }> = {
+  growth:     { emoji: "🌿", sprite: "/sprites/consumables/verdant_rush.png",   label: "Verdant Rush" },
+  craft:      { emoji: "⚒️", sprite: "/sprites/consumables/forge_haste.png",    label: "Forge Haste" },
+  attunement: { emoji: "🌀", sprite: "/sprites/consumables/resonance_draft.png", label: "Resonance Draft" },
 };
 
 function formatRemaining(ms: number): string {
@@ -89,7 +90,7 @@ export function ActiveBoostsHUD({ activeBoosts }: Props) {
         return (
           <div key={b.type} className="flex items-center justify-between gap-4">
             <span className="flex items-center gap-1.5 text-xs text-amber-300">
-              <span className="text-sm leading-none">{cfg.emoji}</span>
+              <ItemSprite emoji={cfg.emoji} sprite={cfg.sprite} name={cfg.label} textSize="text-sm" imgSize="w-4 h-4" />
               <span className="font-medium">{cfg.label}</span>
             </span>
             <span className="text-[11px] font-mono text-muted-foreground whitespace-nowrap">
@@ -112,9 +113,7 @@ export function ActiveBoostsHUD({ activeBoosts }: Props) {
         title="Active boosts — click for details"
       >
         {live.map((b) => (
-          <span key={b.type} className="leading-none">
-            {BOOST_DISPLAY[b.type].emoji}
-          </span>
+          <ItemSprite key={b.type} emoji={BOOST_DISPLAY[b.type].emoji} sprite={BOOST_DISPLAY[b.type].sprite} name={BOOST_DISPLAY[b.type].label} textSize="text-sm" imgSize="w-4 h-4" />
         ))}
         {showInlineTime && (
           <span className="ml-0.5">

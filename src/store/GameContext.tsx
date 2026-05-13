@@ -74,10 +74,10 @@ interface GameContextValue {
   clearGearExpiry: () => void;
   /** Stack of craft entries that just transitioned from in-progress → ready
    *  during this session. App renders one CraftCompletionBanner per entry. */
-  craftCompletions: { id: string; emoji: string; name: string }[];
+  craftCompletions: { id: string; emoji: string; sprite?: string; name: string }[];
   dismissCraftCompletion: (id: string) => void;
   /** Same shape as craftCompletions but for the alchemy attunement queue. */
-  attunementCompletions: { id: string; emoji: string; name: string }[];
+  attunementCompletions: { id: string; emoji: string; sprite?: string; name: string }[];
   dismissAttunementCompletion: (id: string) => void;
   user: User | null;
   profile: CloudProfile | null;
@@ -161,8 +161,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       return next;
     });
   }
-  const [craftCompletions, setCraftCompletions]       = useState<{ id: string; emoji: string; name: string }[]>([]);
-  const [attunementCompletions, setAttunementCompletions] = useState<{ id: string; emoji: string; name: string }[]>([]);
+  const [craftCompletions, setCraftCompletions]       = useState<{ id: string; emoji: string; sprite?: string; name: string }[]>([]);
+  const [attunementCompletions, setAttunementCompletions] = useState<{ id: string; emoji: string; sprite?: string; name: string }[]>([]);
   const [user, setUser]                         = useState<User | null>(null);
   const [profile, setProfile]                   = useState<CloudProfile | null>(null);
   const [authLoading, setAuthLoading]           = useState(true);
@@ -504,8 +504,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           if (isDone) {
             if (craftSeenInProgress.current.has(entry.id)) {
               // Genuine transition — fire banner.
-              const { emoji, name } = queueEntryDisplay(entry);
-              newCompletions.push({ id: entry.id, emoji, name });
+              const { emoji, sprite, name } = queueEntryDisplay(entry);
+              newCompletions.push({ id: entry.id, emoji, sprite, name });
             }
             // Either way, never fire again for this id.
             craftFiredCompleted.current.add(entry.id);
@@ -530,9 +530,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
               // says "Attunement ready: <flower>".
               const flower = getFlower(entry.speciesId);
               newAttuneCompletions.push({
-                id:    entry.id,
-                emoji: flower?.emoji.bloom ?? "🌸",
-                name:  flower?.name ?? entry.speciesId,
+                id:     entry.id,
+                emoji:  flower?.emoji.bloom ?? "🌸",
+                sprite: flower?.sprite.bloom,
+                name:   flower?.name ?? entry.speciesId,
               });
             }
             attuneFiredCompleted.current.add(entry.id);

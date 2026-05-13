@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { ItemSprite } from "./ItemSprite";
 
 interface Props {
   emoji:     string;
+  sprite?:   string;
   name:      string;
   /** Banner title — defaults to "Craft Ready!". Use "Attunement Ready!" etc.
    *  for non-craft queue completions that share the same banner shape. */
@@ -13,7 +15,7 @@ interface Props {
  *  collect". Auto-dismisses after 4 seconds, mirroring the shop restock
  *  banner. The wrapper that mounts it sets the position + z-index so multiple
  *  banners can stack vertically. */
-export function CraftCompletionBanner({ emoji, name, title = "Craft Ready!", onDismiss }: Props) {
+export function CraftCompletionBanner({ emoji, sprite, name, title = "Craft Ready!", onDismiss }: Props) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -40,8 +42,8 @@ export function CraftCompletionBanner({ emoji, name, title = "Craft Ready!", onD
       <div className="flex items-center gap-4 bg-card border border-amber-500/40 rounded-2xl px-5 py-4 shadow-2xl shadow-amber-500/20 min-w-72">
 
         {/* Icon */}
-        <div className="text-3xl flex-shrink-0 animate-bounce">
-          {emoji}
+        <div className="flex-shrink-0 animate-bounce">
+          <ItemSprite emoji={emoji} sprite={sprite} name={name} textSize="text-3xl" imgSize="w-8 h-8" />
         </div>
 
         {/* Text */}

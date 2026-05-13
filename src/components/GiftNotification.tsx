@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ItemSprite } from "./ItemSprite";
 
 interface Props {
   onDismiss: () => void;
@@ -26,7 +27,9 @@ export function GiftNotification({ onDismiss, onView }: Props) {
       `}
     >
       <div className="flex items-center gap-4 bg-card border border-primary/40 rounded-2xl px-5 py-4 shadow-2xl shadow-primary/20 min-w-72">
-        <div className="text-2xl animate-bounce flex-shrink-0">🎁</div>
+        <div className="animate-bounce flex-shrink-0">
+          <ItemSprite emoji="🎁" sprite="/sprites/ui/task_gift.png" name="Gift" textSize="text-2xl" imgSize="w-7 h-7" />
+        </div>
         <div className="flex-1">
           <p className="text-sm font-bold">You received a gift!</p>
           <button

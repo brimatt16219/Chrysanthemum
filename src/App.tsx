@@ -640,6 +640,7 @@ function AppInner() {
             <CraftCompletionBanner
               key={c.id}
               emoji={c.emoji}
+              sprite={c.sprite}
               name={c.name}
               onDismiss={() => dismissCraftCompletion(c.id)}
             />
@@ -648,6 +649,7 @@ function AppInner() {
             <CraftCompletionBanner
               key={c.id}
               emoji={c.emoji}
+              sprite={c.sprite}
               name={c.name}
               title="Attunement Ready!"
               onDismiss={() => dismissAttunementCompletion(c.id)}
