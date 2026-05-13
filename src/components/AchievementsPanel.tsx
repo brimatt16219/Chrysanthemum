@@ -13,6 +13,7 @@ import { ItemSprite } from "./ItemSprite";
 // ── Category display order ─────────────────────────────────────────────────────
 
 const CATEGORY_ORDER: AchievementCategory[] = [
+  "leveling",
   "harvest", "seeds", "sacrifice", "attunement",
   "shopping", "crafting_consumable", "crafting_gear",
   "pouches", "fertilizers", "consumables_used",
@@ -57,6 +58,9 @@ export function AchievementsPanel() {
           break;
         case "recipe_completed":
           current = state.achievementsClaimed.includes(a.id) ? 1 : 0;
+          break;
+        case "level_reached":
+          current = state.gardenerLevel;
           break;
       }
 

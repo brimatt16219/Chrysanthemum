@@ -17,14 +17,16 @@ export type AchievementCategory =
   | "daily"
   | "crossbreeding"
   | "social"
-  | "attunement";
+  | "attunement"
+  | "leveling";
 
 /** How progress is measured at check/claim time. */
 export type AchievementCheck =
   | { kind: "stat";    statKey: string }
   | { kind: "species_discovered" }
   | { kind: "friends_count" }
-  | { kind: "recipe_completed"; recipeId: string };
+  | { kind: "recipe_completed"; recipeId: string }
+  | { kind: "level_reached" };
 
 export interface Achievement {
   id:          string;
@@ -57,6 +59,7 @@ export const ACHIEVEMENT_CATEGORY_META: Record<AchievementCategory, { label: str
   crossbreeding:       { label: "Cross-Breeding",  emoji: "🥢", sprite: "/sprites/ui/ach_crossbreed.png"   },
   social:              { label: "Social",          emoji: "🌍", sprite: "/sprites/ui/ach_social.png"       },
   attunement:          { label: "Attunement",      emoji: "✨", sprite: "/sprites/ui/ach_attunement.png"   },
+  leveling:            { label: "Leveling",        emoji: "⭐", sprite: "/sprites/ui/ach_leveling.png"     },
 };
 
 // ── Lookup tables ──────────────────────────────────────────────────────────────
@@ -661,6 +664,56 @@ for (const [target, gems, name] of ATTUNEMENT_MILESTONES) {
     "attunement",
     { kind: "stat", statKey: "attunements_completed" },
     target, gems,
+  ));
+}
+
+// ── ⭐ Leveling ────────────────────────────────────────────────────────────────
+
+const LEVEL_NAMES: Record<number, string> = {
+  2:  "Seedling",
+  3:  "Sprout",
+  4:  "Tendril",
+  5:  "Budding Gardener",
+  6:  "Leaf & Stem",
+  7:  "Flower Keeper",
+  8:  "Petal Gatherer",
+  9:  "Soil Sage",
+  10: "Journeyman Gardener",
+  11: "Root & Branch",
+  12: "Fertile Grounds",
+  13: "Green Hand",
+  14: "Bloom Seeker",
+  15: "Seasoned Gardener",
+  16: "Garden Adept",
+  17: "Verdant Scholar",
+  18: "Petal Sage",
+  19: "Garden Veteran",
+  20: "Expert Gardener",
+  21: "Nature's Devotee",
+  22: "Bloom Artisan",
+  23: "Garden Champion",
+  24: "Flora Master",
+  25: "Elite Gardener",
+  26: "Garden Legend",
+  27: "Transcendent Bloom",
+  28: "Grand Botanist",
+  29: "Exalted Gardener",
+  30: "Grand Master Gardener",
+};
+
+for (let level = 2; level <= 30; level++) {
+  const isMilestone = level % 5 === 0;
+  const gems        = isMilestone ? 50 : 20;
+  const emoji       = isMilestone ? "🌟" : "⭐";
+  achievements.push(ach(
+    `level_reached_${level}`,
+    LEVEL_NAMES[level],
+    `Reach gardener level ${level}.`,
+    emoji,
+    "leveling",
+    { kind: "level_reached" },
+    level,
+    gems,
   ));
 }
 

@@ -102,6 +102,9 @@ Deno.serve(async (req: Request) => {
         .or(`requester_id.eq.${userId},receiver_id.eq.${userId}`)
         .eq("status", "accepted");
       met = (count ?? 0) >= target;
+
+    } else if (check.kind === "level_reached") {
+      met = gardenerLevel >= target;
     }
 
     if (!met) return err("Achievement progress not met", 409);

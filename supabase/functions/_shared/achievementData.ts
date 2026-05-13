@@ -7,7 +7,8 @@ export type AchievementCheck =
   | { kind: "species_discovered" }
   | { kind: "friends_count" }
   | { kind: "recipe_completed";    recipeId: string }
-  | { kind: "all_recipes_completed" };
+  | { kind: "all_recipes_completed" }
+  | { kind: "level_reached" };
 
 export interface AchievementDef {
   check:  AchievementCheck;
@@ -251,6 +252,12 @@ for (const [target, gems] of [[1, 5], [5, 10], [10, 15]] as [number, number][]) 
 // ✨ Attunements completed
 for (const [target, gems] of [[1, 5], [10, 10], [50, 15]] as [number, number][]) {
   add(`attunements_${target}`, { kind: "stat", statKey: "attunements_completed" }, target, gems);
+}
+
+// ⭐ Leveling — one achievement per level, 5-level milestones award 50 gems
+for (let level = 2; level <= 30; level++) {
+  const gems = level % 5 === 0 ? 50 : 20;
+  add(`level_reached_${level}`, { kind: "level_reached" }, level, gems);
 }
 
 // ── Export ─────────────────────────────────────────────────────────────────────
