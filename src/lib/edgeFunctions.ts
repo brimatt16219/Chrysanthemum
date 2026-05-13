@@ -276,6 +276,45 @@ export function edgeSyncSupplyShop(supplyShop: GameState["supplyShop"], lastSupp
   return callEdge<{ ok: true; serverUpdatedAt?: string }>("supply-action", { action: "sync", supplyShop, lastSupplyReset });
 }
 
+export interface UnlockSlotResult {
+  ok:              true;
+  supplyShop:      GameState["supplyShop"];
+  serverUpdatedAt: string;
+}
+
+export function edgeUnlockSupplySlot(slotId: string) {
+  return callEdge<UnlockSlotResult>("supply-action", { action: "unlock_slot", slotId });
+}
+
+// ── Seed shop slot lock ───────────────────────────────────────────────────────
+
+export interface SeedLockSlotResult {
+  ok:              true;
+  shop:            GameState["shop"];
+  consumables:     GameState["consumables"];
+  serverUpdatedAt: string;
+}
+
+export interface SeedUnlockSlotResult {
+  ok:              true;
+  shop:            GameState["shop"];
+  serverUpdatedAt: string;
+}
+
+/** Pin a seed shop slot permanently (deducts one Slot Lock consumable). */
+export function edgeLockSeedSlot(slotId: string) {
+  return callEdge<SeedLockSlotResult>("use-consumable", {
+    action:       "seed_lock_slot",
+    consumableId: "slot_lock",
+    slotId,
+  });
+}
+
+/** Remove the permanent pin from a locked seed shop slot (free, no consumable). */
+export function edgeUnlockSeedSlot(slotId: string) {
+  return callEdge<SeedUnlockSlotResult>("shop-action", { action: "unlock_slot", slotId });
+}
+
 // ── Gifting ───────────────────────────────────────────────────────────────────
 
 export interface SendGiftResult {

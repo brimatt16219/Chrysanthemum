@@ -8,8 +8,8 @@ const PX = { imageRendering: "pixelated" as const };
 import { FlowerTypeBadges } from "./FlowerTypeBadges";
 import { FERTILIZERS } from "../data/upgrades";
 import { useGame } from "../store/GameContext";
-import { buyFromShop, buyFertilizer, buyAllFromShop, buyAllFertilizer, getSpeciesCompletion } from "../store/gameStore";
-import { edgeBuyFlower, edgeBuyFertilizer, edgeSyncShop } from "../lib/edgeFunctions";
+import { buyFromShop, buyFertilizer, buyAllFromShop, buyAllFertilizer, getSpeciesCompletion, lockSeedSlot, unlockSeedSlot } from "../store/gameStore";
+import { edgeBuyFlower, edgeBuyFertilizer, edgeSyncShop, edgeLockSeedSlot, edgeUnlockSeedSlot } from "../lib/edgeFunctions";
 import type { ShopSlot } from "../store/gameStore";
 import type { Rarity } from "../data/flowers";
 import { useDailyProgress } from "../hooks/useDailyProgress";
@@ -49,16 +49,52 @@ function rarityBadgeClass(rarity: Rarity): string {
 export function ShopSlotCard({ slot }: Props) {
   const { state, getState, perform, user, requestSignIn, pushGenericToast } = useGame();
   const { settings } = useSettings();
-  const [justBought, setJustBought] = useState(false);
+  const [justBought,    setJustBought]    = useState(false);
+  const [lockingSlot,   setLockingSlot]   = useState(false);
+  const [unlockingSlot, setUnlockingSlot] = useState(false);
   // Absolute per-card gate: blocks any buy while a server call is in-flight,
   // even if stateRef or queuing somehow lets a second request slip through.
   const buyingRef = useRef(false);
   const { trackProgress } = useDailyProgress();
   const { incrementStat } = useAchievementStats();
 
+  const hasSlotLock = (state.consumables ?? []).some((c) => c.id === "slot_lock" && c.quantity > 0);
+
   function flashBought() {
     setJustBought(true);
     setTimeout(() => setJustBought(false), 800);
+  }
+
+  function handleLockSlot() {
+    if (!user) { requestSignIn("to use Slot Lock"); return; }
+    if (lockingSlot) return;
+    const cur = getState();
+    const optimistic = lockSeedSlot(cur, slot.speciesId);
+    if (!optimistic) return;
+    const savedConsumables = cur.consumables;
+    const savedShop        = cur.shop;
+    setLockingSlot(true);
+    perform(
+      optimistic,
+      () => edgeLockSeedSlot(slot.speciesId),
+      () => setLockingSlot(false),
+      { rollback: (c) => ({ ...c, consumables: savedConsumables, shop: savedShop }) }
+    );
+  }
+
+  function handleUnlockSlot() {
+    if (unlockingSlot) return;
+    const cur = getState();
+    const optimistic = unlockSeedSlot(cur, slot.speciesId);
+    if (!optimistic) return;
+    const savedShop = cur.shop;
+    setUnlockingSlot(true);
+    perform(
+      optimistic,
+      () => edgeUnlockSeedSlot(slot.speciesId),
+      () => setUnlockingSlot(false),
+      { rollback: (c) => ({ ...c, shop: savedShop }) }
+    );
   }
 
   // ── Empty placeholder slot ───────────────────────────────────────────────
@@ -185,7 +221,33 @@ export function ShopSlotCard({ slot }: Props) {
           <span className="text-xs text-muted-foreground">
             {outOfStock ? "Out of stock" : `${slot.quantity} left`}
           </span>
-          <div className="flex gap-1.5">
+          <div className="flex items-center gap-1.5">
+            {/* Slot lock / unpin */}
+            {slot.locked ? (
+              <button
+                onClick={handleUnlockSlot}
+                disabled={unlockingSlot}
+                title="Pinned — restocks each cycle. Click to remove pin."
+                className="text-[10px] text-amber-400 font-mono flex items-center gap-0.5 hover:text-amber-300 transition-colors disabled:opacity-50"
+              >
+                <ItemSprite emoji="📌" sprite="/sprites/ui/shop_slot_lock.png" name="Slot Lock" textSize="text-[10px]" imgSize="w-3 h-3" />
+                {" "}{unlockingSlot ? "…" : "Pinned ✕"}
+              </button>
+            ) : hasSlotLock ? (
+              <button
+                onClick={handleLockSlot}
+                disabled={lockingSlot}
+                title="Slot Lock — pins this slot permanently, restocking each cycle until you remove it"
+                className="px-2 py-1 rounded-lg text-[10px] bg-amber-400/10 border border-amber-400/30 text-amber-400 hover:bg-amber-400/20 transition-colors disabled:opacity-50"
+              >
+                {lockingSlot ? "…" : (
+                  <span className="flex items-center gap-0.5">
+                    <ItemSprite emoji="📌" sprite="/sprites/ui/shop_slot_lock.png" name="Slot Lock" textSize="text-[10px]" imgSize="w-3 h-3" />
+                    {" "}Pin
+                  </span>
+                )}
+              </button>
+            ) : null}
             {!outOfStock && slot.quantity > 1 && canAfford && (
               <button
                 onClick={handleBuyAllFert}
@@ -387,7 +449,33 @@ export function ShopSlotCard({ slot }: Props) {
         <span className="text-xs text-muted-foreground">
           {outOfStock ? "Out of stock" : `${slot.quantity} left`}
         </span>
-        <div className="flex gap-1.5">
+        <div className="flex items-center gap-1.5">
+          {/* Slot lock / unpin */}
+          {slot.locked ? (
+            <button
+              onClick={handleUnlockSlot}
+              disabled={unlockingSlot}
+              title="Pinned — restocks each cycle. Click to remove pin."
+              className="text-[10px] text-amber-400 font-mono flex items-center gap-0.5 hover:text-amber-300 transition-colors disabled:opacity-50"
+            >
+              <ItemSprite emoji="📌" sprite="/sprites/ui/shop_slot_lock.png" name="Slot Lock" textSize="text-[10px]" imgSize="w-3 h-3" />
+              {" "}{unlockingSlot ? "…" : "Pinned ✕"}
+            </button>
+          ) : hasSlotLock ? (
+            <button
+              onClick={handleLockSlot}
+              disabled={lockingSlot}
+              title="Slot Lock — pins this slot permanently, restocking each cycle until you remove it"
+              className="px-2 py-1 rounded-lg text-[10px] bg-amber-400/10 border border-amber-400/30 text-amber-400 hover:bg-amber-400/20 transition-colors disabled:opacity-50"
+            >
+              {lockingSlot ? "…" : (
+                <span className="flex items-center gap-0.5">
+                  <ItemSprite emoji="📌" sprite="/sprites/ui/shop_slot_lock.png" name="Slot Lock" textSize="text-[10px]" imgSize="w-3 h-3" />
+                  {" "}Pin
+                </span>
+              )}
+            </button>
+          ) : null}
           {!outOfStock && slot.quantity > 1 && canAfford && (
             <button
               onClick={handleBuyAll}

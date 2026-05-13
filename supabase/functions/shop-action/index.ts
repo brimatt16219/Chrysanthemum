@@ -85,8 +85,8 @@ const FLOWER_SELL_VALUES: Record<string, number> = {
   the_first_bloom: 5_000_000,
 };
 
-type Action = "buy" | "buy_all" | "sell" | "sell_all" | "sync" | "buy_all_seeds";
-interface ShopSlot { speciesId: string; price: number; quantity: number; isFertilizer?: boolean; fertilizerType?: string; isEmpty?: boolean; }
+type Action = "buy" | "buy_all" | "sell" | "sell_all" | "sync" | "buy_all_seeds" | "unlock_slot";
+interface ShopSlot { speciesId: string; price: number; quantity: number; isFertilizer?: boolean; fertilizerType?: string; isEmpty?: boolean; locked?: boolean; }
 interface InventoryItem { speciesId: string; quantity: number; mutation?: string; isSeed?: boolean; }
 interface FertilizerItem { type: string; quantity: number; }
 interface SellAllItem  { speciesId: string; mutation?: string; quantity: number; }
@@ -119,10 +119,10 @@ Deno.serve(async (req: Request) => {
 
     const body = await req.json() as {
       action: Action; speciesId?: string; fertType?: string; quantity?: number; mutation?: string;
-      shop?: ShopSlot[]; lastShopReset?: number;
+      shop?: ShopSlot[]; lastShopReset?: number; slotId?: string;
     };
 
-    if (!["buy", "buy_all", "sell", "sell_all", "sync", "buy_all_seeds"].includes(body.action)) {
+    if (!["buy", "buy_all", "sell", "sell_all", "sync", "buy_all_seeds", "unlock_slot"].includes(body.action)) {
       return new Response(JSON.stringify({ error: "Invalid action" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -188,6 +188,51 @@ Deno.serve(async (req: Request) => {
     let logResult: Record<string, unknown> = {};
 
     const { action } = body;
+
+    // ── unlock_slot: remove pin from a locked seed shop slot ─────────────────
+    if (action === "unlock_slot") {
+      if (!body.slotId) {
+        return new Response(JSON.stringify({ error: "slotId required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const slotIdx = newShop.findIndex((s) => s.speciesId === body.slotId);
+      if (slotIdx < 0) {
+        return new Response(JSON.stringify({ error: "Slot not found" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      // Already unlocked — idempotent so optimistic state stays consistent
+      if (!newShop[slotIdx].locked) {
+        return new Response(
+          JSON.stringify({ ok: true, shop: newShop, serverUpdatedAt: priorUpdatedAt }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const newShopUnlocked = newShop.map((s) =>
+        s.speciesId === body.slotId ? { ...s, locked: false } : s
+      );
+      const { data: ud, error: ue } = await supabaseAdmin
+        .from("game_saves")
+        .update({ shop: newShopUnlocked, updated_at: new Date().toISOString() })
+        .eq("user_id", userId)
+        .eq("updated_at", priorUpdatedAt)
+        .select("updated_at")
+        .single();
+      if (ue || !ud) {
+        return new Response(JSON.stringify({ error: "Save conflict — please retry" }), {
+          status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      void supabaseAdmin.from("action_log").insert({
+        user_id: userId, action: "seed_unlock_slot",
+        payload: { slotId: body.slotId },
+      });
+      return new Response(
+        JSON.stringify({ ok: true, shop: newShopUnlocked, serverUpdatedAt: ud.updated_at }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // ── buy / buy_all ─────────────────────────────────────────────────────────
     if (action === "buy" || action === "buy_all") {

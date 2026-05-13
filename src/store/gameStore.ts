@@ -386,9 +386,13 @@ const SEED_PRICE_RATIO: Record<Rarity, number> = {
   prismatic: 0.85,
 };
 
-function generateShop(shopSlots: number = DEFAULT_SHOP_SLOTS): ShopSlot[] {
+function generateShop(
+  shopSlots: number = DEFAULT_SHOP_SLOTS,
+  maxFerts: number = 2,
+  preUsedIds: Set<string> = new Set(),
+): ShopSlot[] {
   const chosen: ShopSlot[] = [];
-  const usedIds = new Set<string>();
+  const usedIds = new Set<string>(preUsedIds);
 
   // ── FLOWERS — roll rarity first, then pick a random flower from that tier ─
   let attempts = 0;
@@ -437,7 +441,7 @@ function generateShop(shopSlots: number = DEFAULT_SHOP_SLOTS): ShopSlot[] {
   let fertCount = 0;
   attempts = 0;
 
-  while (fertCount < 2 && attempts < 1000) {
+  while (fertCount < maxFerts && attempts < 1000) {
     let roll = Math.random() * fertTotalWeight;
 
     for (const f of ferts) {
@@ -465,6 +469,34 @@ function generateShop(shopSlots: number = DEFAULT_SHOP_SLOTS): ShopSlot[] {
 
   return chosen;
 }
+
+/**
+ * Re-generate the seed shop for a new cycle, preserving any permanently-pinned
+ * slots (locked === true) with fresh stock and filling the rest with new picks.
+ */
+function regenerateSeedShop(shopSlots: number, current: ShopSlot[]): ShopSlot[] {
+  const lockedSlots       = current.filter((s) => s.locked && !s.isEmpty);
+  const lockedFlowerCount = lockedSlots.filter((s) => !s.isFertilizer).length;
+  const lockedFertCount   = lockedSlots.filter((s) =>  s.isFertilizer).length;
+  const newFlowerCount    = Math.max(0, shopSlots - lockedFlowerCount);
+  const newFertCount      = Math.max(0, 2 - lockedFertCount);
+
+  // Avoid regenerating the same species/fertilizer as a locked slot
+  const preUsedIds = new Set<string>(lockedSlots.map((s) => s.speciesId));
+  const freshSlots = generateShop(newFlowerCount, newFertCount, preUsedIds);
+
+  return [
+    ...lockedSlots.map((s) => ({
+      ...s,
+      locked:   true,
+      quantity: s.isFertilizer
+        ? Math.floor(Math.random() * 3) + 1
+        : Math.floor(Math.random() * 4) + 1,
+    })),
+    ...freshSlots,
+  ];
+}
+
 // ── Supply shop generation ─────────────────────────────────────────────────
 
 export const SUPPLY_RESET_INTERVAL = 10 * 60 * 1_000; // 10 minutes
@@ -679,7 +711,7 @@ export function applyOfflineTick(
   const timeSinceReset = now - updated.lastShopReset;
 
   if (timeSinceReset >= SHOP_RESET_INTERVAL) {
-    updated       = { ...updated, shop: generateShop(updated.shopSlots), lastShopReset: now };
+    updated       = { ...updated, shop: regenerateSeedShop(updated.shopSlots, updated.shop), lastShopReset: now };
     shopRestocked = true;
   }
 
@@ -851,7 +883,7 @@ export function tickShop(state: GameState): GameState {
   if (now - state.lastShopReset < SHOP_RESET_INTERVAL) return state;
   return {
     ...state,
-    shop:          generateShop(state.shopSlots),
+    shop:          regenerateSeedShop(state.shopSlots, state.shop),
     lastShopReset: now,
   };
 }
@@ -868,9 +900,16 @@ function regenerateSupplyShop(slots: number, current: ShopSlot[]): ShopSlot[] {
   const lockedSlots = current.filter((s) => s.locked && !s.isEmpty);
   const newSlotCount = Math.max(0, slots - lockedSlots.length);
   const freshSlots = generateSupplyShop(newSlotCount);
-  // Clear the lock flag on kept slots so they re-roll on the next reset
+  // Locked slots persist indefinitely (locked: true stays set) until the player
+  // manually removes the pin. Each restock cycle gives them fresh stock so the
+  // player can buy the item again — fertilizers re-roll a random 1-3 quantity,
+  // gear and consumables always get 1.
   return [
-    ...lockedSlots.map((s) => ({ ...s, locked: false })),
+    ...lockedSlots.map((s) => ({
+      ...s,
+      locked:   true,
+      quantity: s.isFertilizer ? Math.floor(Math.random() * 3) + 1 : 1,
+    })),
     ...freshSlots,
   ];
 }
@@ -3014,6 +3053,47 @@ export function applySlotLock(state: GameState, slotSpeciesId: string): GameStat
   };
 }
 
+
+/** Optimistically remove the pin from a locked supply shop slot. */
+export function unlockSupplySlot(state: GameState, slotSpeciesId: string): GameState | null {
+  const slot = (state.supplyShop ?? []).find((s) => s.speciesId === slotSpeciesId);
+  if (!slot || !slot.locked) return null;
+  return {
+    ...state,
+    supplyShop: state.supplyShop.map((s) =>
+      s.speciesId === slotSpeciesId ? { ...s, locked: false } : s
+    ),
+  };
+}
+
+/**
+ * Optimistically apply Slot Lock to a seed shop slot — deducts consumable and
+ * marks the slot as permanently pinned until the player manually removes it.
+ */
+export function lockSeedSlot(state: GameState, slotSpeciesId: string): GameState | null {
+  const after = deductConsumable(state, "slot_lock");
+  if (!after) return null;
+  const slot = (after.shop ?? []).find((s) => s.speciesId === slotSpeciesId);
+  if (!slot || slot.isEmpty || slot.locked) return null;
+  return {
+    ...after,
+    shop: (after.shop ?? []).map((s) =>
+      s.speciesId === slotSpeciesId ? { ...s, locked: true } : s
+    ),
+  };
+}
+
+/** Optimistically remove the pin from a locked seed shop slot. */
+export function unlockSeedSlot(state: GameState, slotSpeciesId: string): GameState | null {
+  const slot = (state.shop ?? []).find((s) => s.speciesId === slotSpeciesId);
+  if (!slot || !slot.locked) return null;
+  return {
+    ...state,
+    shop: state.shop.map((s) =>
+      s.speciesId === slotSpeciesId ? { ...s, locked: false } : s
+    ),
+  };
+}
 
 export function upgradeFarm(state: GameState): GameState | null {
   const next = getNextUpgrade(state.farmRows, state.farmSize);

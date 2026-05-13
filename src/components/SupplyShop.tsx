@@ -9,6 +9,7 @@ import {
   upgradeSupplySlots,
   applyWindShear,
   applySlotLock,
+  unlockSupplySlot,
 } from "../store/gameStore";
 import {
   edgeBuyFromSupplyShop,
@@ -17,6 +18,7 @@ import {
   edgeUseWindShear,
   edgeUseSlotLock,
   edgeSyncSupplyShop,
+  edgeUnlockSupplySlot,
 } from "../lib/edgeFunctions";
 import {
   RARITY_CONFIG,
@@ -59,8 +61,9 @@ function formatDuration(ms: number): string {
 function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolean }) {
   const { state, perform, getState, awaitHarvests, user, requestSignIn, pushGenericToast } = useGame();
   const { settings } = useSettings();
-  const [justBought,  setJustBought]  = useState(false);
-  const [lockingSlot, setLockingSlot] = useState(false);
+  const [justBought,    setJustBought]    = useState(false);
+  const [lockingSlot,   setLockingSlot]   = useState(false);
+  const [unlockingSlot, setUnlockingSlot] = useState(false);
 
   // ── Empty placeholder ─────────────────────────────────────────────────────
   if (slot.isEmpty) {
@@ -95,6 +98,21 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
           supplyShop: savedShop,
         }),
       }
+    );
+  }
+
+  function handleUnlockSlot() {
+    if (unlockingSlot) return;
+    const cur = getState();
+    const optimistic = unlockSupplySlot(cur, slot.speciesId);
+    if (!optimistic) return;
+    const savedShop = cur.supplyShop;
+    setUnlockingSlot(true);
+    perform(
+      optimistic,
+      () => edgeUnlockSupplySlot(slot.speciesId),
+      () => setUnlockingSlot(false),
+      { rollback: (c) => ({ ...c, supplyShop: savedShop }) }
     );
   }
 
@@ -216,21 +234,26 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
           <div className="flex items-center gap-1.5">
             {/* Slot Lock button */}
             {slot.locked ? (
-              <span className="text-[10px] text-amber-400 font-mono flex items-center gap-0.5">
+              <button
+                onClick={handleUnlockSlot}
+                disabled={unlockingSlot}
+                title="Pinned — restocks each cycle. Click to remove pin."
+                className="text-[10px] text-amber-400 font-mono flex items-center gap-0.5 hover:text-amber-300 transition-colors disabled:opacity-50"
+              >
                 <ItemSprite emoji="📌" sprite="/sprites/ui/shop_slot_lock.png" name="Slot Lock" textSize="text-[10px]" imgSize="w-3 h-3" />
-                {" "}Locked
-              </span>
+                {" "}{unlockingSlot ? "…" : "Pinned ✕"}
+              </button>
             ) : hasSlotLock ? (
               <button
                 onClick={handleLockSlot}
                 disabled={lockingSlot}
-                title="Slot Lock — keeps this slot through the next restock"
+                title="Slot Lock — pins this slot permanently, restocking each cycle until you remove it"
                 className="px-2 py-1 rounded-lg text-[10px] bg-amber-400/10 border border-amber-400/30 text-amber-400 hover:bg-amber-400/20 transition-colors disabled:opacity-50"
               >
                 {lockingSlot ? "…" : (
                   <span className="flex items-center gap-0.5">
                     <ItemSprite emoji="📌" sprite="/sprites/ui/shop_slot_lock.png" name="Slot Lock" textSize="text-[10px]" imgSize="w-3 h-3" />
-                    {" "}Lock
+                    {" "}Pin
                   </span>
                 )}
               </button>
@@ -310,21 +333,26 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
           </span>
           <div className="flex items-center gap-1.5">
             {slot.locked ? (
-              <span className="text-[10px] text-amber-400 font-mono flex items-center gap-0.5">
+              <button
+                onClick={handleUnlockSlot}
+                disabled={unlockingSlot}
+                title="Pinned — restocks each cycle. Click to remove pin."
+                className="text-[10px] text-amber-400 font-mono flex items-center gap-0.5 hover:text-amber-300 transition-colors disabled:opacity-50"
+              >
                 <ItemSprite emoji="📌" sprite="/sprites/ui/shop_slot_lock.png" name="Slot Lock" textSize="text-[10px]" imgSize="w-3 h-3" />
-                {" "}Locked
-              </span>
+                {" "}{unlockingSlot ? "…" : "Pinned ✕"}
+              </button>
             ) : hasSlotLock ? (
               <button
                 onClick={handleLockSlot}
                 disabled={lockingSlot}
-                title="Slot Lock — keeps this slot through the next restock"
+                title="Slot Lock — pins this slot permanently, restocking each cycle until you remove it"
                 className="px-2 py-1 rounded-lg text-[10px] bg-amber-400/10 border border-amber-400/30 text-amber-400 hover:bg-amber-400/20 transition-colors disabled:opacity-50"
               >
                 {lockingSlot ? "…" : (
                   <span className="flex items-center gap-0.5">
                     <ItemSprite emoji="📌" sprite="/sprites/ui/shop_slot_lock.png" name="Slot Lock" textSize="text-[10px]" imgSize="w-3 h-3" />
-                    {" "}Lock
+                    {" "}Pin
                   </span>
                 )}
               </button>
@@ -391,21 +419,26 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
           </span>
           <div className="flex items-center gap-1.5">
             {slot.locked ? (
-              <span className="text-[10px] text-amber-400 font-mono flex items-center gap-0.5">
+              <button
+                onClick={handleUnlockSlot}
+                disabled={unlockingSlot}
+                title="Pinned — restocks each cycle. Click to remove pin."
+                className="text-[10px] text-amber-400 font-mono flex items-center gap-0.5 hover:text-amber-300 transition-colors disabled:opacity-50"
+              >
                 <ItemSprite emoji="📌" sprite="/sprites/ui/shop_slot_lock.png" name="Slot Lock" textSize="text-[10px]" imgSize="w-3 h-3" />
-                {" "}Locked
-              </span>
+                {" "}{unlockingSlot ? "…" : "Pinned ✕"}
+              </button>
             ) : hasSlotLock ? (
               <button
                 onClick={handleLockSlot}
                 disabled={lockingSlot}
-                title="Slot Lock — keeps this slot through the next restock"
+                title="Slot Lock — pins this slot permanently, restocking each cycle until you remove it"
                 className="px-2 py-1 rounded-lg text-[10px] bg-amber-400/10 border border-amber-400/30 text-amber-400 hover:bg-amber-400/20 transition-colors disabled:opacity-50"
               >
                 {lockingSlot ? "…" : (
                   <span className="flex items-center gap-0.5">
                     <ItemSprite emoji="📌" sprite="/sprites/ui/shop_slot_lock.png" name="Slot Lock" textSize="text-[10px]" imgSize="w-3 h-3" />
-                    {" "}Lock
+                    {" "}Pin
                   </span>
                 )}
               </button>

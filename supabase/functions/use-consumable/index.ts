@@ -394,7 +394,7 @@ Deno.serve(async (req: Request) => {
     if (!action)       return err("action is required");
     if (!consumableId) return err("consumableId is required");
 
-    const VALID_ACTIONS = ["apply_to_plant", "eclipse_tonic", "wind_shear", "slot_lock", "activate_boost"];
+    const VALID_ACTIONS = ["apply_to_plant", "eclipse_tonic", "wind_shear", "slot_lock", "seed_lock_slot", "activate_boost"];
     if (!VALID_ACTIONS.includes(action)) return err(`Unknown action: ${action}`);
 
     const supabaseAdmin = createClient(
@@ -409,6 +409,7 @@ Deno.serve(async (req: Request) => {
       eclipse_tonic:  ", grid, last_eclipse_tonic",
       wind_shear:     ", last_wind_shear_used",
       slot_lock:      ", supply_shop",
+      seed_lock_slot: ", shop",
       activate_boost: ", active_boosts, crafting_queue",
     } as Record<string, string>;
 
@@ -848,6 +849,55 @@ Deno.serve(async (req: Request) => {
         ok: true,
         supplyShop: newSupplyShop,
         consumables: newConsumables,
+        serverUpdatedAt: ud.updated_at,
+      });
+    }
+
+    // ── Action: seed_lock_slot ────────────────────────────────────────────────
+    // Marks a seed shop slot as permanently pinned — it will survive every shop
+    // refresh until the player manually removes the pin.
+
+    if (action === "seed_lock_slot") {
+      if (consumableId !== "slot_lock") return err("Invalid consumable for seed_lock_slot action");
+      if (!body.slotId) return err("slotId is required for seed_lock_slot");
+
+      const shop    = (save.shop ?? []) as ShopSlot[];
+      const slotIdx = shop.findIndex((s) => s.speciesId === body.slotId);
+
+      if (slotIdx < 0)           return err("Slot not found in seed shop");
+      if (shop[slotIdx].isEmpty) return err("Cannot lock an empty slot");
+      if (shop[slotIdx].locked)  return err("Slot is already locked");
+
+      const newConsumables = deductConsumable(consumables, consumableId);
+      if (!newConsumables) return err("Not enough consumables");
+
+      const newShop = shop.map((s, i) =>
+        i === slotIdx ? { ...s, locked: true } : s
+      );
+
+      const { data: ud, error: ue } = await supabaseAdmin
+        .from("game_saves")
+        .update({
+          shop:        newShop,
+          consumables: newConsumables,
+          updated_at:  new Date().toISOString(),
+        })
+        .eq("user_id", userId)
+        .eq("updated_at", priorUpdatedAt)
+        .select("updated_at")
+        .single();
+
+      if (ue || !ud) return err("Save conflict — please retry", 409);
+
+      void supabaseAdmin.from("action_log").insert({
+        user_id: userId, action: "use_consumable",
+        payload: { action, consumableId, slotId: body.slotId },
+      });
+
+      return json({
+        ok:              true,
+        shop:            newShop,
+        consumables:     newConsumables,
         serverUpdatedAt: ud.updated_at,
       });
     }

@@ -453,7 +453,7 @@ export const CONSUMABLE_RECIPES: ConsumableRecipe[] = [
 
   // ── Slot Lock (non-tiered) — utility ──────────────────────────────────────
   { id: "slot_lock", name: "Slot Lock",  emoji: "📌", sprite: "/sprites/consumables/slot_lock.png", tier: null, rarity: "rare", category: "utility",
-    description: "Locks a supply shop slot so it survives the next refresh without rerolling.",
+    description: "Pins a supply shop slot permanently — it restocks each cycle with fresh stock until you manually remove the pin.",
     cost: { kind: "essence", amounts: [{ type: "arcane", amount: 4 }, { type: "stellar", amount: 4 }] } },
 
   // ── Seed Pouch (I–V) — seed_pouch ────────────────────────────────────────

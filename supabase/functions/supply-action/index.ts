@@ -68,8 +68,8 @@ Deno.serve(async (req: Request) => {
     };
 
     const { action } = body;
-    if (!["buy", "buy_all", "sync"].includes(action)) {
-      return err("Invalid action — use buy | buy_all | sync");
+    if (!["buy", "buy_all", "sync", "unlock_slot"].includes(action)) {
+      return err("Invalid action — use buy | buy_all | sync | unlock_slot");
     }
 
     const supabaseAdmin = createClient(
@@ -210,6 +210,42 @@ Deno.serve(async (req: Request) => {
       });
 
       return json({ ok: true, coins, supplyShop, fertilizers, gearInventory, consumables, serverUpdatedAt: ud.updated_at });
+    }
+
+    // ── unlock_slot: remove the permanent pin from a locked supply slot ──────────
+    if (action === "unlock_slot") {
+      if (!body.slotId) return err("slotId required");
+
+      const supplyShop = (save.supply_shop ?? []) as ShopSlot[];
+      const slotIdx    = supplyShop.findIndex((s) => s.speciesId === body.slotId);
+
+      if (slotIdx < 0) return err("Slot not found");
+
+      // Already unlocked — treat as success so optimistic and server stay in sync
+      if (!supplyShop[slotIdx].locked) {
+        return json({ ok: true, supplyShop, serverUpdatedAt: priorUpdatedAt });
+      }
+
+      const newSupplyShop = supplyShop.map((s, i) =>
+        i === slotIdx ? { ...s, locked: false } : s
+      );
+
+      const { data: ud, error: ue } = await supabaseAdmin
+        .from("game_saves")
+        .update({ supply_shop: newSupplyShop, updated_at: new Date().toISOString() })
+        .eq("user_id", userId)
+        .eq("updated_at", priorUpdatedAt)
+        .select("updated_at")
+        .single();
+
+      if (ue || !ud) return err("Save conflict — please retry", 409);
+
+      void supabaseAdmin.from("action_log").insert({
+        user_id: userId, action: "supply_unlock_slot",
+        payload: { slotId: body.slotId },
+      });
+
+      return json({ ok: true, supplyShop: newSupplyShop, serverUpdatedAt: ud.updated_at });
     }
 
     // ── buy_all: atomically buy 1 of every affordable non-empty supply slot ─────
