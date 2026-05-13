@@ -17,7 +17,6 @@ export function HarvestPopup({ speciesId, mutation, count, isSeed, onDone }: Pro
   const rarity  = species ? RARITY_CONFIG[species.rarity] : null;
   const mut     = mutation ? MUTATIONS[mutation] : null;
 
-  // Reset the dismiss timer whenever count increments so the user has time to read it
   useEffect(() => {
     setVisible(true);
     const timer = setTimeout(
@@ -28,7 +27,12 @@ export function HarvestPopup({ speciesId, mutation, count, isSeed, onDone }: Pro
       mut ? 2_000 : 1_200
     );
     return () => clearTimeout(timer);
-  }, [count]); // eslint-disable-line react-hooks/exhaustive-deps
+  // count intentionally excluded: the timer must NOT reset on every count increment.
+  // Rapid harvests (bell gear, auto-planter) would otherwise cancel the pending
+  // dismiss on each push → onDone never fires → popup lives forever (#241).
+  // The count prop still updates the displayed number; only the timer is locked.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!species) return null;
 

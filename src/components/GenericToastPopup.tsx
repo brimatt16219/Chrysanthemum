@@ -18,7 +18,11 @@ export function GenericToastPopup({ emoji, sprite, label, count, color = "text-p
     setVisible(true);
     const timer = setTimeout(() => { setVisible(false); setTimeout(onDone, 300); }, 1_200);
     return () => clearTimeout(timer);
-  }, [count]); // eslint-disable-line react-hooks/exhaustive-deps
+  // count intentionally excluded: the timer must NOT reset when count increments.
+  // If count were a dep, rapid pushes (bell gear, batch harvest) would cancel the
+  // pending dismiss on every increment → onDone is never called → toast lives forever.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const signClass = variant === "loss" ? "text-red-400" : color;
   const sign      = variant === "loss" ? "-" : "+";
