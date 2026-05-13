@@ -1,3 +1,26 @@
+## [v2.4.0] — 2026-05-13 — Title Screen & Sakura Blossom Event
+
+### Added
+- **Title screen "Enter Garden" flow** — signed-in users now land on the login page and must tap Enter Garden to load the game; music, audio, and level-up SFX are all gated behind this action so nothing plays prematurely
+- **Sign Out button on the login page** — players who are already signed in can sign out directly from the title screen without entering the garden first
+- **Event date range on event cards** — each event in the Events tab now shows its start and end dates (e.g. May 10 – May 31) so you always know how long an event runs
+
+### Fixed
+- **Level-up sound no longer fires on sign-in** — gardener level jumps from its initial default to the real saved value when the cloud save loads; the SFX is now gated behind actually entering the garden
+- **Garden music no longer plays on the login page** — audio is now started only after the player clicks Enter Garden, not when auth resolves
+- **Loading screen no longer flashes before the login page appears** — the auth-resolving spinner is replaced with a subtle inline pulse on the login page itself
+- **"Plot already occupied" race condition fixed** — manual planting used a stale state closure that didn't see plots filled by the auto-planter or harvest bell between renders; the seed/bloom picker now reads the live state ref, and the picker auto-closes if its selected plot becomes occupied
+
+### Changed
+- **Settings "Sign out" renamed to "Go to title screen"** — the action returns you to the login page without signing out of your account
+- **Login page subtitle updated** to Sakura Blossom Event
+- **HUD flower icon** updated to the Sakura Blossom sprite
+- **Balance — Seed Pouch upgrade cost increased** from 2× to 3× of the previous tier (applies to all base and typed/elemental pouches)
+- **Balance — Heirloom Charm upgrade cost increased** from 2× to 3× of the previous tier
+- **Balance — Infuser I cost increased** from 2 to 3 Universal Essence; Infuser II–V upgrade cost increased from 2× to 3× of the previous tier
+
+---
+
 ## [v2.3.8] — 2026-05-05 — Gear Removal & Progress Fixes
 
 ### Fixed

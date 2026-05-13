@@ -14,6 +14,25 @@ export interface ChangelogEntry {
 // Most recent version first — update this with every release
 export const CHANGELOGS: ChangelogEntry[] = [
   {
+    version: "2.4.0",
+    title:   "Title Screen & Sakura Blossom Event",
+    items: [
+      { type: "added",   text: "Title screen \"Enter Garden\" flow — signed-in users now land on the login page and must tap Enter Garden to load the game; music, audio, and level-up SFX are all gated behind this action" },
+      { type: "added",   text: "Sign Out button on the login page — players who are already signed in can sign out directly from the title screen without entering the garden first" },
+      { type: "added",   text: "Event date range on event cards — each event in the Events tab now shows its start and end dates (e.g. May 10 – May 31) so you always know how long an event runs" },
+      { type: "fixed",   text: "Level-up sound no longer fires on sign-in — gardener level jumps from its initial default to the real saved value when the cloud save loads; the SFX is now gated behind actually entering the garden" },
+      { type: "fixed",   text: "Garden music no longer plays on the login page — audio is now started only after the player clicks Enter Garden, not when auth resolves" },
+      { type: "fixed",   text: "Loading screen no longer flashes before the login page appears — the auth-resolving spinner is replaced with a subtle inline pulse on the login page itself" },
+      { type: "fixed",   text: "\"Plot already occupied\" race condition fixed — manual planting used a stale state closure that didn't see plots filled by the auto-planter or harvest bell between renders; the seed/bloom picker now reads the live state ref, and the picker auto-closes if its selected plot becomes occupied" },
+      { type: "changed", text: "Settings \"Sign out\" renamed to \"Go to title screen\" — the action returns you to the login page without signing out of your account" },
+      { type: "changed", text: "Login page subtitle updated to Sakura Blossom Event" },
+      { type: "changed", text: "HUD flower icon updated to the Sakura Blossom sprite" },
+      { type: "changed", text: "Balance — Seed Pouch upgrade cost increased from 2× to 3× of the previous tier (applies to all base and typed/elemental pouches)" },
+      { type: "changed", text: "Balance — Heirloom Charm upgrade cost increased from 2× to 3× of the previous tier" },
+      { type: "changed", text: "Balance — Infuser I cost increased from 2 to 3 Universal Essence; Infuser II–V upgrade cost increased from 2× to 3× of the previous tier" },
+    ],
+  },
+  {
     version: "2.3.8",
     title:   "Gear Removal & Progress Fixes",
     items: [
