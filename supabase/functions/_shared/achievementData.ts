@@ -222,7 +222,8 @@ for (const [target, gems] of [
 
 // 📖 Species discovered
 for (const [target, gems] of [
-  [10, 5], [25, 10], [50, 15], [999, 25],
+  [1, 5], [5, 5], [10, 5], [20, 10], [30, 10], [40, 10],
+  [50, 15], [75, 15], [100, 20], [125, 20], [150, 25], [190, 35],
 ] as [number, number][]) {
   add(`species_discovered_${target}`, { kind: "species_discovered" }, target, gems);
 }
