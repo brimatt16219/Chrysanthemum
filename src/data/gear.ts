@@ -74,6 +74,9 @@ export interface PlacedGear {
    *  "waiting") while the tick can still find them by position at completion. */
   crossbreedSourceA?: { r: number; c: number };
   crossbreedSourceB?: { r: number; c: number };
+  /** Auto-planter only — when true, the planter skips all cells and does not
+   *  plant seeds until resumed by the player. */
+  paused?: boolean;
 }
 
 /** How long a cropsticks cross-breed takes. Mirrored in the

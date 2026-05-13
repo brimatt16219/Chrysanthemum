@@ -1879,6 +1879,7 @@ export function tickAutoPlanter(state: GameState): GameState {
       const def = GEAR[planterPlot.gear.gearType];
       if (!isAutoPlanter(def)) continue;
       if (isGearExpired(planterPlot.gear, now)) continue;
+      if (planterPlot.gear.paused) continue;
 
       const gridRows = updated.grid.length;
       const gridCols = updated.grid[0]?.length ?? 0;
@@ -1933,6 +1934,7 @@ export function findAutoPlantTargets(
       const def = GEAR[planterPlot.gear.gearType];
       if (!isAutoPlanter(def)) continue;
       if (isGearExpired(planterPlot.gear, now)) continue;
+      if (planterPlot.gear.paused) continue;
 
       const gridRows = state.grid.length;
       const gridCols = state.grid[0]?.length ?? 0;
@@ -2612,6 +2614,27 @@ export function removeGear(
   }
 
   return { ...state, grid: newGrid, fertilizers: newFertilizers };
+}
+
+/** Optimistically toggles the paused flag on an auto-planter.
+ *  The server confirms via the toggle_pause gear-action. */
+export function toggleAutoPlanter(
+  state: GameState,
+  row: number,
+  col: number
+): GameState | null {
+  const plot = state.grid[row]?.[col];
+  if (!plot?.gear) return null;
+
+  const newGrid = state.grid.map((r, ri) =>
+    r.map((p, ci) =>
+      ri === row && ci === col
+        ? { ...p, gear: { ...p.gear!, paused: !p.gear!.paused } }
+        : p
+    )
+  );
+
+  return { ...state, grid: newGrid };
 }
 
 /** Collect all fertilizers stored in a composter and add them to player inventory. */

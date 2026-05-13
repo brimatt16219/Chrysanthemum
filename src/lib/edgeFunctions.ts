@@ -244,6 +244,10 @@ export function edgeCollectFromComposter(row: number, col: number) {
   return callEdge<GearActionResult>("gear-action", { action: "collect", row, col });
 }
 
+export function edgeToggleAutoPlanter(row: number, col: number) {
+  return callEdge<GearActionResult>("gear-action", { action: "toggle_pause", row, col });
+}
+
 // ── Supply shop actions ───────────────────────────────────────────────────────
 
 export interface SupplyBuyResult {

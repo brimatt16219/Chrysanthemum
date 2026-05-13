@@ -22,6 +22,7 @@ type PlacedGear = {
   crossbreedStartedAt?: number;
   crossbreedSourceA?:   { r: number; c: number };
   crossbreedSourceB?:   { r: number; c: number };
+  paused?:              boolean;
 };
 
 type PlantData = {
@@ -346,8 +347,8 @@ Deno.serve(async (req: Request) => {
     };
 
     const { action, row, col } = body;
-    if (!["place", "remove", "collect", "set_direction"].includes(action)) {
-      return err("Invalid action — use place | remove | collect | set_direction");
+    if (!["place", "remove", "collect", "set_direction", "toggle_pause"].includes(action)) {
+      return err("Invalid action — use place | remove | collect | set_direction | toggle_pause");
     }
 
     const supabaseAdmin = createClient(
@@ -563,6 +564,40 @@ Deno.serve(async (req: Request) => {
       void supabaseAdmin.from("action_log").insert({
         user_id: userId, action: "gear_remove",
         payload: { gearType, row, col }, result: { storedReturned: stored.length, gearDestroyed: true },
+      });
+
+      return json({ ok: true, grid, gearInventory, fertilizers, serverUpdatedAt: ud.updated_at });
+    }
+
+    // ── toggle_pause (auto-planter) ───────────────────────────────────────────
+    if (action === "toggle_pause") {
+      if (!cell.gear) return err("No gear at this cell");
+
+      const AUTO_PLANTER_TYPES = new Set(["auto_planter_prismatic"]);
+      if (!AUTO_PLANTER_TYPES.has(cell.gear.gearType)) return err("Not an auto-planter");
+
+      const nowPaused = !cell.gear.paused;
+      grid = grid.map((r, ri) =>
+        r.map((p, ci) =>
+          ri === row && ci === col
+            ? { ...p, gear: { ...p.gear!, paused: nowPaused } }
+            : p
+        )
+      );
+
+      const { data: ud, error: ue } = await supabaseAdmin
+        .from("game_saves")
+        .update({ grid, updated_at: new Date().toISOString() })
+        .eq("user_id", userId)
+        .eq("updated_at", priorUpdatedAt)
+        .select("updated_at")
+        .single();
+
+      if (ue || !ud) return err("Save was modified by another action", 409);
+
+      void supabaseAdmin.from("action_log").insert({
+        user_id: userId, action: "gear_toggle_pause",
+        payload: { row, col }, result: { paused: nowPaused },
       });
 
       return json({ ok: true, grid, gearInventory, fertilizers, serverUpdatedAt: ud.updated_at });

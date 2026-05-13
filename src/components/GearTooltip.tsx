@@ -2,9 +2,9 @@ import { useState, useRef, useLayoutEffect, useEffect } from "react";
 import { GEAR, isGearExpired, CROPSTICKS_BREED_DURATION_MS, type PlacedGear, type FanDirection } from "../data/gear";
 import { MUTATIONS, RARITY_CONFIG } from "../data/flowers";
 import { FERTILIZERS } from "../data/upgrades";
-import { removeGear, collectFromComposter, setFanDirection, stampStageTransitions } from "../store/gameStore";
+import { removeGear, collectFromComposter, setFanDirection, stampStageTransitions, toggleAutoPlanter } from "../store/gameStore";
 import { useGame } from "../store/GameContext";
-import { edgeRemoveGear, edgeCollectFromComposter, edgeSetFanDirection } from "../lib/edgeFunctions";
+import { edgeRemoveGear, edgeCollectFromComposter, edgeSetFanDirection, edgeToggleAutoPlanter } from "../lib/edgeFunctions";
 import { ItemSprite } from "./ItemSprite";
 
 interface Props {
@@ -104,6 +104,29 @@ export function GearTooltip({ gear, row, col, onClose }: Props) {
       }
     );
     onClose?.();
+  }
+
+  function handleTogglePause() {
+    const optimistic = toggleAutoPlanter(getState(), row, col);
+    if (!optimistic) return;
+    const wasPaused = gear.paused ?? false;
+    perform(
+      optimistic,
+      () => edgeToggleAutoPlanter(row, col),
+      undefined,
+      {
+        rollback: (cur) => ({
+          ...cur,
+          grid: cur.grid.map((r2, ri) =>
+            r2.map((p, ci) =>
+              ri === row && ci === col && p.gear
+                ? { ...p, gear: { ...p.gear, paused: wasPaused } }
+                : p
+            )
+          ),
+        }),
+      }
+    );
   }
 
   function handleCollect() {
@@ -358,6 +381,18 @@ export function GearTooltip({ gear, row, col, onClose }: Props) {
                 Waiting for nearby blooms…
               </p>
             )}
+          </div>
+        )}
+
+        {/* Auto-planter pause/resume */}
+        {def.passiveSubtype === "auto_planter" && (
+          <div className="pt-1 border-t border-border">
+            <button
+              onClick={handleTogglePause}
+              className={`text-[10px] transition-colors w-full text-left ${gear.paused ? "text-green-400 hover:text-green-300" : "text-yellow-400 hover:text-yellow-300"}`}
+            >
+              {gear.paused ? "▶ Resume planting" : "⏸ Pause planting"}
+            </button>
           </div>
         )}
 
