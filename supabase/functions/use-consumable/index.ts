@@ -28,6 +28,18 @@ const TIER_RARITIES: Record<number, string> = {
   1: "rare", 2: "legendary", 3: "mythic", 4: "exalted", 5: "prismatic",
 };
 
+// ── Fertilizer speed multipliers (mirrors harvest/index.ts) ──────────────────
+
+const FERTILIZER_MULTIPLIERS: Record<string, number> = {
+  basic: 1.1, advanced: 1.25, premium: 1.5, elite: 1.75, miracle: 2.0,
+};
+
+// Maximum combined gear + weather speed multiplier used as a harvest-readiness
+// grace factor. Gear (balance scale, sprinkler, etc.) + weather (thunderstorm 2×)
+// can stack well above 2×; 10× gives headroom for legitimate stacks while still
+// blocking impossibly fast harvest attempts.
+const MAX_SPEED_MULTIPLIER = 10.0;
+
 // ── Eclipse Tonic: advancement hours per consumable ID ───────────────────────
 
 const ECLIPSE_ADVANCE_HOURS: Record<string, number> = {
@@ -506,6 +518,39 @@ Deno.serve(async (req: Request) => {
       } else if (consumableId.startsWith("heirloom_charm_")) {
         if (stage !== "bloom") return err("Heirloom Charm requires a bloomed plant");
         if (plant.heirloomActive) return err("Plant already has an active Heirloom Charm");
+
+        // Security: verify the plant is truly harvestable using the same
+        // plant_timings gate that harvest/index.ts uses. Without this check a
+        // desynced plant (client says bloom, server says not ready) lets players
+        // apply the charm repeatedly and receive infinite seeds.
+        // Bloom-placed sentinels (timePlanted === 0) skip the timing gate.
+        if (plant.timePlanted !== 0) {
+          const { data: timingRow } = await supabaseAdmin
+            .from("plant_timings")
+            .select("planted_at")
+            .eq("user_id", userId)
+            .eq("row", row)
+            .eq("col", col)
+            .maybeSingle();
+          if (timingRow) {
+            const authPlantedAt = new Date(timingRow.planted_at).getTime();
+            const times         = FLOWER_GROWTH_TIMES[plant.speciesId];
+            if (times) {
+              const fertMult  = plant.fertilizer
+                ? (FERTILIZER_MULTIPLIERS[plant.fertilizer as string] ?? 1.0)
+                : 1.0;
+              const mastBonus = Math.min(
+                (plant as { masteredBonus?: number }).masteredBonus ?? 1.0, 1.25
+              );
+              const totalMs  = times.seed + times.sprout;
+              const minBloom = authPlantedAt + totalMs / (fertMult * mastBonus * MAX_SPEED_MULTIPLIER);
+              if (Date.now() < minBloom) {
+                return err("Plant is not ready to harvest yet");
+              }
+            }
+          }
+        }
+
         updatedPlant = { ...updatedPlant, heirloomActive: true };
 
       // ── Purity Vial ─────────────────────────────────────────────────────────
@@ -677,6 +722,29 @@ Deno.serve(async (req: Request) => {
           user_id: userId, action: "use_consumable",
           payload: { action, consumableId, advanceHours },
         });
+
+        // Keep plant_timings in sync with the tonic's time advancement.
+        // harvest/index.ts uses plant_timings.planted_at as the authoritative
+        // bloom gate — without this update the server ignores the tonic and
+        // rejects harvests until the original (un-tonicked) time elapses.
+        void (async () => {
+          const { data: timings } = await supabaseAdmin
+            .from("plant_timings")
+            .select("row, col, planted_at")
+            .eq("user_id", userId);
+          if (timings && timings.length > 0) {
+            const shifts = (timings as { row: number; col: number; planted_at: string }[])
+              .map((t) => ({
+                user_id:    userId,
+                row:        t.row,
+                col:        t.col,
+                planted_at: new Date(new Date(t.planted_at).getTime() - advanceMs).toISOString(),
+              }));
+            await supabaseAdmin
+              .from("plant_timings")
+              .upsert(shifts, { onConflict: "user_id,row,col" });
+          }
+        })();
 
         return json({
           ok: true,

@@ -129,8 +129,11 @@ const FLOWER_GROWTH_TIMES: Record<string, { seed: number; sprout: number }> = {
   dreamshade: { seed: 68_400_000, sprout: 136_800_000 }, gravewilt: { seed: 75_600_000, sprout: 151_200_000 },
 };
 
-// Max weather multiplier (thunderstorm 2×) used as grace factor
-const MAX_WEATHER_MULTIPLIER = 2.0;
+// Maximum combined speed multiplier used as a harvest-readiness grace factor.
+// Gear (balance scale, sprinkler stacks, etc.) + weather (thunderstorm 2×) can
+// push the effective multiplier well above 2×; 10× gives headroom for all
+// legitimate stacks while still blocking impossibly fast harvest attempts.
+const MAX_WEATHER_MULTIPLIER = 10.0;
 
 Deno.serve(async (req: Request) => {
   initSentry();
