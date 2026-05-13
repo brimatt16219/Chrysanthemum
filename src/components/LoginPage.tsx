@@ -72,10 +72,18 @@ const DECO_FLOWERS = [
 // ── Component ─────────────────────────────────────────────────────────────
 
 interface Props {
-  onSignIn: () => void;
+  onSignIn:   () => void;
+  /** Shown when user is already signed in — navigates into the game. */
+  onEnter?:   () => void;
+  /** Shown when user is already signed in — actually signs them out. */
+  onSignOut?: () => void;
+  /** Display name shown when signed in (username or email). */
+  username?:  string | null;
+  /** True while auth is still resolving — hides all action buttons. */
+  isLoading?: boolean;
 }
 
-export function LoginPage({ onSignIn }: Props) {
+export function LoginPage({ onSignIn, onEnter, onSignOut, username, isLoading }: Props) {
   const { settings } = useSettings();
 
   useEffect(() => {
@@ -146,19 +154,57 @@ export function LoginPage({ onSignIn }: Props) {
 
       {/* ── Auth buttons ─────────────────────────────────────────────────── */}
       <div className="relative flex flex-col gap-3 w-full max-w-xs">
-        {/* 2-step pixel border: outer wrapper shows 2 px of primary color as the
-            "border" ring; the clip-path on both layers gives pixel-stepped corners. */}
-        <div
-          className="btn-pixel-2 p-[2px] w-full"
-          style={{ background: "hsl(var(--primary) / 0.55)" }}
-        >
-          <button
-            onClick={onSignIn}
-            className="btn-pixel-2 w-full py-3 bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity text-center"
+        {isLoading ? (
+          /* ── Auth resolving — show a subtle pulse so the layout doesn't jump ── */
+          <div className="h-11 flex items-center justify-center">
+            <p className="text-xs text-muted-foreground animate-pulse">Loading...</p>
+          </div>
+        ) : onEnter ? (
+          /* ── Signed-in state ───────────────────────────────────────────── */
+          <>
+            {username && (
+              <p className="text-center text-xs text-muted-foreground">
+                Signed in as <span className="text-foreground font-semibold">{username}</span>
+              </p>
+            )}
+            {/* Enter Garden — primary pixel button */}
+            <div
+              className="btn-pixel-2 p-[2px] w-full"
+              style={{ background: "hsl(var(--primary) / 0.55)" }}
+            >
+              <button
+                onClick={onEnter}
+                className="btn-pixel-2 w-full py-3 bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity text-center"
+              >
+                Enter Garden
+              </button>
+            </div>
+            {/* Sign out — understated link */}
+            {onSignOut && (
+              <button
+                onClick={onSignOut}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors text-center"
+              >
+                Sign out
+              </button>
+            )}
+          </>
+        ) : (
+          /* ── Signed-out state ──────────────────────────────────────────── */
+          /* 2-step pixel border: outer wrapper shows 2 px of primary color as the
+             "border" ring; the clip-path on both layers gives pixel-stepped corners. */
+          <div
+            className="btn-pixel-2 p-[2px] w-full"
+            style={{ background: "hsl(var(--primary) / 0.55)" }}
           >
-            Sign in with Google
-          </button>
-        </div>
+            <button
+              onClick={onSignIn}
+              className="btn-pixel-2 w-full py-3 bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity text-center"
+            >
+              Sign in with Google
+            </button>
+          </div>
+        )}
       </div>
 
     </div>

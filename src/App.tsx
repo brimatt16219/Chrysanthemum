@@ -125,16 +125,21 @@ function AppInner() {
 
   const { settings } = useSettings();
 
-  useAudio(!!user);
+  /** True once the user has clicked "Enter Garden" on the title screen. */
+  const [gameEntered, setGameEntered] = useState(false);
+
+  useAudio(!!user && gameEntered);
 
   // ── Level-up SFX ─────────────────────────────────────────────────────────────
+  // Guard on gameEntered so the initial save-load (level jumps from default → real
+  // value) doesn't trigger the SFX before the user has entered the garden.
   const prevGardenerLevelRef = useRef(state.gardenerLevel);
   useEffect(() => {
-    if (state.gardenerLevel > prevGardenerLevelRef.current) {
+    if (gameEntered && state.gardenerLevel > prevGardenerLevelRef.current) {
       audioManager.playSfx("levelUp");
     }
     prevGardenerLevelRef.current = state.gardenerLevel;
-  }, [state.gardenerLevel]);
+  }, [state.gardenerLevel, gameEntered]);
 
   usePresence();
 
@@ -561,25 +566,14 @@ function AppInner() {
     setProfileUsername(null);
   }
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
-        <ItemSprite emoji="🌱" sprite="/sprites/flowers/seed.png" name="🌱" textSize="text-5xl" imgSize="w-14 h-14" />
-        <p className="text-sm text-muted-foreground font-mono animate-pulse">Loading...</p>
-        <div className="relative w-48 h-1.5 bg-muted rounded-full overflow-hidden">
-          <div
-            className="absolute h-full bg-primary rounded-full"
-            style={{ animation: "loading-slide 1.6s ease-in-out infinite" }}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
+  if (!user || !gameEntered) {
     return (
       <LoginPage
         onSignIn={signInWithGoogle}
+        onEnter={user ? () => setGameEntered(true) : undefined}
+        onSignOut={user ? signOut : undefined}
+        isLoading={authLoading}
+        username={profile?.username ?? user?.email ?? null}
       />
     );
   }
@@ -748,7 +742,7 @@ function AppInner() {
       {showSettings && (
         <SettingsModal
           onClose={() => setShowSettings(false)}
-          onSignOut={user ? () => { setShowSettings(false); signOut(); } : undefined}
+          onSignOut={user ? () => { setShowSettings(false); setGameEntered(false); } : undefined}
         />
       )}
 
