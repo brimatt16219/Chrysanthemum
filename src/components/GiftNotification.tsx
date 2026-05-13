@@ -20,6 +20,7 @@ export function GiftNotification({ onDismiss, onView }: Props) {
 
   return (
     <div
+      onMouseDown={(e) => e.stopPropagation()}
       className={`
         fixed bottom-6 left-1/2 -translate-x-1/2 z-50
         transition-all duration-400
