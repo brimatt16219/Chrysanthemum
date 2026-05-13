@@ -314,8 +314,8 @@ export async function saveToCloud(
     // Gardener Level
     gardener_level:         state.gardenerLevel     ?? 1,
     gardener_xp:            state.gardenerXp        ?? 0,
-    // v2.4 — Daily tasks
-    daily_tasks:            state.dailyTasks        ?? null,
+    // v2.4 — Daily tasks (must never be null — column has NOT NULL constraint)
+    daily_tasks:            state.dailyTasks        ?? freshDailyState(userId),
     // v2.4 — Gems
     gems:                   state.gems              ?? 0,
     // v2.4 — Achievements

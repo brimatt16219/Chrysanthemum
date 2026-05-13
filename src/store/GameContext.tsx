@@ -230,6 +230,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     // via the storage event and disable their saves to prevent data races.
     localStorage.setItem(`chrysanthemum_active_tab_${u.id}`, tabId.current);
 
+    let loadedEvents: EventEntry[] = [];
+
     try {
       const p = await getProfile(u.id);
       if (loadGen.current !== gen) return; // sign-out fired while we were loading — discard
@@ -269,7 +271,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         saveToUse = cloudSave;
       }
 
-      let loadedEvents: EventEntry[] = [];
       try {
         loadedEvents = await loadEvents(u.id);
       } catch {}
