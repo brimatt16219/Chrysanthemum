@@ -72,6 +72,8 @@ interface Props {
   lawnmowerDirection?: FanDirection;
   /** "boost" (3×) or "slow" (0.5×) — set when this cell is covered by a Balance Scale. */
   balanceScaleSide?: "boost" | "slow";
+  /** Ms until the balance scale covering this cell flips to the other side (#240). */
+  balanceScaleFlipMs?: number;
   /** True when this cell is within an auto-planter's radius. */
   isUnderAutoPlanter?: boolean;
   /** True when this cell is shielded by an active Aegis. */
@@ -93,7 +95,7 @@ export function PlotTile({
   isSelected, isHighlighted,
   isUnderSprinkler, isUnderAqueduct, sprinklerMutations = [],
   isUnderScarecrow, isUnderComposter, isUnderGrowLamp,
-  isUnderFan, fanDirection, isUnderHarvestBell, isUnderLawnmower, lawnmowerDirection, balanceScaleSide, isUnderAutoPlanter, isUnderAegis,
+  isUnderFan, fanDirection, isUnderHarvestBell, isUnderLawnmower, lawnmowerDirection, balanceScaleSide, balanceScaleFlipMs, isUnderAutoPlanter, isUnderAegis,
   crossbreedDirection, isCrossBreeding = false,
   onGearInspect, onGearInspectClose,
   cellSize = "w-16 h-16",
@@ -414,6 +416,7 @@ export function PlotTile({
           isUnderHarvestBell={isUnderHarvestBell}
           isUnderLawnmower={isUnderLawnmower}
           balanceScaleSide={balanceScaleSide}
+          balanceScaleFlipMs={balanceScaleFlipMs}
           isUnderAegis={isUnderAegis}
         />
       )}

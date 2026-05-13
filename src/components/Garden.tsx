@@ -280,7 +280,7 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
   }, [highlightSource, state.farmRows, state.farmSize, state.grid]);
 
   // Per-cell gear coverage — used for plant indicator icons
-  const { regularSprinklerKeys, aqueductCoveredCells, mutationSprinklerMap, scarecrowCoveredCells, composterCoveredCells, growLampKeys, fanCoveredCells, harvestBellCoveredCells, lawnmowerCoveredCells, balanceScaleCoveredCells, autoPlantCoveredCells, aegisCoveredCells } =
+  const { regularSprinklerKeys, aqueductCoveredCells, mutationSprinklerMap, scarecrowCoveredCells, composterCoveredCells, growLampKeys, fanCoveredCells, harvestBellCoveredCells, lawnmowerCoveredCells, balanceScaleCoveredCells, balanceScaleFlipCells, autoPlantCoveredCells, aegisCoveredCells } =
     useMemo(() => {
       const regular   = new Set<string>(); // sprinkler_regular only — excludes aqueduct
       const aqueduct  = new Set<string>(); // aqueduct only — displayed separately from sprinkler
@@ -291,7 +291,8 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
       const fan        = new Map<string, FanDirection>();
       const harvestBell  = new Set<string>();
       const lawnmower    = new Map<string, FanDirection>();
-      const balanceScale = new Map<string, "boost" | "slow">();
+      const balanceScale     = new Map<string, "boost" | "slow">();
+      const balanceScaleFlip = new Map<string, number>(); // ms until next phase flip
       const autoPlanter  = new Set<string>();
       const aegis        = new Set<string>();
       const now = Date.now();
@@ -333,12 +334,16 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
             // Must use placedAt-relative phase to match gameStore's growth computation.
             // Wall-clock phase was wrong: it drifted from the actual effect whenever the
             // scale was placed mid-hour, causing boost/slow labels to be flipped (#221).
-            const phase  = Math.floor((now - (g.placedAt ?? 0)) / 3_600_000) % 2;
+            const HOUR_MS     = 3_600_000;
+            const elapsed     = now - (g.placedAt ?? 0);
+            const phase       = Math.floor(elapsed / HOUR_MS) % 2;
+            const msUntilFlip = HOUR_MS - (elapsed % HOUR_MS);
             affected.forEach(([r, c]) => {
               const dc      = c - ci;
               const inLeft  = dc < 0;
               const isBoost = phase === 0 ? inLeft : !inLeft;
               balanceScale.set(`${r}-${c}`, isBoost ? "boost" : "slow");
+              balanceScaleFlip.set(`${r}-${c}`, msUntilFlip);
             });
           } else if (def.passiveSubtype === "auto_planter") {
             keys.forEach((k) => autoPlanter.add(k));
@@ -347,7 +352,7 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
           }
         }
       }
-      return { regularSprinklerKeys: regular, aqueductCoveredCells: aqueduct, mutationSprinklerMap: mutation, scarecrowCoveredCells: scarecrow, composterCoveredCells: composter, growLampKeys: growLamp, fanCoveredCells: fan, harvestBellCoveredCells: harvestBell, lawnmowerCoveredCells: lawnmower, balanceScaleCoveredCells: balanceScale, autoPlantCoveredCells: autoPlanter, aegisCoveredCells: aegis };
+      return { regularSprinklerKeys: regular, aqueductCoveredCells: aqueduct, mutationSprinklerMap: mutation, scarecrowCoveredCells: scarecrow, composterCoveredCells: composter, growLampKeys: growLamp, fanCoveredCells: fan, harvestBellCoveredCells: harvestBell, lawnmowerCoveredCells: lawnmower, balanceScaleCoveredCells: balanceScale, balanceScaleFlipCells: balanceScaleFlip, autoPlantCoveredCells: autoPlanter, aegisCoveredCells: aegis };
     }, [state.grid, state.farmRows, state.farmSize]);
 
   // Plant cells adjacent to active cropsticks, mapped to the direction their
@@ -747,6 +752,7 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
                 isUnderLawnmower={lawnmowerCoveredCells.has(`${row}-${col}`)}
                 lawnmowerDirection={lawnmowerCoveredCells.get(`${row}-${col}`)}
                 balanceScaleSide={balanceScaleCoveredCells.get(`${row}-${col}`)}
+                balanceScaleFlipMs={balanceScaleFlipCells.get(`${row}-${col}`)}
                 isUnderAutoPlanter={autoPlantCoveredCells.has(`${row}-${col}`)}
                 isUnderAegis={aegisCoveredCells.has(`${row}-${col}`)}
                 crossbreedDirection={crossbreedSourceCells.get(`${row}-${col}`)}

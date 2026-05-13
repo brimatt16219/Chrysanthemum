@@ -1125,8 +1125,10 @@ export function getEffectiveGrowthMultiplier(
   from: number,
   to: number,
 ): number {
-  // Zero-width window — no growth to attribute, avoid divide-by-zero
-  if (from >= to) return 1.0;
+  // Zero-width window (render fired the same millisecond as the last tick stamp).
+  // Return the current point-in-time multiplier rather than 1.0 — otherwise the
+  // tooltip shows the unmodified base time for one frame and flip-flops (#239).
+  if (from >= to) return getPassiveGrowthMultiplier(grid, row, col, to);
 
   // Ask: which gears were affecting this cell at the START of the window?
   // getGearAffectingCell already skips expired gear, so passing `from` (not
