@@ -183,8 +183,12 @@ export function GearTooltip({ gear, row, col, onClose }: Props) {
   const isDirectional = def.passiveSubtype === "fan" || def.passiveSubtype === "aegis" || def.passiveSubtype === "lawnmower" || def.passiveSubtype === "aqueduct";
 
   // Balance Scale: which side is currently boosting?
+  const HOUR_MS = 3_600_000;
   const balanceScalePhase = def.passiveSubtype === "balance_scale"
-    ? Math.floor((now - gear.placedAt) / 3_600_000) % 2
+    ? Math.floor((now - gear.placedAt) / HOUR_MS) % 2
+    : null;
+  const balanceScaleFlipMs = balanceScalePhase !== null
+    ? HOUR_MS - ((now - gear.placedAt) % HOUR_MS)
     : null;
 
   return (
@@ -293,7 +297,7 @@ export function GearTooltip({ gear, row, col, onClose }: Props) {
           </div>
         )}
 
-        {/* Balance Scale: current phase status */}
+        {/* Balance Scale: current phase status + flip countdown */}
         {balanceScalePhase !== null && (
           <div className="pt-1 border-t border-border space-y-1">
             <p className="text-[10px] text-muted-foreground">
@@ -301,8 +305,13 @@ export function GearTooltip({ gear, row, col, onClose }: Props) {
               <span className="text-amber-300 font-mono">
                 {balanceScalePhase === 0 ? "← left" : "→ right"}
               </span>
-              <span className="text-muted-foreground"> · switches hourly</span>
             </p>
+            {balanceScaleFlipMs !== null && (
+              <p className="text-[10px] text-muted-foreground">
+                Flips in:{" "}
+                <span className="font-mono text-foreground">{formatMs(balanceScaleFlipMs)}</span>
+              </p>
+            )}
           </div>
         )}
 

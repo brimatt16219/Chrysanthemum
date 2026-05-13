@@ -560,20 +560,12 @@ export function PlotTooltip({
               )}
               {balanceScaleSide === "boost" && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-amber-400/10 border border-amber-400/20 text-[10px] text-amber-300">
-                  <ItemSprite emoji="⚖️" sprite="/sprites/gear/balance_scale.png" name="Balance Scale" textSize="text-[10px]" imgSize="w-3 h-3" />
-                  <span>Scale boost</span>
-                  {balanceScaleFlipMs !== undefined && (
-                    <span className="text-amber-400/60 ml-0.5">· flips {formatMs(balanceScaleFlipMs)}</span>
-                  )}
+                  <ItemSprite emoji="⚖️" sprite="/sprites/gear/balance_scale.png" name="Balance Scale" textSize="text-[10px]" imgSize="w-3 h-3" /><span>Scale boost</span>
                 </span>
               )}
               {balanceScaleSide === "slow" && (
                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-slate-400/10 border border-slate-400/20 text-[10px] text-slate-400">
-                  <ItemSprite emoji="⚖️" sprite="/sprites/gear/balance_scale.png" name="Balance Scale" textSize="text-[10px]" imgSize="w-3 h-3" />
-                  <span>Scale slow</span>
-                  {balanceScaleFlipMs !== undefined && (
-                    <span className="text-slate-400/60 ml-0.5">· flips {formatMs(balanceScaleFlipMs)}</span>
-                  )}
+                  <ItemSprite emoji="⚖️" sprite="/sprites/gear/balance_scale.png" name="Balance Scale" textSize="text-[10px]" imgSize="w-3 h-3" /><span>Scale slow</span>
                 </span>
               )}
               {isUnderAegis && (
