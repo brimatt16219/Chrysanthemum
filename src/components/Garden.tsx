@@ -262,6 +262,18 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
     state.farmSize === 5 ? "w-15 h-15 sm:w-16 sm:h-16" :
     "w-11 h-11 sm:w-16 sm:h-16"; // 6+ cols: compact on mobile
 
+  // Close SeedPicker if the selected plot is claimed by the auto-planter (or any
+  // other concurrent write) while the picker is open. Catches the case where
+  // perform() advanced stateRef synchronously before React re-rendered.
+  useEffect(() => {
+    if (!selectedPlot) return;
+    const { row, col } = selectedPlot;
+    const plot = state.grid[row]?.[col];
+    if (plot?.plant || plantingPlots.current.has(`plant-${row}-${col}`)) {
+      setSelectedPlot(null);
+    }
+  }, [state.grid, selectedPlot]);
+
   // Auto-clear highlightSource when the gear tile it's tracking is removed or expires.
   // This runs in Garden (the owner of highlightSource) rather than in PlotTile's useEffect
   // so we never call a parent's setState from a child effect (React 18 concurrent-mode warning).
@@ -426,7 +438,11 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
 
   function handlePlotClick(row: number, col: number) {
     const plot = state.grid[row][col];
-    if (plot.plant || harvestingPlots.current.has(`${row}-${col}`)) return;
+    if (
+      plot.plant ||
+      harvestingPlots.current.has(`${row}-${col}`) ||
+      plantingPlots.current.has(`plant-${row}-${col}`)
+    ) return;
 
     // Guest guard — guests have empty inventories, so opening the SeedPicker
     // would just show "Nothing to place" (#148). Surface the sign-in prompt
@@ -439,7 +455,9 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
   function handleSeedSelect(speciesId: string) {
     if (!selectedPlot) return;
     const { row, col } = selectedPlot;
-    const optimistic = plantSeed(state, row, col, speciesId);
+    // Use getState() (the always-current ref) rather than the React `state` closure,
+    // which may be stale if the auto-planter advanced stateRef between renders.
+    const optimistic = plantSeed(getState(), row, col, speciesId);
     if (optimistic) {
       const sp = getFlower(speciesId);
       const discovered = state.discovered.includes(speciesId);
@@ -476,7 +494,9 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
   function handleBloomSelect(speciesId: string, mutation?: string) {
     if (!selectedPlot) return;
     const { row, col } = selectedPlot;
-    const optimistic = plantBloom(state, row, col, speciesId, mutation);
+    // Use getState() (the always-current ref) rather than the React `state` closure,
+    // which may be stale if the auto-planter advanced stateRef between renders.
+    const optimistic = plantBloom(getState(), row, col, speciesId, mutation);
     if (optimistic) {
       const sp = getFlower(speciesId);
       audioManager.playSfx("plant");
