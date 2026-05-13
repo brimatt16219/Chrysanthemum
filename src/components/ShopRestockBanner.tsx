@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ItemSprite } from "./ItemSprite";
 
 interface Props {
   onDismiss: () => void;
@@ -39,8 +40,10 @@ export function ShopRestockBanner({ onDismiss, type = "seeds" }: Props) {
       <div className="flex items-center gap-4 bg-card border border-primary/40 rounded-2xl px-5 py-4 shadow-2xl shadow-primary/20 min-w-72">
 
         {/* Icon */}
-        <div className="text-3xl flex-shrink-0 animate-bounce">
-          {type === "supply" ? "🧪" : "🛒"}
+        <div className="flex-shrink-0 animate-bounce">
+          {type === "supply"
+            ? <ItemSprite emoji="🧪" sprite="/sprites/ui/consumables.png" name="Supply shop" textSize="text-3xl" imgSize="w-8 h-8" />
+            : <ItemSprite emoji="🛒" sprite="/sprites/ui/tab_shop.png" name="Shop" textSize="text-3xl" imgSize="w-8 h-8" />}
         </div>
 
         {/* Text */}

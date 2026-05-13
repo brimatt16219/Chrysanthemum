@@ -85,7 +85,7 @@ export function OfflineBanner({ summary, onDismiss, changelog, username }: Props
             )}
             {supplyRestocked && (
               <div className="flex items-center gap-3 bg-card/80 border border-border rounded-xl px-4 py-3">
-                <span className="text-2xl">🧪</span>
+                <ItemSprite emoji="🧪" sprite="/sprites/ui/consumables.png" name="Supply shop" textSize="text-2xl" imgSize="w-7 h-7" />
                 <div>
                   <p className="text-sm font-semibold">Supply shop has restocked</p>
                   <p className="text-xs text-muted-foreground">
