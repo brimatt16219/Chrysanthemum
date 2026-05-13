@@ -1,5 +1,6 @@
 import { supabase } from "../lib/supabase";
 import type { GameState, EventEntry, EventProgress } from "./gameStore";
+import { pruneExpiredGear } from "./gameStore";
 import { awardXp, DISCOVERY_XP_BY_RARITY, MUTATION_DISCOVERY_BONUS } from "../data/gardenerLevel";
 import { getFlower } from "../data/flowers";
 import { freshDailyState, isStale } from "../lib/dailySeed";
@@ -268,13 +269,17 @@ export async function saveToCloud(
   state: GameState
 ): Promise<string | false> {
   const newUpdatedAt = new Date().toISOString();
+  // Always prune expired gear before persisting — the 1s tick removes expired
+  // gear from React display state but stateRef may momentarily lag, so this is
+  // the definitive guard that prevents ghost gear from being written to DB (#242).
+  const grid = pruneExpiredGear(state.grid, Date.now());
   const payload = {
     user_id:                userId,
     coins:                  state.coins,
     farm_size:              state.farmSize,
     farm_rows:              state.farmRows,
     shop_slots:             state.shopSlots,
-    grid:                   state.grid,
+    grid:                   grid,
     inventory:              state.inventory,
     fertilizers:            state.fertilizers,
     shop:                   state.shop,

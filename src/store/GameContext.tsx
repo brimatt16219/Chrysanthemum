@@ -497,6 +497,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         if (prunedGrid !== next.grid) {
           if (expired.length > 0) setGearExpiry({ gearType: expired[0].gearType });
           next = { ...next, grid: prunedGrid };
+          // stateRef drives saveToCloud and perform rollbacks. Without updating it
+          // here the 30s autosave would re-write the expired gear to DB, and any
+          // subsequent reloadFromCloud would pull it back as a "ghost" (#242).
+          stateRef.current = { ...stateRef.current, grid: prunedGrid };
         }
 
         // ── Craft completion detection ─────────────────────────────────────
