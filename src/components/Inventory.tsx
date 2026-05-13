@@ -230,7 +230,7 @@ export function Inventory({ newSeeds = 0, newBlooms = 0, newSupplies = 0, onSubT
   if (isEmpty) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
-        <span className="text-5xl">🎒</span>
+        <ItemSprite emoji="🎒" sprite="/sprites/ui/tab_inventory.png" name="Inventory" textSize="text-5xl" imgSize="w-14 h-14" />
         <p className="font-medium text-muted-foreground">Your inventory is empty</p>
         <p className="text-sm text-muted-foreground max-w-xs">
           Buy seeds from the Shop, plant them in your Garden, then harvest bloomed flowers here.
@@ -335,6 +335,7 @@ export function Inventory({ newSeeds = 0, newBlooms = 0, newSupplies = 0, onSubT
           ) : (
             <EmptyTab
               emoji="🌱"
+              sprite="/sprites/flowers/seed.png"
               message={q ? "No seeds match your search" : "No seeds in inventory"}
               hint={q ? undefined : "Buy seeds from the Shop to get started."}
             />
@@ -360,11 +361,11 @@ export function Inventory({ newSeeds = 0, newBlooms = 0, newSupplies = 0, onSubT
                   item={item}
                 />
               )) : (
-                <EmptyTab emoji="🌸" message="No blooms match your search" />
+                <EmptyTab emoji="🌸" sprite="/sprites/flowers/bloom.png" message="No blooms match your search" />
               )}
             </>
           ) : (
-            <EmptyTab emoji="🌸" message="No blooms to sell" hint="Harvest fully-grown flowers from your Garden." />
+            <EmptyTab emoji="🌸" sprite="/sprites/flowers/bloom.png" message="No blooms to sell" hint="Harvest fully-grown flowers from your Garden." />
           )
         )}
 
@@ -411,6 +412,7 @@ export function Inventory({ newSeeds = 0, newBlooms = 0, newSupplies = 0, onSubT
           ) : (
             <EmptyTab
               emoji="🧪"
+              sprite="/sprites/ui/consumables.png"
               message={q ? "No consumables match your search" : "No consumables"}
               hint={q ? undefined : "Craft consumables in the Alchemy lab."}
             />
@@ -451,6 +453,7 @@ export function Inventory({ newSeeds = 0, newBlooms = 0, newSupplies = 0, onSubT
           ) : (
             <EmptyTab
               emoji="⚙️"
+              sprite="/sprites/ui/gear.png"
               message={q ? "No supplies match your search" : "No supplies"}
               hint={q ? undefined : "Buy fertilizers and gear from the Supply Shop."}
             />
@@ -535,12 +538,12 @@ export function Inventory({ newSeeds = 0, newBlooms = 0, newSupplies = 0, onSubT
   );
 }
 
-function EmptyTab({ emoji, message, hint }: { emoji: string; message: string; hint?: string }) {
+function EmptyTab({ emoji, sprite, message, hint }: { emoji: string; sprite?: string; message: string; hint?: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
-      <span className="text-4xl">{emoji}</span>
+      <ItemSprite emoji={emoji} sprite={sprite} name={message} textSize="text-4xl" imgSize="w-10 h-10" />
       <p className="font-medium text-muted-foreground text-sm">{message}</p>
-      <p className="text-xs text-muted-foreground max-w-xs">{hint}</p>
+      {hint && <p className="text-xs text-muted-foreground max-w-xs">{hint}</p>}
     </div>
   );
 }
