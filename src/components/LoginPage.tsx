@@ -138,7 +138,7 @@ export function LoginPage({ onSignIn, onEnter, onSignOut, username, isLoading }:
         <ItemSprite emoji="🌸" sprite="/sprites/flowers/sakura_blossom.png" name="Sakura Blossom" textSize="text-6xl" imgSize="w-16 h-16" />
         <div className="flex flex-col items-center gap-0.5">
           <h1 className="text-3xl font-bold text-primary tracking-wide">Chrysanthemum</h1>
-          <p className="text-xs font-semibold tracking-widest uppercase text-pink-400">✿ Sakura Festival Event ✿</p>
+          <p className="text-xs font-semibold tracking-widest uppercase text-pink-400">✿ Sakura Blossom Event ✿</p>
         </div>
         <p className="text-sm text-muted-foreground max-w-xs">
           Grow rare flowers, discover mutations, and build the ultimate garden.
@@ -206,6 +206,11 @@ export function LoginPage({ onSignIn, onEnter, onSignOut, username, isLoading }:
           </div>
         )}
       </div>
+
+      {/* ── Version ──────────────────────────────────────────────────────── */}
+      <p className="relative text-[10px] text-muted-foreground/50 tracking-widest font-mono">
+        v2.4.0
+      </p>
 
     </div>
   );
