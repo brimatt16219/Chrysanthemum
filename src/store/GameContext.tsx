@@ -477,7 +477,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           const reset = supplyTicked.lastSupplyReset;
           setSupplyJustRestocked(true);
           harvestQueue.current = harvestQueue.current
-            .then(() => edgeSyncSupplyShop(shop, reset))
+            .then(async () => {
+              const res = await edgeSyncSupplyShop(shop, reset);
+              // Keep the client's CAS token current so the 30s auto-save doesn't
+              // fail because the sync bumped updated_at without returning a fresh stamp.
+              if (res?.serverUpdatedAt) {
+                stateRef.current = { ...stateRef.current, serverUpdatedAt: res.serverUpdatedAt };
+                setState((prev) => ({ ...prev, serverUpdatedAt: res.serverUpdatedAt }));
+              }
+            })
             .catch(() => {});
           next = supplyTicked;
         }

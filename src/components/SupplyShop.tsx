@@ -57,7 +57,7 @@ function formatDuration(ms: number): string {
 // ── Individual supply slot card ─────────────────────────────────────────────
 
 function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolean }) {
-  const { state, perform, getState, user, requestSignIn, pushGenericToast } = useGame();
+  const { state, perform, getState, awaitHarvests, user, requestSignIn, pushGenericToast } = useGame();
   const { settings } = useSettings();
   const [justBought,  setJustBought]  = useState(false);
   const [lockingSlot, setLockingSlot] = useState(false);
@@ -121,9 +121,15 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
     }
     audioManager.playSfx("buy");
     if (toastEmoji) pushGenericToast(slot.speciesId!, toastEmoji, toastLabel, toastColor, undefined, 1, toastSprite);
+    // Capture the current queue tail so this buy waits for any in-flight
+    // supply-shop sync before hitting the server. Without this, a buy fired
+    // immediately after a restock could reach the server before the sync
+    // writes the new shop, causing "Slot not found" or the sync later
+    // overwriting the buy's decremented quantities (#243).
+    const pendingSync = awaitHarvests();
     perform(
       optimistic,
-      () => edgeBuyFromSupplyShop(slot.speciesId),
+      async () => { await pendingSync; return edgeBuyFromSupplyShop(slot.speciesId); },
       undefined,
       {
         rollback: (cur) => {
@@ -444,7 +450,7 @@ function supplyUnlockSlots(rarity: Rarity): number | null {
 }
 
 export function SupplyShop() {
-  const { state, perform, getState, user, requestSignIn, pushGenericToast } = useGame();
+  const { state, perform, getState, awaitHarvests, user, requestSignIn, pushGenericToast } = useGame();
   const { settings } = useSettings();
   const [countdown,     setCountdown]     = useState(() => msUntilSupplyReset(state));
   const [showRates,     setShowRates]     = useState(false);
@@ -568,8 +574,9 @@ export function SupplyShop() {
       })
       .filter((x): x is NonNullable<typeof x> => x !== null);
     setBuyingAll(true);
+    const pendingSync = awaitHarvests();
     try {
-      await perform(optimistic, () => edgeBuyAllFromSupplyShop(), () => {
+      await perform(optimistic, async () => { await pendingSync; return edgeBuyAllFromSupplyShop(); }, () => {
         for (const { key, emoji, label, color, sprite } of toastItems) {
           pushGenericToast(key, emoji, label, color, undefined, 1, sprite);
         }

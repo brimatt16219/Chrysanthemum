@@ -273,7 +273,7 @@ export function edgeBuyAllFromSupplyShop() {
 }
 
 export function edgeSyncSupplyShop(supplyShop: GameState["supplyShop"], lastSupplyReset: number) {
-  return callEdge<{ ok: true }>("supply-action", { action: "sync", supplyShop, lastSupplyReset });
+  return callEdge<{ ok: true; serverUpdatedAt?: string }>("supply-action", { action: "sync", supplyShop, lastSupplyReset });
 }
 
 // ── Gifting ───────────────────────────────────────────────────────────────────
