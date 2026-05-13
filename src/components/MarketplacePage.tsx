@@ -259,7 +259,7 @@ export function MarketplacePage({ onViewProfile }: Props) {
 
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4 text-center px-4">
-        <p className="text-5xl">🏪</p>
+        <ItemSprite emoji="🏪" sprite="/sprites/ui/social_market.png" name="Marketplace" textSize="text-5xl" imgSize="w-14 h-14" />
         <h2 className="text-lg font-bold">Marketplace</h2>
         <p className="text-sm text-muted-foreground max-w-xs">
           Buy and sell flowers with other players. Unlock your first listing slot to get started.
@@ -415,7 +415,7 @@ export function MarketplacePage({ onViewProfile }: Props) {
         </div>
       ) : listings.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 gap-3 text-center">
-          <p className="text-4xl">🏪</p>
+          <ItemSprite emoji="🏪" sprite="/sprites/ui/social_market.png" name="Marketplace" textSize="text-4xl" imgSize="w-12 h-12" />
           <p className="font-medium text-muted-foreground">No listings found</p>
           <p className="text-sm text-muted-foreground max-w-xs">
             {search || filterRarity !== "all"

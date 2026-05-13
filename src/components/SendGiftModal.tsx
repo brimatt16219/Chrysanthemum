@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useGame } from "../store/GameContext";
+import { ItemSprite } from "./ItemSprite";
 import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
 import { edgeSendGift } from "../lib/edgeFunctions";
 import type { MutationType } from "../data/flowers";
@@ -71,7 +72,7 @@ export function SendGiftModal({ receiverId, receiverUsername, onClose, onSent }:
 
         {items.length === 0 ? (
           <div className="text-center py-8 space-y-2">
-            <p className="text-3xl">🎒</p>
+            <ItemSprite emoji="🎒" sprite="/sprites/ui/tab_inventory.png" name="Inventory" textSize="text-3xl" imgSize="w-9 h-9" />
             <p className="text-sm text-muted-foreground">Your inventory is empty.</p>
             <p className="text-xs text-muted-foreground">Harvest some flowers first!</p>
           </div>

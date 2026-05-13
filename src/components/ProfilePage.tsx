@@ -484,7 +484,7 @@ export function ProfilePage({ username }: Props) {
         <div className="grid grid-cols-3 gap-3">
           {[
             { label: "Coins",   value: save.coins.toLocaleString(), emoji: "🟡", sprite: "/sprites/ui/coins.png"      },
-            { label: "Items",   value: totalItems.toString(),       emoji: "🎒", sprite: undefined                    },
+            { label: "Items",   value: totalItems.toString(),       emoji: "🎒", sprite: "/sprites/ui/tab_inventory.png" },
             { label: "Species", value: uniqueSpecies.toString(),    emoji: "🌸", sprite: "/sprites/flowers/bloom.png" },
           ].map(({ label, value, emoji, sprite }) => (
             <div key={label} className="bg-card/60 border border-border rounded-xl px-3 py-3 text-center">

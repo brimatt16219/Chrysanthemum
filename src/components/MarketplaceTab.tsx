@@ -18,7 +18,7 @@ export function MarketplaceTab({ onViewProfile, onSignIn }: Props) {
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
-        <p className="text-5xl">🏪</p>
+        <ItemSprite emoji="🏪" sprite="/sprites/ui/social_market.png" name="Marketplace" textSize="text-5xl" imgSize="w-14 h-14" />
         <p className="font-semibold">Sign in to use the Marketplace</p>
         <p className="text-sm text-muted-foreground max-w-xs">
           Buy and sell flowers with other players from around the world.
