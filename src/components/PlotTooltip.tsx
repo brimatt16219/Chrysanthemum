@@ -381,7 +381,10 @@ export function PlotTooltip({
           )}
           {/* Magnifying Glass used — species is revealed for this growing tile */}
           {plant.revealed && !isBloomed && (
-            <p className="text-[10px] font-mono text-sky-400">🔎 Species revealed</p>
+            <p className="text-[10px] font-mono text-sky-400 flex items-center gap-0.5">
+              <ItemSprite emoji="🔎" sprite="/sprites/consumables/magnifying_glass.png" name="Species revealed" textSize="text-[10px]" imgSize="w-3 h-3" />
+              {" "}Species revealed
+            </p>
           )}
           {/* Active consumable flags */}
           {plant.infused && (() => {
@@ -399,7 +402,10 @@ export function PlotTooltip({
             );
           })()}
           {plant.heirloomActive && (
-            <p className="text-[10px] font-mono text-emerald-400">🔮 Heirloom Charm active</p>
+            <p className="text-[10px] font-mono text-emerald-400 flex items-center gap-0.5">
+              <ItemSprite emoji="🔮" sprite="/sprites/consumables/heirloom_charm.png" name="Heirloom Charm" textSize="text-[10px]" imgSize="w-3 h-3" />
+              {" "}Heirloom Charm active
+            </p>
           )}
           {plant.forcedMutation === "giant" && (
             <p className="text-[10px] font-mono text-violet-400">🧬 Giant Force active</p>
@@ -473,7 +479,12 @@ export function PlotTooltip({
                 title="Removes the Garden Pin (consumed). Required before harvesting."
                 className="w-full py-1.5 rounded-lg bg-amber-500/20 border border-amber-500/50 text-amber-300 text-xs font-semibold hover:bg-amber-500/30 transition-colors text-center disabled:opacity-50"
               >
-                {unpinning ? "Removing…" : "📌 Remove Pin"}
+                {unpinning ? "Removing…" : (
+                  <span className="inline-flex items-center gap-0.5">
+                    <ItemSprite emoji="📌" sprite="/sprites/ui/pin.png" name="Pin" textSize="text-xs" imgSize="w-3.5 h-3.5" />
+                    {" "}Remove Pin
+                  </span>
+                )}
               </button>
             ) : isCrossBreeding ? (
               <p className="text-[11px] text-emerald-400/80 font-mono text-center py-0.5">
@@ -617,12 +628,14 @@ export function PlotTooltip({
         {!isBloomed && (
           <div className="pt-1 border-t border-border">
             {plant.pinned ? (
-              <p className="text-[10px] text-muted-foreground">
-                📌 Remove Pin first to dig up
+              <p className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                <ItemSprite emoji="📌" sprite="/sprites/ui/pin.png" name="Pin" textSize="text-[10px]" imgSize="w-3 h-3" />
+                {" "}Remove Pin first to dig up
               </p>
             ) : !hasShovel ? (
-              <p className="text-[10px] text-muted-foreground">
-                🥄 Need a Shovel to dig up
+              <p className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                <ItemSprite emoji="🥄" sprite="/sprites/consumables/shovel.png" name="Shovel" textSize="text-[10px]" imgSize="w-3 h-3" />
+                {" "}Need a Shovel to dig up
               </p>
             ) : confirmRemove ? (
               <div className="space-y-1">

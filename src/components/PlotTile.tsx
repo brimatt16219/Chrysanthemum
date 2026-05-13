@@ -680,10 +680,10 @@ export function PlotTile({
             - bloomed unpinned → pulsing circle to draw attention to harvest-ready state */}
         {plant.pinned ? (
           <span
-            className="absolute -top-1 -right-1 text-sm leading-none"
+            className="absolute -top-1 -right-1 leading-none"
             title="Pinned — auto-harvest blocked"
           >
-            📌
+            <ItemSprite emoji="📌" sprite="/sprites/ui/pin.png" name="Pinned" textSize="text-sm" imgSize="w-4 h-4" />
           </span>
         ) : isBloomed ? (
           <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full animate-pulse" />

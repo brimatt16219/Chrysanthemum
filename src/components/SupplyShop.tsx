@@ -211,10 +211,7 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
             {/* Slot Lock button */}
             {slot.locked ? (
               <span className="text-[10px] text-amber-400 font-mono flex items-center gap-0.5">
-                {settings.useSprites
-                  ? <img src="/sprites/ui/shop_slot_lock.png" alt="📌" className="w-3 h-3 object-contain" style={PX} />
-                  : "📌"
-                }
+                <ItemSprite emoji="📌" sprite="/sprites/ui/shop_slot_lock.png" name="Slot Lock" textSize="text-[10px]" imgSize="w-3 h-3" />
                 {" "}Locked
               </span>
             ) : hasSlotLock ? (
@@ -226,10 +223,7 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
               >
                 {lockingSlot ? "…" : (
                   <span className="flex items-center gap-0.5">
-                    {settings.useSprites
-                      ? <img src="/sprites/ui/shop_slot_lock.png" alt="📌" className="w-3 h-3 object-contain" style={PX} />
-                      : "📌"
-                    }
+                    <ItemSprite emoji="📌" sprite="/sprites/ui/shop_slot_lock.png" name="Slot Lock" textSize="text-[10px]" imgSize="w-3 h-3" />
                     {" "}Lock
                   </span>
                 )}
@@ -311,10 +305,7 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
           <div className="flex items-center gap-1.5">
             {slot.locked ? (
               <span className="text-[10px] text-amber-400 font-mono flex items-center gap-0.5">
-                {settings.useSprites
-                  ? <img src="/sprites/ui/shop_slot_lock.png" alt="📌" className="w-3 h-3 object-contain" style={PX} />
-                  : "📌"
-                }
+                <ItemSprite emoji="📌" sprite="/sprites/ui/shop_slot_lock.png" name="Slot Lock" textSize="text-[10px]" imgSize="w-3 h-3" />
                 {" "}Locked
               </span>
             ) : hasSlotLock ? (
@@ -326,10 +317,7 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
               >
                 {lockingSlot ? "…" : (
                   <span className="flex items-center gap-0.5">
-                    {settings.useSprites
-                      ? <img src="/sprites/ui/shop_slot_lock.png" alt="📌" className="w-3 h-3 object-contain" style={PX} />
-                      : "📌"
-                    }
+                    <ItemSprite emoji="📌" sprite="/sprites/ui/shop_slot_lock.png" name="Slot Lock" textSize="text-[10px]" imgSize="w-3 h-3" />
                     {" "}Lock
                   </span>
                 )}
@@ -398,10 +386,7 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
           <div className="flex items-center gap-1.5">
             {slot.locked ? (
               <span className="text-[10px] text-amber-400 font-mono flex items-center gap-0.5">
-                {settings.useSprites
-                  ? <img src="/sprites/ui/shop_slot_lock.png" alt="📌" className="w-3 h-3 object-contain" style={PX} />
-                  : "📌"
-                }
+                <ItemSprite emoji="📌" sprite="/sprites/ui/shop_slot_lock.png" name="Slot Lock" textSize="text-[10px]" imgSize="w-3 h-3" />
                 {" "}Locked
               </span>
             ) : hasSlotLock ? (
@@ -413,10 +398,7 @@ function SupplyCard({ slot, hasSlotLock }: { slot: ShopSlot; hasSlotLock: boolea
               >
                 {lockingSlot ? "…" : (
                   <span className="flex items-center gap-0.5">
-                    {settings.useSprites
-                      ? <img src="/sprites/ui/shop_slot_lock.png" alt="📌" className="w-3 h-3 object-contain" style={PX} />
-                      : "📌"
-                    }
+                    <ItemSprite emoji="📌" sprite="/sprites/ui/shop_slot_lock.png" name="Slot Lock" textSize="text-[10px]" imgSize="w-3 h-3" />
                     {" "}Lock
                   </span>
                 )}

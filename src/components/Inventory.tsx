@@ -522,7 +522,7 @@ export function Inventory({ newSeeds = 0, newBlooms = 0, newSupplies = 0, onSubT
           `}
         >
           <div className="flex items-center gap-3 bg-card border border-primary/40 rounded-2xl px-5 py-4 shadow-2xl shadow-primary/10 min-w-64">
-            <span className="text-2xl">❓</span>
+            <ItemSprite emoji="❓" sprite="/sprites/ui/unknown.png" name="Pouch" textSize="text-2xl" imgSize="w-7 h-7" />
             <div>
               <p className="text-sm font-bold text-primary mb-0.5">Pouch opened!</p>
               <p className="text-[11px] text-muted-foreground">

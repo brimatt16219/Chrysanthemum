@@ -190,7 +190,7 @@ export function WeatherForecastPanel({ onClose }: Props) {
                       key={i}
                       className="flex items-center gap-3 rounded-xl border border-dashed border-border/40 p-3 opacity-50"
                     >
-                      <span className="text-2xl opacity-40">❓</span>
+                      <ItemSprite emoji="❓" sprite="/sprites/ui/weather_unknown.png" name="Pending forecast" textSize="text-2xl" imgSize="w-7 h-7" className="opacity-40" />
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Pending…</p>
                         <p className="text-xs text-muted-foreground/60">
