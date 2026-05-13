@@ -127,8 +127,11 @@ export function LoginPage({ onSignIn }: Props) {
 
       {/* ── Branding ─────────────────────────────────────────────────────── */}
       <div className="relative flex flex-col items-center gap-3 text-center">
-        <ItemSprite emoji="🌸" sprite="/sprites/ui/logo.png" name="Chrysanthemum" textSize="text-6xl" imgSize="w-16 h-16" />
-        <h1 className="text-3xl font-bold text-primary tracking-wide">Chrysanthemum</h1>
+        <ItemSprite emoji="🌸" sprite="/sprites/flowers/sakura_blossom.png" name="Sakura Blossom" textSize="text-6xl" imgSize="w-16 h-16" />
+        <div className="flex flex-col items-center gap-0.5">
+          <h1 className="text-3xl font-bold text-primary tracking-wide">Chrysanthemum</h1>
+          <p className="text-xs font-semibold tracking-widest uppercase text-pink-400">✿ Sakura Festival Event ✿</p>
+        </div>
         <p className="text-sm text-muted-foreground max-w-xs">
           Grow rare flowers, discover mutations, and build the ultimate garden.
         </p>
@@ -143,12 +146,19 @@ export function LoginPage({ onSignIn }: Props) {
 
       {/* ── Auth buttons ─────────────────────────────────────────────────── */}
       <div className="relative flex flex-col gap-3 w-full max-w-xs">
-        <button
-          onClick={onSignIn}
-          className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity text-center"
+        {/* 2-step pixel border: outer wrapper shows 2 px of primary color as the
+            "border" ring; the clip-path on both layers gives pixel-stepped corners. */}
+        <div
+          className="btn-pixel-2 p-[2px] w-full"
+          style={{ background: "hsl(var(--primary) / 0.55)" }}
         >
-          Sign in with Google
-        </button>
+          <button
+            onClick={onSignIn}
+            className="btn-pixel-2 w-full py-3 bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity text-center"
+          >
+            Sign in with Google
+          </button>
+        </div>
       </div>
 
     </div>

@@ -122,6 +122,23 @@ body {
    curved corners — each corner steps in 2 px increments rather than a single
    diagonal cut, producing the classic RPG-panel "rounded" pixel look.        */
 
+/* Standalone 2-step staircase shape (4 px total corner span) — applied
+   directly to individual elements (e.g. login-page CTA button) that want
+   the pixel-art corner treatment without the global .pixel-borders root.
+   Each corner: step at (0,4)→(0,2)→(2,2)→(2,0)→(4,0).                      */
+.btn-pixel-2 {
+  clip-path: polygon(
+    /* top-left */    0px 4px, 0px 2px, 2px 2px, 2px 0px, 4px 0px,
+    /* top edge */    calc(100% - 4px) 0px,
+    /* top-right */   calc(100% - 2px) 0px, calc(100% - 2px) 2px, 100% 2px, 100% 4px,
+    /* right edge */  100% calc(100% - 4px),
+    /* bot-right */   100% calc(100% - 2px), calc(100% - 2px) calc(100% - 2px),
+                      calc(100% - 2px) 100%, calc(100% - 4px) 100%,
+    /* bot edge */    4px 100%,
+    /* bot-left */    2px 100%, 2px calc(100% - 2px), 0px calc(100% - 2px), 0px calc(100% - 4px)
+  );
+}
+
 .pixel-borders,
 .pixel-borders * {
   border-radius: 0 !important;
