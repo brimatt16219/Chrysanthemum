@@ -773,7 +773,7 @@ function AppInner() {
             onClick={() => handleTabChange("garden")}
           >
             {settings.useSprites
-              ? <img src="/sprites/ui/logo.png" alt="🌸" className="w-6 h-6 object-contain" style={{ imageRendering: "pixelated" }} />
+              ? <img src="/sprites/flowers/sakura_blossom.png" alt="🌸" className="w-6 h-6 object-contain" style={{ imageRendering: "pixelated" }} />
               : <span>🌸</span>
             }
             <span className="hidden sm:block text-lg">Chrysanthemum</span>
