@@ -21,12 +21,12 @@ export interface Settings {
 const DEFAULTS: Settings = {
   plotAnimations:          true,
   plotGearIndicator:       true,
-  plotMutationIndicator:   true,
+  plotMutationIndicator:   false,
   plotMutationVfx:         true,
   plotMasteryIndicator:    true,
   plotFertilizerIndicator: true,
   useSprites:              true,
-  pixelBorders:            false,
+  pixelBorders:            true,
   theme:                   "garden",
   // ── Audio ──────────────────────────────────────────────
   musicVolume:             0.5,
