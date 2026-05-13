@@ -675,42 +675,40 @@ export function PlotTile({
           </div>
         )}
 
-        {/* Top-right indicator:
-            - pinned plant → 📌 (overrides the bloom pulse, since auto-harvest is shielded)
-            - bloomed unpinned → pulsing circle to draw attention to harvest-ready state */}
-        {plant.pinned ? (
-          <span
-            className="absolute -top-1 -right-1 leading-none"
-            title="Pinned — auto-harvest blocked"
-          >
-            <ItemSprite emoji="📌" sprite="/sprites/ui/pin.png" name="Pinned" textSize="text-sm" imgSize="w-4 h-4" />
-          </span>
-        ) : isBloomed ? (
-          <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full animate-pulse" />
-        ) : null}
-
-        {/* Mutation badge — bottom-right */}
-        {settings.plotMutationIndicator && isBloomed && (plant as PlantedFlower).mutation && (
-          <span className="absolute -bottom-1 -right-1 leading-none">
-            <ItemSprite
-              emoji={MUTATIONS[(plant as PlantedFlower).mutation!].emoji}
-              sprite={MUTATIONS[(plant as PlantedFlower).mutation!].sprite}
-              name={MUTATIONS[(plant as PlantedFlower).mutation!].emoji}
-              textSize="text-sm" imgSize="w-4 h-4"
-            />
-          </span>
-        )}
-
-        {/* Tooltip-open indicator (suppressed when pinned — 📌 occupies the slot) */}
-        {open && !isBloomed && !plant.pinned && (
-          <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary/60 rounded-full" />
-        )}
-
         {/* Sprinkler-highlight ring overlay */}
         {isHighlighted && (
           <div className="absolute inset-0 rounded-xl bg-primary/10 pointer-events-none" />
         )}
       </button>
+
+      {/* Top-right indicator — on the wrapper so pixel-border clip-path on the button doesn't cut them off
+            - pinned plant → 📌 (overrides the bloom pulse, since auto-harvest is shielded)
+            - bloomed unpinned → pulsing circle to draw attention to harvest-ready state
+            - tooltip open on growing plant → muted indicator */}
+      {plant.pinned ? (
+        <span
+          className="absolute -top-1 -right-1 leading-none pointer-events-none"
+          title="Pinned — auto-harvest blocked"
+        >
+          <ItemSprite emoji="📌" sprite="/sprites/ui/pin.png" name="Pinned" textSize="text-sm" imgSize="w-4 h-4" />
+        </span>
+      ) : isBloomed ? (
+        <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary animate-pulse pointer-events-none" style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }} />
+      ) : open ? (
+        <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary/60 pointer-events-none" style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }} />
+      ) : null}
+
+      {/* Mutation badge — bottom-right, also outside button for same reason */}
+      {settings.plotMutationIndicator && isBloomed && (plant as PlantedFlower).mutation && (
+        <span className="absolute -bottom-1 -right-1 leading-none pointer-events-none">
+          <ItemSprite
+            emoji={MUTATIONS[(plant as PlantedFlower).mutation!].emoji}
+            sprite={MUTATIONS[(plant as PlantedFlower).mutation!].sprite}
+            name={MUTATIONS[(plant as PlantedFlower).mutation!].emoji}
+            textSize="text-sm" imgSize="w-4 h-4"
+          />
+        </span>
+      )}
     </div>
   );
 }

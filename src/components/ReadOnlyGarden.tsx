@@ -306,11 +306,11 @@ export function ReadOnlyGarden({ grid, farmSize, farmRows }: Props) {
 
 
           return (
+            <div key={plot.id} className="relative">
             <div
-              key={plot.id}
               style={prismaticStyle}
               className={`
-                relative w-14 h-14 rounded-xl border-2 flex flex-col items-center justify-center
+                w-14 h-14 rounded-xl border-2 flex flex-col items-center justify-center
                 ${isBloomed
                   ? `${rarity?.borderBloom ?? "border-primary/50"} ${rarity?.bgBloom ?? "bg-primary/10"} ${rarity?.glow ?? ""}`
                   : `${rarity?.borderGrowing ?? "border-border/60"} bg-card/60`
@@ -513,26 +513,28 @@ export function ReadOnlyGarden({ grid, farmSize, farmRows }: Props) {
                 );
               })()}
 
-              {/* Top-right: pin badge overrides bloom pulse */}
-              {plant.pinned ? (
-                <span className="absolute -top-1 -right-1 leading-none" title="Pinned — auto-harvest blocked">
-                  <ItemSprite emoji="📌" sprite="/sprites/ui/pin.png" name="Pinned" textSize="text-sm" imgSize="w-4 h-4" />
-                </span>
-              ) : isBloomed ? (
-                <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full animate-pulse" />
-              ) : null}
+            </div>
 
-              {/* Mutation badge */}
-              {settings.plotMutationIndicator && mut && (
-                <span className="absolute -bottom-1 -right-1 leading-none">
-                  <ItemSprite
-                    emoji={mut.emoji}
-                    sprite={mut.sprite}
-                    name={mut.emoji}
-                    textSize="text-sm" imgSize="w-4 h-4"
-                  />
-                </span>
-              )}
+            {/* Top-right: pin badge overrides bloom pulse — on wrapper so pixel-border clip-path doesn't cut them */}
+            {plant.pinned ? (
+              <span className="absolute -top-1 -right-1 leading-none pointer-events-none" title="Pinned — auto-harvest blocked">
+                <ItemSprite emoji="📌" sprite="/sprites/ui/pin.png" name="Pinned" textSize="text-sm" imgSize="w-4 h-4" />
+              </span>
+            ) : isBloomed ? (
+              <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary animate-pulse pointer-events-none" style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }} />
+            ) : null}
+
+            {/* Mutation badge */}
+            {settings.plotMutationIndicator && mut && (
+              <span className="absolute -bottom-1 -right-1 leading-none pointer-events-none">
+                <ItemSprite
+                  emoji={mut.emoji}
+                  sprite={mut.sprite}
+                  name={mut.emoji}
+                  textSize="text-sm" imgSize="w-4 h-4"
+                />
+              </span>
+            )}
             </div>
           );
         })}
