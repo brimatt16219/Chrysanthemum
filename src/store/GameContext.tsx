@@ -76,9 +76,13 @@ interface GameContextValue {
    *  during this session. App renders one CraftCompletionBanner per entry. */
   craftCompletions: { id: string; emoji: string; sprite?: string; name: string }[];
   dismissCraftCompletion: (id: string) => void;
+  clearAllCraftCompletions: () => void;
   /** Same shape as craftCompletions but for the alchemy attunement queue. */
   attunementCompletions: { id: string; emoji: string; sprite?: string; name: string }[];
   dismissAttunementCompletion: (id: string) => void;
+  clearAllAttunementCompletions: () => void;
+  /** Clears every banner-type notification in one shot. */
+  clearAllBanners: () => void;
   user: User | null;
   profile: CloudProfile | null;
   authLoading: boolean;
@@ -798,9 +802,18 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       craftCompletions,
       dismissCraftCompletion: (id: string) =>
         setCraftCompletions((prev) => prev.filter((c) => c.id !== id)),
+      clearAllCraftCompletions: () => setCraftCompletions([]),
       attunementCompletions,
       dismissAttunementCompletion: (id: string) =>
         setAttunementCompletions((prev) => prev.filter((c) => c.id !== id)),
+      clearAllAttunementCompletions: () => setAttunementCompletions([]),
+      clearAllBanners: () => {
+        setShopJustRestocked(false);
+        setSupplyJustRestocked(false);
+        setGearExpiry(null);
+        setCraftCompletions([]);
+        setAttunementCompletions([]);
+      },
       user, profile, authLoading,
       signInWithGoogle, signOut,
       refreshProfile,

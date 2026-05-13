@@ -112,8 +112,9 @@ function AppInner() {
     shopJustRestocked,   clearShopNotification,
     supplyJustRestocked, clearSupplyNotification,
     gearExpiry, clearGearExpiry,
-    craftCompletions, dismissCraftCompletion,
-    attunementCompletions, dismissAttunementCompletion,
+    craftCompletions, dismissCraftCompletion, clearAllCraftCompletions,
+    attunementCompletions, dismissAttunementCompletion, clearAllAttunementCompletions,
+    clearAllBanners,
     user, profile, authLoading,
     signInWithGoogle, signOut,
     needsUsername, completeUsername,
@@ -625,38 +626,88 @@ function AppInner() {
           vertically when multiple fire instead of rendering on top of each
           other. flex-col-reverse keeps the most recent banner closest to the
           anchor (bottom edge); older banners stack above. */}
-      {(shopJustRestocked || supplyJustRestocked || craftCompletions.length > 0 || attunementCompletions.length > 0 || !!gearExpiry) && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col-reverse items-center gap-2 pointer-events-none">
-          {shopJustRestocked && (
-            <ShopRestockBanner onDismiss={clearShopNotification} type="seeds" />
-          )}
-          {supplyJustRestocked && (
-            <ShopRestockBanner onDismiss={clearSupplyNotification} type="supply" />
-          )}
-          {gearExpiry && (
-            <GearExpiryBanner gearType={gearExpiry.gearType} onDismiss={clearGearExpiry} />
-          )}
-          {craftCompletions.map((c) => (
-            <CraftCompletionBanner
-              key={c.id}
-              emoji={c.emoji}
-              sprite={c.sprite}
-              name={c.name}
-              onDismiss={() => dismissCraftCompletion(c.id)}
-            />
-          ))}
-          {attunementCompletions.map((c) => (
-            <CraftCompletionBanner
-              key={c.id}
-              emoji={c.emoji}
-              sprite={c.sprite}
-              name={c.name}
-              title="Attunement Ready!"
-              onDismiss={() => dismissAttunementCompletion(c.id)}
-            />
-          ))}
-        </div>
-      )}
+      {(shopJustRestocked || supplyJustRestocked || craftCompletions.length > 0 || attunementCompletions.length > 0 || !!gearExpiry) && (() => {
+          // Count how many distinct banner slots are active (craft/attunement each
+          // count as 1 regardless of how many individual completions are queued).
+          const bannerCount =
+            (shopJustRestocked      ? 1 : 0) +
+            (supplyJustRestocked    ? 1 : 0) +
+            (!!gearExpiry           ? 1 : 0) +
+            (craftCompletions.length      > 0 ? 1 : 0) +
+            (attunementCompletions.length > 0 ? 1 : 0);
+
+          return (
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col-reverse items-center gap-2 pointer-events-none">
+              {shopJustRestocked && (
+                <ShopRestockBanner onDismiss={clearShopNotification} type="seeds" />
+              )}
+              {supplyJustRestocked && (
+                <ShopRestockBanner onDismiss={clearSupplyNotification} type="supply" />
+              )}
+              {gearExpiry && (
+                <GearExpiryBanner gearType={gearExpiry.gearType} onDismiss={clearGearExpiry} />
+              )}
+              {/* Craft completions — consolidated to a single banner when > 1 */}
+              {craftCompletions.length === 1 && (
+                <CraftCompletionBanner
+                  key={craftCompletions[0].id}
+                  emoji={craftCompletions[0].emoji}
+                  sprite={craftCompletions[0].sprite}
+                  name={craftCompletions[0].name}
+                  onDismiss={() => dismissCraftCompletion(craftCompletions[0].id)}
+                />
+              )}
+              {craftCompletions.length > 1 && (
+                <CraftCompletionBanner
+                  key="consolidated-craft"
+                  emoji={craftCompletions[0].emoji}
+                  sprite={craftCompletions[0].sprite}
+                  name={craftCompletions[0].name}
+                  count={craftCompletions.length}
+                  title="Crafts Ready!"
+                  onDismiss={clearAllCraftCompletions}
+                />
+              )}
+              {/* Attunement completions — consolidated to a single banner when > 1 */}
+              {attunementCompletions.length === 1 && (
+                <CraftCompletionBanner
+                  key={attunementCompletions[0].id}
+                  emoji={attunementCompletions[0].emoji}
+                  sprite={attunementCompletions[0].sprite}
+                  name={attunementCompletions[0].name}
+                  title="Attunement Ready!"
+                  onDismiss={() => dismissAttunementCompletion(attunementCompletions[0].id)}
+                />
+              )}
+              {attunementCompletions.length > 1 && (
+                <CraftCompletionBanner
+                  key="consolidated-attunement"
+                  emoji={attunementCompletions[0].emoji}
+                  sprite={attunementCompletions[0].sprite}
+                  name={attunementCompletions[0].name}
+                  count={attunementCompletions.length}
+                  title="Attunements Ready!"
+                  onDismiss={clearAllAttunementCompletions}
+                />
+              )}
+              {/* "Clear all" pill — sits at the top of the visual stack (last in
+                  flex-col-reverse DOM order) when 2+ banner slots are active. */}
+              {bannerCount >= 2 && (
+                <button
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={() => {
+                    clearAllBanners();
+                    clearNewRequest();
+                    clearNewGift();
+                  }}
+                  className="pointer-events-auto text-[11px] text-muted-foreground hover:text-foreground bg-card/80 hover:bg-card border border-border rounded-full px-3 py-1 transition-colors"
+                >
+                  Clear all ✕
+                </button>
+              )}
+            </div>
+          );
+        })()}
       {newRequest && (
         <FriendRequestNotification
           onDismiss={clearNewRequest}

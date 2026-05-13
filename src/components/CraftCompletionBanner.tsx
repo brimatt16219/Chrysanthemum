@@ -8,6 +8,10 @@ interface Props {
   /** Banner title — defaults to "Craft Ready!". Use "Attunement Ready!" etc.
    *  for non-craft queue completions that share the same banner shape. */
   title?:    string;
+  /** When > 1 the body shows "{count} items ready to collect." instead of the
+   *  individual item name. Lets the parent consolidate multiple completions into
+   *  a single banner instead of stacking one per item. */
+  count?:    number;
   onDismiss: () => void;
 }
 
@@ -15,7 +19,7 @@ interface Props {
  *  collect". Auto-dismisses after 4 seconds, mirroring the shop restock
  *  banner. The wrapper that mounts it sets the position + z-index so multiple
  *  banners can stack vertically. */
-export function CraftCompletionBanner({ emoji, sprite, name, title = "Craft Ready!", onDismiss }: Props) {
+export function CraftCompletionBanner({ emoji, sprite, name, title = "Craft Ready!", count, onDismiss }: Props) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -50,7 +54,9 @@ export function CraftCompletionBanner({ emoji, sprite, name, title = "Craft Read
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold text-foreground">{title}</p>
           <p className="text-xs text-muted-foreground mt-0.5 truncate">
-            {name} is ready to collect.
+            {count && count > 1
+              ? `${count} items ready to collect.`
+              : `${name} is ready to collect.`}
           </p>
         </div>
 
