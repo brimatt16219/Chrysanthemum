@@ -645,6 +645,11 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
     }
     audioManager.playSfx(toHarvest.some(({ mutation }) => !!mutation) ? "mutation" : "harvest");
 
+    // Track daily progress optimistically — same pattern as the toast popups
+    // above. Firing inside the async onSuccess callback risks being skipped if
+    // the serialized harvestQueue is busy or the component re-renders mid-flight.
+    void trackProgress("harvest", toHarvest.length);
+
     const plots = toHarvest.map(({ row, col }) => ({ row, col }));
 
     perform(
@@ -657,7 +662,6 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
         }
       },
       () => {
-        void trackProgress("harvest", plots.length);
         // Aggregate per-type and per-rarity counts across all harvested plants
         const typeCounts: Record<string, number>   = {};
         const rarityCounts: Record<string, number> = {};
