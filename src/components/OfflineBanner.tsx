@@ -3,6 +3,7 @@ import { getCurrentPeriod } from "../data/dayNight";
 import type { ChangelogEntry } from "../data/changelog";
 import { CHANGELOG_ITEM_ICONS } from "../data/changelog";
 import { ItemSprite } from "./ItemSprite";
+import { audioManager } from "../lib/audioManager";
 
 interface Props {
   summary:   OfflineSummary;
@@ -144,7 +145,7 @@ export function OfflineBanner({ summary, onDismiss, changelog, username }: Props
         )}
 
         <button
-          onClick={onDismiss}
+          onClick={() => { audioManager.playSfx("click"); onDismiss(); }}
           className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity text-center shrink-0"
         >
           <span className="inline-flex items-center justify-center gap-1.5">Let's go! <ItemSprite emoji="🌱" sprite="/sprites/flowers/seed.png" name="🌱" textSize="text-sm" imgSize="w-4 h-4" /></span>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useGame } from "../store/GameContext";
 import { useSettings } from "../store/SettingsContext";
 import { ItemSprite } from "./ItemSprite";
+import { audioManager } from "../lib/audioManager";
 
 const PX = { imageRendering: "pixelated" as const };
 import { msUntilShopReset, upgradeShopSlots, buyAllSeeds, SHOP_RARITY_WEIGHTS } from "../store/gameStore";
@@ -89,6 +90,7 @@ export function Shop({ view }: ShopProps) {
     setBuyingAll(true);
     try {
       await perform(optimistic, () => edgeBuyAllSeeds(), () => {
+        audioManager.playSfx("buy");
         for (const { speciesId, qty, emoji, label, sprite } of seedDeltas) {
           pushGenericToast(`gain:seed:${speciesId}`, emoji, label, "text-green-400", "gain", qty, sprite);
         }

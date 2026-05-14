@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useGame } from "../store/GameContext";
+import { audioManager } from "../lib/audioManager";
 import {
   GEAR_RECIPES, CRAFTING_SLOT_UPGRADES, canCraftGear,
   craftDurationFromRarity, type GearRecipe,
@@ -1418,6 +1419,7 @@ export function CraftingTab() {
             serverUpdatedAt: res.serverUpdatedAt,
           });
           // Show collect notification
+          audioManager.playSfx("click");
           const toastId = crypto.randomUUID();
           setCollectToasts((prev) => [...prev, { id: toastId, emoji, sprite, name }]);
           // Achievement stats
