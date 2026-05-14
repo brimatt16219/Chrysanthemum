@@ -439,6 +439,8 @@ export async function getPublicSave(userId: string): Promise<GameState | null> {
     // v2.4 — Achievements
     achievementStats:    (data.achievement_stats    as AchievementStats) ?? {},
     achievementsClaimed: (data.achievements_claimed as string[])         ?? [],
+    // v2.4 — Codex XP backfill flag
+    codexXpBackfilled:   (data.codex_xp_backfilled  as boolean)          ?? false,
     // v2.4 — Events (public save never needs event progress)
     events:              [],
   } as GameState;
