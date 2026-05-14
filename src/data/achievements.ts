@@ -1,5 +1,5 @@
 import type { FlowerType } from "./flowers";
-import type { GearType, PassiveSubtype } from "./gear";
+import type { GearType } from "./gear";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 

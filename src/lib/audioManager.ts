@@ -34,7 +34,6 @@ class AudioManager {
 
   // Set to true on first user gesture — used by resumeBlocked to know
   // whether a paused element was blocked by autoplay or intentionally paused.
-  private unlocked = false;
 
   constructor() {
     const raw    = localStorage.getItem(LS_KEY);
@@ -61,7 +60,6 @@ class AudioManager {
 
     // On the first user gesture, resume any audio that was blocked by autoplay.
     const resumeBlocked = () => {
-      this.unlocked = true;
       // Music: resume whichever element has a src but is paused (blocked by autoplay).
       for (const el of [this.elA, this.elB]) {
         if (el.src && el.paused) void el.play().catch(() => {});

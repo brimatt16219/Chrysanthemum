@@ -28,7 +28,6 @@ import { getBoostMultiplier } from "../store/gameStore";
 import { queueEntryDisplay } from "../lib/craftDisplay";
 import { useAchievementStats } from "../hooks/useAchievementStats";
 import type { AchievementStatKey } from "../data/achievements";
-import { useSettings } from "../store/SettingsContext";
 import { ItemSprite } from "./ItemSprite";
 
 // ── Forge Haste / Resonance Draft (Phase 5a) ───────────────────────────────────

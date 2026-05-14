@@ -1,4 +1,5 @@
-import { useState, useMemo, ComponentType } from "react";
+import { useState, useMemo } from "react";
+import type { ComponentType } from "react";
 import { useGame } from "../store/GameContext";
 import type { EventEntry } from "../store/gameStore";
 import { CheckinEventCard }    from "./events/CheckinEventCard";

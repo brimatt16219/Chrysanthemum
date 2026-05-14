@@ -497,7 +497,6 @@ for (const t of TYPED_POUCH_TYPES) {
     CONSUMABLE_RECIPES.push({
       id,
       name: `${label} Seed Pouch ${ROMAN[tier]}`,
-      emoji: "🎁",
       emoji: "🎁", sprite: "/sprites/consumables/seed_pouch.png",
       tier,
       rarity: TIER_RARITIES[tier],

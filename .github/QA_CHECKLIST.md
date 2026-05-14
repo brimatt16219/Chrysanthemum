@@ -544,6 +544,261 @@ Growth multiplier changes (gear removed or expired) previously caused the progre
 
 ---
 
+## AK. v2.4.0 — Title Screen & Enter Garden Flow
+
+| # | Action | Expected |
+|---|--------|----------|
+| AK1 | Open the app while signed in | Lands on the **login page** — garden does not load yet; no music plays |
+| AK2 | On the login page, click **Enter Garden** | Garden loads; background music starts; level-up SFX is suppressed on the initial level jump |
+| AK3 | Reload the page while signed in | Returns to login page again, not directly into the garden |
+| AK4 | On the login page, click **Sign Out** | Signs out and shows the login page with Google sign-in option |
+| AK5 | In settings (while in the garden), tap **Go to title screen** | Returns to login page without signing out; can re-enter garden immediately |
+| AK6 | DevTools → Console during AK1 | No audio errors; no music or SFX fires before Enter Garden is clicked |
+
+---
+
+## AL. v2.4.0 — Google Sign-In Popup
+
+| # | Action | Expected |
+|---|--------|----------|
+| AL1 | On the login page, click **Sign in with Google** | A **popup window** opens for Google OAuth — the main page does not redirect |
+| AL2 | Complete sign-in in the popup | Popup closes; main window **reloads and signs in** without any manual interaction |
+| AL3 | Close the popup without completing sign-in | Main window remains on the login page; no error shown |
+| AL4 | DevTools Network on the main window during popup auth | No navigation event on the main page until the popup closes and reloads it |
+
+---
+
+## AM. v2.4.0 — Audio System
+
+| # | Action | Expected |
+|---|--------|----------|
+| AM1 | Click Enter Garden during daytime | **Daytime ambient music** starts playing |
+| AM2 | Wait for the time period to shift to night | Music cross-fades to the **nighttime track** without a hard cut |
+| AM3 | During a **Rain** weather event | Weather ambience layer (rain sound) fades in over the ambient music |
+| AM4 | Plant a seed | A short **plant SFX** fires at the moment of tap, not after the server round-trip |
+| AM5 | Harvest a bloomed plant | **Harvest SFX** fires immediately |
+| AM6 | Sell a bloom from inventory | **Sell SFX** fires; sell toast shows the correct coin amount |
+| AM7 | Buy a seed from the shop | **Buy SFX** and flashBought animation fire at interaction time |
+| AM8 | Level up | **Level-up SFX** plays |
+| AM9 | Mute music in settings | Music stops; SFX still plays |
+| AM10 | Mute SFX in settings | SFX silent; music continues |
+| AM11 | Set music volume to 0% | No music audible; slider can raise volume again |
+| AM12 | Navigate back to login page and re-enter garden | Music restarts cleanly; no doubled-up audio tracks |
+
+---
+
+## AN. v2.4.0 — Pixel Art Sprites
+
+| # | Action | Expected |
+|---|--------|----------|
+| AN1 | Open the garden with sprites enabled (default) | All plot tiles, gear, and HUD icons show pixel art sprites instead of emoji |
+| AN2 | Open Inventory → Blooms | Each bloom row shows the correct pixel art sprite for that species and rarity |
+| AN3 | Open the Shop | Seed listings show flower sprites; gear/consumable listings in Supply Shop show item sprites |
+| AN4 | Open Codex | Species entries show bloom sprites; mutation entries show mutation VFX alongside sprites |
+| AN5 | Disable sprites in settings → Toggle **Use Sprites** off | UI falls back to emoji rendering everywhere |
+| AN6 | Re-enable sprites | Sprites return immediately without a page reload |
+| AN7 | Open a Marketplace listing for a mutated bloom | Listing card shows the mutation VFX sheen animation on the sprite |
+| AN8 | Check the leaderboard top 3 | Gold, silver, bronze medal sprites shown next to rank numbers |
+
+---
+
+## AO. v2.4.0 — Mutation VFX
+
+| # | Action | Expected |
+|---|--------|----------|
+| AO1 | Have a **Shocked** bloom in garden. Open plot tooltip. | Plot tile shows a blue-tinted sheen VFX; tooltip shows the VFX on the bloom sprite |
+| AO2 | Check the same bloom in Inventory | Bloom row displays the mutation VFX (colorized sheen animation) |
+| AO3 | List the bloom on the Marketplace | Listing card shows the VFX on the bloom |
+| AO4 | Disable mutation VFX in settings | Mutation sheen disappears; plain badge shown instead (or nothing if badge is also off) |
+| AO5 | Check profile — view your own garden | Mutated blooms show VFX on plot tiles in the read-only garden |
+
+---
+
+## AP. v2.4.0 — Gardener XP & Leveling
+
+| # | Action | Expected |
+|---|--------|----------|
+| AP1 | Harvest a bloom | XP bar in HUD increases; if level threshold crossed, level-up SFX plays |
+| AP2 | Sell a bloom | XP awarded; HUD bar updates |
+| AP3 | Buy a seed from the shop | XP awarded |
+| AP4 | Open a Seed Pouch | XP awarded |
+| AP5 | Complete a craft in the crafting queue | XP awarded on collect |
+| AP6 | Sell a bloom on the marketplace (as seller) | XP awarded when buyer purchases |
+| AP7 | Reload the page | XP bar shows the correct persisted level and XP — no regression to 0 |
+| AP8 | Try to unlock a marketplace listing slot at too low a level | Button disabled or shows a "Requires Gardener Level X" message |
+| AP9 | Try to purchase a farm upgrade at too low a level | Same gate applies |
+
+---
+
+## AQ. v2.4.0 — Achievements
+
+| # | Action | Expected |
+|---|--------|----------|
+| AQ1 | Open Events tab → Achievements sub-tab | Achievement categories shown as a grid; progress bars reflect current stats |
+| AQ2 | Harvest enough blooms to cross a milestone (e.g. 10 harvests) | Achievement shows as claimable; badge on the Achievements panel |
+| AQ3 | Claim an achievement | Gems awarded; achievement marked claimed; cannot be claimed again |
+| AQ4 | Reload the page | Claimed achievements persist; stats still accurate |
+| AQ5 | Check "Flower Discovery" category | Tiers reflect how many unique species have been discovered (not harvest count) |
+| AQ6 | DevTools → Network after claiming | `achievement-claim` edge function returns `{ ok: true, gems: N }` |
+
+---
+
+## AR. v2.4.0 — Gems
+
+| # | Action | Expected |
+|---|--------|----------|
+| AR1 | Claim an achievement | Gem balance in HUD increases by the reward amount |
+| AR2 | Complete all daily tasks | Gem reward added to balance |
+| AR3 | Reload the page | Gem balance persists correctly |
+| AR4 | Check the HUD | Gem count displayed alongside coin count |
+
+---
+
+## AS. v2.4.0 — Daily Tasks
+
+| # | Action | Expected |
+|---|--------|----------|
+| AS1 | Open Events tab → Daily Tasks | Today's tasks shown with progress bars |
+| AS2 | Harvest a bloom | Harvest task progress increments immediately |
+| AS3 | Sell a bloom | Sell task progress increments |
+| AS4 | Plant a seed | Plant task progress increments |
+| AS5 | Complete all daily tasks | Claim button appears; tapping it awards coins and gems |
+| AS6 | After claiming, reload the page | Tasks remain marked as claimed for the day |
+| AS7 | Next calendar day | Tasks reset with new objectives |
+
+---
+
+## AT. v2.4.0 — Sakura Blossom Event
+
+| # | Action | Expected |
+|---|--------|----------|
+| AT1 | Open Events tab | Sakura Blossom Event card visible with **May 10 – May 31** date range |
+| AT2 | Check in on the event | Check-in progress increments; rewards shown |
+| AT3 | Check the seed shop during the event | **Sakura Blossom** seed may appear as an exclusive listing |
+| AT4 | Harvest a Sakura Blossom bloom | Bloom added to inventory correctly; codex entry created |
+| AT5 | DevTools → Network on check-in | `event-checkin-claim` returns `{ ok: true }` |
+| AT6 | Check event card after the event window ends (post May 31) | Event card shows as ended; check-in button disabled |
+
+---
+
+## AU. v2.4.0 — Notification Consolidation & Clear All
+
+| # | Action | Expected |
+|---|--------|----------|
+| AU1 | Harvest the same species 3 times rapidly | A single toast accumulates to **+3** rather than three separate toasts |
+| AU2 | Trigger several different notifications at once (harvest, craft complete, shop restock) | Toasts stack vertically without overlapping |
+| AU3 | With multiple toasts on screen, tap **Clear All** | All toasts dismiss immediately |
+| AU4 | Single notification without Clear All | Notification auto-dismisses after its normal duration; no looping |
+
+---
+
+## AV. v2.4.0 — SeedPicker Rarity Filter & Sort (#263)
+
+| # | Action | Expected |
+|---|--------|----------|
+| AV1 | Tap an empty plot to open the seed picker | Rarity filter chips and sort control visible at the top |
+| AV2 | Select "Rare" filter | Only Rare seeds shown in the list |
+| AV3 | Select multiple rarities | All selected rarities shown; others hidden |
+| AV4 | Change sort to "Rarity ↑" | Seeds sorted from common to rare |
+| AV5 | Clear filters | All seeds restored |
+
+---
+
+## AW. v2.4.0 — Bulk Plant/Harvest Filter Modal (#262)
+
+| # | Action | Expected |
+|---|--------|----------|
+| AW1 | Long-press or tap the **Plant All** button | Filter modal opens with rarity and type multi-select |
+| AW2 | Select "Legendary" rarity only and confirm | Only Legendary seeds are planted; others left in inventory |
+| AW3 | Open **Collect All** filter | Filter modal opens; select a subset of rarities |
+| AW4 | Confirm Collect All filter | Only blooms matching the selected rarity/type are harvested |
+| AW5 | Clear filters and Plant/Collect All | All eligible plants/blooms are affected (normal behaviour) |
+
+---
+
+## AX. v2.4.0 — Per-Rarity Select-All on Sacrifice Screen (#251)
+
+| # | Action | Expected |
+|---|--------|----------|
+| AX1 | Open AlchemyTab → Sacrifice view | Each rarity section has **Select All** and **Clear** buttons |
+| AX2 | Tap **Select All** on the Rare row | All Rare blooms in inventory selected |
+| AX3 | Tap **Clear** on the Rare row | Rare selection cleared; other rarity selections unaffected |
+| AX4 | Mix of manual and select-all selections | Only selected blooms show in the sacrifice summary |
+
+---
+
+## AY. v2.4.0 — Seed Shop Slot Lock (#238)
+
+| # | Action | Expected |
+|---|--------|----------|
+| AY1 | In the seed shop, tap the lock icon on a listing slot | Slot shows a locked indicator; lock persists after restock |
+| AY2 | Wait for a shop restock | Locked slot retains its current seed; other slots refresh normally |
+| AY3 | Tap the lock again to unlock | Slot unlocks; next restock replaces it normally |
+| AY4 | Reload the page | Lock state persists |
+
+---
+
+## AZ. v2.4.0 — Auto-Planter Pause/Resume (#245)
+
+| # | Action | Expected |
+|---|--------|----------|
+| AZ1 | Place an Auto-Planter with seeds in inventory | Planter begins planting empty cells |
+| AZ2 | Open the Auto-Planter's gear tooltip and tap **Pause** | Planter stops planting; plots remain empty |
+| AZ3 | Tap **Resume** | Planting resumes |
+| AZ4 | Navigate away while paused | Planter stays paused; no plants appear |
+| AZ5 | Navigate away while running | Planter continues planting off-tab (existing offline behaviour) |
+
+---
+
+## BA. v2.4.0 — Balance Scale Flip Countdown (#239/#240)
+
+| # | Action | Expected |
+|---|--------|----------|
+| BA1 | Place a Balance Scale. Open its gear tooltip. | Tooltip shows current phase (Boost or Slow) **and a countdown** to the next flip |
+| BA2 | Wait for the phase to flip | Countdown resets; phase label changes |
+| BA3 | Compare tooltip countdown to actual flip time | Countdown matches the observed flip time (± a few seconds for render lag) |
+
+---
+
+## BB. v2.4.0 — Weather Effects Toggle
+
+| # | Action | Expected |
+|---|--------|----------|
+| BB1 | Open settings → disable **Weather Effects** | Rain particles, lightning flash, snow overlay, and other weather animations are **not rendered** |
+| BB2 | Weather still advances and affects mutations | Mutations still apply during rain/storm even with effects disabled |
+| BB3 | Re-enable Weather Effects | Overlays return immediately without a reload |
+
+---
+
+## BC. v2.4.0 — Ghost Gear After Expiry (#242)
+
+| # | Action | Expected |
+|---|--------|----------|
+| BC1 | Let any piece of gear reach 0 time remaining | Gear disappears from the plot tile; plot is empty and re-interactable |
+| BC2 | DevTools → Network: watch the client tick during expiry | No additional `gear-action` remove call needed — gear removed client-side on expiry |
+| BC3 | Reload the page after gear expires | Expired gear **not present** in the loaded state — not reloaded from DB |
+| BC4 | Check Supabase `game_saves.grid` after expiry and a cloud save | Gear entry is absent from the saved grid |
+
+---
+
+## BD. v2.4.0 — Shop Restock Blink Race (#243)
+
+| # | Action | Expected |
+|---|--------|----------|
+| BD1 | Wait for the seed shop to restock | Shop updates to new items with **no blank flash** |
+| BD2 | Throttle to Slow 4G in DevTools. Trigger a restock. | Even with delayed responses, new listings appear without reverting to the old list |
+
+---
+
+## BE. v2.4.0 — Heirloom Charm Duplication Exploit
+
+| # | Action | Expected |
+|---|--------|----------|
+| BE1 | Apply a Heirloom Charm to a plant. Use an Eclipse Tonic to skip time. Harvest the plant. | Only **one seed** returned; no duplicate bloom row in inventory |
+| BE2 | Attempt to apply a second Heirloom Charm to the same plant (via DevTools POST) | Server returns **400** rejecting the duplicate activation |
+
+---
+
 ## Automated Gates (CI — must pass before merge)
 
 ```

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import { useState, useRef } from "react";
 import { getFlower, RARITY_CONFIG } from "../data/flowers";
 import { useSettings } from "../store/SettingsContext";
 import { ItemSprite } from "./ItemSprite";

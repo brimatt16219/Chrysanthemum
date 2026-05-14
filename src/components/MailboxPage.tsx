@@ -336,10 +336,6 @@ function MailCard({
     setHeight(isOpen ? bodyRef.current.scrollHeight : 0);
   }, [isOpen, entry]);
 
-  // Small attachment preview shown in the collapsed header row
-  const attachPreview = attachTitle
-    ? `${attachEmoji} ${attachTitle}`
-    : null;
 
   return (
     <div className={`border rounded-2xl overflow-hidden transition-all duration-300 ${isOpen ? "border-primary/40" : "border-border"} ${claimed ? "opacity-40" : "bg-card/60"}`}>

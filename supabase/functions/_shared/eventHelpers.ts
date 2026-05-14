@@ -20,7 +20,7 @@ export interface EventRow {
   description: string;
   starts_at:   string;
   ends_at:     string;
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   config:      any;
   created_at:  string;
 }

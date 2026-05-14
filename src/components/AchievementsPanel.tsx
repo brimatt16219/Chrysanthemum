@@ -4,7 +4,6 @@ import {
   ACHIEVEMENTS,
   ACHIEVEMENT_CATEGORY_META,
   type AchievementCategory,
-  type Achievement,
 } from "../data/achievements";
 import { edgeAchievementClaim } from "../lib/edgeFunctions";
 import { audioManager } from "../lib/audioManager";

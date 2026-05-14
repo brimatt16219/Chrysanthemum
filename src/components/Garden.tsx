@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useGame } from "../store/GameContext";
 import { useSettings } from "../store/SettingsContext";
 import { ItemSprite } from "./ItemSprite";

@@ -626,7 +626,7 @@ function AppInner() {
           const bannerCount =
             (shopJustRestocked      ? 1 : 0) +
             (supplyJustRestocked    ? 1 : 0) +
-            (!!gearExpiry           ? 1 : 0) +
+            (gearExpiry != null      ? 1 : 0) +
             (craftCompletions.length      > 0 ? 1 : 0) +
             (attunementCompletions.length > 0 ? 1 : 0);
 

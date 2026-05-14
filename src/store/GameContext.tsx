@@ -4,6 +4,7 @@ import {
   type GameState,
   type OfflineSummary,
   type WeatherWindow,
+  type EventEntry,
   loadGame,
   saveGame,
   tickShop,
@@ -277,7 +278,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
       try {
         loadedEvents = await loadEvents(u.id);
-      } catch {}
+      } catch { /* ignore — events are non-critical; game loads without them */ }
 
       // Fetch current weather so offline growth can apply rain / storm bonuses.
       let offlineWeather: WeatherWindow | undefined;
@@ -486,8 +487,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
               // Keep the client's CAS token current so the 30s auto-save doesn't
               // fail because the sync bumped updated_at without returning a fresh stamp.
               if (res?.serverUpdatedAt) {
-                stateRef.current = { ...stateRef.current, serverUpdatedAt: res.serverUpdatedAt };
-                setState((prev) => ({ ...prev, serverUpdatedAt: res.serverUpdatedAt }));
+                stateRef.current = { ...stateRef.current, serverUpdatedAt: res.serverUpdatedAt ?? null };
+                setState((prev) => ({ ...prev, serverUpdatedAt: res.serverUpdatedAt ?? null }));
               }
             })
             .catch(() => {});
@@ -512,7 +513,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         // during this session. Already-completed entries observed on first
         // load go straight into "fired" so they don't pop banners on refresh —
         // the navbar badge (B6) is the right surface for that.
-        const newCompletions: { id: string; emoji: string; name: string }[] = [];
+        const newCompletions: { id: string; emoji: string; sprite?: string; name: string }[] = [];
         for (const entry of next.craftingQueue ?? []) {
           if (craftFiredCompleted.current.has(entry.id)) continue;
           const doneAt = new Date(entry.startedAt).getTime() + entry.durationMs;
@@ -534,7 +535,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         }
 
         // ── Attunement completion detection (mirrors craft logic) ─────────
-        const newAttuneCompletions: { id: string; emoji: string; name: string }[] = [];
+        const newAttuneCompletions: { id: string; emoji: string; sprite?: string; name: string }[] = [];
         for (const entry of next.attunementQueue ?? []) {
           if (attuneFiredCompleted.current.has(entry.id)) continue;
           const doneAt = new Date(entry.startedAt).getTime() + entry.durationMs;
@@ -548,7 +549,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
               newAttuneCompletions.push({
                 id:     entry.id,
                 emoji:  flower?.emoji.bloom ?? "🌸",
-                sprite: flower?.sprite.bloom,
+                sprite: flower?.sprite?.bloom,
                 name:   flower?.name ?? entry.speciesId,
               });
             }

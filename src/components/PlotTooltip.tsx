@@ -69,7 +69,7 @@ export function PlotTooltip({
   gearGrowthMultiplier = 1.0,
   isUnderSprinkler, isUnderAqueduct, sprinklerMutations = [],
   isUnderGrowLamp, isUnderScarecrow, isUnderComposter, isUnderFan, isUnderHarvestBell, isUnderLawnmower,
-  balanceScaleSide, balanceScaleFlipMs, isUnderAegis,
+  balanceScaleSide, balanceScaleFlipMs: _balanceScaleFlipMs, isUnderAegis,
 }: Props) {
   const { state, getState, perform, update, activeWeather, pushHarvestPopup, pushGenericToast } = useGame();
   const { trackProgress } = useDailyProgress();

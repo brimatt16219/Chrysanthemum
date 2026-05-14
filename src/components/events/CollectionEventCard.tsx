@@ -147,7 +147,7 @@ export function CollectionEventCard({ event }: Props) {
                         return (
                           <button
                             key={`${item.speciesId}:${item.mutation ?? "none"}`}
-                            onClick={() => setSelectedBloom({ speciesId: item.speciesId, mutation: item.mutation })}
+                            onClick={() => setSelectedBloom({ speciesId: item.speciesId, mutation: item.mutation ?? null })}
                             className={`
                               text-[10px] px-2 py-1 rounded-lg border transition-all
                               ${isSelected
