@@ -297,7 +297,7 @@ export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: P
             filteredBlooms.map(({ item, species }) => {
               const rarity   = RARITY_CONFIG[species.rarity];
               const mastered = isSpeciesMastered(state.discovered, item.speciesId);
-              const mut      = item.mutation as MutationType | undefined;
+              const mut      = item.mutation ?? undefined; // normalize null → undefined
               return (
                 <button
                   key={`${item.speciesId}:${item.mutation ?? ""}`}

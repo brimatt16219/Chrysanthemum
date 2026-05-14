@@ -1324,7 +1324,7 @@ export function plantBloom(
   if (!plot || plot.plant || plot.gear) return null;
 
   const invItem = state.inventory.find(
-    (i) => i.speciesId === speciesId && !i.isSeed && (i.mutation ?? undefined) === mutation
+    (i) => i.speciesId === speciesId && !i.isSeed && (i.mutation ?? null) === (mutation ?? null)
   );
   if (!invItem || invItem.quantity < 1) return null;
 
@@ -1350,7 +1350,7 @@ export function plantBloom(
 
   const newInventory = state.inventory
     .map((i) =>
-      i.speciesId === speciesId && !i.isSeed && (i.mutation ?? undefined) === mutation
+      i.speciesId === speciesId && !i.isSeed && (i.mutation ?? null) === (mutation ?? null)
         ? { ...i, quantity: i.quantity - 1 }
         : i
     )

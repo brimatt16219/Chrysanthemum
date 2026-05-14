@@ -491,9 +491,13 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
     setSelectedPlot(null);
   }
 
-  function handleBloomSelect(speciesId: string, mutation?: string) {
+  async function handleBloomSelect(speciesId: string, mutation?: string) {
     if (!selectedPlot) return;
     const { row, col } = selectedPlot;
+    // Wait for any in-flight harvests to commit before planting — plant-bloom
+    // reads from the DB, so if a recent harvest hasn't been written yet the
+    // edge function won't find the bloom and will return 400.
+    await awaitHarvests();
     // Use getState() (the always-current ref) rather than the React `state` closure,
     // which may be stale if the auto-planter advanced stateRef between renders.
     const optimistic = plantBloom(getState(), row, col, speciesId, mutation);
