@@ -735,7 +735,7 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
           throw e;
         }
       },
-      () => { incrementStat("seeds_planted", planted.length); },
+      () => { audioManager.playSfx("plant"); incrementStat("seeds_planted", planted.length); },
       {
         serialize: true,
         rollback: () => currentState,
