@@ -714,7 +714,8 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
     }
     if (planted.length === 0) return;
 
-    // Fire all toasts immediately.
+    // Fire SFX and toasts immediately with the optimistic update.
+    audioManager.playSfx("plant");
     const discoveredSet = new Set(currentState.discovered);
     for (const { speciesId } of planted) {
       const sp = getFlower(speciesId);
@@ -735,7 +736,7 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
           throw e;
         }
       },
-      () => { audioManager.playSfx("plant"); incrementStat("seeds_planted", planted.length); },
+      () => { incrementStat("seeds_planted", planted.length); },
       {
         serialize: true,
         rollback: () => currentState,
