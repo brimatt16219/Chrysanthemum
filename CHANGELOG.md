@@ -1,3 +1,13 @@
+## [v2.4.1] — 2026-05-14 — Bloom & Achievement Fixes
+
+### Fixed
+- **Non-mutated bloom placement** — a null/undefined mutation mismatch between the DB and client caused non-mutated blooms to silently fail when placed from inventory with no error shown; both `SeedPicker`, `plantBloom`, and the `plant-bloom` edge function now normalize `null` and `undefined` identically (#271)
+- **Species Discovered achievement wrong count** — progress was sourced from inventory instead of the codex (`state.discovered`), and mutation variants such as `rose:golden` were inflating the count on the server; both client and `achievement-claim` now filter to base species only (#275)
+- **Mutation VFX missing on prismatic blooms** — an erroneous `rarity !== "prismatic"` guard in `PlotTile` suppressed the mutation sheen animation on all prismatic flowers (e.g. Sakura Blossom after a vial); the guard has been removed
+- **Sakura Blossom "Unknown species" errors** — the event flower was absent from the hardcoded species tables in every edge function, causing 400 errors on vial use, harvest, alchemy sacrifice, botany conversion, gear actions, marketplace listing, shop, and offline tick; `sakura_blossom` is now registered in all affected functions
+
+---
+
 ## [v2.4.0] — 2026-05-13 — The Sakura Blossom Update
 
 ### Added
