@@ -23,7 +23,37 @@ export function EventsTab() {
 
   // ── Badge computations ──────────────────────────────────────────────────────
 
-  const hasActiveEvents = (state.events ?? []).length > 0;
+  // Badge only when there's something actionable RIGHT NOW — not just "events exist".
+  const hasActiveEvents = useMemo(() => {
+    return (state.events ?? []).some((event) => {
+      if (event.type === "checkin") {
+        const progress    = event.progress ?? {};
+        const claimedDays = (progress.claimedDays ?? []) as number[];
+        const config      = event.config as { days: { day: number }[] };
+        if (claimedDays.length >= config.days.length) return false; // all done
+        const today    = new Date().toISOString().slice(0, 10);
+        const lastDate = progress.lastClaimedAt
+          ? new Date(progress.lastClaimedAt as string).toISOString().slice(0, 10)
+          : null;
+        return lastDate !== today; // can still claim today
+      }
+      if (event.type === "collection") {
+        const completedQuests = (event.progress?.completedQuests ?? []) as string[];
+        const config = event.config as { quests: { id: string; validSpeciesIds: string[]; mutation: string | null }[] };
+        // Find the next incomplete quest
+        const activeQuest = config.quests.find((q) => !completedQuests.includes(q.id));
+        if (!activeQuest) return false; // all quests done
+        // Only badge if the user actually has an eligible bloom for it
+        return state.inventory.some((i) =>
+          !i.isSeed &&
+          activeQuest.validSpeciesIds.includes(i.speciesId) &&
+          (activeQuest.mutation === null || i.mutation === activeQuest.mutation) &&
+          i.quantity > 0,
+        );
+      }
+      return false;
+    });
+  }, [state.events, state.inventory]);
 
   const hasCollectableReward = useMemo(() => {
     if (!state.dailyTasks) return false;
