@@ -149,6 +149,8 @@ const SPECIES_RARITY: Record<string, string> = {
   eternal_heart: "prismatic",nova_bloom: "prismatic",   princess_blossom: "prismatic",
   // Cropsticks recipe output — Prismatic (Tier 4)
   the_first_bloom: "prismatic",
+  // Event-exclusive
+  sakura_blossom: "prismatic",
   // v2.3.1 — new flowers
   cloudveil: "common",      pepperbloom: "common",     flurrysprig: "common",
   showerbloom: "common",    creamcap: "common",         duskling: "common",
@@ -249,6 +251,8 @@ const FLOWER_GROWTH_TIMES: Record<string, { seed: number; sprout: number }> = {
   eternal_heart: { seed: 374_400_000, sprout: 748_800_000 }, moonrime: { seed: 385_000_000, sprout: 770_000_000 },
   nova_bloom: { seed: 403_200_000, sprout: 806_400_000 }, shadowgale: { seed: 415_000_000, sprout: 830_000_000 },
   princess_blossom: { seed: 432_000_000, sprout: 864_000_000 },
+  // Event-exclusive
+  sakura_blossom: { seed: 259_200_000, sprout: 518_400_000 },
   // v2.3.1 — new flowers
   cloudveil:    { seed: 83_000,       sprout: 166_000       },
   pepperbloom:  { seed: 86_000,       sprout: 172_000       },

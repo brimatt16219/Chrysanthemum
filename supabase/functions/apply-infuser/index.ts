@@ -89,6 +89,8 @@ const SPECIES_RARITY: Record<string, string> = {
   dreambloom: "prismatic",  fairy_blossom: "prismatic", lovebind: "prismatic",
   eternal_heart: "prismatic",nova_bloom: "prismatic",   princess_blossom: "prismatic",
   the_first_bloom: "prismatic",
+  // Event-exclusive
+  sakura_blossom: "prismatic",
 };
 
 // ── Species → types (rare+ only — the species that can hold an infuser) ───────
@@ -177,6 +179,8 @@ const SPECIES_TYPES: Record<string, string[]> = {
   lovebind:        ["fairy","arcane"],     eternal_heart:   ["fairy","solar"],
   nova_bloom:      ["stellar","storm","blaze"],
   princess_blossom:["fairy","arcane"],     the_first_bloom: ["arcane","stellar"],
+  // Event-exclusive
+  sakura_blossom:  ["fairy","zephyr"],
 };
 
 // ── Cross-breed recipes + matching (mirrors tick-offline-gardens) ─────────────
