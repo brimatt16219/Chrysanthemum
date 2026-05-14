@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
 import { ItemSprite } from "./ItemSprite";
 import { FlowerSprite } from "./FlowerSprite";
-import type { MutationType, Rarity } from "../data/flowers";
+import type { Rarity } from "../data/flowers";
 import { FlowerTypeBadges } from "./FlowerTypeBadges";
 import { GEAR } from "../data/gear";
 import { useGame } from "../store/GameContext";

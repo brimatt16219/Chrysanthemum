@@ -13,6 +13,7 @@ import {
   isSpeciesMastered,
   makeGrid,
   MAX_FORECAST_SLOTS,
+  plantBloom,
   plantSeed,
   removePlant,
   resizeGrid,
@@ -430,5 +431,63 @@ describe("applyPlantConsumable — mutation vial guard (v2.3.0 regression)", () 
       consumables: [{ id: "purity_vial_1" as never, quantity: 1 }],
     });
     expect(applyPlantConsumable(s, 0, 0, "purity_vial_1")).not.toBeNull();
+  });
+});
+
+// ── plantBloom — null/undefined mutation normalization (regression) ───────────
+//
+// Inventory items stored via the DB arrive with mutation === null for
+// non-mutated blooms. plantBloom must treat null and undefined identically
+// so that a "no-mutation" bloom can always be placed regardless of which
+// sentinel the inventory record carries.
+
+describe("plantBloom — null/undefined mutation normalization (regression)", () => {
+  function stateWithBloom(mutation: null | undefined | string): GameState {
+    return baseState({
+      inventory: [
+        {
+          speciesId: fastFlower.id,
+          quantity: 1,
+          isSeed: false,
+          mutation: mutation as PlantedFlower["mutation"],
+        },
+      ],
+    });
+  }
+
+  it("places a bloom whose inventory mutation is null when called without a mutation arg", () => {
+    // DB stores null for non-mutated blooms; plantBloom is called without the
+    // mutation arg (undefined). Both sides must normalise to null so the item is found.
+    const s = stateWithBloom(null);
+    const next = plantBloom(s, 0, 0, fastFlower.id);
+    expect(next).not.toBeNull();
+    expect(next!.grid[0][0].plant?.speciesId).toBe(fastFlower.id);
+    expect(next!.inventory).toHaveLength(0); // bloom consumed
+  });
+
+  it("places a bloom whose inventory mutation is undefined when called without a mutation arg", () => {
+    const s = stateWithBloom(undefined);
+    const next = plantBloom(s, 0, 0, fastFlower.id);
+    expect(next).not.toBeNull();
+    expect(next!.grid[0][0].plant?.speciesId).toBe(fastFlower.id);
+  });
+
+  it("places a mutated bloom when the mutation arg matches the inventory entry", () => {
+    const s = stateWithBloom("golden");
+    const next = plantBloom(s, 0, 0, fastFlower.id, "golden");
+    expect(next).not.toBeNull();
+    expect((next!.grid[0][0].plant as PlantedFlower).mutation).toBe("golden");
+  });
+
+  it("returns null when mutation arg is provided but inventory has no mutation", () => {
+    const s = stateWithBloom(null); // no mutation in inventory
+    expect(plantBloom(s, 0, 0, fastFlower.id, "golden")).toBeNull();
+  });
+
+  it("places a pre-bloomed plant (timePlanted === 0 sentinel)", () => {
+    const s = stateWithBloom(null);
+    const next = plantBloom(s, 0, 0, fastFlower.id)!;
+    expect(next.grid[0][0].plant?.timePlanted).toBe(0);
+    expect((next.grid[0][0].plant as PlantedFlower).bloomedAt).toBeDefined();
   });
 });
