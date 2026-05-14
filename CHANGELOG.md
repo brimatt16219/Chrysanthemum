@@ -1,3 +1,10 @@
+## [v2.4.2] — 2026-05-14 — Alchemy Sacrifice Fix
+
+### Fixed
+- **Sacrifice fails for non-mutated blooms** — the same null/undefined mutation mismatch from v2.4.1 was present in `sacrificeFlowers`; strict `===` caused `null !== undefined` so every non-mutated bloom sacrifice returned "Invalid selection" before reaching the server; normalized with `?? null` on both sides
+
+---
+
 ## [v2.4.1] — 2026-05-14 — Bloom & Achievement Fixes
 
 ### Fixed

@@ -14,6 +14,13 @@ export interface ChangelogEntry {
 // Most recent version first — update this with every release
 export const CHANGELOGS: ChangelogEntry[] = [
   {
+    version: "2.4.2",
+    title:   "Alchemy Sacrifice Fix",
+    items: [
+      { type: "fixed", text: "Sacrificing non-mutated blooms no longer fails with \"Invalid selection\" — a null/undefined mutation mismatch in sacrificeFlowers caused the inventory find to miss null-mutation items from the DB; normalized with ?? null on both sides" },
+    ],
+  },
+  {
     version: "2.4.1",
     title:   "Bloom & Achievement Fixes",
     items: [
