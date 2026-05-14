@@ -209,7 +209,7 @@ export function LoginPage({ onSignIn, onEnter, onSignOut, username, isLoading }:
 
       {/* ── Version ──────────────────────────────────────────────────────── */}
       <p className="relative text-[10px] text-muted-foreground/50 tracking-widest font-mono">
-        v2.4.0
+        v2.4.3
       </p>
 
     </div>
