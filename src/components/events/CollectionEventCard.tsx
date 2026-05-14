@@ -172,7 +172,7 @@ export function CollectionEventCard({ event }: Props) {
                     onClick={handleSubmit}
                     disabled={!selectedBloom || submitting}
                     className={`
-                      w-full py-2 rounded-xl text-xs font-semibold transition-all mt-1
+                      w-full py-2 rounded-xl text-xs font-semibold transition-all mt-1 text-center
                       ${selectedBloom && !submitting
                         ? "bg-primary text-primary-foreground hover:opacity-90"
                         : "bg-muted text-muted-foreground cursor-not-allowed"
