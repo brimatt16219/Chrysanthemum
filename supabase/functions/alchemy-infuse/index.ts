@@ -72,6 +72,8 @@ const SPECIES_RARITY: Record<string, string> = {
   dreambloom: "prismatic",  fairy_blossom: "prismatic", lovebind: "prismatic",
   eternal_heart: "prismatic",nova_bloom: "prismatic",  princess_blossom: "prismatic",
   the_first_bloom: "prismatic",
+  // Event-exclusive
+  sakura_blossom: "prismatic",
 };
 
 // ── Species types (mirrors src/data/flowers.ts) ───────────────────────────────
@@ -128,6 +130,8 @@ const SPECIES_TYPES: Record<string, string[]> = {
   dreambloom: ["fairy","arcane"],    fairy_blossom: ["fairy"],            lovebind: ["fairy","arcane"],
   eternal_heart: ["fairy","solar"],  nova_bloom: ["stellar","storm","blaze"],princess_blossom: ["fairy","arcane"],
   the_first_bloom: ["arcane","stellar"],
+  // Event-exclusive
+  sakura_blossom:  ["fairy","zephyr"],
 };
 
 // ── Gold cost table [tier1, tier2, tier3, tier4] per rarity ──────────────────

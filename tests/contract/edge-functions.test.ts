@@ -209,3 +209,59 @@ describe("daily-complete — v2.4.0 reward contract", () => {
     expect(src).toMatch(/gemsGained/);
   });
 });
+
+// ── sakura_blossom — spring_sakura event flower registered everywhere ──────────
+//
+// sakura_blossom was added as an event-only flower but was initially missing
+// from the hardcoded species tables inside every edge function, causing
+// "Unknown species" 400 errors on vial use, harvest, alchemy, etc.
+// These tests assert the flower is now present in each affected function.
+
+describe("sakura_blossom — event flower registered in edge functions (regression)", () => {
+  const functions: Array<{ name: string; file: string }> = [
+    { name: "use-consumable",   file: "use-consumable/index.ts" },
+    { name: "apply-infuser",    file: "apply-infuser/index.ts" },
+    { name: "harvest",          file: "harvest/index.ts" },
+    { name: "harvest-all",      file: "harvest-all/index.ts" },
+    { name: "alchemy-sacrifice",file: "alchemy-sacrifice/index.ts" },
+    { name: "alchemy-craft-seed",file: "alchemy-craft-seed/index.ts" },
+    { name: "alchemy-infuse",   file: "alchemy-infuse/index.ts" },
+    { name: "alchemy-sacrifice",file: "alchemy-sacrifice/index.ts" },
+    { name: "botany-convert",   file: "botany-convert/index.ts" },
+    { name: "gear-action",      file: "gear-action/index.ts" },
+    { name: "marketplace-list", file: "marketplace-list/index.ts" },
+    { name: "shop-action",      file: "shop-action/index.ts" },
+    { name: "tick-offline-gardens", file: "tick-offline-gardens/index.ts" },
+  ];
+
+  for (const { name, file } of functions) {
+    it(`${name} contains sakura_blossom`, () => {
+      const src = readFileSync(join(FUNCTIONS_DIR, file), "utf8");
+      expect(src, `${name} is missing sakura_blossom`).toMatch(/sakura_blossom/);
+    });
+  }
+});
+
+// ── achievement-claim — species_discovered uses base-species-only count ───────
+//
+// Bug #275: achievement-claim was counting all discovered entries (including
+// mutation variants like "rose:golden") instead of only base species.
+// This caused the "Species Discovered" achievement to require far more
+// discoveries than intended. The fix filters to entries without a colon.
+
+describe("achievement-claim — species_discovered base-species-only filter (Bug #275 regression)", () => {
+  const src = readFileSync(join(FUNCTIONS_DIR, "achievement-claim", "index.ts"), "utf8");
+
+  it("filters discovered entries to base species (no colon) before counting", () => {
+    // The function must contain logic that strips mutation variants from the count.
+    // A bare discovered.length would count both "rose" and "rose:golden" as 2,
+    // inflating the progress number. The correct pattern filters out ":" entries.
+    expect(src).toMatch(/includes\s*\(\s*["']:["']\s*\)/);
+  });
+
+  it("does not use raw discovered.length for species_discovered target check", () => {
+    // If this assertion fails, someone re-introduced the bare length check.
+    // The variable holding the base count must be intermediate (not discovered.length directly).
+    expect(src).not.toMatch(/met\s*=\s*discovered\.length\s*>=\s*target/);
+  });
+});

@@ -114,12 +114,14 @@ Deno.serve(async (req: Request) => {
       return err("Flower mutation does not match quest requirement");
     }
 
-    // Player must have at least 1 matching bloom in inventory
+    // Player must have at least 1 matching bloom in inventory.
+    // Normalize mutation to null before comparing — inventory items may store
+    // mutation as undefined (absent key) while the submitted value is always null.
     const itemIdx = inventory.findIndex((i) =>
       !i.isSeed &&
-      i.speciesId === speciesId &&
-      i.mutation  === submittedMutation &&
-      i.quantity  > 0,
+      i.speciesId       === speciesId &&
+      (i.mutation ?? null) === submittedMutation &&
+      i.quantity        > 0,
     );
     if (itemIdx < 0) return err("Matching flower not found in inventory", 409);
 

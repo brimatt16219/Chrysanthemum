@@ -14,6 +14,16 @@ export interface ChangelogEntry {
 // Most recent version first — update this with every release
 export const CHANGELOGS: ChangelogEntry[] = [
   {
+    version: "2.4.1",
+    title:   "Bloom & Achievement Fixes",
+    items: [
+      { type: "fixed", text: "Non-mutated blooms can now be placed from inventory — a null/undefined mutation mismatch between the DB and client caused non-mutated bloom placement to silently fail with no error (#271)" },
+      { type: "fixed", text: "Species Discovered achievement now tracks unique species correctly — progress was counting inventory instead of the codex, and mutation variants like rose:golden were inflating the count; both client and server now filter to base species only (#275)" },
+      { type: "fixed", text: "Mutation VFX now appears on prismatic blooms (e.g. Sakura Blossom) after applying a vial — an erroneous prismatic rarity exclusion in PlotTile was removed" },
+      { type: "fixed", text: "Sakura Blossom no longer returns \"Unknown species\" errors when using vials, harvesting, sacrificing, or listing on the marketplace — the event flower was missing from every edge function's species table and has been registered across all of them" },
+    ],
+  },
+  {
     version: "2.4.0",
     title:   "The Sakura Blossom Update",
     items: [

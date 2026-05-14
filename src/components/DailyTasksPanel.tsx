@@ -71,7 +71,6 @@ export function DailyTasksPanel() {
       update({
         ...cur,
         dailyTasks:      result.dailyTasks,
-        consumables:     result.consumables     ?? cur.consumables,
         gardenerLevel:   result.gardenerLevel   ?? cur.gardenerLevel,
         gardenerXp:      result.gardenerXp      ?? cur.gardenerXp,
         gems:            result.gems            ?? cur.gems,
@@ -81,10 +80,12 @@ export function DailyTasksPanel() {
         const tier = result.dailyTasks.rewardsCollected.filter(Boolean).length;
         pushGenericToast(
           `daily_reward_${tier}`,
-          "🎁",
+          "💎",
           `Daily reward! +${result.gemsGained} 💎  +${result.xpGained} XP`,
           undefined,
           "gain",
+          1,
+          "/sprites/ui/gems.png",
         );
       }
       if (result.dailyTasks.tasks.every((t) => t.completed)) {

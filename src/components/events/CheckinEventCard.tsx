@@ -100,7 +100,7 @@ export function CheckinEventCard({ event }: Props) {
           onClick={handleClaim}
           disabled={!canClaim || claiming}
           className={`
-            mx-auto block px-8 py-2 rounded-xl text-xs font-semibold transition-all
+            mx-auto block px-8 py-2 rounded-xl text-xs font-semibold transition-all text-center
             ${canClaim && !claiming
               ? "bg-primary text-primary-foreground hover:opacity-90"
               : "bg-muted text-muted-foreground cursor-not-allowed"

@@ -491,9 +491,13 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
     setSelectedPlot(null);
   }
 
-  function handleBloomSelect(speciesId: string, mutation?: string) {
+  async function handleBloomSelect(speciesId: string, mutation?: string) {
     if (!selectedPlot) return;
     const { row, col } = selectedPlot;
+    // Wait for any in-flight harvests to commit before planting — plant-bloom
+    // reads from the DB, so if a recent harvest hasn't been written yet the
+    // edge function won't find the bloom and will return 400.
+    await awaitHarvests();
     // Use getState() (the always-current ref) rather than the React `state` closure,
     // which may be stale if the auto-planter advanced stateRef between renders.
     const optimistic = plantBloom(getState(), row, col, speciesId, mutation);
@@ -645,6 +649,11 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
     }
     audioManager.playSfx(toHarvest.some(({ mutation }) => !!mutation) ? "mutation" : "harvest");
 
+    // Track daily progress optimistically — same pattern as the toast popups
+    // above. Firing inside the async onSuccess callback risks being skipped if
+    // the serialized harvestQueue is busy or the component re-renders mid-flight.
+    void trackProgress("harvest", toHarvest.length);
+
     const plots = toHarvest.map(({ row, col }) => ({ row, col }));
 
     perform(
@@ -657,7 +666,6 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
         }
       },
       () => {
-        void trackProgress("harvest", plots.length);
         // Aggregate per-type and per-rarity counts across all harvested plants
         const typeCounts: Record<string, number>   = {};
         const rarityCounts: Record<string, number> = {};

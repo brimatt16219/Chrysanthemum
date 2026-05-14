@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
 import { ItemSprite } from "./ItemSprite";
 import { FlowerSprite } from "./FlowerSprite";
-import type { MutationType, Rarity } from "../data/flowers";
+import type { Rarity } from "../data/flowers";
 import { FlowerTypeBadges } from "./FlowerTypeBadges";
 import { GEAR } from "../data/gear";
 import { useGame } from "../store/GameContext";
@@ -297,7 +297,7 @@ export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: P
             filteredBlooms.map(({ item, species }) => {
               const rarity   = RARITY_CONFIG[species.rarity];
               const mastered = isSpeciesMastered(state.discovered, item.speciesId);
-              const mut      = item.mutation as MutationType | undefined;
+              const mut      = item.mutation ?? undefined; // normalize null → undefined
               return (
                 <button
                   key={`${item.speciesId}:${item.mutation ?? ""}`}

@@ -55,6 +55,8 @@ export const SPECIES_RARITY: Record<string, string> = {
   dreambloom: "prismatic",  fairy_blossom: "prismatic", lovebind: "prismatic",
   eternal_heart: "prismatic",nova_bloom: "prismatic",  princess_blossom: "prismatic",
   the_first_bloom: "prismatic",
+  // Event-exclusive
+  sakura_blossom: "prismatic",
   // ── New common flowers ──────────────────────────────────────────────────
   cloudveil: "common",      pepperbloom: "common",      flurrysprig: "common",
   showerbloom: "common",    creamcap: "common",          duskling: "common",

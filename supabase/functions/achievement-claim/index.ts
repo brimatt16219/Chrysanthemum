@@ -84,9 +84,10 @@ Deno.serve(async (req: Request) => {
       met = (achievementStats[check.statKey] ?? 0) >= target;
 
     } else if (check.kind === "species_discovered") {
-      // discovered[] entries are "speciesId" or "speciesId:mutation" — each unique
-      // entry counts as one species/variant discovered.
-      met = discovered.length >= target;
+      // discovered[] entries are "speciesId" (base) or "speciesId:mutation" (variant).
+      // Only count base species (no colon) — mutations don't add to the species count.
+      const baseSpeciesCount = discovered.filter((k: string) => !k.includes(":")).length;
+      met = baseSpeciesCount >= target;
 
     } else if (check.kind === "recipe_completed") {
       met = discoveredRecipes.includes(check.recipeId);

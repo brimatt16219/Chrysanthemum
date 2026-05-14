@@ -104,7 +104,7 @@ Deno.serve(async (req: Request) => {
       (i) =>
         i.speciesId === speciesId &&
         !i.isSeed &&
-        (i.mutation ?? undefined) === (mutation ?? undefined)
+        (i.mutation ?? null) === (mutation ?? null)
     );
     if (!bloomItem || bloomItem.quantity < 1) {
       return err("No bloom of this species in inventory");
@@ -132,7 +132,7 @@ Deno.serve(async (req: Request) => {
 
     const newInventory = inventory
       .map((i) =>
-        i.speciesId === speciesId && !i.isSeed && (i.mutation ?? undefined) === (mutation ?? undefined)
+        i.speciesId === speciesId && !i.isSeed && (i.mutation ?? null) === (mutation ?? null)
           ? { ...i, quantity: i.quantity - 1 }
           : i
       )
