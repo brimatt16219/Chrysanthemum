@@ -182,3 +182,30 @@ describe("use-consumable — v2.3.0 mutation vial guard", () => {
     expect(src).toMatch(/Purity Vial/);
   });
 });
+
+// ── daily-complete — v2.4.0 reward structure (no seed pouches) ───────────────
+
+describe("daily-complete — v2.4.0 reward contract", () => {
+  const src = readFileSync(join(FUNCTIONS_DIR, "daily-complete", "index.ts"), "utf8");
+
+  it("DAILY_REWARDS contains only xp and gems (no pouch field)", () => {
+    // Regression: seed-pouch rewards were removed in v2.4.0.
+    // If 'pouch' appears in DAILY_REWARDS, reward delivery is broken.
+    expect(src).not.toMatch(/pouch:/);
+  });
+
+  it("does not write consumables to the DB on task completion", () => {
+    // The edge function must not touch the consumables column — inventory
+    // management was removed when seed pouches were dropped from rewards.
+    expect(src).not.toMatch(/consumables:/);
+  });
+
+  it("response payload does not include rewardPouch or consumables fields", () => {
+    expect(src).not.toMatch(/rewardPouch/);
+  });
+
+  it("grants xp and gems on tier completion", () => {
+    expect(src).toMatch(/xpGained/);
+    expect(src).toMatch(/gemsGained/);
+  });
+});
