@@ -47,18 +47,24 @@ export function CollectionEventCard({ event }: Props) {
     );
   }, [state.inventory, activeQuestIdx]);
 
+  // Auto-select when there's exactly one eligible bloom so the user doesn't
+  // have to click a single option just to enable the Submit button.
+  const autoSelected = eligibleBlooms.length === 1
+    ? { speciesId: eligibleBlooms[0].speciesId, mutation: eligibleBlooms[0].mutation ?? null }
+    : null;
   const [selectedBloom, setSelectedBloom] = useState<{ speciesId: string; mutation: string | null } | null>(null);
+  const effectiveSelected = selectedBloom ?? autoSelected;
   const [submitting,    setSubmitting]    = useState(false);
 
   async function handleSubmit() {
-    if (!activeQuest || !selectedBloom || submitting) return;
+    if (!activeQuest || !effectiveSelected || submitting) return;
     setSubmitting(true);
     try {
       const result = await edgeQuestSubmit(
         event.id,
         activeQuest.id,
-        selectedBloom.speciesId,
-        selectedBloom.mutation,
+        effectiveSelected.speciesId,
+        effectiveSelected.mutation,
       );
       const cur = getState();
       update({
@@ -142,8 +148,8 @@ export function CollectionEventCard({ event }: Props) {
                       {eligibleBlooms.map((item) => {
                         const flower     = FLOWERS.find((f) => f.id === item.speciesId);
                         const isSelected =
-                          selectedBloom?.speciesId === item.speciesId &&
-                          selectedBloom?.mutation  === item.mutation;
+                          effectiveSelected?.speciesId === item.speciesId &&
+                          effectiveSelected?.mutation  === (item.mutation ?? null);
                         return (
                           <button
                             key={`${item.speciesId}:${item.mutation ?? "none"}`}
@@ -170,10 +176,10 @@ export function CollectionEventCard({ event }: Props) {
 
                   <button
                     onClick={handleSubmit}
-                    disabled={!selectedBloom || submitting}
+                    disabled={!effectiveSelected || submitting}
                     className={`
                       w-full py-2 rounded-xl text-xs font-semibold transition-all mt-1 text-center
-                      ${selectedBloom && !submitting
+                      ${effectiveSelected && !submitting
                         ? "bg-primary text-primary-foreground hover:opacity-90"
                         : "bg-muted text-muted-foreground cursor-not-allowed"
                       }
