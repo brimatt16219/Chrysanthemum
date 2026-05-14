@@ -184,6 +184,8 @@ const FLOWERS: { id: string; rarity: Rarity; types: FlowerType[] }[] = [
   { id: "princess_blossom",  rarity: "prismatic", types: ["fairy", "arcane"] },
   // PRISMATIC — Cropsticks recipe output (Tier 4)
   { id: "the_first_bloom", rarity: "prismatic", types: ["arcane", "stellar"] },
+  // Event-exclusive
+  { id: "sakura_blossom",  rarity: "prismatic", types: ["fairy", "zephyr"] },
   // PRISMATIC — v2.3.0
   { id: "islebloom",       rarity: "prismatic", types: ["tide",   "grove"]  },
   { id: "moonrime",        rarity: "prismatic", types: ["frost",  "lunar"]  },

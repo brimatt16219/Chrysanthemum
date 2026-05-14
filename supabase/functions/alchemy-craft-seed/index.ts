@@ -170,6 +170,8 @@ const FLOWERS: { id: string; rarity: Rarity; types: string[] }[] = [
   { id: "nova_bloom",      rarity: "prismatic", types: ["stellar", "storm", "blaze"] },
   { id: "princess_blossom",rarity: "prismatic", types: ["fairy", "arcane"] },
   { id: "the_first_bloom", rarity: "prismatic", types: ["arcane", "stellar"] },
+  // Event-exclusive
+  { id: "sakura_blossom",  rarity: "prismatic", types: ["fairy", "zephyr"] },
   // ── v2.3.1 — new flowers ─────────────────────────────────────────────────
   { id: "cloudveil",     rarity: "common",    types: ["storm"] },
   { id: "pepperbloom",   rarity: "common",    types: ["blaze"] },

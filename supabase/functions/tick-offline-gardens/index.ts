@@ -59,6 +59,8 @@ const FLOWER_BLOOM_MS: Record<string, number> = {
   dreambloom: 900_000_000, fairy_blossom: 972_000_000, lovebind: 1_036_800_000,
   islebloom: 1_065_000_000, eternal_heart: 1_123_200_000, moonrime: 1_155_000_000,
   nova_bloom: 1_209_600_000, shadowgale: 1_245_000_000, princess_blossom: 1_296_000_000,
+  // Event-exclusive
+  sakura_blossom: 777_600_000,
 };
 
 // ── Fertilizer speed multipliers (mirrors src/data/upgrades.ts) ───────────
@@ -915,6 +917,8 @@ const SPECIES_DATA: Record<string, { t: string[]; r: string }> = {
   nova_bloom:      { t: ["stellar","storm","blaze"], r: "prismatic" },
   princess_blossom:{ t: ["fairy","arcane"],   r: "prismatic" },
   the_first_bloom: { t: ["arcane","stellar"], r: "prismatic" },
+  // Event-exclusive
+  sakura_blossom:  { t: ["fairy","zephyr"],   r: "prismatic" },
 };
 
 function runCropsticks(save: Save, now: number): Save {

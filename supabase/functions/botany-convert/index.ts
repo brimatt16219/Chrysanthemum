@@ -82,6 +82,8 @@ const FLOWERS: { id: string; rarity: Rarity }[] = [
   { id: "dreambloom", rarity: "prismatic" }, { id: "fairy_blossom", rarity: "prismatic" },
   { id: "lovebind", rarity: "prismatic" }, { id: "eternal_heart", rarity: "prismatic" },
   { id: "nova_bloom", rarity: "prismatic" }, { id: "princess_blossom", rarity: "prismatic" },
+  // Event-exclusive
+  { id: "sakura_blossom", rarity: "prismatic" },
   // ── v2.3.1 — new flowers ─────────────────────────────────────────────────
   { id: "cloudveil", rarity: "common" },    { id: "pepperbloom", rarity: "common" },
   { id: "flurrysprig", rarity: "common" },  { id: "showerbloom", rarity: "common" },

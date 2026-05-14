@@ -47,6 +47,8 @@ const FLOWER_SELL_VALUES: Record<string, number> = {
   graveweb: 355_000, nightwing: 430_000, ashenveil: 465_000, voidfire: 500_000,
   dreambloom: 1_000_000, fairy_blossom: 1_200_000, lovebind: 1_350_000,
   eternal_heart: 1_550_000, nova_bloom: 1_800_000, princess_blossom: 2_000_000,
+  // Event-exclusive
+  sakura_blossom: 1_500_000,
   // v2.3.0 & v2.3.1 additions
   stormcap: 14, stardust: 16, moonstrike: 56, winterwood: 325,
   galebloom: 4_000, infernopetal: 51_000, anchorweed: 55_000, worldroot: 60_000,
