@@ -15,7 +15,7 @@ export interface ChangelogEntry {
 export const CHANGELOGS: ChangelogEntry[] = [
   {
     version: "2.4.0",
-    title:   "The Sakura Festival Update",
+    title:   "The Sakura Blossom Update",
     items: [
       // ── Pixel Art Sprites ────────────────────────────────────────────────
       { type: "added",   text: "Pixel art sprite system — all 192 flowers, gear, consumables, essences, and UI elements now render as hand-crafted pixel art sprites; sprite rendering can be toggled in settings" },
