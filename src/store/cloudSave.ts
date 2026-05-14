@@ -181,10 +181,12 @@ export async function loadCloudSave(userId: string): Promise<GameState | null> {
       achievementsClaimed: (data.achievements_claimed as string[])         ?? [],
     } as GameState;
 
-    // ── Gardener XP backfill (first load post-deploy) ──────────────────────
-    // Pre-deploy saves have gardener_xp = 0. Recompute from the discovered
-    // array so existing players get credit for what they've already found.
-    if (state.gardenerXp === 0 && state.discovered.length > 0) {
+    // ── Gardener XP backfill (one-time, flag-gated) ───────────────────────
+    // Recompute XP from the discovered array so existing players get credit
+    // for codex entries they earned before the Gardener Level system launched.
+    // Guarded by codex_xp_backfilled so it runs exactly once per account,
+    // regardless of how much XP the player has already accumulated.
+    if (!data.codex_xp_backfilled && state.discovered.length > 0) {
       let backfillXp = 0;
       for (const entry of state.discovered) {
         const sep = entry.indexOf(":");
@@ -201,7 +203,7 @@ export async function loadCloudSave(userId: string): Promise<GameState | null> {
         state.gardenerXp    = xp;
         void supabase
           .from("game_saves")
-          .update({ gardener_level: level, gardener_xp: xp })
+          .update({ gardener_level: level, gardener_xp: xp, codex_xp_backfilled: true })
           .eq("user_id", userId);
       }
     }
