@@ -761,13 +761,11 @@ export function edgeActivateBoost(consumableId: string) {
 export interface DailyCompleteResult {
   ok:              true;
   dailyTasks:      DailyTaskState;
-  consumables?:    GameState["consumables"];
   xpGained?:       number;
   gardenerLevel?:  number;
   gardenerXp?:     number;
   leveledUp?:      boolean;
   levelsGained?:   number;
-  rewardPouch?:    string;
   gemsGained?:     number;
   gems?:           number;
   serverUpdatedAt: string;
