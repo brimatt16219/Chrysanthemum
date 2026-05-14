@@ -1,23 +1,68 @@
-## [v2.4.0] — 2026-05-13 — Title Screen & Sakura Blossom Event
+## [v2.4.0] — 2026-05-13 — The Sakura Festival Update
 
 ### Added
-- **Title screen "Enter Garden" flow** — signed-in users now land on the login page and must tap Enter Garden to load the game; music, audio, and level-up SFX are all gated behind this action so nothing plays prematurely
-- **Sign Out button on the login page** — players who are already signed in can sign out directly from the title screen without entering the garden first
-- **Event date range on event cards** — each event in the Events tab now shows its start and end dates (e.g. May 10 – May 31) so you always know how long an event runs
 
-### Fixed
-- **Level-up sound no longer fires on sign-in** — gardener level jumps from its initial default to the real saved value when the cloud save loads; the SFX is now gated behind actually entering the garden
-- **Garden music no longer plays on the login page** — audio is now started only after the player clicks Enter Garden, not when auth resolves
-- **Loading screen no longer flashes before the login page appears** — the auth-resolving spinner is replaced with a subtle inline pulse on the login page itself
-- **"Plot already occupied" race condition fixed** — manual planting used a stale state closure that didn't see plots filled by the auto-planter or harvest bell between renders; the seed/bloom picker now reads the live state ref, and the picker auto-closes if its selected plot becomes occupied
+#### Pixel Art Sprites
+- **Full pixel art sprite system** — all 192 flowers, gear, consumables, essences, and UI chrome now render as hand-crafted pixel art sprites; a sprite toggle in settings lets you switch between sprite and emoji rendering
+- **Mutation VFX** — mutated plants display a filter-based colorized sheen animation (grayscale → sepia → hue-rotate pipeline) across every surface: plot tiles, tooltips, seed picker, inventory, codex, marketplace, profile gardens, and my-listings cards; badge and VFX display are independently toggleable in settings
+- **Medal sprites on leaderboard** — top-3 ranks show pixel art gold/silver/bronze medal icons; coin layout corrected alongside
+
+#### Audio
+- **Full audio system** — ambient background music (login lobby, daytime garden, nighttime garden), a separate weather ambience layer (rain, thunderstorm, wind), and sound effects for all major actions (plant, harvest, sell, buy, craft, level-up, shovel remove); music volume, SFX volume, and mute toggles added to the settings modal
+- **Sequential title music playlist** — the login page cycles through a curated track library; each track plays in full before the next begins, looping continuously
+
+#### Achievements, XP & Gems
+- **Achievements** — 618 milestone achievements across 23 categories (harvests, coins earned, flowers discovered, gardener leveling, crafting, alchemy, daily streaks, and more); award gems on claim; a new Achievements panel with category tabs and animated progress bars lives inside the Events tab
+- **Gardener XP & leveling system** — every game action grants XP: harvesting, selling, buying, crafting, alchemy sacrifice, seed pouch opening, and marketplace sales; XP bar with current level shown in the HUD header; gardener level gates marketplace listing slot unlocks and farm expansion upgrades
+- **Flower discovery achievement tiers** — cumulative discovery milestones (discover 5 / 10 / 25 / 50 / … species) replace the old harvest-count achievements; tiers auto-advance as you fill out the Floral Codex
+- **Gems** — new currency awarded from achievements and daily task completion streaks; gem balance shown in the HUD alongside coins
+
+#### Daily Tasks & Events
+- **Daily Tasks** — a set of quests refreshes each day with per-action progress tracking (plant X seeds, harvest X blooms, sell X flowers, etc.); completing all tasks claims coins and gems via the `daily-complete` edge function
+- **Events system** — live timed events of two types: check-in events (log in daily for a reward) and collection quests (submit specific flowers); each event card shows its start and end dates so you always know how long it runs
+- **Sakura Blossom Event (May 10 – May 31)** — the first seasonal event; check in daily to earn rewards; features an exclusive **Sakura Blossom** flower unobtainable outside the event window
+
+#### Login Page & Title Screen
+- **Title screen "Enter Garden" flow** — signed-in users land on the login page and must tap Enter Garden before the game loads; all audio, weather ambience, and level-up SFX are gated behind this action so nothing plays prematurely
+- **Animated flower grid background on login page** — pastel pixel art flowers tile the background; polished petal drop and logo sprite animations complete the look
+- **Google sign-in via popup** — OAuth flow opens in a small popup window instead of a full-page redirect; the main window reloads automatically after sign-in completes without losing context
+- **Auth loading screen animated progress bar** — a labelled multi-phase progress bar and loading text replace the plain spinner while the game state loads after sign-in
+
+#### Garden & UI Quality of Life
+- **Notification consolidation + Clear All** — duplicate toasts for the same event (e.g. repeated harvests of the same flower) merge into a single accumulating pill counter; a Clear All button dismisses every active notification at once (#224)
+- **Rarity filter + sort in SeedPicker** — filter the seed list by rarity and sort by name or rarity tier before planting; applies to both the single-plot picker and the Plant All flow (#263)
+- **Bulk plant/harvest filter modal** — a filter sheet lets you select rarity tiers and flower types to include before Plant All or Collect All runs (#262)
+- **Per-rarity select-all / clear on Sacrifice screen** — quick-action buttons per rarity row let you instantly select or deselect all blooms of that rarity in the alchemy sacrifice view (#251)
+- **Slot lock on seed shop listings** — tap the lock icon on any shop slot to prevent it from being replaced when the shop restocks (#238)
+- **Auto-planter pause/resume toggle** — pause and resume the auto-planter from its gear tooltip without removing it from the farm (#245)
+- **Balance Scale flip countdown in gear tooltip** — the tooltip now shows a live countdown to the next boost/penalty phase flip alongside the current phase indicator (#239, #240)
+- **Weather effects toggle in settings** — disable animated weather overlays (rain particles, lightning, snow) for a cleaner garden view on lower-powered devices
 
 ### Changed
+- **Font switched to Pixelify Sans** — all UI text now uses the Pixelify Sans variable font for a cohesive pixel-art aesthetic
+- **Settings modal consolidated** — visual appearance settings and the new audio settings live in a single redesigned panel; the Sign Out button has been moved into settings
+- **Guest play removed** — an account is now required; the guest play option is no longer shown on the login page
+- **Login page subtitle** updated to Sakura Blossom Event; **HUD flower icon** updated to the Sakura Blossom sprite
+- **Notification badges unified** — all tab nav badges are now primary-colored pixel-corner dots (replaced mixed emoji/number styles)
 - **Settings "Sign out" renamed to "Go to title screen"** — the action returns you to the login page without signing out of your account
-- **Login page subtitle updated** to Sakura Blossom Event
-- **HUD flower icon** updated to the Sakura Blossom sprite
-- **Balance — Seed Pouch upgrade cost increased** from 2× to 3× of the previous tier (applies to all base and typed/elemental pouches)
-- **Balance — Heirloom Charm upgrade cost increased** from 2× to 3× of the previous tier
-- **Balance — Infuser I cost increased** from 2 to 3 Universal Essence; Infuser II–V upgrade cost increased from 2× to 3× of the previous tier
+- **Balance — Seed Pouch upgrade cost** increased from 2× to 3× of the previous tier (applies to all base and typed/elemental pouches)
+- **Balance — Heirloom Charm upgrade cost** increased from 2× to 3× of the previous tier
+- **Balance — Infuser I cost** increased from 2 to 3 Universal Essence; Infuser II–V upgrade cost increased from 2× to 3× of the previous tier
+
+### Fixed
+- **Ghost gear after expiry** — expired gear is now removed from both client state and the DB atomically; gear tiles no longer linger as un-interactable ghosts after their timer runs out (#242)
+- **Shop restock blink** — a rapid restock poll race no longer briefly blanks the shop grid between the old and new listings (#243)
+- **Heirloom Charm duplication exploit** — `plant_timings` are now synced when an Eclipse Tonic is applied so the server can correctly reject a second charm activation on the same plant
+- **Harvest and generic toasts looping** — removed `count` from the dismiss timer dependency array so accumulated pill toasts clear correctly instead of re-triggering on every state change
+- **Notification mousedown closing plant tooltip** — tapping a notification no longer dismisses an open plot tooltip behind it (#225)
+- **"Plot already occupied" race condition** — the seed/bloom picker now reads the live state ref instead of a stale render closure, so plots filled by the auto-planter or harvest bell between renders are correctly blocked; the picker auto-closes if its target plot becomes occupied (#1A)
+- **Level-up SFX firing on sign-in** — gardener level jumps from the initial default to the real saved value on cloud load; the SFX is now gated behind actually entering the garden
+- **Garden music playing on login page** — audio now starts only after the player clicks Enter Garden, not when auth resolves
+- **Login music not playing on fresh page load** — audio context creation and first track selection now happen synchronously on Enter Garden
+- **Google sign-in popup not reloading** — the opener window now correctly reloads after the popup OAuth flow completes so the session is picked up
+- **Loading screen flash before login** — the auth-resolving spinner is replaced with a subtle inline pulse on the login page itself; no intermediate full-screen flash
+- **Crossbreeding claim gated on non-existent achievement tier** — the Master Botanist tier referenced in the claim gate did not exist on the client; gating now checks `discoveredRecipes` correctly
+- **Achievement stats not reaching DB** — periodic cloud saves and a pre-claim flush were added so stats accumulated between auto-saves are not lost before an achievement is claimed
 
 ---
 
