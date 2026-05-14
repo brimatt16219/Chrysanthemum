@@ -1,4 +1,4 @@
-## [v2.4.0] — 2026-05-13 — The Sakura Festival Update
+## [v2.4.0] — 2026-05-13 — The Sakura Blossom Update
 
 ### Added
 
