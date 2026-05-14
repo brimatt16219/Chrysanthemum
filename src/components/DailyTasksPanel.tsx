@@ -42,10 +42,10 @@ function taskLabel(type: DailyTaskType, target: number): string {
 // ── Reward tier definitions ───────────────────────────────────────────────────
 
 export const DAILY_REWARDS = [
-  { xp:  50, label: "Seed Pouch I",   gems: 10 },
-  { xp:  75, label: "Seed Pouch I",   gems: 15 },
-  { xp: 100, label: "Seed Pouch II",  gems: 20 },
-  { xp: 200, label: "Seed Pouch III", gems: 35 },
+  { xp:  50, gems: 10 },
+  { xp:  75, gems: 15 },
+  { xp: 100, gems: 20 },
+  { xp: 200, gems: 35 },
 ] as const;
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -77,12 +77,12 @@ export function DailyTasksPanel() {
         gems:            result.gems            ?? cur.gems,
         serverUpdatedAt: result.serverUpdatedAt,
       });
-      if (result.rewardPouch) {
+      if (result.gemsGained) {
         const tier = result.dailyTasks.rewardsCollected.filter(Boolean).length;
         pushGenericToast(
           `daily_reward_${tier}`,
           "🎁",
-          `Daily reward! +${result.xpGained} XP`,
+          `Daily reward! +${result.gemsGained} 💎  +${result.xpGained} XP`,
           undefined,
           "gain",
         );
@@ -192,7 +192,7 @@ export function DailyTasksPanel() {
                 {collected ? "✓" : i + 1}
               </span>
               <span className={`flex-1 inline-flex items-center gap-0.5 ${collected ? "line-through" : ""}`}>
-                {reward.xp} XP + {reward.label} + {reward.gems}<ItemSprite emoji="💎" sprite="/sprites/ui/gems.png" textSize="text-xs" imgSize="w-3.5 h-3.5" name="gems" />
+                {reward.xp} XP + {reward.gems}<ItemSprite emoji="💎" sprite="/sprites/ui/gems.png" textSize="text-xs" imgSize="w-3.5 h-3.5" name="gems" />
               </span>
             </div>
           );

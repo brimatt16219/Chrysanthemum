@@ -19,28 +19,16 @@ const err = (msg: string, status = 400) => json({ error: msg }, status);
 
 // ── Reward tiers (indexed 0–3 by completion count) ───────────────────────────
 const DAILY_REWARDS = [
-  { xp:  50, pouch: "seed_pouch_1", gems: 10 },
-  { xp:  75, pouch: "seed_pouch_1", gems: 15 },
-  { xp: 100, pouch: "seed_pouch_2", gems: 20 },
-  { xp: 200, pouch: "seed_pouch_3", gems: 35 },
+  { xp:  50, gems: 10 },
+  { xp:  75, gems: 15 },
+  { xp: 100, gems: 20 },
+  { xp: 200, gems: 35 },
 ] as const;
 
 const TASKS_REQUIRED = 4;
 
 function utcDateString(): string {
   return new Date().toISOString().slice(0, 10);
-}
-
-type Consumable = { id: string; quantity: number };
-
-function addConsumable(consumables: Consumable[], id: string): Consumable[] {
-  const idx = consumables.findIndex((c) => c.id === id);
-  if (idx >= 0) {
-    const updated = [...consumables];
-    updated[idx]  = { ...updated[idx], quantity: updated[idx].quantity + 1 };
-    return updated;
-  }
-  return [...consumables, { id, quantity: 1 }];
 }
 
 interface DailyTask {
@@ -83,7 +71,7 @@ Deno.serve(async (req: Request) => {
     const [authResult, saveResult] = await Promise.all([
       supabaseAdmin.auth.getUser(token),
       supabaseAdmin.from("game_saves")
-        .select("daily_tasks, consumables, gems, gardener_level, gardener_xp, updated_at")
+        .select("daily_tasks, gems, gardener_level, gardener_xp, updated_at")
         .eq("user_id", userId)
         .single(),
     ]);
@@ -97,7 +85,6 @@ Deno.serve(async (req: Request) => {
     const priorUpdatedAt = save.updated_at      as string;
     const gardenerLevel  = (save.gardener_level as number) ?? 1;
     const gardenerXp     = (save.gardener_xp    as number) ?? 0;
-    const consumables    = (save.consumables     ?? []) as Consumable[];
     const dailyTasks     = (save.daily_tasks     ?? {})  as Partial<DailyTaskState>;
     const gems           = (save.gems            as number) ?? 0;
 
@@ -141,7 +128,6 @@ Deno.serve(async (req: Request) => {
     const newRewardsCollected = [...rewardsCollected] as boolean[];
     newRewardsCollected[tierIdx] = true;
 
-    const newConsumables = addConsumable(consumables, reward.pouch);
     const { level: newLevel, xp: newXp, leveledUp, levelsGained } = awardXp(gardenerLevel, gardenerXp, reward.xp);
     const newGems = gems + reward.gems;
     const newDailyTasks: DailyTaskState = { date: today, tasks: newTasks, rewardsCollected: newRewardsCollected };
@@ -151,7 +137,6 @@ Deno.serve(async (req: Request) => {
       .from("game_saves")
       .update({
         daily_tasks:    newDailyTasks,
-        consumables:    newConsumables,
         gardener_level: newLevel,
         gardener_xp:    newXp,
         gems:           newGems,
@@ -166,19 +151,17 @@ Deno.serve(async (req: Request) => {
 
     void supabaseAdmin.from("action_log").insert({
       user_id: userId, action: "daily_complete",
-      payload: { taskType, tier: tierIdx + 1, reward: reward.pouch, xpGained: reward.xp, gemsGained: reward.gems },
+      payload: { taskType, tier: tierIdx + 1, xpGained: reward.xp, gemsGained: reward.gems },
     });
 
     return json({
       ok:              true,
       dailyTasks:      newDailyTasks,
-      consumables:     newConsumables,
       xpGained:        reward.xp,
       gardenerLevel:   newLevel,
       gardenerXp:      newXp,
       leveledUp,
       levelsGained,
-      rewardPouch:     reward.pouch,
       gemsGained:      reward.gems,
       gems:            newGems,
       serverUpdatedAt: ud.updated_at,
