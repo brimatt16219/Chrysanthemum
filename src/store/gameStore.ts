@@ -262,10 +262,11 @@ export interface GameState {
   // server-authoritative state (inventory, coins, etc.) with stale client data.
   serverUpdatedAt:   string | null;
   
-  gardenerLevel: number,
-  gardenerXp: number,
-  dailyTasks: DailyTaskState | null,
-  gems:       number,
+  gardenerLevel:       number,
+  gardenerXp:          number,
+  codexXpBackfilled:   boolean,
+  dailyTasks:          DailyTaskState | null,
+  gems:                number,
   achievementStats:    AchievementStats,
   achievementsClaimed: string[],
   events:              EventEntry[],
@@ -604,6 +605,7 @@ export function defaultState(): GameState {
     serverUpdatedAt:      null,
     gardenerLevel:        1,
     gardenerXp:           0,
+    codexXpBackfilled:    false,
     dailyTasks:           null,
     gems:                 0,
     achievementStats:    {},

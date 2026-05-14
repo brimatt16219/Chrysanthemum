@@ -172,6 +172,7 @@ export async function loadCloudSave(userId: string): Promise<GameState | null> {
       // Gardener Level
       gardenerLevel:        (data.gardener_level        as number)                      ?? 1,
       gardenerXp:           (data.gardener_xp           as number)                      ?? 0,
+      codexXpBackfilled:    (data.codex_xp_backfilled   as boolean)                     ?? false,
       // v2.4 — Daily tasks
       dailyTasks:           (data.daily_tasks           as GameState["dailyTasks"])      ?? null,
       // v2.4 — Gems
@@ -186,13 +187,13 @@ export async function loadCloudSave(userId: string): Promise<GameState | null> {
     // for codex entries they earned before the Gardener Level system launched.
     // Guarded by codex_xp_backfilled so it runs exactly once per account,
     // regardless of how much XP the player has already accumulated.
-    if (!data.codex_xp_backfilled && state.discovered.length > 0) {
+    if (!state.codexXpBackfilled && state.discovered.length > 0) {
       let backfillXp = 0;
       for (const entry of state.discovered) {
-        const sep = entry.indexOf(":");
-        const speciesId = sep === -1 ? entry : entry.slice(0, sep);
+        const sep        = entry.indexOf(":");
+        const speciesId  = sep === -1 ? entry : entry.slice(0, sep);
         const isMutation = sep !== -1;
-        const rarity = getFlower(speciesId)?.rarity;
+        const rarity     = getFlower(speciesId)?.rarity;
         if (!rarity) continue;
         const baseXp = DISCOVERY_XP_BY_RARITY[rarity];
         backfillXp += isMutation ? Math.floor(baseXp * MUTATION_DISCOVERY_BONUS) : baseXp;
@@ -201,11 +202,10 @@ export async function loadCloudSave(userId: string): Promise<GameState | null> {
         const { level, xp } = awardXp(1, 0, backfillXp);
         state.gardenerLevel = level;
         state.gardenerXp    = xp;
-        void supabase
-          .from("game_saves")
-          .update({ gardener_level: level, gardener_xp: xp, codex_xp_backfilled: true })
-          .eq("user_id", userId);
       }
+      // Always mark as done so the regular saveToCloud persists it — even if
+      // backfillXp was 0 (no discovered entries to credit).
+      state.codexXpBackfilled = true;
     }
 
     // ── Daily tasks init / reset ───────────────────────────────────────────
@@ -328,6 +328,8 @@ export async function saveToCloud(
     // v2.4 — Achievements
     achievement_stats:    state.achievementStats    ?? {},
     achievements_claimed: state.achievementsClaimed ?? [],
+    // v2.4 — Codex XP backfill flag
+    codex_xp_backfilled:  state.codexXpBackfilled  ?? false,
     updated_at:             newUpdatedAt,
   };
 
