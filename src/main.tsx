@@ -28,14 +28,28 @@ Sentry.init({
 // any module JS runs — the only reliable way to capture ?code=&state= before
 // Supabase's detectSessionInUrl strips them from the URL.
 if (_isOAuthCallback) {
-  // Let Supabase exchange the code for tokens (happens automatically on init).
-  // Close the popup once the session is ready.
+  // Determine whether we're running inside a popup or the main window.
+  // window.opener is set when this window was opened via window.open().
+  // If it's not set we're the main window — the popup was blocked and the
+  // fallback full-page redirect landed here instead.
+  const _isPopup = !!window.opener && window.opener !== window;
+
   supabase.auth.getSession().then(({ data }) => {
-    if (data.session) { window.close(); return; }
-    // Not ready yet — wait for the exchange to complete.
-    supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) window.close();
-    });
+    if (_isPopup) {
+      // Popup flow: close the popup so the parent window resumes.
+      if (data.session) { window.close(); return; }
+      supabase.auth.onAuthStateChange((_event, session) => {
+        if (session) window.close();
+      });
+    } else {
+      // Fallback redirect flow (popup was blocked): navigate to the clean
+      // origin URL so the main window doesn't stay on "Signing in…".
+      // The session is now in localStorage; the fresh load will pick it up.
+      if (data.session) { window.location.replace(window.location.origin); return; }
+      supabase.auth.onAuthStateChange((_event, session) => {
+        if (session) window.location.replace(window.location.origin);
+      });
+    }
   });
 
   createRoot(document.getElementById("root")!).render(

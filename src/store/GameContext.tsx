@@ -766,21 +766,19 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
     popup.location.href = data.url;
 
-    // Poll every 500 ms. As soon as a session appears in localStorage (written
-    // by the popup's Supabase client after the OAuth exchange), load it on the
-    // main window and close the popup from here.  We also stop if the user
-    // manually closes the popup before completing sign-in.
+    // Poll every 500 ms for the session the popup writes to localStorage.
+    // Check the session BEFORE checking popup.closed so we don't miss it if
+    // main.tsx already called window.close() on the popup between ticks.
     const interval = setInterval(async () => {
-      if (popup.closed) { clearInterval(interval); return; }
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         clearInterval(interval);
         try { popup.close(); } catch { /* ignore */ }
-        // Reload the main window — the session is now in localStorage and will
-        // be picked up cleanly by INITIAL_SESSION on the fresh load. This is
-        // more reliable than trying to update in-memory auth state cross-tab.
-        window.location.reload();
+        await loadUserSession(session.user);
+        return;
       }
+      // No session yet — stop only if the user manually closed the popup.
+      if (popup.closed) { clearInterval(interval); }
     }, 500);
   }
 
