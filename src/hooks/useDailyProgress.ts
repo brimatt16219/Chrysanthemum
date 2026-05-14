@@ -1,20 +1,17 @@
 import { useCallback } from "react";
 import { useGame } from "../store/GameContext";
-import { edgeDailyComplete } from "../lib/edgeFunctions";
 import type { DailyTaskType } from "../lib/dailySeed";
-import { useAchievementStats } from "./useAchievementStats";
 
 /**
  * Returns `trackProgress(taskType, count?)` — call it after any action that
- * maps to a daily task. Increments progress locally, and if the task reaches
- * its target, calls the server to mark it complete and deliver the reward.
- * `count` defaults to 1; pass a higher value for bulk actions (e.g. harvest-all).
+ * maps to a daily task. Increments progress locally only. The user must click
+ * "Claim" in DailyTasksPanel to submit the completion to the server and
+ * receive the reward.
  */
 export function useDailyProgress() {
-  const { update, getState, pushGenericToast } = useGame();
-  const { incrementStat } = useAchievementStats();
+  const { update, getState } = useGame();
 
-  const trackProgress = useCallback(async (taskType: DailyTaskType, count = 1) => {
+  const trackProgress = useCallback((taskType: DailyTaskType, count = 1) => {
     const dailyTasks = getState().dailyTasks;
     if (!dailyTasks) return;
 
@@ -22,54 +19,15 @@ export function useDailyProgress() {
     if (taskIdx < 0) return;
 
     const task = dailyTasks.tasks[taskIdx];
-    if (task.completed) return;
+    if (task.completed) return; // already claimed
 
     const newProgress = Math.min(task.target, task.progress + count);
-    const nowComplete = newProgress >= task.target;
+    if (newProgress === task.progress) return; // no change
 
-    // ── Optimistic progress update ────────────────────────────────────────
     const newTasks    = [...dailyTasks.tasks];
-    newTasks[taskIdx] = { ...task, progress: newProgress, completed: nowComplete };
+    newTasks[taskIdx] = { ...task, progress: newProgress };
     update({ ...getState(), dailyTasks: { ...dailyTasks, tasks: newTasks } });
-
-    if (!nowComplete) return;
-
-    // ── Task complete — tell the server, claim reward ─────────────────────
-    try {
-      const result = await edgeDailyComplete(taskType);
-      const cur    = getState();
-      update({
-        ...cur,
-        dailyTasks:      result.dailyTasks,
-        consumables:     result.consumables     ?? cur.consumables,
-        gardenerLevel:   result.gardenerLevel   ?? cur.gardenerLevel,
-        gardenerXp:      result.gardenerXp      ?? cur.gardenerXp,
-        gems:            result.gems            ?? cur.gems,
-        serverUpdatedAt: result.serverUpdatedAt,
-      });
-
-      if (result.rewardPouch) {
-        const tier = result.dailyTasks.rewardsCollected.filter(Boolean).length;
-        pushGenericToast(
-          `daily_reward_${tier}`,
-          "🎁",
-          `Daily reward! +${result.xpGained} XP`,
-          undefined,
-          "gain",
-        );
-      }
-      // Increment daily set counter when all 4 tasks complete in one day
-      if (result.dailyTasks.tasks.every((t) => t.completed)) {
-        incrementStat("daily_sets_completed");
-      }
-    } catch {
-      // Server rejected — roll back the optimistic completion
-      const cur    = getState();
-      const rolled = [...cur.dailyTasks!.tasks];
-      rolled[taskIdx] = { ...rolled[taskIdx], progress: task.progress, completed: false };
-      update({ ...cur, dailyTasks: { ...cur.dailyTasks!, tasks: rolled } });
-    }
-  }, [getState, update, pushGenericToast]);
+  }, [getState, update]);
 
   return { trackProgress };
 }

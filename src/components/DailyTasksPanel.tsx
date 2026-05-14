@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { useGame } from "../store/GameContext";
 import { TASKS_REQUIRED, type DailyTaskType } from "../lib/dailySeed";
-import { awardXp } from "../data/gardenerLevel";
+import { edgeDailyComplete } from "../lib/edgeFunctions";
+import { useAchievementStats } from "../hooks/useAchievementStats";
 import { ItemSprite } from "./ItemSprite";
 
 // ── Task display metadata ─────────────────────────────────────────────────────
@@ -24,7 +26,6 @@ const TASK_SPRITE: Record<DailyTaskType, string> = {
   apply_fertilizer:  "/sprites/ui/task_fertilizer.png",
   alchemy_sacrifice: "/sprites/ui/task_sacrifice.png",
 };
-
 
 function taskLabel(type: DailyTaskType, target: number): string {
   switch (type) {
@@ -50,37 +51,50 @@ export const DAILY_REWARDS = [
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function DailyTasksPanel() {
-  const { state, getState, update, pushGenericToast, saveGridNow } = useGame();
-  const dailyTasks = state.dailyTasks;
+  const { state, getState, update, pushGenericToast } = useGame();
+  const { incrementStat } = useAchievementStats();
+  const [claiming, setClaiming] = useState<DailyTaskType | null>(null);
 
+  const dailyTasks = state.dailyTasks;
   if (!dailyTasks) return null;
 
   const { tasks, rewardsCollected } = dailyTasks;
-  const completedCount  = tasks.filter((t) => t.completed).length;
-  const collectedCount  = rewardsCollected.filter(Boolean).length;
+  const completedCount = tasks.filter((t) => t.completed).length;
+  const collectedCount = rewardsCollected.filter(Boolean).length;
 
-  async function handleCollect(i: number) {
-    const cur    = getState();
-    if (!cur.dailyTasks) return;
-    const reward = DAILY_REWARDS[i];
-    const { level: newLevel, xp: newXp } = awardXp(cur.gardenerLevel, cur.gardenerXp, reward.xp);
-    const updated = [...cur.dailyTasks.rewardsCollected];
-    updated[i]   = true;
-    update({
-      ...cur,
-      gems:          cur.gems + reward.gems,
-      gardenerLevel: newLevel,
-      gardenerXp:    newXp,
-      dailyTasks:    { ...cur.dailyTasks, rewardsCollected: updated },
-    });
-    pushGenericToast(
-      `daily_reward_${i}`,
-      "🎁",
-      `+${reward.gems} 💎  +${reward.xp} XP`,
-      undefined,
-      "gain",
-    );
-    await saveGridNow();
+  async function handleClaim(taskType: DailyTaskType) {
+    if (claiming) return;
+    setClaiming(taskType);
+    try {
+      const result = await edgeDailyComplete(taskType);
+      const cur    = getState();
+      update({
+        ...cur,
+        dailyTasks:      result.dailyTasks,
+        consumables:     result.consumables     ?? cur.consumables,
+        gardenerLevel:   result.gardenerLevel   ?? cur.gardenerLevel,
+        gardenerXp:      result.gardenerXp      ?? cur.gardenerXp,
+        gems:            result.gems            ?? cur.gems,
+        serverUpdatedAt: result.serverUpdatedAt,
+      });
+      if (result.rewardPouch) {
+        const tier = result.dailyTasks.rewardsCollected.filter(Boolean).length;
+        pushGenericToast(
+          `daily_reward_${tier}`,
+          "🎁",
+          `Daily reward! +${result.xpGained} XP`,
+          undefined,
+          "gain",
+        );
+      }
+      if (result.dailyTasks.tasks.every((t) => t.completed)) {
+        incrementStat("daily_sets_completed");
+      }
+    } catch {
+      // server rejected — leave progress as-is, user can retry
+    } finally {
+      setClaiming(null);
+    }
   }
 
   return (
@@ -97,13 +111,16 @@ export function DailyTasksPanel() {
       {/* Task list */}
       <div className="space-y-2">
         {tasks.map((task) => {
-          const pct = Math.min(100, (task.progress / task.target) * 100);
+          const pct     = Math.min(100, (task.progress / task.target) * 100);
+          const isReady = task.progress >= task.target && !task.completed;
           return (
             <div
               key={task.type}
               className={`flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm transition-colors ${
                 task.completed
                   ? "border-primary/40 bg-primary/5"
+                  : isReady
+                  ? "border-primary/60 bg-primary/5"
                   : "border-border bg-card/60"
               }`}
             >
@@ -125,7 +142,7 @@ export function DailyTasksPanel() {
                     {task.progress}/{task.target}
                   </span>
                 </div>
-                {!task.completed && task.target > 1 && (
+                {!task.completed && !isReady && task.target > 1 && (
                   <div className="mt-1.5 h-1 rounded-full bg-muted overflow-hidden">
                     <div
                       className="h-full rounded-full bg-primary transition-all duration-300"
@@ -137,6 +154,15 @@ export function DailyTasksPanel() {
               {task.completed && (
                 <span className="text-primary text-sm shrink-0">✓</span>
               )}
+              {isReady && (
+                <button
+                  onClick={() => handleClaim(task.type as DailyTaskType)}
+                  disabled={!!claiming}
+                  className="shrink-0 px-2.5 py-1 rounded-lg bg-primary text-primary-foreground text-[10px] font-semibold hover:opacity-90 transition-opacity disabled:opacity-60"
+                >
+                  {claiming === task.type ? "…" : "Claim"}
+                </button>
+              )}
             </div>
           );
         })}
@@ -146,10 +172,9 @@ export function DailyTasksPanel() {
       <div className="border-t border-border pt-3 space-y-1.5">
         <p className="text-xs font-medium text-muted-foreground mb-2">Rewards</p>
         {DAILY_REWARDS.map((reward, i) => {
-          const collected  = rewardsCollected[i];
-          const unlocked   = completedCount >= i + 1;
-          const canCollect = unlocked && !collected;
-          const isNext     = !collected && i === collectedCount;
+          const collected = rewardsCollected[i];
+          const unlocked  = completedCount >= i + 1;
+          const isNext    = !collected && i === collectedCount;
           return (
             <div
               key={i}
@@ -160,7 +185,7 @@ export function DailyTasksPanel() {
               <span className={`w-4 h-4 rounded-full border flex items-center justify-center text-[10px] shrink-0 font-semibold ${
                 collected
                   ? "border-primary bg-primary text-primary-foreground"
-                  : canCollect
+                  : unlocked
                   ? "border-primary text-primary"
                   : "border-muted-foreground"
               }`}>
@@ -169,14 +194,6 @@ export function DailyTasksPanel() {
               <span className={`flex-1 inline-flex items-center gap-0.5 ${collected ? "line-through" : ""}`}>
                 {reward.xp} XP + {reward.label} + {reward.gems}<ItemSprite emoji="💎" sprite="/sprites/ui/gems.png" textSize="text-xs" imgSize="w-3.5 h-3.5" name="gems" />
               </span>
-              {canCollect && (
-                <button
-                  onClick={() => handleCollect(i)}
-                  className="ml-auto px-2.5 py-0.5 rounded-lg bg-primary text-primary-foreground text-[10px] font-semibold hover:opacity-90 transition-opacity"
-                >
-                  Collect
-                </button>
-              )}
             </div>
           );
         })}
