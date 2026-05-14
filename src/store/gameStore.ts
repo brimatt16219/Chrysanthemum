@@ -2833,7 +2833,7 @@ export function sacrificeFlowers(
     const species = getFlower(speciesId);
     if (!species) return null;
     const invItem = state.inventory.find(
-      (i) => i.speciesId === speciesId && i.mutation === mutation && !i.isSeed
+      (i) => i.speciesId === speciesId && (i.mutation ?? null) === (mutation ?? null) && !i.isSeed
     );
     if (!invItem || invItem.quantity < quantity) return null;
   }
@@ -2843,7 +2843,7 @@ export function sacrificeFlowers(
   for (const { speciesId, mutation, quantity } of sacrifices) {
     newInventory = newInventory
       .map((i) =>
-        i.speciesId === speciesId && i.mutation === mutation && !i.isSeed
+        i.speciesId === speciesId && (i.mutation ?? null) === (mutation ?? null) && !i.isSeed
           ? { ...i, quantity: i.quantity - quantity }
           : i
       )

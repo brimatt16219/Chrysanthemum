@@ -17,6 +17,7 @@ import {
   plantSeed,
   removePlant,
   resizeGrid,
+  sacrificeFlowers,
   sellFlower,
   stampStageTransitions,
   type GameState,
@@ -489,5 +490,64 @@ describe("plantBloom — null/undefined mutation normalization (regression)", ()
     const next = plantBloom(s, 0, 0, fastFlower.id)!;
     expect(next.grid[0][0].plant?.timePlanted).toBe(0);
     expect((next.grid[0][0].plant as PlantedFlower).bloomedAt).toBeDefined();
+  });
+});
+
+// ── sacrificeFlowers — null/undefined mutation normalization (v2.4.2 regression) ─
+//
+// Inventory items from the DB carry mutation: null for non-mutated blooms.
+// sacrificeFlowers was using strict === which made null !== undefined and
+// caused "Invalid selection" for every non-mutated sacrifice attempt.
+
+describe("sacrificeFlowers — null/undefined mutation normalization (v2.4.2 regression)", () => {
+  function stateWithBloom(mutation: null | undefined | string): GameState {
+    return baseState({
+      inventory: [
+        {
+          speciesId: fastFlower.id,
+          quantity: 2,
+          isSeed: false,
+          mutation: mutation as PlantedFlower["mutation"],
+        },
+      ],
+    });
+  }
+
+  it("sacrifices a bloom whose inventory mutation is null when called without a mutation arg", () => {
+    // DB stores null; sacrifice entry has mutation: undefined. Must normalize.
+    const s = stateWithBloom(null);
+    const next = sacrificeFlowers(s, [{ speciesId: fastFlower.id, quantity: 1 }]);
+    expect(next).not.toBeNull();
+    expect(next!.inventory[0].quantity).toBe(1); // one deducted
+  });
+
+  it("sacrifices a bloom whose inventory mutation is undefined when called without a mutation arg", () => {
+    const s = stateWithBloom(undefined);
+    const next = sacrificeFlowers(s, [{ speciesId: fastFlower.id, quantity: 1 }]);
+    expect(next).not.toBeNull();
+  });
+
+  it("sacrifices a mutated bloom when the mutation arg matches", () => {
+    const s = stateWithBloom("golden");
+    const next = sacrificeFlowers(s, [{ speciesId: fastFlower.id, mutation: "golden", quantity: 1 }]);
+    expect(next).not.toBeNull();
+    expect(next!.inventory[0].quantity).toBe(1);
+  });
+
+  it("returns null when mutation arg is provided but inventory has no mutation", () => {
+    const s = stateWithBloom(null);
+    expect(sacrificeFlowers(s, [{ speciesId: fastFlower.id, mutation: "golden", quantity: 1 }])).toBeNull();
+  });
+
+  it("returns null when quantity exceeds owned amount", () => {
+    const s = stateWithBloom(null);
+    expect(sacrificeFlowers(s, [{ speciesId: fastFlower.id, quantity: 99 }])).toBeNull();
+  });
+
+  it("adds essences to state after a successful sacrifice", () => {
+    const s = stateWithBloom(null);
+    const next = sacrificeFlowers(s, [{ speciesId: fastFlower.id, quantity: 1 }])!;
+    expect(next.essences.length).toBeGreaterThan(0);
+    expect(next.essences.every((e) => e.amount > 0)).toBe(true);
   });
 });
