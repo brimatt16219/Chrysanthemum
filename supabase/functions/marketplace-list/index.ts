@@ -106,16 +106,17 @@ const GEAR_SHOP_PRICES: Record<string, number> = {
 
 // ── Marketplace slot upgrade costs (mirrors src/data/upgrades.ts) ─────────────
 const MARKETPLACE_SLOT_UPGRADES = [
-  { slots: 1, cost: 10_000  },
-  { slots: 2, cost: 50_000  },
-  { slots: 3, cost: 150_000 },
-  { slots: 4, cost: 350_000 },
-  { slots: 5, cost: 650_000 },
+  { slots: 1, cost: 10_000,  minLevel: 5  },
+  { slots: 2, cost: 50_000,  minLevel: 10 },
+  { slots: 3, cost: 150_000, minLevel: 15 },
+  { slots: 4, cost: 350_000, minLevel: 20 },
+  { slots: 5, cost: 650_000, minLevel: 25 },
 ];
 
 const _MAX_MARKETPLACE_SLOTS = 5;
-const LISTING_FEE_PCT       = 0.05; // 5% listing fee, non-refundable
-const LISTING_DURATION_MS   = 48 * 60 * 60 * 1_000; // 48 hours
+const MARKETPLACE_MIN_LEVEL  = 5;
+const LISTING_FEE_PCT        = 0.05; // 5% listing fee, non-refundable
+const LISTING_DURATION_MS    = 48 * 60 * 60 * 1_000; // 48 hours
 
 interface InventoryItem  { speciesId: string; quantity: number; mutation?: string; isSeed?: boolean; }
 interface FertilizerItem { type: string; quantity: number; }
@@ -172,7 +173,7 @@ Deno.serve(async (req: Request) => {
       supabaseAdmin.auth.getUser(token),
       supabaseAdmin
         .from("game_saves")
-        .select("coins, inventory, fertilizers, gear_inventory, consumables, marketplace_slots, updated_at")
+        .select("coins, inventory, fertilizers, gear_inventory, consumables, marketplace_slots, gardener_level, updated_at")
         .eq("user_id", userId)
         .single(),
     ]);
@@ -191,6 +192,7 @@ Deno.serve(async (req: Request) => {
 
     const save = saveResult.data;
     const priorUpdatedAt = save.updated_at as string;
+    const gardenerLevel = (save.gardener_level as number) ?? 1;
     console.log("save loaded:", JSON.stringify({ coins: save.coins, marketplace_slots: save.marketplace_slots, action: body.action }));
     let coins             = save.coins as number;
     let newInventory      = [...(save.inventory ?? []) as InventoryItem[]];
@@ -205,6 +207,11 @@ Deno.serve(async (req: Request) => {
       if (!next) {
         return new Response(JSON.stringify({ error: "Already at max marketplace slots" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (gardenerLevel < next.minLevel) {
+        return new Response(JSON.stringify({ error: `Requires Gardener Level ${next.minLevel}` }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (coins < next.cost) {
@@ -238,6 +245,11 @@ Deno.serve(async (req: Request) => {
 
     // ── create_listing ────────────────────────────────────────────────────────
     if (body.action === "create_listing") {
+      if (gardenerLevel < MARKETPLACE_MIN_LEVEL) {
+        return new Response(JSON.stringify({ error: `Requires Gardener Level ${MARKETPLACE_MIN_LEVEL} to use the Marketplace` }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       if (!Number.isInteger(body.askPrice) || body.askPrice < 1) {
         return new Response(JSON.stringify({ error: "askPrice must be a positive integer" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },

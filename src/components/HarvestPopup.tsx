@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { getFlower, RARITY_CONFIG, MUTATIONS, type MutationType } from "../data/flowers";
+import { FlowerSprite } from "./FlowerSprite";
+import { ItemSprite } from "./ItemSprite";
 
 interface Props {
   speciesId: string;
@@ -15,7 +17,6 @@ export function HarvestPopup({ speciesId, mutation, count, isSeed, onDone }: Pro
   const rarity  = species ? RARITY_CONFIG[species.rarity] : null;
   const mut     = mutation ? MUTATIONS[mutation] : null;
 
-  // Reset the dismiss timer whenever count increments so the user has time to read it
   useEffect(() => {
     setVisible(true);
     const timer = setTimeout(
@@ -26,7 +27,12 @@ export function HarvestPopup({ speciesId, mutation, count, isSeed, onDone }: Pro
       mut ? 2_000 : 1_200
     );
     return () => clearTimeout(timer);
-  }, [count]); // eslint-disable-line react-hooks/exhaustive-deps
+  // count intentionally excluded: the timer must NOT reset on every count increment.
+  // Rapid harvests (bell gear, auto-planter) would otherwise cancel the pending
+  // dismiss on each push → onDone never fires → popup lives forever (#241).
+  // The count prop still updates the displayed number; only the timer is locked.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!species) return null;
 
@@ -44,13 +50,14 @@ export function HarvestPopup({ speciesId, mutation, count, isSeed, onDone }: Pro
         <span className={`text-xs font-bold font-mono ${isSeed ? "text-green-400" : mut ? mut.color : rarity?.color}`}>
           +{count}
         </span>
-        <span className="text-base">{isSeed ? species.emoji.seed : species.emoji.bloom}</span>
+        <FlowerSprite species={species} stage={isSeed ? "seed" : "bloom"} textSize="text-base" imgSize="w-5 h-5" />
         {isSeed && (
           <span className="text-xs font-bold font-mono text-green-400">Seed</span>
         )}
         {!isSeed && mut && (
-          <span className={`text-xs font-bold font-mono ${mut.color}`}>
-            {mut.emoji} {mut.name}
+          <span className={`text-xs font-bold font-mono ${mut.color} inline-flex items-center gap-1`}>
+            <ItemSprite emoji={mut.emoji} sprite={mut.sprite} name={mut.emoji} textSize="text-xs" imgSize="w-3.5 h-3.5" />
+            {mut.name}
           </span>
         )}
       </div>

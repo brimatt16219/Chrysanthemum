@@ -1,17 +1,23 @@
 import { useRef } from "react";
 import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
+import { FlowerSprite } from "./FlowerSprite";
 import { FlowerTypeBadges } from "./FlowerTypeBadges";
+import { ItemSprite } from "./ItemSprite";
 import { useGame } from "../store/GameContext";
 import { sellFlower, rollbackSellAll } from "../store/gameStore";
 import { edgeSellFlower } from "../lib/edgeFunctions";
 import type { InventoryItem } from "../store/gameStore";
+import { useAchievementStats } from "../hooks/useAchievementStats";
+import { audioManager } from "../lib/audioManager";
+import { awardXp, SELL_XP_PERCENT } from "../data/gardenerLevel";
 
 interface Props {
   item: InventoryItem;
 }
 
 export function InventoryItemCard({ item }: Props) {
-  const { getState, perform } = useGame();
+  const { getState, perform, pushGenericToast } = useGame();
+  const { incrementStat }    = useAchievementStats();
   // Per-card gate: blocks any sell while a server call is in-flight for this card,
   // preventing rapid clicks from queuing duplicate sells that the server will reject.
   const sellingRef = useRef(false);
@@ -29,18 +35,21 @@ export function InventoryItemCard({ item }: Props) {
     const optimistic = sellFlower(cur, item.speciesId, 1, item.mutation);
     if (!optimistic) return;
     sellingRef.current = true;
-    // Snapshot the coin delta this action introduced so the rollback can be
-    // SURGICAL — undoing only this sell, not anything that landed during the
-    // server roundtrip (e.g. a harvest the user did mid-sell).
-    const earned = optimistic.coins - cur.coins;
-    const items  = [{ speciesId: item.speciesId, mutation: item.mutation, quantity: 1 }];
+    const earned   = optimistic.coins - cur.coins;
+    const xpGained = Math.floor(earned * SELL_XP_PERCENT);
+    const { level: newLevel, xp: newXp } = awardXp(cur.gardenerLevel, cur.gardenerXp, xpGained);
+    const prevLevel = cur.gardenerLevel;
+    const prevXp    = cur.gardenerXp;
+    const items     = [{ speciesId: item.speciesId, mutation: item.mutation, quantity: 1 }];
+    audioManager.playSfx("sell");
+    pushGenericToast(`sell:${item.speciesId}:${item.mutation ?? ""}`, "🟡", "coins", "text-yellow-400", "gain", earned, "/sprites/ui/coins.png");
     perform(
-      optimistic,
+      { ...optimistic, gardenerLevel: newLevel, gardenerXp: newXp },
       async () => { try { return await edgeSellFlower(item.speciesId, item.mutation, 1); } finally { sellingRef.current = false; } },
-      undefined,
+      () => { incrementStat("blooms_sold"); },
       {
         serialize: true,
-        rollback: (c) => rollbackSellAll(c, items, earned),
+        rollback: (c) => ({ ...rollbackSellAll(c, items, earned), gardenerLevel: prevLevel, gardenerXp: prevXp }),
       }
     );
   }
@@ -56,15 +65,21 @@ export function InventoryItemCard({ item }: Props) {
     const optimistic = sellFlower(cur, item.speciesId, liveQty, item.mutation);
     if (!optimistic) return;
     sellingRef.current = true;
-    const earned = optimistic.coins - cur.coins;
-    const items  = [{ speciesId: item.speciesId, mutation: item.mutation, quantity: liveQty }];
+    const earned   = optimistic.coins - cur.coins;
+    const xpGained = Math.floor(earned * SELL_XP_PERCENT);
+    const { level: newLevel, xp: newXp } = awardXp(cur.gardenerLevel, cur.gardenerXp, xpGained);
+    const prevLevel = cur.gardenerLevel;
+    const prevXp    = cur.gardenerXp;
+    const items     = [{ speciesId: item.speciesId, mutation: item.mutation, quantity: liveQty }];
+    audioManager.playSfx("sell");
+    pushGenericToast(`sell:${item.speciesId}:${item.mutation ?? ""}`, "🟡", "coins", "text-yellow-400", "gain", earned, "/sprites/ui/coins.png");
     perform(
-      optimistic,
+      { ...optimistic, gardenerLevel: newLevel, gardenerXp: newXp },
       async () => { try { return await edgeSellFlower(item.speciesId, item.mutation, liveQty); } finally { sellingRef.current = false; } },
-      undefined,
+      () => { incrementStat("blooms_sold", liveQty); },
       {
         serialize: true,
-        rollback: (c) => rollbackSellAll(c, items, earned),
+        rollback: (c) => ({ ...rollbackSellAll(c, items, earned), gardenerLevel: prevLevel, gardenerXp: prevXp }),
       }
     );
   }
@@ -77,9 +92,9 @@ export function InventoryItemCard({ item }: Props) {
         ${rarity.glow}
       `}
     >
-      {/* Emoji */}
+      {/* Sprite / Emoji */}
       <div className="relative flex-shrink-0">
-        <span className="text-3xl">{species.emoji.bloom}</span>
+        <FlowerSprite species={species} stage="bloom" textSize="text-3xl" imgSize="w-10 h-10" />
         {mut && (
           <span className="absolute -top-1 -right-1 text-sm">{mut.emoji}</span>
         )}
@@ -100,7 +115,14 @@ export function InventoryItemCard({ item }: Props) {
         </div>
         <FlowerTypeBadges types={species.types} className="mt-1" />
         <p className="text-xs text-muted-foreground mt-0.5">
-          {item.quantity}× · {valuePerItem} 🟡 each · {totalValue} 🟡 total
+          <span className="inline-flex items-center gap-0.5 flex-wrap">
+            {item.quantity}× ·{" "}
+            {valuePerItem}
+            <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
+            {" "}each · {totalValue}
+            <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
+            {" "}total
+          </span>
         </p>
       </div>
 

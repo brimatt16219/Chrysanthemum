@@ -1,6 +1,7 @@
 import { supabase } from "./supabase";
 import type { GameState } from "../store/gameStore";
-import * as Sentry from "@sentry/react"
+import * as Sentry from "@sentry/react";
+import type { DailyTaskState } from "./dailySeed";
 
 const BASE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
@@ -64,9 +65,11 @@ export interface PlantAllResult {
 }
 
 export interface SellAllResult {
-  ok:          true;
-  coins:       number;
-  inventory:   GameState["inventory"];
+  ok:            true;
+  coins:         number;
+  inventory:     GameState["inventory"];
+  gardenerXp?:   number;
+  gardenerLevel?: number;
   serverUpdatedAt: string;
 }
 
@@ -78,11 +81,13 @@ export interface PlantSeedResult {
 }
 
 export interface ShopActionResult {
-  ok:          true;
-  coins:       number;
-  shop:        GameState["shop"];
-  inventory:   GameState["inventory"];
-  fertilizers: GameState["fertilizers"];
+  ok:            true;
+  coins:         number;
+  shop:          GameState["shop"];
+  inventory:     GameState["inventory"];
+  fertilizers:   GameState["fertilizers"];
+  gardenerXp?:   number;
+  gardenerLevel?: number;
   serverUpdatedAt: string;
 }
 
@@ -239,6 +244,10 @@ export function edgeCollectFromComposter(row: number, col: number) {
   return callEdge<GearActionResult>("gear-action", { action: "collect", row, col });
 }
 
+export function edgeToggleAutoPlanter(row: number, col: number) {
+  return callEdge<GearActionResult>("gear-action", { action: "toggle_pause", row, col });
+}
+
 // ── Supply shop actions ───────────────────────────────────────────────────────
 
 export interface SupplyBuyResult {
@@ -264,7 +273,46 @@ export function edgeBuyAllFromSupplyShop() {
 }
 
 export function edgeSyncSupplyShop(supplyShop: GameState["supplyShop"], lastSupplyReset: number) {
-  return callEdge<{ ok: true }>("supply-action", { action: "sync", supplyShop, lastSupplyReset });
+  return callEdge<{ ok: true; serverUpdatedAt?: string }>("supply-action", { action: "sync", supplyShop, lastSupplyReset });
+}
+
+export interface UnlockSlotResult {
+  ok:              true;
+  supplyShop:      GameState["supplyShop"];
+  serverUpdatedAt: string;
+}
+
+export function edgeUnlockSupplySlot(slotId: string) {
+  return callEdge<UnlockSlotResult>("supply-action", { action: "unlock_slot", slotId });
+}
+
+// ── Seed shop slot lock ───────────────────────────────────────────────────────
+
+export interface SeedLockSlotResult {
+  ok:              true;
+  shop:            GameState["shop"];
+  consumables:     GameState["consumables"];
+  serverUpdatedAt: string;
+}
+
+export interface SeedUnlockSlotResult {
+  ok:              true;
+  shop:            GameState["shop"];
+  serverUpdatedAt: string;
+}
+
+/** Pin a seed shop slot permanently (deducts one Slot Lock consumable). */
+export function edgeLockSeedSlot(slotId: string) {
+  return callEdge<SeedLockSlotResult>("use-consumable", {
+    action:       "seed_lock_slot",
+    consumableId: "slot_lock",
+    slotId,
+  });
+}
+
+/** Remove the permanent pin from a locked seed shop slot (free, no consumable). */
+export function edgeUnlockSeedSlot(slotId: string) {
+  return callEdge<SeedUnlockSlotResult>("shop-action", { action: "unlock_slot", slotId });
 }
 
 // ── Gifting ───────────────────────────────────────────────────────────────────
@@ -707,3 +755,78 @@ export function edgeActivateBoost(consumableId: string) {
   return callEdge<ActivateBoostResult>("use-consumable", { action: "activate_boost", consumableId });
 }
 
+
+// ── Daily tasks ───────────────────────────────────────────────────────────────
+
+export interface DailyCompleteResult {
+  ok:              true;
+  dailyTasks:      DailyTaskState;
+  consumables?:    GameState["consumables"];
+  xpGained?:       number;
+  gardenerLevel?:  number;
+  gardenerXp?:     number;
+  leveledUp?:      boolean;
+  levelsGained?:   number;
+  rewardPouch?:    string;
+  gemsGained?:     number;
+  gems?:           number;
+  serverUpdatedAt: string;
+}
+
+export function edgeDailyComplete(taskType: string) {
+  return callEdge<DailyCompleteResult>("daily-complete", { taskType });
+}
+
+// ── Achievements ──────────────────────────────────────────────────────────────
+
+export interface AchievementClaimResult {
+  ok:                  true;
+  xpGained:            number;
+  gemsGained:          number;
+  gardenerLevel:       number;
+  gardenerXp:          number;
+  leveledUp:           boolean;
+  levelsGained:        number;
+  gems:                number;
+  achievementsClaimed: string[];
+  serverUpdatedAt:     string;
+}
+
+export function edgeAchievementClaim(achievementId: string) {
+  return callEdge<AchievementClaimResult>("achievement-claim", { achievementId });
+}
+
+// ── Events ────────────────────────────────────────────────────────────────────
+
+export interface CheckinClaimResult {
+  ok:              true;
+  claimedDay:      number;
+  gemsGained:      number;
+  gems:            number;
+  progress:        { claimedDays: number[]; lastClaimedAt: string };
+  serverUpdatedAt: string;
+}
+
+export function edgeCheckinClaim(eventId: string) {
+  return callEdge<CheckinClaimResult>("event-checkin-claim", { eventId });
+}
+
+export interface QuestSubmitResult {
+  ok:                   true;
+  questId:              string;
+  gemsGained:           number;
+  finalRewardDelivered: boolean;
+  inventory:            GameState["inventory"];
+  progress:             { completedQuests: string[]; claimedRewards: string[] };
+  gems:                 number;
+  serverUpdatedAt:      string;
+}
+
+export function edgeQuestSubmit(
+  eventId:   string,
+  questId:   string,
+  speciesId: string,
+  mutation:  string | null,
+) {
+  return callEdge<QuestSubmitResult>("event-quest-submit", { eventId, questId, speciesId, mutation });
+}

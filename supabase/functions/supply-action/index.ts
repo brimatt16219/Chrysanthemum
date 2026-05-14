@@ -68,8 +68,8 @@ Deno.serve(async (req: Request) => {
     };
 
     const { action } = body;
-    if (!["buy", "buy_all", "sync"].includes(action)) {
-      return err("Invalid action — use buy | buy_all | sync");
+    if (!["buy", "buy_all", "sync", "unlock_slot"].includes(action)) {
+      return err("Invalid action — use buy | buy_all | sync | unlock_slot");
     }
 
     const supabaseAdmin = createClient(
@@ -87,17 +87,43 @@ Deno.serve(async (req: Request) => {
         return err("supplyShop and lastSupplyReset required for sync");
       }
 
-      const { error: ue } = await supabaseAdmin
+      // Read current state so we can: (a) guard stale syncs and (b) use CAS.
+      const { data: cur, error: curErr } = await supabaseAdmin
+        .from("game_saves")
+        .select("last_supply_reset, updated_at")
+        .eq("user_id", userId)
+        .single();
+
+      if (curErr || !cur) return err("Save not found", 404);
+
+      // Skip if DB already has this or a newer reset — prevents an out-of-order
+      // sync (e.g. after a concurrent buy) from clobbering more recent shop state.
+      const dbReset = (cur.last_supply_reset as number) ?? 0;
+      if (body.lastSupplyReset <= dbReset) {
+        return json({ ok: true, serverUpdatedAt: cur.updated_at });
+      }
+
+      const newUpdatedAt = new Date().toISOString();
+      const { data: ud, error: ue } = await supabaseAdmin
         .from("game_saves")
         .update({
           supply_shop:        body.supplyShop,
           last_supply_reset:  body.lastSupplyReset,
-          updated_at:         new Date().toISOString(),
+          updated_at:         newUpdatedAt,
         })
-        .eq("user_id", userId);
+        .eq("user_id", userId)
+        .eq("updated_at", cur.updated_at as string) // CAS — skip if another write raced us
+        .select("updated_at")
+        .single();
 
-      if (ue) return err("Failed to sync supply shop", 500);
-      return json({ ok: true });
+      if (ue || !ud) {
+        // CAS miss — a buy or other action already wrote. That write preserved the
+        // correct shop state; returning ok without serverUpdatedAt is fine — the
+        // client gets a fresh token on the next successful edge-function response.
+        return json({ ok: true });
+      }
+
+      return json({ ok: true, serverUpdatedAt: ud.updated_at });
     }
 
     // ── buy ───────────────────────────────────────────────────────────────────
@@ -184,6 +210,42 @@ Deno.serve(async (req: Request) => {
       });
 
       return json({ ok: true, coins, supplyShop, fertilizers, gearInventory, consumables, serverUpdatedAt: ud.updated_at });
+    }
+
+    // ── unlock_slot: remove the permanent pin from a locked supply slot ──────────
+    if (action === "unlock_slot") {
+      if (!body.slotId) return err("slotId required");
+
+      const supplyShop = (save.supply_shop ?? []) as ShopSlot[];
+      const slotIdx    = supplyShop.findIndex((s) => s.speciesId === body.slotId);
+
+      if (slotIdx < 0) return err("Slot not found");
+
+      // Already unlocked — treat as success so optimistic and server stay in sync
+      if (!supplyShop[slotIdx].locked) {
+        return json({ ok: true, supplyShop, serverUpdatedAt: priorUpdatedAt });
+      }
+
+      const newSupplyShop = supplyShop.map((s, i) =>
+        i === slotIdx ? { ...s, locked: false } : s
+      );
+
+      const { data: ud, error: ue } = await supabaseAdmin
+        .from("game_saves")
+        .update({ supply_shop: newSupplyShop, updated_at: new Date().toISOString() })
+        .eq("user_id", userId)
+        .eq("updated_at", priorUpdatedAt)
+        .select("updated_at")
+        .single();
+
+      if (ue || !ud) return err("Save conflict — please retry", 409);
+
+      void supabaseAdmin.from("action_log").insert({
+        user_id: userId, action: "supply_unlock_slot",
+        payload: { slotId: body.slotId },
+      });
+
+      return json({ ok: true, supplyShop: newSupplyShop, serverUpdatedAt: ud.updated_at });
     }
 
     // ── buy_all: atomically buy 1 of every affordable non-empty supply slot ─────

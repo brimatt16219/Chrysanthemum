@@ -15,53 +15,53 @@ function b64url(s: string): string {
 
 // ── Farm upgrade tiers (mirrors src/data/upgrades.ts) ────────────────────────
 const FARM_UPGRADES = [
-  { rows: 3, cols: 3, cost: 0       },
-  { rows: 4, cols: 4, cost: 1_000   },
-  { rows: 5, cols: 5, cost: 5_000   },
-  { rows: 6, cols: 6, cost: 30_000  },
-  { rows: 7, cols: 6, cost: 100_000 },
-  { rows: 8, cols: 6, cost: 350_000 },
-  { rows: 9, cols: 6, cost: 750_000 },
+  { rows: 3, cols: 3, cost: 0,       minLevel: 1  },
+  { rows: 4, cols: 4, cost: 1_000,   minLevel: 3  },
+  { rows: 5, cols: 5, cost: 5_000,   minLevel: 6  },
+  { rows: 6, cols: 6, cost: 30_000,  minLevel: 10 },
+  { rows: 7, cols: 6, cost: 100_000, minLevel: 14 },
+  { rows: 8, cols: 6, cost: 350_000, minLevel: 18 },
+  { rows: 9, cols: 6, cost: 750_000, minLevel: 22 },
 ];
 
 // ── Shop slot upgrades (mirrors src/data/upgrades.ts) ────────────────────────
 const SHOP_SLOT_UPGRADES = [
-  { slots: 5,  cost: 500     },
-  { slots: 6,  cost: 3_000   },
-  { slots: 7,  cost: 8_000   },
-  { slots: 8,  cost: 25_000  },
-  { slots: 9,  cost: 75_000  },
-  { slots: 10, cost: 200_000 },
-  { slots: 11, cost: 450_000 },
-  { slots: 12, cost: 750_000 },
+  { slots: 5,  cost: 500,     minLevel: 1  },
+  { slots: 6,  cost: 3_000,   minLevel: 3  },
+  { slots: 7,  cost: 8_000,   minLevel: 5  },
+  { slots: 8,  cost: 25_000,  minLevel: 8  },
+  { slots: 9,  cost: 75_000,  minLevel: 11 },
+  { slots: 10, cost: 200_000, minLevel: 14 },
+  { slots: 11, cost: 450_000, minLevel: 18 },
+  { slots: 12, cost: 750_000, minLevel: 22 },
 ];
 
 // ── Supply slot upgrades (mirrors src/data/upgrades.ts) ──────────────────────
 const SUPPLY_SLOT_UPGRADES = [
-  { slots: 3, cost: 15_000    },
-  { slots: 4, cost: 50_000    },
-  { slots: 5, cost: 150_000   },
-  { slots: 6, cost: 350_000   },
-  { slots: 7, cost: 800_000   },
-  { slots: 8, cost: 2_000_000 },
+  { slots: 3, cost: 15_000,    minLevel: 8  },
+  { slots: 4, cost: 50_000,    minLevel: 12 },
+  { slots: 5, cost: 150_000,   minLevel: 16 },
+  { slots: 6, cost: 350_000,   minLevel: 20 },
+  { slots: 7, cost: 800_000,   minLevel: 24 },
+  { slots: 8, cost: 2_000_000, minLevel: 28 },
 ];
 
 // ── Crafting slot upgrades (mirrors src/data/gear-recipes.ts) ─────────────────
 const CRAFTING_SLOT_UPGRADES = [
-  { slots: 2, cost: 5_000   },
-  { slots: 3, cost: 25_000  },
-  { slots: 4, cost: 100_000 },
-  { slots: 5, cost: 300_000 },
-  { slots: 6, cost: 700_000 },
+  { slots: 2, cost: 5_000,   minLevel: 5  },
+  { slots: 3, cost: 25_000,  minLevel: 9  },
+  { slots: 4, cost: 100_000, minLevel: 14 },
+  { slots: 5, cost: 300_000, minLevel: 19 },
+  { slots: 6, cost: 700_000, minLevel: 24 },
 ];
 
 // ── Alchemy attunement slot upgrades (mirrors src/data/gear-recipes.ts) ───────
 // Player starts at 0 slots. Each unlock = one more concurrent attunement.
 const ATTUNEMENT_SLOT_UPGRADES = [
-  { slots: 1, cost: 50_000  },
-  { slots: 2, cost: 150_000 },
-  { slots: 3, cost: 350_000 },
-  { slots: 4, cost: 700_000 },
+  { slots: 1, cost: 50_000,  minLevel: 10 },
+  { slots: 2, cost: 150_000, minLevel: 15 },
+  { slots: 3, cost: 350_000, minLevel: 20 },
+  { slots: 4, cost: 700_000, minLevel: 25 },
 ];
 
 function getNextFarmUpgrade(rows: number, cols: number) {
@@ -129,11 +129,11 @@ Deno.serve(async (req: Request) => {
     );
 
     const selectCols =
-      action === "farm"             ? "coins, farm_rows, farm_size, grid"     :
-      action === "shop_slots"       ? "coins, shop_slots, shop"               :
-      action === "supply_slots"     ? "coins, supply_slots, supply_shop"       :
-      action === "crafting_slots"   ? "coins, crafting_slot_count"             :
-                                      "coins, attunement_slots";
+      action === "farm"             ? "coins, farm_rows, farm_size, grid, gardener_level"     :
+      action === "shop_slots"       ? "coins, shop_slots, shop, gardener_level"               :
+      action === "supply_slots"     ? "coins, supply_slots, supply_shop, gardener_level"      :
+      action === "crafting_slots"   ? "coins, crafting_slot_count, gardener_level"            :
+                                      "coins, attunement_slots, gardener_level";
 
     // ── Verify JWT + load save in parallel ────────────────────────────────────
     const [authResult, saveResult] = await Promise.all([
@@ -152,7 +152,8 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const save = saveResult.data;
+    const save          = saveResult.data;
+    const gardenerLevel = (save.gardener_level as number) ?? 1;
     let coins     = save.coins as number;
     let updatePayload: Record<string, unknown> = {};
     let logResult: Record<string, unknown>     = {};
@@ -166,6 +167,11 @@ Deno.serve(async (req: Request) => {
       if (!next) {
         return new Response(JSON.stringify({ error: "Farm is already at max size" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (gardenerLevel < next.minLevel) {
+        return new Response(JSON.stringify({ error: `Requires Gardener Level ${next.minLevel}` }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (coins < next.cost) {
@@ -188,6 +194,11 @@ Deno.serve(async (req: Request) => {
       if (!next) {
         return new Response(JSON.stringify({ error: "Shop slots already at maximum" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (gardenerLevel < next.minLevel) {
+        return new Response(JSON.stringify({ error: `Requires Gardener Level ${next.minLevel}` }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (coins < next.cost) {
@@ -218,6 +229,11 @@ Deno.serve(async (req: Request) => {
       if (!next) {
         return new Response(JSON.stringify({ error: "Supply slots already at maximum" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (gardenerLevel < next.minLevel) {
+        return new Response(JSON.stringify({ error: `Requires Gardener Level ${next.minLevel}` }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (coins < next.cost) {
@@ -252,6 +268,11 @@ Deno.serve(async (req: Request) => {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      if (gardenerLevel < next.minLevel) {
+        return new Response(JSON.stringify({ error: `Requires Gardener Level ${next.minLevel}` }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       if (coins < next.cost) {
         return new Response(JSON.stringify({ error: "Not enough coins" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -271,6 +292,11 @@ Deno.serve(async (req: Request) => {
       if (!next) {
         return new Response(JSON.stringify({ error: "Attunement slots already at maximum" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (gardenerLevel < next.minLevel) {
+        return new Response(JSON.stringify({ error: `Requires Gardener Level ${next.minLevel}` }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (coins < next.cost) {

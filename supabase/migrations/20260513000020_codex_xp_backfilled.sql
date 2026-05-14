@@ -1,0 +1,2 @@
+ALTER TABLE game_saves
+    ADD COLUMN IF NOT EXISTS codex_xp_backfilled BOOLEAN NOT NULL DEFAULT FALSE;

@@ -16,6 +16,9 @@ import {
   MAX_MARKETPLACE_SLOTS,
 } from "../data/upgrades";
 import { edgeMarketplaceUpgradeSlots } from "../lib/edgeFunctions";
+import { useDailyProgress } from "../hooks/useDailyProgress";
+import { audioManager } from "../lib/audioManager";
+import { ItemSprite } from "./ItemSprite";
 
 const PAGE_SIZE = 20;
 
@@ -204,6 +207,8 @@ export function MarketplacePage({ onViewProfile }: Props) {
     return () => { supabase.removeChannel(channel); };
   }, []); // subscribe once — filter logic reads from filtersRef
 
+  const { trackProgress } = useDailyProgress();
+
   // ── Buy handler ────────────────────────────────────────────────────────────
   async function handleBuy(listing: Listing) {
     setBuyError(null);
@@ -212,6 +217,8 @@ export function MarketplacePage({ onViewProfile }: Props) {
       const result = await edgeMarketplaceBuy(listing.id);
       const cur = getState();
       update({ ...cur, coins: result.coins });
+      audioManager.playSfx("buy");
+      void trackProgress("marketplace_buy");
       setListings((prev) => prev.filter((l) => l.id !== listing.id));
       setBuySuccess(true);
       setTimeout(() => setBuySuccess(false), 5_000);
@@ -252,7 +259,7 @@ export function MarketplacePage({ onViewProfile }: Props) {
 
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4 text-center px-4">
-        <p className="text-5xl">🏪</p>
+        <ItemSprite emoji="🏪" sprite="/sprites/ui/social_market.png" name="Marketplace" textSize="text-5xl" imgSize="w-14 h-14" />
         <h2 className="text-lg font-bold">Marketplace</h2>
         <p className="text-sm text-muted-foreground max-w-xs">
           Buy and sell flowers with other players. Unlock your first listing slot to get started.
@@ -260,12 +267,12 @@ export function MarketplacePage({ onViewProfile }: Props) {
         <div className="bg-card/60 border border-border rounded-2xl p-4 w-full max-w-xs space-y-3">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">First slot</span>
-            <span className="font-mono font-bold">{(firstSlot.cost / 1_000).toFixed(0)}k 🟡</span>
+            <span className="font-mono font-bold inline-flex items-center gap-0.5">{(firstSlot.cost / 1_000).toFixed(0)}k <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /></span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Your coins</span>
-            <span className={`font-mono font-bold ${canAfford ? "text-primary" : "text-red-400"}`}>
-              {state.coins.toLocaleString()} 🟡
+            <span className={`font-mono font-bold inline-flex items-center gap-0.5 ${canAfford ? "text-primary" : "text-red-400"}`}>
+              {state.coins.toLocaleString()} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
             </span>
           </div>
           <button
@@ -273,7 +280,11 @@ export function MarketplacePage({ onViewProfile }: Props) {
             disabled={!canAfford || upgrading}
             className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-40"
           >
-            {upgrading ? "Unlocking..." : canAfford ? "Unlock Marketplace — 10k 🟡" : "Not enough coins"}
+            {upgrading ? "Unlocking..." : canAfford ? (
+              <span className="inline-flex items-center gap-0.5">
+                Unlock Marketplace — 10k <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
+              </span>
+            ) : "Not enough coins"}
           </button>
         </div>
       </div>
@@ -299,7 +310,12 @@ export function MarketplacePage({ onViewProfile }: Props) {
               disabled={state.coins < nextUpgrade.cost || upgrading}
               className="px-3 py-1.5 border border-primary/40 text-primary text-xs font-semibold rounded-xl hover:bg-primary/10 transition-all disabled:opacity-40 disabled:border-border disabled:text-muted-foreground whitespace-nowrap"
             >
-              {upgrading ? "..." : `+1 slot — ${nextUpgrade.cost >= 1_000_000 ? `${(nextUpgrade.cost/1_000_000).toFixed(1)}M` : `${(nextUpgrade.cost/1_000).toFixed(0)}k`} 🟡`}
+              {upgrading ? "..." : (
+                <span className="inline-flex items-center gap-0.5">
+                  +1 slot — {nextUpgrade.cost >= 1_000_000 ? `${(nextUpgrade.cost/1_000_000).toFixed(1)}M` : `${(nextUpgrade.cost/1_000).toFixed(0)}k`}
+                  <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
+                </span>
+              )}
             </button>
           )}
           <button
@@ -331,7 +347,9 @@ export function MarketplacePage({ onViewProfile }: Props) {
       <div className="flex flex-col gap-2">
         {/* Search */}
         <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">🔍</span>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+            <ItemSprite emoji="🔍" sprite="/sprites/ui/search.png" textSize="text-sm" imgSize="w-4 h-4" name="search" />
+          </span>
           <input
             type="text"
             value={search}
@@ -397,7 +415,7 @@ export function MarketplacePage({ onViewProfile }: Props) {
         </div>
       ) : listings.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 gap-3 text-center">
-          <p className="text-4xl">🏪</p>
+          <ItemSprite emoji="🏪" sprite="/sprites/ui/social_market.png" name="Marketplace" textSize="text-4xl" imgSize="w-12 h-12" />
           <p className="font-medium text-muted-foreground">No listings found</p>
           <p className="text-sm text-muted-foreground max-w-xs">
             {search || filterRarity !== "all"

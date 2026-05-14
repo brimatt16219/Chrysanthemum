@@ -1,0 +1,270 @@
+import React from "react";
+import { useSettings } from "../store/SettingsContext";
+import type { Settings } from "../store/SettingsContext";
+import { THEMES } from "../data/themes";
+
+const PX: React.CSSProperties = { imageRendering: "pixelated" };
+
+interface Props { onClose: () => void; onSignOut?: () => void; }
+
+// ── Module-level constants ────────────────────────────────────────────────────
+
+const VISUAL_TOGGLES: { key: keyof Settings; label: string; description: string }[] = [
+  {
+    key:         "useSprites",
+    label:       "Pixel art sprites",
+    description: "Show pixel art images for flowers and UI icons. Turn off to use classic emoji.",
+  },
+  {
+    key:         "pixelBorders",
+    label:       "Pixel borders (WIP)",
+    description: "Replace rounded corners with pixel-art style square borders everywhere.",
+  },
+  {
+    key:         "plotAnimations",
+    label:       "Tile animations",
+    description: "Particle effects on tiles (water drops, glow, birds, sparkles)",
+  },
+  {
+    key:         "plotGearIndicator",
+    label:       "Gear indicators",
+    description: "Small icons showing active gear effects (💧 🌸 🧹 🧺 💡)",
+  },
+  {
+    key:         "plotMutationIndicator",
+    label:       "Mutation badge",
+    description: "Mutation sprite shown on bloomed tiles",
+  },
+  {
+    key:         "plotMutationVfx",
+    label:       "Mutation VFX",
+    description: "Color sheen animation on bloomed mutated tiles",
+  },
+  {
+    key:         "plotMasteryIndicator",
+    label:       "Mastery badge",
+    description: "⚡ shown on tiles with a mastery speed bonus",
+  },
+  {
+    key:         "plotFertilizerIndicator",
+    label:       "Fertilizer badge",
+    description: "Fertilizer emoji shown on tiles with an active fertilizer",
+  },
+  {
+    key:         "weatherEffects",
+    label:       "Weather effects",
+    description: "Visual overlays for rain, storms, golden hour, and other weather events.",
+  },
+];
+
+// ── Main component ────────────────────────────────────────────────────────────
+
+export function SettingsModal({ onClose, onSignOut }: Props) {
+  const { settings, setSetting } = useSettings();
+
+  return (
+    <div
+      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-background/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="bg-card border border-border rounded-t-2xl sm:rounded-2xl p-5 w-full sm:w-96 max-h-[85vh] overflow-y-auto shadow-xl flex flex-col gap-5"
+        onClick={(e) => e.stopPropagation()}
+      >
+
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <h2 className="font-bold text-sm flex items-center gap-1.5">
+            {settings.useSprites
+              ? <img src="/sprites/ui/settings.png" alt="⚙️" className="w-4 h-4 object-contain" style={PX} />
+              : <span>⚙️</span>
+            }
+            Settings
+          </h2>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-xs">✕</button>
+        </div>
+
+        {/* ── Appearance ──────────────────────────────────────────────────── */}
+        <section className="flex flex-col gap-3">
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+            {settings.useSprites
+              ? <img src="/sprites/ui/settings_appearance.png" alt="🎨" className="w-3.5 h-3.5 object-contain" style={PX} />
+              : <span>🎨</span>
+            }
+            Appearance
+          </p>
+
+          {/* Theme picker */}
+          <div>
+            <p className="text-xs font-medium text-foreground mb-2">Theme</p>
+            <div className="grid grid-cols-3 gap-2">
+              {THEMES.map((t) => {
+                const active = settings.theme === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => setSetting("theme", t.id)}
+                    className={`
+                      rounded-xl border-2 p-2 transition-all text-left
+                      ${active ? "border-primary scale-[1.03]" : "border-border hover:border-primary/40"}
+                    `}
+                  >
+                    <div
+                      className="w-full h-7 rounded-lg mb-1.5 relative overflow-hidden"
+                      style={{ backgroundColor: t.swatch[0] }}
+                    >
+                      <div
+                        className="absolute bottom-1 right-1.5 w-3 h-3 rounded-full"
+                        style={{ backgroundColor: t.swatch[1] }}
+                      />
+                    </div>
+                    <p className="text-[10px] font-medium leading-none">{t.name}</p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Visual toggles */}
+          <div className="space-y-3 pt-1 border-t border-border mt-1">
+            {VISUAL_TOGGLES.map(({ key, label, description }) => (
+              <ToggleRow
+                key={key}
+                label={label}
+                description={description}
+                value={settings[key] as boolean}
+                onToggle={() => setSetting(key, !(settings[key] as boolean))}
+              />
+            ))}
+          </div>
+        </section>
+
+        <div className="border-t border-border" />
+
+        {/* ── Music ───────────────────────────────────────────────────────── */}
+        <section className="flex flex-col gap-3">
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+            {settings.useSprites
+              ? <img src="/sprites/ui/settings_music.png" alt="🎵" className="w-3.5 h-3.5 object-contain" style={PX} />
+              : <span>🎵</span>
+            }
+            Music
+          </p>
+          <SliderRow
+            value={settings.musicVolume}
+            muted={settings.musicMuted}
+            useSprites={settings.useSprites}
+            onChange={(v) => setSetting("musicVolume", v)}
+            onToggleMute={() => setSetting("musicMuted", !settings.musicMuted)}
+          />
+        </section>
+
+        <div className="border-t border-border" />
+
+        {/* ── Sound Effects ────────────────────────────────────────────────── */}
+        <section className="flex flex-col gap-3">
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+            {settings.useSprites
+              ? <img src="/sprites/ui/settings_sfx.png" alt="🔊" className="w-3.5 h-3.5 object-contain" style={PX} />
+              : <span>🔊</span>
+            }
+            Sound Effects
+          </p>
+          <SliderRow
+            value={settings.sfxVolume}
+            muted={settings.sfxMuted}
+            useSprites={settings.useSprites}
+            onChange={(v) => setSetting("sfxVolume", v)}
+            onToggleMute={() => setSetting("sfxMuted", !settings.sfxMuted)}
+          />
+        </section>
+
+        {/* ── Account ──────────────────────────────────────────────────────── */}
+        {onSignOut && (
+          <>
+            <div className="border-t border-border" />
+            <button
+              onClick={onSignOut}
+              className="w-full py-2 rounded-xl text-xs font-semibold border border-border text-muted-foreground hover:border-primary/40 hover:text-foreground transition-colors text-center"
+            >
+              Go to title screen
+            </button>
+          </>
+        )}
+
+      </div>
+    </div>
+  );
+}
+
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+function ToggleRow({
+  label, description, value, onToggle,
+}: {
+  label: string; description: string; value: boolean; onToggle: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 pt-3">
+      <div className="min-w-0">
+        <p className="text-xs font-medium text-foreground">{label}</p>
+        <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">{description}</p>
+      </div>
+      <button
+        onClick={onToggle}
+        className={`
+          relative flex-shrink-0 w-10 h-6 rounded-full border transition-colors duration-200
+          ${value ? "bg-primary/30 border-primary/60" : "bg-card border-border"}
+        `}
+        role="switch"
+        aria-checked={value}
+      >
+        <span
+          className={`
+            absolute inset-y-0 my-auto w-4 h-4 rounded-full transition-transform duration-200
+            ${value ? "translate-x-5 bg-primary" : "translate-x-0.5 bg-muted-foreground/50"}
+          `}
+        />
+      </button>
+    </div>
+  );
+}
+
+function SliderRow({
+  value, muted, useSprites, onChange, onToggleMute,
+}: {
+  value: number; muted: boolean; useSprites: boolean;
+  onChange: (v: number) => void;
+  onToggleMute: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <button
+        onClick={onToggleMute}
+        className="flex-shrink-0 opacity-80 hover:opacity-100 transition-opacity"
+        title={muted ? "Unmute" : "Mute"}
+      >
+        {useSprites
+          ? <img
+              src={muted ? "/sprites/ui/settings_mute.png" : "/sprites/ui/settings_unmute.png"}
+              alt={muted ? "🔇" : "🔈"}
+              className="w-5 h-5 object-contain"
+              style={PX}
+            />
+          : <span className="text-base leading-none">{muted ? "🔇" : "🔈"}</span>
+        }
+      </button>
+      <input
+        type="range"
+        min={0} max={1} step={0.01}
+        value={muted ? 0 : value}
+        disabled={muted}
+        onChange={(e) => onChange(parseFloat(e.target.value))}
+        className="flex-1 accent-primary disabled:opacity-40"
+      />
+      <span className="text-[11px] font-mono text-muted-foreground w-8 text-right">
+        {muted ? "—" : `${Math.round(value * 100)}%`}
+      </span>
+    </div>
+  );
+}

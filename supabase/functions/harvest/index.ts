@@ -1,5 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { initSentry, Sentry } from "../_shared/sentry.ts";
+import { SPECIES_RARITY } from "../_shared/alchemyAttuneData.ts";
+import { awardXp, DISCOVERY_XP_BY_RARITY, MUTATION_DISCOVERY_BONUS } from "../_shared/gardenerLevel.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin":  "*",
@@ -127,8 +129,11 @@ const FLOWER_GROWTH_TIMES: Record<string, { seed: number; sprout: number }> = {
   dreamshade: { seed: 68_400_000, sprout: 136_800_000 }, gravewilt: { seed: 75_600_000, sprout: 151_200_000 },
 };
 
-// Max weather multiplier (thunderstorm 2×) used as grace factor
-const MAX_WEATHER_MULTIPLIER = 2.0;
+// Maximum combined speed multiplier used as a harvest-readiness grace factor.
+// Gear (balance scale, sprinkler stacks, etc.) + weather (thunderstorm 2×) can
+// push the effective multiplier well above 2×; 10× gives headroom for all
+// legitimate stacks while still blocking impossibly fast harvest attempts.
+const MAX_WEATHER_MULTIPLIER = 10.0;
 
 Deno.serve(async (req: Request) => {
   initSentry();
@@ -172,7 +177,7 @@ Deno.serve(async (req: Request) => {
     // ── Verify JWT + load save + load authoritative planting time in parallel ──
     const [authResult, saveResult, timingResult] = await Promise.all([
       supabaseAdmin.auth.getUser(token),
-      supabaseAdmin.from("game_saves").select("coins, grid, inventory, discovered, updated_at").eq("user_id", userId).single(),
+      supabaseAdmin.from("game_saves").select("coins, grid, inventory, discovered, gardener_level, gardener_xp, updated_at").eq("user_id", userId).single(),
       // plant_timings has no client write policy — planted_at cannot be forged
       supabaseAdmin.from("plant_timings").select("planted_at").eq("user_id", userId).eq("row", row).eq("col", col).maybeSingle(),
     ]);
@@ -363,12 +368,15 @@ Deno.serve(async (req: Request) => {
       speciesId: string; quantity: number; mutation?: string; isSeed?: boolean;
     }[];
 
+    // Normalise mutation to null so null/undefined mismatches never create
+    // duplicate inventory entries for the same species (root cause of #250).
+    const normMutation = mutation ?? null;
     const existingIdx = inventory.findIndex(
-      (i) => i.speciesId === speciesId && i.mutation === mutation && !i.isSeed
+      (i) => i.speciesId === speciesId && (i.mutation ?? null) === normMutation && !i.isSeed
     );
     let newInventory = existingIdx >= 0
       ? inventory.map((i, idx) => idx === existingIdx ? { ...i, quantity: i.quantity + 1 } : i)
-      : [...inventory, { speciesId, quantity: 1, mutation, isSeed: false }];
+      : [...inventory, { speciesId, quantity: 1, mutation: normMutation, isSeed: false }];
 
     // ── Consumable flag: Heirloom Charm (heirloomActive) ─────────────────────
     // Return the seed to inventory in addition to the normal bloom harvest.
@@ -381,7 +389,9 @@ Deno.serve(async (req: Request) => {
         : [...newInventory, { speciesId, quantity: 1, isSeed: true }];
     }
 
-    const discovered    = (save.discovered ?? []) as string[];
+    const discovered    = (save.discovered        as string[]) ?? [];
+    const gardenerLevel = (save.gardener_level    as number)   ?? 1;
+    const gardenerXp    = (save.gardener_xp       as number)   ?? 0;
     const newDiscovered = [...discovered];
     if (!newDiscovered.includes(speciesId)) newDiscovered.push(speciesId);
     if (mutation) {
@@ -389,11 +399,29 @@ Deno.serve(async (req: Request) => {
       if (!newDiscovered.includes(mutKey)) newDiscovered.push(mutKey);
     }
 
+    let xpGained = 0;
+    const speciesRarity = SPECIES_RARITY[speciesId];
+    if (speciesRarity) {
+      const baseXp = DISCOVERY_XP_BY_RARITY[speciesRarity] ?? 0;
+      if (!discovered.includes(speciesId)) xpGained += baseXp;
+      if (mutation && !discovered.includes(`${speciesId}:${mutation}`)) {
+        xpGained += Math.floor(baseXp * MUTATION_DISCOVERY_BONUS);
+      }
+    }
+    const { level: newLevel, xp: newXp, leveledUp, levelsGained } = awardXp(gardenerLevel, gardenerXp, xpGained);
+
     // ── Write to DB ───────────────────────────────────────────────────────────
     // Coins are NOT updated on harvest — they only change when blooms are sold.
     const { data: updateData, error: updateError } = await supabaseAdmin
       .from("game_saves")
-      .update({ grid: newGrid, inventory: newInventory, discovered: newDiscovered, updated_at: new Date().toISOString() })
+      .update({
+        grid:           newGrid,
+        inventory:      newInventory,
+        discovered:     newDiscovered,
+        gardener_level: newLevel,
+        gardener_xp:    newXp,
+        updated_at:     new Date().toISOString(),
+      })
       .eq("user_id", userId)
       .eq("updated_at", priorUpdatedAt)
       .select("updated_at")
@@ -417,7 +445,18 @@ Deno.serve(async (req: Request) => {
     // Return inventory/discovered only — NOT coins or grid.
     // Coins never change on harvest (only on sell), so there is nothing to sync back.
     return new Response(
-      JSON.stringify({ ok: true, inventory: newInventory, discovered: newDiscovered, mutation, serverUpdatedAt: updateData.updated_at }),
+      JSON.stringify({
+        ok:              true,
+        inventory:       newInventory,
+        discovered:      newDiscovered,
+        mutation,
+        xpGained,
+        gardenerLevel:   newLevel,
+        gardenerXp:      newXp,
+        leveledUp,
+        levelsGained,
+        serverUpdatedAt: updateData.updated_at,
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {

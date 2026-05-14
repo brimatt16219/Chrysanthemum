@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
-import type { MutationType } from "../data/flowers";
+import { ItemSprite } from "./ItemSprite";
+import { FlowerSprite } from "./FlowerSprite";
+import type { MutationType, Rarity } from "../data/flowers";
 import { FlowerTypeBadges } from "./FlowerTypeBadges";
 import { GEAR } from "../data/gear";
 import { useGame } from "../store/GameContext";
@@ -16,6 +18,13 @@ interface Props {
 
 type Tab = "seeds" | "blooms" | "gear";
 
+// Highest rarity first (matches RARITY_PRIORITY from gameStore)
+const RARITY_SORT: Rarity[] = [
+  "prismatic", "exalted", "mythic", "legendary", "rare", "uncommon", "common",
+];
+
+function rarityRank(r: Rarity) { return RARITY_SORT.indexOf(r); }
+
 export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: Props) {
   const { state } = useGame();
 
@@ -25,9 +34,91 @@ export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: P
 
   // Default to whichever tab has items; prefer seeds
   const defaultTab: Tab = seeds.length > 0 ? "seeds" : blooms.length > 0 ? "blooms" : "gear";
-  const [tab, setTab] = useState<Tab>(defaultTab);
+  const [tab, setTab]               = useState<Tab>(defaultTab);
+  const [activeRarities, setActiveRarities] = useState<Rarity[]>([]);
+
+  // Clear filter whenever the tab changes
+  useEffect(() => { setActiveRarities([]); }, [tab]);
 
   const hasAnything = seeds.length > 0 || blooms.length > 0 || gear.length > 0;
+
+  // ── Sorted + enriched item lists ─────────────────────────────────────────
+
+  const allSeeds = useMemo(() =>
+    seeds
+      .flatMap((item) => {
+        const species = getFlower(item.speciesId);
+        return species ? [{ item, species }] : [];
+      })
+      .sort((a, b) => {
+        const rd = rarityRank(a.species.rarity) - rarityRank(b.species.rarity);
+        return rd !== 0 ? rd : a.species.name.localeCompare(b.species.name);
+      }),
+    [seeds],
+  );
+
+  const allBlooms = useMemo(() =>
+    blooms
+      .flatMap((item) => {
+        const species = getFlower(item.speciesId);
+        return species ? [{ item, species }] : [];
+      })
+      .sort((a, b) => {
+        const rd = rarityRank(a.species.rarity) - rarityRank(b.species.rarity);
+        return rd !== 0 ? rd : a.species.name.localeCompare(b.species.name);
+      }),
+    [blooms],
+  );
+
+  const allGear = useMemo(() =>
+    gear
+      .flatMap((item) => {
+        const def = GEAR[item.gearType];
+        return def ? [{ item, def }] : [];
+      })
+      .sort((a, b) => {
+        const rd = rarityRank(a.def.rarity) - rarityRank(b.def.rarity);
+        return rd !== 0 ? rd : a.def.name.localeCompare(b.def.name);
+      }),
+    [gear],
+  );
+
+  // ── Available rarities per tab (for filter chips) ─────────────────────────
+
+  const availableRarities = useMemo((): Rarity[] => {
+    const set = new Set<Rarity>();
+    if (tab === "seeds")  allSeeds.forEach(({ species }) => set.add(species.rarity));
+    if (tab === "blooms") allBlooms.forEach(({ species }) => set.add(species.rarity));
+    if (tab === "gear")   allGear.forEach(({ def }) => set.add(def.rarity));
+    return RARITY_SORT.filter((r) => set.has(r));
+  }, [tab, allSeeds, allBlooms, allGear]);
+
+  const showFilter = availableRarities.length > 1;
+
+  // ── Filtered views ────────────────────────────────────────────────────────
+
+  const filteredSeeds = useMemo(() =>
+    activeRarities.length === 0
+      ? allSeeds
+      : allSeeds.filter(({ species }) => activeRarities.includes(species.rarity)),
+    [allSeeds, activeRarities],
+  );
+
+  const filteredBlooms = useMemo(() =>
+    activeRarities.length === 0
+      ? allBlooms
+      : allBlooms.filter(({ species }) => activeRarities.includes(species.rarity)),
+    [allBlooms, activeRarities],
+  );
+
+  const filteredGear = useMemo(() =>
+    activeRarities.length === 0
+      ? allGear
+      : allGear.filter(({ def }) => activeRarities.includes(def.rarity)),
+    [allGear, activeRarities],
+  );
+
+  // ─────────────────────────────────────────────────────────────────────────
 
   if (!hasAnything) {
     return (
@@ -64,7 +155,8 @@ export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: P
             }
           `}
         >
-          🌱 Seeds
+          <ItemSprite emoji="🌱" sprite="/sprites/flowers/seed.png" name="🌱" textSize="text-sm" imgSize="w-4 h-4" />
+          Seeds
           {seeds.length > 0 && (
             <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
               tab === "seeds" ? "bg-primary/20 text-primary" : "bg-border text-muted-foreground"
@@ -83,7 +175,8 @@ export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: P
             }
           `}
         >
-          🌸 Blooms
+          <ItemSprite emoji="🌸" sprite="/sprites/flowers/bloom.png" name="🌸" textSize="text-sm" imgSize="w-4 h-4" />
+          Blooms
           {blooms.length > 0 && (
             <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
               tab === "blooms" ? "bg-primary/20 text-primary" : "bg-border text-muted-foreground"
@@ -102,7 +195,8 @@ export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: P
             }
           `}
         >
-          ⚙️ Gear
+          <ItemSprite emoji="⚙️" sprite="/sprites/ui/gear.png" name="⚙️" textSize="text-sm" imgSize="w-4 h-4" />
+          Gear
           {gear.length > 0 && (
             <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
               tab === "gear" ? "bg-primary/20 text-primary" : "bg-border text-muted-foreground"
@@ -113,15 +207,54 @@ export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: P
         </button>
       </div>
 
+      {/* Rarity filter — only shown when 2+ rarities are present in the tab */}
+      {showFilter && (
+        <div className="flex flex-wrap gap-1 mb-2">
+          <button
+            onClick={() => setActiveRarities([])}
+            className={`
+              px-2 py-0.5 rounded-md text-[11px] font-semibold transition-all
+              ${activeRarities.length === 0
+                ? "bg-primary/20 border border-primary/50 text-primary"
+                : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
+              }
+            `}
+          >
+            All
+          </button>
+          {availableRarities.map((rarity) => {
+            const cfg      = RARITY_CONFIG[rarity];
+            const isActive = activeRarities.includes(rarity);
+            return (
+              <button
+                key={rarity}
+                onClick={() =>
+                  setActiveRarities((prev) =>
+                    isActive ? prev.filter((r) => r !== rarity) : [...prev, rarity]
+                  )
+                }
+                className={`
+                  px-2 py-0.5 rounded-md text-[11px] font-semibold capitalize transition-all
+                  ${isActive
+                    ? `bg-primary/20 border border-primary/50 ${cfg.color}`
+                    : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
+                  }
+                `}
+              >
+                {cfg.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Tab content */}
       <div className="flex flex-col gap-1 max-h-72 overflow-y-auto">
 
         {/* ── Seeds ── */}
         {tab === "seeds" && (
-          seeds.length > 0 ? (
-            seeds.map((item) => {
-              const species = getFlower(item.speciesId);
-              if (!species) return null;
+          filteredSeeds.length > 0 ? (
+            filteredSeeds.map(({ item, species }) => {
               const rarity   = RARITY_CONFIG[species.rarity];
               const isNew    = !state.discovered.includes(item.speciesId);
               const mastered = !isNew && isSpeciesMastered(state.discovered, item.speciesId);
@@ -131,13 +264,16 @@ export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: P
                   onClick={() => onSelect(item.speciesId)}
                   className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 border border-transparent hover:border-primary/30 transition-all text-left"
                 >
-                  <span className="text-xl">{isNew ? "❓" : species.emoji.seed}</span>
+                  {isNew
+                    ? <ItemSprite emoji="❓" sprite="/sprites/ui/unknown.png" name="Unknown" textSize="text-xl" imgSize="w-6 h-6" />
+                    : <FlowerSprite species={species} stage="seed" textSize="text-xl" imgSize="w-6 h-6" />
+                  }
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <p className="text-sm font-medium truncate">{isNew ? "???" : species.name}</p>
                       {mastered && (
-                        <span className="text-yellow-400 text-xs leading-none flex-shrink-0" title="Mastered — grows 20% faster">
-                          ⚡
+                        <span className="text-yellow-400 leading-none flex-shrink-0" title="Mastered — grows 20% faster">
+                          <ItemSprite emoji="⚡" sprite="/sprites/ui/mastery.png" name="Mastered" textSize="text-xs" imgSize="w-3.5 h-3.5" />
                         </span>
                       )}
                     </div>
@@ -149,16 +285,16 @@ export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: P
               );
             })
           ) : (
-            <p className="text-xs text-muted-foreground text-center py-8">No seeds in inventory.</p>
+            <p className="text-xs text-muted-foreground text-center py-8">
+              {seeds.length > 0 ? "No seeds match the filter." : "No seeds in inventory."}
+            </p>
           )
         )}
 
         {/* ── Blooms ── */}
         {tab === "blooms" && (
-          blooms.length > 0 ? (
-            blooms.map((item) => {
-              const species = getFlower(item.speciesId);
-              if (!species) return null;
+          filteredBlooms.length > 0 ? (
+            filteredBlooms.map(({ item, species }) => {
               const rarity   = RARITY_CONFIG[species.rarity];
               const mastered = isSpeciesMastered(state.discovered, item.speciesId);
               const mut      = item.mutation as MutationType | undefined;
@@ -168,26 +304,27 @@ export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: P
                   onClick={() => onBloomSelect(item.speciesId, mut)}
                   className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 border border-transparent hover:border-primary/30 transition-all text-left"
                 >
-                  <span className="text-xl relative">
-                    {species.emoji.bloom}
-                    {mut && (
-                      <span className="absolute -bottom-0.5 -right-1 text-[10px] leading-none">
-                        {MUTATIONS[mut].emoji}
-                      </span>
-                    )}
-                  </span>
+                  <FlowerSprite
+                    species={species}
+                    stage="bloom"
+                    textSize="text-xl"
+                    imgSize="w-6 h-6"
+                    className={mut ? MUTATIONS[mut].vfxClass : ""}
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <p className="text-sm font-medium truncate">{species.name}</p>
                       {mastered && (
-                        <span className="text-yellow-400 text-xs leading-none flex-shrink-0" title="Mastered">
-                          ⚡
-                        </span>
+                        <ItemSprite emoji="⚡" sprite="/sprites/ui/mastery.png" name="Mastered" textSize="text-xs" imgSize="w-3.5 h-3.5" className="flex-shrink-0" />
                       )}
                     </div>
-                    <p className={`text-xs ${rarity.color}`}>
-                      {rarity.label}{mut ? ` · ${MUTATIONS[mut].name}` : ""}
-                    </p>
+                    <p className={`text-xs ${rarity.color}`}>{rarity.label}</p>
+                    {mut && (
+                      <p className={`text-xs ${MUTATIONS[mut].color} inline-flex items-center gap-1`}>
+                        <ItemSprite emoji={MUTATIONS[mut].emoji} sprite={MUTATIONS[mut].sprite} name={MUTATIONS[mut].emoji} textSize="text-xs" imgSize="w-3.5 h-3.5" />
+                        {MUTATIONS[mut].name}
+                      </p>
+                    )}
                     <FlowerTypeBadges types={species.types} className="mt-0.5" />
                   </div>
                   <span className="text-xs text-muted-foreground flex-shrink-0">×{item.quantity}</span>
@@ -195,16 +332,16 @@ export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: P
               );
             })
           ) : (
-            <p className="text-xs text-muted-foreground text-center py-8">No blooms in inventory.</p>
+            <p className="text-xs text-muted-foreground text-center py-8">
+              {blooms.length > 0 ? "No blooms match the filter." : "No blooms in inventory."}
+            </p>
           )
         )}
 
         {/* ── Gear ── */}
         {tab === "gear" && (
-          gear.length > 0 ? (
-            gear.map((item) => {
-              const def    = GEAR[item.gearType];
-              if (!def) return null; // orphan from a removed gear type (cleaned up on next applyOfflineTick)
+          filteredGear.length > 0 ? (
+            filteredGear.map(({ item, def }) => {
               const rarity = RARITY_CONFIG[def.rarity];
               return (
                 <button
@@ -213,10 +350,10 @@ export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: P
                   className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 border border-transparent hover:border-primary/30 transition-all text-left"
                 >
                   <span className="text-xl relative">
-                    {def.emoji}
+                    <ItemSprite emoji={def.emoji} sprite={def.sprite} name={def.name} textSize="text-xl" imgSize="w-6 h-6" />
                     {def.category === "sprinkler_mutation" && def.mutationType && (
-                      <span className="absolute -bottom-0.5 -right-1 text-[10px] leading-none">
-                        {MUTATIONS[def.mutationType].emoji}
+                      <span className="absolute -bottom-0.5 -right-1 leading-none">
+                        <ItemSprite emoji={MUTATIONS[def.mutationType].emoji} sprite={MUTATIONS[def.mutationType].sprite} name={MUTATIONS[def.mutationType].emoji} textSize="text-[10px]" imgSize="w-3 h-3" />
                       </span>
                     )}
                   </span>
@@ -229,7 +366,9 @@ export function SeedPicker({ onSelect, onBloomSelect, onGearSelect, onClose }: P
               );
             })
           ) : (
-            <p className="text-xs text-muted-foreground text-center py-8">No gear in inventory.</p>
+            <p className="text-xs text-muted-foreground text-center py-8">
+              {gear.length > 0 ? "No gear matches the filter." : "No gear in inventory."}
+            </p>
           )
         )}
 

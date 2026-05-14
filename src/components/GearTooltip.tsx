@@ -2,9 +2,10 @@ import { useState, useRef, useLayoutEffect, useEffect } from "react";
 import { GEAR, isGearExpired, CROPSTICKS_BREED_DURATION_MS, type PlacedGear, type FanDirection } from "../data/gear";
 import { MUTATIONS, RARITY_CONFIG } from "../data/flowers";
 import { FERTILIZERS } from "../data/upgrades";
-import { removeGear, collectFromComposter, setFanDirection, stampStageTransitions } from "../store/gameStore";
+import { removeGear, collectFromComposter, setFanDirection, stampStageTransitions, toggleAutoPlanter } from "../store/gameStore";
 import { useGame } from "../store/GameContext";
-import { edgeRemoveGear, edgeCollectFromComposter, edgeSetFanDirection } from "../lib/edgeFunctions";
+import { edgeRemoveGear, edgeCollectFromComposter, edgeSetFanDirection, edgeToggleAutoPlanter } from "../lib/edgeFunctions";
+import { ItemSprite } from "./ItemSprite";
 
 interface Props {
   gear:    PlacedGear;
@@ -105,6 +106,29 @@ export function GearTooltip({ gear, row, col, onClose }: Props) {
     onClose?.();
   }
 
+  function handleTogglePause() {
+    const optimistic = toggleAutoPlanter(getState(), row, col);
+    if (!optimistic) return;
+    const wasPaused = gear.paused ?? false;
+    perform(
+      optimistic,
+      () => edgeToggleAutoPlanter(row, col),
+      undefined,
+      {
+        rollback: (cur) => ({
+          ...cur,
+          grid: cur.grid.map((r2, ri) =>
+            r2.map((p, ci) =>
+              ri === row && ci === col && p.gear
+                ? { ...p, gear: { ...p.gear, paused: wasPaused } }
+                : p
+            )
+          ),
+        }),
+      }
+    );
+  }
+
   function handleCollect() {
     const optimistic = collectFromComposter(state, row, col);
     if (!optimistic) return;
@@ -159,8 +183,12 @@ export function GearTooltip({ gear, row, col, onClose }: Props) {
   const isDirectional = def.passiveSubtype === "fan" || def.passiveSubtype === "aegis" || def.passiveSubtype === "lawnmower" || def.passiveSubtype === "aqueduct";
 
   // Balance Scale: which side is currently boosting?
+  const HOUR_MS = 3_600_000;
   const balanceScalePhase = def.passiveSubtype === "balance_scale"
-    ? Math.floor((now - gear.placedAt) / 3_600_000) % 2
+    ? Math.floor((now - gear.placedAt) / HOUR_MS) % 2
+    : null;
+  const balanceScaleFlipMs = balanceScalePhase !== null
+    ? HOUR_MS - ((now - gear.placedAt) % HOUR_MS)
     : null;
 
   return (
@@ -173,9 +201,11 @@ export function GearTooltip({ gear, row, col, onClose }: Props) {
 
         {/* Header */}
         <div className="flex items-center gap-2">
-          <span className="text-xl">{def.emoji}</span>
+          <ItemSprite emoji={def.emoji} sprite={def.sprite} name={def.name} textSize="text-xl" imgSize="w-6 h-6" />
           {def.category === "sprinkler_mutation" && def.mutationType && (
-            <span className="text-base leading-none">{MUTATIONS[def.mutationType].emoji}</span>
+            <span className="leading-none">
+              <ItemSprite emoji={MUTATIONS[def.mutationType].emoji} sprite={MUTATIONS[def.mutationType].sprite} name={MUTATIONS[def.mutationType].emoji} textSize="text-base" imgSize="w-5 h-5" />
+            </span>
           )}
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold leading-tight">{def.name}</p>
@@ -217,7 +247,9 @@ export function GearTooltip({ gear, row, col, onClose }: Props) {
                     : "bg-white/5 border border-white/10 text-muted-foreground hover:border-primary/30 hover:text-foreground"
                 }`}
               >←</button>
-              <div className="flex items-center justify-center text-base">{def.emoji}</div>
+              <div className="flex items-center justify-center">
+                <ItemSprite emoji={def.emoji} sprite={def.sprite} name={def.name} textSize="text-base" imgSize="w-5 h-5" />
+              </div>
               <button
                 onClick={() => handleFanDirection("right")}
                 className={`py-1 rounded-lg text-xs font-bold transition-all text-center ${
@@ -265,7 +297,7 @@ export function GearTooltip({ gear, row, col, onClose }: Props) {
           </div>
         )}
 
-        {/* Balance Scale: current phase status */}
+        {/* Balance Scale: current phase status + flip countdown */}
         {balanceScalePhase !== null && (
           <div className="pt-1 border-t border-border space-y-1">
             <p className="text-[10px] text-muted-foreground">
@@ -273,8 +305,13 @@ export function GearTooltip({ gear, row, col, onClose }: Props) {
               <span className="text-amber-300 font-mono">
                 {balanceScalePhase === 0 ? "← left" : "→ right"}
               </span>
-              <span className="text-muted-foreground"> · switches hourly</span>
             </p>
+            {balanceScaleFlipMs !== null && (
+              <p className="text-[10px] text-muted-foreground">
+                Flips in:{" "}
+                <span className="font-mono text-foreground">{formatMs(balanceScaleFlipMs)}</span>
+              </p>
+            )}
           </div>
         )}
 
@@ -336,8 +373,14 @@ export function GearTooltip({ gear, row, col, onClose }: Props) {
             {hasStored && (
               <div className="flex flex-wrap gap-1">
                 {stored.map((t, i) => (
-                  <span key={i} className="text-sm" title={FERTILIZERS[t].name}>
-                    {FERTILIZERS[t].emoji}
+                  <span key={i} title={FERTILIZERS[t].name}>
+                    <ItemSprite
+                      emoji={FERTILIZERS[t].emoji}
+                      sprite={FERTILIZERS[t].sprite}
+                      name={FERTILIZERS[t].name}
+                      textSize="text-sm"
+                      imgSize="w-5 h-5"
+                    />
                   </span>
                 ))}
               </div>
@@ -347,6 +390,18 @@ export function GearTooltip({ gear, row, col, onClose }: Props) {
                 Waiting for nearby blooms…
               </p>
             )}
+          </div>
+        )}
+
+        {/* Auto-planter pause/resume */}
+        {def.passiveSubtype === "auto_planter" && (
+          <div className="pt-1 border-t border-border">
+            <button
+              onClick={handleTogglePause}
+              className={`text-[10px] transition-colors w-full text-left ${gear.paused ? "text-green-400 hover:text-green-300" : "text-yellow-400 hover:text-yellow-300"}`}
+            >
+              {gear.paused ? "▶ Resume planting" : "⏸ Pause planting"}
+            </button>
           </div>
         )}
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ItemSprite } from "./ItemSprite";
 
 interface Props {
   onDismiss: () => void;
@@ -19,6 +20,7 @@ export function FriendRequestNotification({ onDismiss, onView }: Props) {
 
   return (
     <div
+      onMouseDown={(e) => e.stopPropagation()}
       className={`
         fixed bottom-6 left-1/2 -translate-x-1/2 z-50
         transition-all duration-400
@@ -26,7 +28,9 @@ export function FriendRequestNotification({ onDismiss, onView }: Props) {
       `}
     >
       <div className="flex items-center gap-4 bg-card border border-primary/40 rounded-2xl px-5 py-4 shadow-2xl shadow-primary/20 min-w-72">
-        <div className="text-2xl flex-shrink-0">👋</div>
+        <div className="flex-shrink-0">
+          <ItemSprite emoji="👋" sprite="/sprites/ui/social_friends.png" name="Friend request" textSize="text-2xl" imgSize="w-7 h-7" />
+        </div>
         <div className="flex-1">
           <p className="text-sm font-bold">New friend request!</p>
           <button

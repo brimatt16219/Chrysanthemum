@@ -4,6 +4,7 @@ import {
   type GameState,
   type OfflineSummary,
   type WeatherWindow,
+  type EventEntry,
   loadGame,
   saveGame,
   tickShop,
@@ -20,6 +21,7 @@ import {
   loadCloudSave,
   saveToCloud,
   getProfile,
+  loadEvents,
   type CloudProfile,
 } from "./cloudSave";
 import { supabase } from "../lib/supabase";
@@ -73,11 +75,15 @@ interface GameContextValue {
   clearGearExpiry: () => void;
   /** Stack of craft entries that just transitioned from in-progress → ready
    *  during this session. App renders one CraftCompletionBanner per entry. */
-  craftCompletions: { id: string; emoji: string; name: string }[];
+  craftCompletions: { id: string; emoji: string; sprite?: string; name: string }[];
   dismissCraftCompletion: (id: string) => void;
+  clearAllCraftCompletions: () => void;
   /** Same shape as craftCompletions but for the alchemy attunement queue. */
-  attunementCompletions: { id: string; emoji: string; name: string }[];
+  attunementCompletions: { id: string; emoji: string; sprite?: string; name: string }[];
   dismissAttunementCompletion: (id: string) => void;
+  clearAllAttunementCompletions: () => void;
+  /** Clears every banner-type notification in one shot. */
+  clearAllBanners: () => void;
   user: User | null;
   profile: CloudProfile | null;
   authLoading: boolean;
@@ -109,8 +115,8 @@ interface GameContextValue {
   harvestPopups: Map<string, { speciesId: string; mutation?: MutationType; count: number; isSeed?: boolean }>;
   pushHarvestPopup: (speciesId: string, mutation?: MutationType, isSeed?: boolean, qty?: number) => void;
   dismissHarvestPopup: (key: string) => void;
-  genericToasts: Map<string, { emoji: string; label: string; count: number; color?: string; variant?: "gain" | "loss" }>;
-  pushGenericToast: (key: string, emoji: string, label: string, color?: string, variant?: "gain" | "loss", qty?: number) => void;
+  genericToasts: Map<string, { emoji: string; label: string; count: number; color?: string; variant?: "gain" | "loss"; sprite?: string }>;
+  pushGenericToast: (key: string, emoji: string, label: string, color?: string, variant?: "gain" | "loss", qty?: number, sprite?: string) => void;
   dismissGenericToast: (key: string) => void;
 }
 
@@ -150,18 +156,18 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       return next;
     });
   }
-  type GenericToastEntry = { emoji: string; label: string; count: number; color?: string; variant?: "gain" | "loss" };
+  type GenericToastEntry = { emoji: string; label: string; count: number; color?: string; variant?: "gain" | "loss"; sprite?: string };
   const [genericToasts, setGenericToasts] = useState<Map<string, GenericToastEntry>>(new Map());
-  function pushGenericToast(key: string, emoji: string, label: string, color?: string, variant?: "gain" | "loss", qty = 1) {
+  function pushGenericToast(key: string, emoji: string, label: string, color?: string, variant?: "gain" | "loss", qty = 1, sprite?: string) {
     setGenericToasts((prev) => {
       const next = new Map(prev);
       const existing = next.get(key);
-      next.set(key, existing ? { ...existing, count: existing.count + qty } : { emoji, label, count: qty, color, variant });
+      next.set(key, existing ? { ...existing, count: existing.count + qty } : { emoji, label, count: qty, color, variant, sprite });
       return next;
     });
   }
-  const [craftCompletions, setCraftCompletions]       = useState<{ id: string; emoji: string; name: string }[]>([]);
-  const [attunementCompletions, setAttunementCompletions] = useState<{ id: string; emoji: string; name: string }[]>([]);
+  const [craftCompletions, setCraftCompletions]       = useState<{ id: string; emoji: string; sprite?: string; name: string }[]>([]);
+  const [attunementCompletions, setAttunementCompletions] = useState<{ id: string; emoji: string; sprite?: string; name: string }[]>([]);
   const [user, setUser]                         = useState<User | null>(null);
   const [profile, setProfile]                   = useState<CloudProfile | null>(null);
   const [authLoading, setAuthLoading]           = useState(true);
@@ -229,6 +235,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     // via the storage event and disable their saves to prevent data races.
     localStorage.setItem(`chrysanthemum_active_tab_${u.id}`, tabId.current);
 
+    let loadedEvents: EventEntry[] = [];
+
     try {
       const p = await getProfile(u.id);
       if (loadGen.current !== gen) return; // sign-out fired while we were loading — discard
@@ -268,6 +276,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         saveToUse = cloudSave;
       }
 
+      try {
+        loadedEvents = await loadEvents(u.id);
+      } catch { /* ignore — events are non-critical; game loads without them */ }
+
       // Fetch current weather so offline growth can apply rain / storm bonuses.
       let offlineWeather: WeatherWindow | undefined;
       try {
@@ -288,7 +300,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       if (loadGen.current !== gen) return; // sign-out fired — discard
 
       const { state: ticked, summary } = applyOfflineTick(saveToUse, offlineWeather);
-      setState(ticked);
+      setState({ ...ticked, events: loadedEvents });
       setOfflineSummary(summary);
       if (summary.shopRestocked)   setShopJustRestocked(true);
       if (summary.supplyRestocked) setSupplyJustRestocked(true);
@@ -304,7 +316,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
       if (savedUpdatedAt) {
         // Keep serverUpdatedAt in sync so subsequent CAS writes use the correct stamp.
-        stateRef.current = { ...ticked, serverUpdatedAt: savedUpdatedAt };
+        stateRef.current = { ...ticked, events: loadedEvents, serverUpdatedAt: savedUpdatedAt };
         setState(stateRef.current);
       } else {
         // CAS failed — the offline cron or another process wrote to DB between our
@@ -315,12 +327,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         if (loadGen.current !== gen) return;
         if (freshCloud) {
           const { state: reticked } = applyOfflineTick(freshCloud, offlineWeather);
-          stateRef.current = reticked;
-          setState(reticked);
+          stateRef.current = { ...reticked, events: loadedEvents };
+          setState(stateRef.current);
           savedUpdatedAt = await saveToCloud(u.id, reticked);
           if (loadGen.current !== gen) return;
           if (savedUpdatedAt) {
-            stateRef.current = { ...reticked, serverUpdatedAt: savedUpdatedAt };
+            stateRef.current = { ...reticked, events: loadedEvents, serverUpdatedAt: savedUpdatedAt };
             setState(stateRef.current);
           }
         }
@@ -331,7 +343,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     } catch (e) {
       if (loadGen.current !== gen) return; // sign-out fired — discard
       const { state: localState, summary } = loadGame();
-      setState(localState);
+      setState({ ...localState, events: loadedEvents });
       setOfflineSummary(summary);
       saveEnabled.current = true;
     }
@@ -470,7 +482,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           const reset = supplyTicked.lastSupplyReset;
           setSupplyJustRestocked(true);
           harvestQueue.current = harvestQueue.current
-            .then(() => edgeSyncSupplyShop(shop, reset))
+            .then(async () => {
+              const res = await edgeSyncSupplyShop(shop, reset);
+              // Keep the client's CAS token current so the 30s auto-save doesn't
+              // fail because the sync bumped updated_at without returning a fresh stamp.
+              if (res?.serverUpdatedAt) {
+                stateRef.current = { ...stateRef.current, serverUpdatedAt: res.serverUpdatedAt ?? null };
+                setState((prev) => ({ ...prev, serverUpdatedAt: res.serverUpdatedAt ?? null }));
+              }
+            })
             .catch(() => {});
           next = supplyTicked;
         }
@@ -482,6 +502,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         if (prunedGrid !== next.grid) {
           if (expired.length > 0) setGearExpiry({ gearType: expired[0].gearType });
           next = { ...next, grid: prunedGrid };
+          // stateRef drives saveToCloud and perform rollbacks. Without updating it
+          // here the 30s autosave would re-write the expired gear to DB, and any
+          // subsequent reloadFromCloud would pull it back as a "ghost" (#242).
+          stateRef.current = { ...stateRef.current, grid: prunedGrid };
         }
 
         // ── Craft completion detection ─────────────────────────────────────
@@ -489,7 +513,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         // during this session. Already-completed entries observed on first
         // load go straight into "fired" so they don't pop banners on refresh —
         // the navbar badge (B6) is the right surface for that.
-        const newCompletions: { id: string; emoji: string; name: string }[] = [];
+        const newCompletions: { id: string; emoji: string; sprite?: string; name: string }[] = [];
         for (const entry of next.craftingQueue ?? []) {
           if (craftFiredCompleted.current.has(entry.id)) continue;
           const doneAt = new Date(entry.startedAt).getTime() + entry.durationMs;
@@ -497,8 +521,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           if (isDone) {
             if (craftSeenInProgress.current.has(entry.id)) {
               // Genuine transition — fire banner.
-              const { emoji, name } = queueEntryDisplay(entry);
-              newCompletions.push({ id: entry.id, emoji, name });
+              const { emoji, sprite, name } = queueEntryDisplay(entry);
+              newCompletions.push({ id: entry.id, emoji, sprite, name });
             }
             // Either way, never fire again for this id.
             craftFiredCompleted.current.add(entry.id);
@@ -511,7 +535,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         }
 
         // ── Attunement completion detection (mirrors craft logic) ─────────
-        const newAttuneCompletions: { id: string; emoji: string; name: string }[] = [];
+        const newAttuneCompletions: { id: string; emoji: string; sprite?: string; name: string }[] = [];
         for (const entry of next.attunementQueue ?? []) {
           if (attuneFiredCompleted.current.has(entry.id)) continue;
           const doneAt = new Date(entry.startedAt).getTime() + entry.durationMs;
@@ -523,9 +547,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
               // says "Attunement ready: <flower>".
               const flower = getFlower(entry.speciesId);
               newAttuneCompletions.push({
-                id:    entry.id,
-                emoji: flower?.emoji.bloom ?? "🌸",
-                name:  flower?.name ?? entry.speciesId,
+                id:     entry.id,
+                emoji:  flower?.emoji.bloom ?? "🌸",
+                sprite: flower?.sprite?.bloom,
+                name:   flower?.name ?? entry.speciesId,
               });
             }
             attuneFiredCompleted.current.add(entry.id);
@@ -603,6 +628,23 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
+  // ── Periodic cloud auto-save ──────────────────────────────────────────────
+  // Achievement stats and other local-only state changes (incrementStat, etc.)
+  // are not written by edge functions. This interval flushes them to the DB
+  // every 30 s so the achievement-claim edge function always sees current data.
+  useEffect(() => {
+    if (!user) return;
+    const interval = setInterval(async () => {
+      if (!saveEnabled.current || isStaleTab) return;
+      const saved = await saveToCloud(user.id, stateRef.current);
+      if (saved) {
+        stateRef.current = { ...stateRef.current, serverUpdatedAt: saved };
+        setState((prev) => ({ ...prev, serverUpdatedAt: saved }));
+      }
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, [user, isStaleTab]);
+
   // Global queue for harvest server calls — ensures they execute one at a time
   // so concurrent DB reads/writes don't overwrite each other's grid changes.
   const harvestQueue = useRef<Promise<unknown>>(Promise.resolve());
@@ -630,7 +672,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const doServer = async () => {
       try {
         const result = await serverFn();
-        setState((cur) => mergeServerResult(cur, result));
+        // Merge synchronously into stateRef FIRST so the auto-save CAS token
+        // (serverUpdatedAt) is current before onSuccess runs. Using the updater
+        // form of setState would defer the stateRef update until React processes
+        // the batch — too late for onSuccess callbacks like incrementStat.
+        const merged = mergeServerResult(stateRef.current, result);
+        stateRef.current = merged;
+        setState(merged);
         onSuccess?.(result);
       } catch (err) {
         console.error("Action failed, rolling back:", err);
@@ -686,10 +734,52 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function signInWithGoogle() {
-    await supabase.auth.signInWithOAuth({
+    // Open about:blank synchronously — window.open must be called within the
+    // browser's user-gesture activation window; any await before it causes the
+    // popup to be blocked silently.
+    const w    = 500, h = 650;
+    const left = Math.round(window.screenX + (window.outerWidth  - w) / 2);
+    const top  = Math.round(window.screenY + (window.outerHeight - h) / 2);
+    const popup = window.open(
+      "about:blank",
+      "google-signin",
+      `width=${w},height=${h},left=${left},top=${top},scrollbars=yes,resizable=yes`,
+    );
+
+    const { data } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: window.location.origin },
+      options: {
+        redirectTo: window.location.origin,
+        skipBrowserRedirect: true,
+      },
     });
+
+    if (!popup || popup.closed || !data.url) {
+      popup?.close();
+      // Popup was blocked — fall back to full-page redirect.
+      await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: window.location.origin },
+      });
+      return;
+    }
+
+    popup.location.href = data.url;
+
+    // Poll every 500 ms for the session the popup writes to localStorage.
+    // Check the session BEFORE checking popup.closed so we don't miss it if
+    // main.tsx already called window.close() on the popup between ticks.
+    const interval = setInterval(async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        clearInterval(interval);
+        try { popup.close(); } catch { /* ignore */ }
+        await loadUserSession(session.user);
+        return;
+      }
+      // No session yet — stop only if the user manually closed the popup.
+      if (popup.closed) { clearInterval(interval); }
+    }, 500);
   }
 
   async function signOut() {
@@ -711,9 +801,18 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       craftCompletions,
       dismissCraftCompletion: (id: string) =>
         setCraftCompletions((prev) => prev.filter((c) => c.id !== id)),
+      clearAllCraftCompletions: () => setCraftCompletions([]),
       attunementCompletions,
       dismissAttunementCompletion: (id: string) =>
         setAttunementCompletions((prev) => prev.filter((c) => c.id !== id)),
+      clearAllAttunementCompletions: () => setAttunementCompletions([]),
+      clearAllBanners: () => {
+        setShopJustRestocked(false);
+        setSupplyJustRestocked(false);
+        setGearExpiry(null);
+        setCraftCompletions([]);
+        setAttunementCompletions([]);
+      },
       user, profile, authLoading,
       signInWithGoogle, signOut,
       refreshProfile,

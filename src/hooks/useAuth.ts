@@ -38,12 +38,39 @@ export function useAuth() {
   }, []);
 
   async function signInWithGoogle() {
-    await supabase.auth.signInWithOAuth({
+    // Open about:blank FIRST — window.open must be called synchronously
+    // inside the click handler (within the browser's user-gesture window).
+    // Calling it after any await causes browsers to treat it as a pop-up
+    // and block it, silently falling through to the redirect.
+    const w    = 500, h = 650;
+    const left = Math.round(window.screenX + (window.outerWidth  - w) / 2);
+    const top  = Math.round(window.screenY + (window.outerHeight - h) / 2);
+    const popup = window.open(
+      "about:blank",
+      "google-signin",
+      `width=${w},height=${h},left=${left},top=${top},scrollbars=yes,resizable=yes`,
+    );
+
+    // Now fetch the OAuth URL (async is fine — the popup is already ours).
+    const { data } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: window.location.origin,
+        skipBrowserRedirect: true,
       },
     });
+
+    if (popup && !popup.closed && data.url) {
+      // Navigate the already-open popup to Google's account chooser.
+      popup.location.href = data.url;
+    } else {
+      // Popup was blocked or URL unavailable — fall back to redirect.
+      popup?.close();
+      await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: window.location.origin },
+      });
+    }
   }
 
   async function signOut() {

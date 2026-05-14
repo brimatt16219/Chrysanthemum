@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { WeatherType } from "../data/weather";
+import { audioManager } from "../lib/audioManager";
 
 interface Props {
   weatherType: WeatherType;
@@ -264,6 +265,32 @@ function HeatwaveOverlay({ active }: { active: boolean }) {
 function ThunderstormOverlay({ active }: { active: boolean }) {
   const drops = useParticles(35, active);
 
+  // Each increment remounts the flash div, restarting the CSS animation cleanly.
+  const [flashKey, setFlashKey] = useState(0);
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  useEffect(() => {
+    const timers = timersRef.current;
+    timers.forEach(clearTimeout);
+    timers.length = 0;
+
+    if (!active) return;
+
+    function strike() {
+      setFlashKey((k) => k + 1);
+      audioManager.playSfx("thunderCrack");
+      // Next strike: random 20–40 s gap
+      const next = 20_000 + Math.random() * 20_000;
+      timers.push(setTimeout(strike, next));
+    }
+
+    // First strike after 4–8 s
+    const first = 4_000 + Math.random() * 4_000;
+    timers.push(setTimeout(strike, first));
+
+    return () => { timers.forEach(clearTimeout); timers.length = 0; };
+  }, [active]);
+
   return (
     <OverlayWrapper active={active}>
       <div className="absolute inset-0 bg-slate-900/30" />
@@ -283,25 +310,32 @@ function ThunderstormOverlay({ active }: { active: boolean }) {
           |
         </div>
       ))}
-      {/* Lightning flashes */}
-      {[{ delay: 2 }, { delay: 7 }, { delay: 13 }].map((l, i) => (
+      {/* CSS-keyframe flash — remounted on each strike so animation always restarts.
+          Double-flash curve built into the keyframe for a realistic lightning look. */}
+      {flashKey > 0 && (
         <div
-          key={i}
-          className="absolute inset-0 bg-white/5"
-          style={{ animation: `lightning 15s ${l.delay}s ease-out infinite` }}
+          key={flashKey}
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: "rgba(220, 235, 255, 0.35)",
+            animation:  "lightningFlash 900ms ease-out forwards",
+          }}
         />
-      ))}
+      )}
       <style>{`
+        @keyframes lightningFlash {
+          0%   { opacity: 0; }
+          4%   { opacity: 1; }
+          14%  { opacity: 0.06; }
+          20%  { opacity: 0.65; }
+          35%  { opacity: 0; }
+          100% { opacity: 0; }
+        }
         @keyframes heavyRain {
           0%   { transform: translateY(-10vh) rotate(20deg); opacity: 0; }
           10%  { opacity: 1; }
           90%  { opacity: 1; }
           100% { transform: translateY(110vh) rotate(20deg); opacity: 0; }
-        }
-        @keyframes lightning {
-          0%, 4%, 8%, 100% { opacity: 0; }
-          2%               { opacity: 1; }
-          6%               { opacity: 0.6; }
         }
       `}</style>
     </OverlayWrapper>

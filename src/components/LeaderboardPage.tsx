@@ -10,6 +10,8 @@ import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
 import type { MutationType } from "../data/flowers";
 import { getTotalCodexEntries } from "../store/gameStore";
 import { formatLastSeen, getPresenceStatus, STATUS_DOT } from "../lib/presence";
+import { ItemSprite } from "./ItemSprite";
+import { FlowerSprite } from "./FlowerSprite";
 
 interface Props {
   onViewProfile: (username: string) => void;
@@ -19,7 +21,12 @@ type LeaderboardTab = "global" | "friends";
 type SortBy         = "coins" | "codex";
 
 
-const RANK_MEDALS: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" };
+const RANK_MEDALS: Record<number, string>  = { 1: "🥇", 2: "🥈", 3: "🥉" };
+const RANK_MEDAL_SPRITES: Record<number, string> = {
+  1: "/sprites/ui/medal_gold.png",
+  2: "/sprites/ui/medal_silver.png",
+  3: "/sprites/ui/medal_bronze.png",
+};
 const TOTAL_CODEX = getTotalCodexEntries();
 
 export function LeaderboardPage({ onViewProfile }: Props) {
@@ -106,7 +113,15 @@ export function LeaderboardPage({ onViewProfile }: Props) {
                 }
               `}
             >
-              {t === "global" ? "🌍 Global" : "👥 Friends"}
+              <span className="inline-flex items-center justify-center gap-1">
+                <ItemSprite
+                  emoji={t === "global" ? "🌍" : "👥"}
+                  sprite={t === "global" ? "/sprites/ui/ach_social.png" : "/sprites/ui/social_friends.png"}
+                  textSize="text-base" imgSize="w-5 h-5"
+                  name={t === "global" ? "global" : "friends"}
+                />
+                <span className="hidden sm:inline">{t === "global" ? "Global" : "Friends"}</span>
+              </span>
             </button>
           ))}
         </div>
@@ -124,7 +139,17 @@ export function LeaderboardPage({ onViewProfile }: Props) {
                 }
               `}
             >
-              {s === "coins" ? "🟡 Coins" : "📖 Codex"}
+              {s === "coins" ? (
+                <span className="inline-flex items-center gap-0.5">
+                  <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
+                  Coins
+                </span>
+              ) : (
+                <span className="inline-flex items-center justify-center gap-1">
+                  <ItemSprite emoji="📖" sprite="/sprites/ui/tab_codex.png" textSize="text-base" imgSize="w-5 h-5" name="codex" />
+                  <span className="hidden sm:inline">Codex</span>
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -133,18 +158,22 @@ export function LeaderboardPage({ onViewProfile }: Props) {
       {/* Your rank banner */}
       {user && (
         <div className="flex items-center gap-3 bg-primary/10 border border-primary/30 rounded-xl px-4 py-3">
-          <span className="text-2xl">
-            {myEntry && myEntry.rank <= 3 ? RANK_MEDALS[myEntry.rank] : "🌸"}
+          <span className="text-2xl flex-shrink-0">
+            {myEntry && myEntry.rank <= 3
+              ? RANK_MEDALS[myEntry.rank]
+              : (() => { const f = myEntry ? getFlower(myEntry.display_flower) : null; const mut = myEntry?.display_mutation ? MUTATIONS[myEntry.display_mutation as MutationType] : null; return f ? <FlowerSprite species={f} stage="bloom" imgSize="w-8 h-8" textSize="text-2xl" className={mut?.vfxClass ?? ""} /> : "🌸"; })()
+            }
           </span>
           <div className="flex-1">
             <p className="text-xs text-muted-foreground font-mono">Your rank</p>
             <p className="text-sm font-bold">
               {myEntry ? `#${myEntry.rank}` : myRank ? `#${myRank}` : "Unranked"}{" "}
-              <span className="text-muted-foreground font-normal">
-                {sortBy === "coins"
-                  ? `· ${state.coins.toLocaleString()} 🟡`
-                  : `· ${myCodexCount}/${TOTAL_CODEX} 📖`
-                }
+              <span className="text-muted-foreground font-normal inline-flex items-center gap-0.5">
+                {sortBy === "coins" ? (
+                  <>· {state.coins.toLocaleString()} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /></>
+                ) : (
+                  <>· {myCodexCount}/{TOTAL_CODEX} <ItemSprite emoji="📖" sprite="/sprites/ui/tab_codex.png" name="codex" textSize="text-xs" imgSize="w-3.5 h-3.5" /></>
+                )}
               </span>
             </p>
           </div>
@@ -206,7 +235,7 @@ export function LeaderboardPage({ onViewProfile }: Props) {
                 {/* Rank */}
                 <div className="w-8 text-center flex-shrink-0">
                   {medal ? (
-                    <span className="text-xl">{medal}</span>
+                    <ItemSprite emoji={medal} sprite={RANK_MEDAL_SPRITES[entry.rank]} name={medal} textSize="text-xl" imgSize="w-6 h-6" />
                   ) : (
                     <span className="text-sm font-mono text-muted-foreground">
                       #{entry.rank}
@@ -220,10 +249,7 @@ export function LeaderboardPage({ onViewProfile }: Props) {
                   text-xl flex-shrink-0 border-border bg-background
                   ${rarity?.glow ?? ""}
                 `}>
-                  {flower?.emoji.bloom ?? "🌱"}
-                  {mutObj && (
-                    <span className="absolute -top-1 -right-1 text-sm leading-none">{mutObj.emoji}</span>
-                  )}
+                  {flower ? <FlowerSprite species={flower} stage="bloom" imgSize="w-6 h-6" textSize="text-xl" className={mutObj?.vfxClass ?? ""} /> : "🌱"}
                   <span
                     className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background ${STATUS_DOT[status]}`}
                     title={status === "offline"
@@ -259,19 +285,17 @@ export function LeaderboardPage({ onViewProfile }: Props) {
                 {/* Stat — coins or codex depending on sort */}
                 <div className="text-right flex-shrink-0">
                   {sortBy === "coins" ? (
-                    <>
-                      <p className="text-sm font-mono font-semibold">
-                        {entry.coins.toLocaleString()}
-                      </p>
-                      <p className="text-xs text-muted-foreground">🟡</p>
-                    </>
+                    <p className="text-sm font-mono font-semibold inline-flex items-center gap-1">
+                      <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
+                      {entry.coins.toLocaleString()}
+                    </p>
                   ) : (
                     <>
                       <p className="text-sm font-mono font-semibold">
                         {entry.discovered_count ?? 0}
                         <span className="text-muted-foreground font-normal text-xs">/{TOTAL_CODEX}</span>
                       </p>
-                      <p className="text-xs text-muted-foreground">{codexPct}% 📖</p>
+                      <p className="text-xs text-muted-foreground inline-flex items-center gap-0.5">{codexPct}% <ItemSprite emoji="📖" sprite="/sprites/ui/tab_codex.png" name="codex" textSize="text-xs" imgSize="w-3.5 h-3.5" /></p>
                     </>
                   )}
                 </div>

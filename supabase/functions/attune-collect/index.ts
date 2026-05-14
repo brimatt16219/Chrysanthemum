@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { addOrIncrement, rollMutation, type InvItem } from "../_shared/alchemyAttuneData.ts";
 import { initSentry, Sentry } from "../_shared/sentry.ts";
+import { awardXp } from "../_shared/gardenerLevel.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin":  "*",
@@ -59,7 +60,7 @@ Deno.serve(async (req: Request) => {
     const [authResult, saveResult] = await Promise.all([
       supabaseAdmin.auth.getUser(token),
       supabaseAdmin.from("game_saves")
-        .select("inventory, discovered, attunement_queue, updated_at")
+        .select("inventory, discovered, attunement_queue, gardener_level, gardener_xp, updated_at")
         .eq("user_id", userId)
         .single(),
     ]);
@@ -71,6 +72,8 @@ Deno.serve(async (req: Request) => {
 
     const save           = saveResult.data;
     const priorUpdatedAt = save.updated_at as string;
+    const gardenerLevel  = (save.gardener_level as number) ?? 1;
+    const gardenerXp     = (save.gardener_xp    as number) ?? 0;
     const inventory      = (save.inventory  ?? []) as InvItem[];
     const discovered     = (save.discovered ?? []) as string[];
     const queue          = (save.attunement_queue ?? []) as AttunementQueueEntry[];
@@ -105,6 +108,10 @@ Deno.serve(async (req: Request) => {
     // ── Remove from queue ──────────────────────────────────────────────────
     const newQueue = queue.filter((e) => e.id !== attunementId);
 
+    const ATTUNE_XP: Record<number, number> = { 1: 50, 2: 100, 3: 200, 4: 500 };
+    const xpGained = ATTUNE_XP[entry.tier] ?? 0;
+    const { level: newLevel, xp: newXp, leveledUp, levelsGained } = awardXp(gardenerLevel, gardenerXp, xpGained);
+
     // ── CAS write ──────────────────────────────────────────────────────────
     const { data: ud, error: ue } = await supabaseAdmin
       .from("game_saves")
@@ -112,6 +119,8 @@ Deno.serve(async (req: Request) => {
         inventory:        newInventory,
         discovered:       newDiscovered,
         attunement_queue: newQueue,
+        gardener_level:   newLevel,
+        gardener_xp:      newXp,
         updated_at:       new Date().toISOString(),
       })
       .eq("user_id", userId)
@@ -133,6 +142,11 @@ Deno.serve(async (req: Request) => {
       attunementQueue:  newQueue,
       mutation,
       tier:             entry.tier,
+      xpGained,
+      gardenerLevel:   newLevel,
+      gardenerXp:      newXp,
+      leveledUp,
+      levelsGained,
       serverUpdatedAt:  ud.updated_at,
     });
 

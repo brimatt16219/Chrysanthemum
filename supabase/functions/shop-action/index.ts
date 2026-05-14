@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { initSentry, Sentry } from "../_shared/sentry.ts";
+import { awardXp, SELL_XP_PERCENT } from "../_shared/gardenerLevel.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin":  "*",
@@ -84,8 +85,8 @@ const FLOWER_SELL_VALUES: Record<string, number> = {
   the_first_bloom: 5_000_000,
 };
 
-type Action = "buy" | "buy_all" | "sell" | "sell_all" | "sync" | "buy_all_seeds";
-interface ShopSlot { speciesId: string; price: number; quantity: number; isFertilizer?: boolean; fertilizerType?: string; isEmpty?: boolean; }
+type Action = "buy" | "buy_all" | "sell" | "sell_all" | "sync" | "buy_all_seeds" | "unlock_slot";
+interface ShopSlot { speciesId: string; price: number; quantity: number; isFertilizer?: boolean; fertilizerType?: string; isEmpty?: boolean; locked?: boolean; }
 interface InventoryItem { speciesId: string; quantity: number; mutation?: string; isSeed?: boolean; }
 interface FertilizerItem { type: string; quantity: number; }
 interface SellAllItem  { speciesId: string; mutation?: string; quantity: number; }
@@ -118,10 +119,10 @@ Deno.serve(async (req: Request) => {
 
     const body = await req.json() as {
       action: Action; speciesId?: string; fertType?: string; quantity?: number; mutation?: string;
-      shop?: ShopSlot[]; lastShopReset?: number;
+      shop?: ShopSlot[]; lastShopReset?: number; slotId?: string;
     };
 
-    if (!["buy", "buy_all", "sell", "sell_all", "sync", "buy_all_seeds"].includes(body.action)) {
+    if (!["buy", "buy_all", "sell", "sell_all", "sync", "buy_all_seeds", "unlock_slot"].includes(body.action)) {
       return new Response(JSON.stringify({ error: "Invalid action" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -162,7 +163,7 @@ Deno.serve(async (req: Request) => {
     // ── Verify JWT + load save in parallel ────────────────────────────────────
     const [authResult, saveResult] = await Promise.all([
       supabaseAdmin.auth.getUser(token),
-      supabaseAdmin.from("game_saves").select("coins, shop, inventory, fertilizers, updated_at").eq("user_id", userId).single(),
+      supabaseAdmin.from("game_saves").select("coins, shop, inventory, fertilizers, gardener_level, gardener_xp, updated_at").eq("user_id", userId).single(),
     ]);
 
     if (authResult.error || !authResult.data.user || authResult.data.user.id !== userId) {
@@ -178,6 +179,8 @@ Deno.serve(async (req: Request) => {
 
     const save        = saveResult.data;
     const priorUpdatedAt = save.updated_at as string;
+    const gardenerLevel = (save.gardener_level as number) ?? 1;
+    const gardenerXp    = (save.gardener_xp    as number) ?? 0;
     let coins         = save.coins as number;
     let newShop        = [...(save.shop        ?? []) as ShopSlot[]];
     let newInventory   = [...(save.inventory   ?? []) as InventoryItem[]];
@@ -185,6 +188,51 @@ Deno.serve(async (req: Request) => {
     let logResult: Record<string, unknown> = {};
 
     const { action } = body;
+
+    // ── unlock_slot: remove pin from a locked seed shop slot ─────────────────
+    if (action === "unlock_slot") {
+      if (!body.slotId) {
+        return new Response(JSON.stringify({ error: "slotId required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const slotIdx = newShop.findIndex((s) => s.speciesId === body.slotId);
+      if (slotIdx < 0) {
+        return new Response(JSON.stringify({ error: "Slot not found" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      // Already unlocked — idempotent so optimistic state stays consistent
+      if (!newShop[slotIdx].locked) {
+        return new Response(
+          JSON.stringify({ ok: true, shop: newShop, serverUpdatedAt: priorUpdatedAt }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const newShopUnlocked = newShop.map((s) =>
+        s.speciesId === body.slotId ? { ...s, locked: false } : s
+      );
+      const { data: ud, error: ue } = await supabaseAdmin
+        .from("game_saves")
+        .update({ shop: newShopUnlocked, updated_at: new Date().toISOString() })
+        .eq("user_id", userId)
+        .eq("updated_at", priorUpdatedAt)
+        .select("updated_at")
+        .single();
+      if (ue || !ud) {
+        return new Response(JSON.stringify({ error: "Save conflict — please retry" }), {
+          status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      void supabaseAdmin.from("action_log").insert({
+        user_id: userId, action: "seed_unlock_slot",
+        payload: { slotId: body.slotId },
+      });
+      return new Response(
+        JSON.stringify({ ok: true, shop: newShopUnlocked, serverUpdatedAt: ud.updated_at }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // ── buy / buy_all ─────────────────────────────────────────────────────────
     if (action === "buy" || action === "buy_all") {
@@ -266,6 +314,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // ── sell ──────────────────────────────────────────────────────────────────
+    let xpGained = 0;
     if (action === "sell") {
       if (!body.speciesId) {
         return new Response(JSON.stringify({ error: "speciesId required" }), {
@@ -284,6 +333,7 @@ Deno.serve(async (req: Request) => {
       }
       const earned = Math.floor((FLOWER_SELL_VALUES[body.speciesId] ?? 0) * (body.mutation ? (MUTATION_MULTIPLIERS[body.mutation] ?? 1) : 1)) * qty;
       coins += earned;
+      xpGained += Math.floor(earned * SELL_XP_PERCENT);
       newInventory = newInventory
         .map((i) => i.speciesId === body.speciesId && i.mutation === body.mutation && !i.isSeed ? { ...i, quantity: i.quantity - qty } : i)
         .filter((i) => i.quantity > 0);
@@ -305,6 +355,7 @@ Deno.serve(async (req: Request) => {
           (mutation ? (MUTATION_MULTIPLIERS[mutation] ?? 1) : 1)
         ) * quantity;
         coins += earned;
+        xpGained += Math.floor(earned * SELL_XP_PERCENT);
         newInventory = newInventory
           .map((i) =>
             i.speciesId === speciesId && i.mutation === (mutation ?? undefined) && !i.isSeed
@@ -315,11 +366,20 @@ Deno.serve(async (req: Request) => {
         logResult = { ...(logResult as object), [`${speciesId}:${mutation ?? ""}`]: earned };
       }
     }
+    const { level: newLevel, xp: newXp, leveledUp, levelsGained } = awardXp(gardenerLevel, gardenerXp, xpGained);
 
     // ── Write to DB ───────────────────────────────────────────────────────────
     const { data: updateData, error: updateError } = await supabaseAdmin
       .from("game_saves")
-      .update({ coins, shop: newShop, inventory: newInventory, fertilizers: newFertilizers, updated_at: new Date().toISOString() })
+      .update({
+        coins,
+        shop:           newShop,
+        inventory:      newInventory,
+        fertilizers:    newFertilizers,
+        gardener_level: newLevel,
+        gardener_xp:    newXp,
+        updated_at:     new Date().toISOString(),
+      })
       .eq("user_id", userId)
       .eq("updated_at", priorUpdatedAt)
       .select("updated_at")
@@ -334,7 +394,19 @@ Deno.serve(async (req: Request) => {
     void supabaseAdmin.from("action_log").insert({ user_id: userId, action, payload: body, result: logResult });
 
     return new Response(
-      JSON.stringify({ ok: true, coins, shop: newShop, inventory: newInventory, fertilizers: newFertilizers, serverUpdatedAt: updateData.updated_at }),
+      JSON.stringify({
+        ok:              true,
+        coins,
+        shop:            newShop,
+        inventory:       newInventory,
+        fertilizers:     newFertilizers,
+        xpGained,
+        gardenerLevel:   newLevel,
+        gardenerXp:      newXp,
+        leveledUp,
+        levelsGained,
+        serverUpdatedAt: updateData.updated_at,
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {

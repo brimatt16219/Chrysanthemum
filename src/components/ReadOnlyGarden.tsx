@@ -1,5 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useSettings } from "../store/SettingsContext";
+import { ItemSprite } from "./ItemSprite";
+import { FlowerSprite } from "./FlowerSprite";
 import { getCurrentStage, getStageProgress, getPassiveGrowthMultiplier, getDevShowGrowthDebug } from "../store/gameStore";
 import type { Plot } from "../store/gameStore";
 import { supabase } from "../lib/supabase";
@@ -61,7 +63,7 @@ export function ReadOnlyGarden({ grid, farmSize, farmRows }: Props) {
   const { regularSprinklerKeys, aqueductKeys, mutationSprinklerMap, scarecrowKeys, composterKeys, growLampKeys, fanCoveredCells, harvestBellKeys, lawnmowerCells, balanceScaleCells, autoPlanterKeys, aegisKeys } = useMemo(() => {
     const regular      = new Set<string>();
     const aqueduct     = new Set<string>();
-    const mutation     = new Map<string, string[]>();
+    const mutation     = new Map<string, { emoji: string; sprite?: string }[]>();
     const scarecrow    = new Set<string>();
     const composter    = new Set<string>();
     const growLamp     = new Set<string>();
@@ -83,11 +85,12 @@ export function ReadOnlyGarden({ grid, farmSize, farmRows }: Props) {
         } else if (def.passiveSubtype === "aqueduct") {
           keys.forEach((k) => aqueduct.add(k));
         } else if (def.category === "sprinkler_mutation" && def.mutationType) {
-          const emoji = MUTATIONS[def.mutationType as MutationType]?.emoji ?? "✨";
+          const emoji  = MUTATIONS[def.mutationType as MutationType]?.emoji ?? "✨";
+          const sprite = MUTATIONS[def.mutationType as MutationType]?.sprite;
           keys.forEach((k) => {
             const existing = mutation.get(k);
-            if (!existing) mutation.set(k, [emoji]);
-            else if (!existing.includes(emoji)) existing.push(emoji);
+            if (!existing) mutation.set(k, [{ emoji, sprite }]);
+            else if (!existing.some((e) => e.emoji === emoji)) existing.push({ emoji, sprite });
           });
         } else if (def.passiveSubtype === "scarecrow") {
           keys.forEach((k) => scarecrow.add(k));
@@ -209,12 +212,17 @@ export function ReadOnlyGarden({ grid, farmSize, farmRows }: Props) {
                 `}
                 title={`${def.name} — ${def.rarity}`}
               >
-                <span className="text-xl leading-none">{def.emoji}</span>
+                <ItemSprite emoji={def.emoji} sprite={def.sprite} name={def.name} textSize="text-xl" imgSize="w-6 h-6" />
 
-                {/* Mutation sprinkler overlay */}
+                {/* Mutation sprinkler badge */}
                 {def.category === "sprinkler_mutation" && def.mutationType && (
-                  <span className="absolute -bottom-0.5 -right-1 text-xs leading-none">
-                    {MUTATIONS[def.mutationType].emoji}
+                  <span className="absolute -bottom-0.5 -right-1 leading-none">
+                    <ItemSprite
+                      emoji={MUTATIONS[def.mutationType].emoji}
+                      sprite={MUTATIONS[def.mutationType].sprite}
+                      name={MUTATIONS[def.mutationType].emoji}
+                      textSize="text-xs" imgSize="w-3.5 h-3.5"
+                    />
                   </span>
                 )}
 
@@ -296,12 +304,13 @@ export function ReadOnlyGarden({ grid, farmSize, farmRows }: Props) {
               ? { animation: "rainbow-border-cycle 3s linear infinite, rainbow-bg-cycle 3s linear infinite, rainbow-glow-cycle 3s linear infinite" }
               : undefined;
 
+
           return (
+            <div key={plot.id} className="relative">
             <div
-              key={plot.id}
               style={prismaticStyle}
               className={`
-                relative w-14 h-14 rounded-xl border-2 flex flex-col items-center justify-center
+                w-14 h-14 rounded-xl border-2 flex flex-col items-center justify-center
                 ${isBloomed
                   ? `${rarity?.borderBloom ?? "border-primary/50"} ${rarity?.bgBloom ?? "bg-primary/10"} ${rarity?.glow ?? ""}`
                   : `${rarity?.borderGrowing ?? "border-border/60"} bg-card/60`
@@ -328,9 +337,9 @@ export function ReadOnlyGarden({ grid, farmSize, farmRows }: Props) {
                       <span className="gear-drop" style={{ left: "74%", animationDelay: "0s"    }}>💧</span>
                     </>
                   )}
-                  {mutEmojis.flatMap((emoji, mi) => [
-                    <span key={`m${mi}a`} className="gear-float" style={{ left: `${16 + mi * 28}%`, animationDelay: `${mi * 0.5 - 2}s`   }}>{emoji}</span>,
-                    <span key={`m${mi}b`} className="gear-float" style={{ left: `${40 + mi * 28}%`, animationDelay: `${mi * 0.5 - 0.9}s` }}>{emoji}</span>,
+                  {mutEmojis.flatMap(({ emoji, sprite }, mi) => [
+                    <span key={`m${mi}a`} className="gear-float" style={{ left: `${16 + mi * 28}%`, animationDelay: `${mi * 0.5 - 2}s`   }}><ItemSprite emoji={emoji} sprite={sprite} name={emoji} textSize="text-sm" imgSize="w-4 h-4" /></span>,
+                    <span key={`m${mi}b`} className="gear-float" style={{ left: `${40 + mi * 28}%`, animationDelay: `${mi * 0.5 - 0.9}s` }}><ItemSprite emoji={emoji} sprite={sprite} name={emoji} textSize="text-sm" imgSize="w-4 h-4" /></span>,
                   ])}
                   {underScarecrow && (
                     <>
@@ -356,16 +365,16 @@ export function ReadOnlyGarden({ grid, farmSize, farmRows }: Props) {
                   })()}
                   {underAutoPlanter && (
                     <>
-                      <span className="gear-planter-seed" style={{ left: "20%", animationDelay: "-1.6s" }}>🌱</span>
-                      <span className="gear-planter-seed" style={{ left: "52%", animationDelay: "-0.8s" }}>🌱</span>
-                      <span className="gear-planter-seed" style={{ left: "76%", animationDelay: "0s"    }}>🌱</span>
+                      <span className="gear-planter-seed" style={{ left: "20%", animationDelay: "-1.6s" }}><ItemSprite emoji="🌱" sprite="/sprites/flowers/seed.png" name="seed" textSize="text-sm" imgSize="w-4 h-4" /></span>
+                      <span className="gear-planter-seed" style={{ left: "52%", animationDelay: "-0.8s" }}><ItemSprite emoji="🌱" sprite="/sprites/flowers/seed.png" name="seed" textSize="text-sm" imgSize="w-4 h-4" /></span>
+                      <span className="gear-planter-seed" style={{ left: "76%", animationDelay: "0s"    }}><ItemSprite emoji="🌱" sprite="/sprites/flowers/seed.png" name="seed" textSize="text-sm" imgSize="w-4 h-4" /></span>
                     </>
                   )}
                   {underHarvestBell && (
                     <>
-                      <span className="gear-bell" style={{ left: "18%", animationDelay: "-2.2s" }}>🔔</span>
-                      <span className="gear-bell" style={{ left: "52%", animationDelay: "-1.1s" }}>🔔</span>
-                      <span className="gear-bell" style={{ left: "74%", animationDelay: "0s"    }}>🔔</span>
+                      <span className="gear-bell" style={{ left: "18%", animationDelay: "-2.2s" }}><ItemSprite emoji="🔔" sprite="/sprites/gear/harvest_bell.png" name="Harvest Bell" textSize="text-sm" imgSize="w-4 h-4" /></span>
+                      <span className="gear-bell" style={{ left: "52%", animationDelay: "-1.1s" }}><ItemSprite emoji="🔔" sprite="/sprites/gear/harvest_bell.png" name="Harvest Bell" textSize="text-sm" imgSize="w-4 h-4" /></span>
+                      <span className="gear-bell" style={{ left: "74%", animationDelay: "0s"    }}><ItemSprite emoji="🔔" sprite="/sprites/gear/harvest_bell.png" name="Harvest Bell" textSize="text-sm" imgSize="w-4 h-4" /></span>
                     </>
                   )}
                   {underLawnmower && (() => {
@@ -391,12 +400,12 @@ export function ReadOnlyGarden({ grid, farmSize, farmRows }: Props) {
                       <span className="gear-scale-slow" style={{ left: "76%", animationDelay: "0s"    }}>▾</span>
                     </>
                   )}
-                  {/* Aegis: 🛡️ shields rising — weather mutations blocked */}
+                  {/* Aegis: shields rising — weather mutations blocked */}
                   {underAegis && (
                     <>
-                      <span className="gear-aegis-shield" style={{ left: "15%", animationDelay: "-1.8s" }}>🛡️</span>
-                      <span className="gear-aegis-shield" style={{ left: "50%", animationDelay: "-0.9s" }}>🛡️</span>
-                      <span className="gear-aegis-shield" style={{ left: "76%", animationDelay: "0s"    }}>🛡️</span>
+                      <span className="gear-aegis-shield" style={{ left: "15%", animationDelay: "-1.8s" }}><ItemSprite emoji="🛡️" sprite="/sprites/gear/aegis.png" name="Aegis" textSize="text-sm" imgSize="w-4 h-4" /></span>
+                      <span className="gear-aegis-shield" style={{ left: "50%", animationDelay: "-0.9s" }}><ItemSprite emoji="🛡️" sprite="/sprites/gear/aegis.png" name="Aegis" textSize="text-sm" imgSize="w-4 h-4" /></span>
+                      <span className="gear-aegis-shield" style={{ left: "76%", animationDelay: "0s"    }}><ItemSprite emoji="🛡️" sprite="/sprites/gear/aegis.png" name="Aegis" textSize="text-sm" imgSize="w-4 h-4" /></span>
                     </>
                   )}
                 </div>
@@ -424,43 +433,56 @@ export function ReadOnlyGarden({ grid, farmSize, farmRows }: Props) {
                 </div>
               )}
 
-              <span className="text-xl leading-none">
-                {species?.emoji[stage!] ?? "🌱"}
-              </span>
+              {species && stage
+                ? <FlowerSprite
+                    species={species}
+                    stage={stage}
+                    imgSize="w-6 h-6"
+                    textSize="text-xl"
+                    className={settings.plotMutationVfx && isBloomed && mut && species?.rarity !== "prismatic" ? mut.vfxClass : ""}
+                  />
+                : <span className="text-xl leading-none">🌱</span>
+              }
 
               {/* Fertilizer — top-left */}
               {settings.plotFertilizerIndicator && hasFert && !isBloomed && (
-                <span className="absolute top-0.5 left-0.5 text-[9px] leading-none">
-                  {FERTILIZERS[plant.fertilizer!].emoji}
+                <span className="absolute top-0.5 left-0.5 leading-none">
+                  <ItemSprite
+                    emoji={FERTILIZERS[plant.fertilizer!].emoji}
+                    sprite={FERTILIZERS[plant.fertilizer!].sprite}
+                    name={FERTILIZERS[plant.fertilizer!].name}
+                    textSize="text-[9px]"
+                    imgSize="w-3 h-3"
+                  />
                 </span>
               )}
 
               {/* Mastery — top-right */}
               {settings.plotMasteryIndicator && plant.masteredBonus && (
-                <span className="absolute top-0.5 right-0.5 text-[9px] leading-none text-yellow-400" title="Mastered">
-                  ⚡
+                <span className="absolute top-0.5 right-0.5 leading-none text-yellow-400" title="Mastered">
+                  <ItemSprite emoji="⚡" sprite="/sprites/ui/mastery.png" name="Mastered" textSize="text-[9px]" imgSize="w-3 h-3" />
                 </span>
               )}
 
               {/* Gear effect indicators — bottom-left */}
               {settings.plotGearIndicator && (underSprinkler || underAqueduct || mutEmojis.length > 0 || underScarecrow || underComposter || underGrowLamp || underFan || underHarvestBell || underAutoPlanter || !!balanceScaleSide || underAegis || plant.infused || plant.revealed) && (
                 <div className={`absolute left-0.5 flex leading-none ${isBloomed ? "bottom-1" : "bottom-2"}`}>
-                  {underAqueduct && <span className="text-[9px]" title="Under aqueduct">⛲</span>}
-                  {underSprinkler && !underAqueduct && <span className="text-[9px]" title="Under sprinkler">💧</span>}
-                  {mutEmojis.map((emoji, i) => (
-                    <span key={i} className="text-[9px]" title="Mutation sprinkler">{emoji}</span>
+                  {underAqueduct && <ItemSprite emoji="⛲" sprite="/sprites/gear/aqueduct.png" name="Under aqueduct" textSize="text-[9px]" imgSize="w-3 h-3" />}
+                  {underSprinkler && !underAqueduct && <ItemSprite emoji="💧" sprite="/sprites/gear/sprinkler.png" name="Under sprinkler" textSize="text-[9px]" imgSize="w-3 h-3" />}
+                  {mutEmojis.map(({ emoji, sprite }, i) => (
+                    <ItemSprite key={i} emoji={emoji} sprite={sprite} name="Mutation sprinkler" textSize="text-[9px]" imgSize="w-3 h-3" />
                   ))}
-                  {underScarecrow && <span className="text-[9px]" title="Under scarecrow">🧹</span>}
-                  {underComposter && <span className="text-[9px]" title="Near composter">🧺</span>}
-                  {underGrowLamp && <span className="text-[9px]" title="Under grow lamp">💡</span>}
-                  {underFan && <span className="text-[9px]" title="In fan range">💨</span>}
-                  {underHarvestBell && <span className="text-[9px]" title="Auto-harvest active">🔔</span>}
-                  {underAutoPlanter && <span className="text-[9px]" title="Auto-planter active">🌱</span>}
-                  {balanceScaleSide === "boost" && <span className="text-[9px]" title="Balance Scale — 3× boost">⚖️</span>}
-                  {balanceScaleSide === "slow"  && <span className="text-[9px]" title="Balance Scale — 0.5× slow">⚖️</span>}
-                  {underAegis && <span className="text-[9px]" title="Aegis — weather mutations blocked">🛡️</span>}
-                  {plant.infused && <span className="text-[9px]" title="Infused — cross-breeding active">💉</span>}
-                  {plant.revealed && <span className="text-[9px]" title="Species revealed — Magnifying Glass used">🔎</span>}
+                  {underScarecrow && <ItemSprite emoji="🧹" sprite="/sprites/gear/scarecrow.png" name="Under scarecrow" textSize="text-[9px]" imgSize="w-3 h-3" />}
+                  {underComposter && <ItemSprite emoji="🧺" sprite="/sprites/gear/composter.png" name="Near composter" textSize="text-[9px]" imgSize="w-3 h-3" />}
+                  {underGrowLamp && <ItemSprite emoji="💡" sprite="/sprites/gear/grow_lamp.png" name="Under grow lamp" textSize="text-[9px]" imgSize="w-3 h-3" />}
+                  {underFan && <ItemSprite emoji="💨" sprite="/sprites/gear/fan.png" name="In fan range" textSize="text-[9px]" imgSize="w-3 h-3" />}
+                  {underHarvestBell && <ItemSprite emoji="🔔" sprite="/sprites/gear/harvest_bell.png" name="Auto-harvest active" textSize="text-[9px]" imgSize="w-3 h-3" />}
+                  {underAutoPlanter && <ItemSprite emoji="🌱" sprite="/sprites/gear/auto_planter.png" name="Auto-planter active" textSize="text-[9px]" imgSize="w-3 h-3" />}
+                  {balanceScaleSide === "boost" && <ItemSprite emoji="⚖️" sprite="/sprites/gear/balance_scale.png" name="Balance Scale — 3× boost" textSize="text-[9px]" imgSize="w-3 h-3" />}
+                  {balanceScaleSide === "slow"  && <ItemSprite emoji="⚖️" sprite="/sprites/gear/balance_scale.png" name="Balance Scale — 0.5× slow" textSize="text-[9px]" imgSize="w-3 h-3" />}
+                  {underAegis && <ItemSprite emoji="🛡️" sprite="/sprites/gear/aegis.png" name="Aegis" textSize="text-[9px]" imgSize="w-3 h-3" />}
+                  {plant.infused && <ItemSprite emoji="💉" sprite="/sprites/consumables/infuser.png" name="Infused" textSize="text-[9px]" imgSize="w-3 h-3" />}
+                  {plant.revealed && <ItemSprite emoji="🔎" sprite="/sprites/consumables/magnifying_glass.png" name="Species revealed" textSize="text-[9px]" imgSize="w-3 h-3" />}
                 </div>
               )}
 
@@ -491,21 +513,28 @@ export function ReadOnlyGarden({ grid, farmSize, farmRows }: Props) {
                 );
               })()}
 
-              {/* Top-right: pin badge overrides bloom pulse */}
-              {plant.pinned ? (
-                <span className="absolute -top-1 -right-1 text-sm leading-none" title="Pinned — auto-harvest blocked">
-                  📌
-                </span>
-              ) : isBloomed ? (
-                <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full animate-pulse" />
-              ) : null}
+            </div>
 
-              {/* Mutation emoji */}
-              {settings.plotMutationIndicator && mut && (
-                <span className="absolute -bottom-1 -right-1 text-sm leading-none">
-                  {mut.emoji}
-                </span>
-              )}
+            {/* Top-right: pin badge overrides bloom pulse — on wrapper so pixel-border clip-path doesn't cut them */}
+            {plant.pinned ? (
+              <span className="absolute -top-1 -right-1 leading-none pointer-events-none" title="Pinned — auto-harvest blocked">
+                <ItemSprite emoji="📌" sprite="/sprites/ui/pin.png" name="Pinned" textSize="text-sm" imgSize="w-4 h-4" />
+              </span>
+            ) : isBloomed ? (
+              <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary animate-pulse pointer-events-none" style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }} />
+            ) : null}
+
+            {/* Mutation badge */}
+            {settings.plotMutationIndicator && mut && (
+              <span className="absolute -bottom-1 -right-1 leading-none pointer-events-none">
+                <ItemSprite
+                  emoji={mut.emoji}
+                  sprite={mut.sprite}
+                  name={mut.emoji}
+                  textSize="text-sm" imgSize="w-4 h-4"
+                />
+              </span>
+            )}
             </div>
           );
         })}

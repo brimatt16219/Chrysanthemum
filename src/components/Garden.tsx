@@ -1,5 +1,9 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useGame } from "../store/GameContext";
+import { useSettings } from "../store/SettingsContext";
+import { ItemSprite } from "./ItemSprite";
+
+const PX = { imageRendering: "pixelated" as const };
 import { useGrowthTick } from "../hooks/useGrowthTick";
 import { PlotTile } from "./PlotTile";
 import { SeedPicker } from "./SeedPicker";
@@ -25,11 +29,18 @@ import { edgePlantSeed, edgePlantBloom, edgeUpgradeFarm, edgeHarvest, edgeHarves
 import { getNextUpgrade, getCurrentTier } from "../data/upgrades";
 import { getAffectedCells, GEAR, isGearExpired } from "../data/gear";
 import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
-import type { MutationType } from "../data/flowers";
+import type { MutationType, Rarity, FlowerType } from "../data/flowers";
+import { BulkActionModal } from "./BulkActionModal";
+import type { BulkPoolItem } from "./BulkActionModal";
 import type { GearType, FanDirection } from "../data/gear";
+import { useDailyProgress } from "../hooks/useDailyProgress";
+import { useAchievementStats } from "../hooks/useAchievementStats";
+import type { AchievementStatKey } from "../data/achievements";
+import { audioManager } from "../lib/audioManager";
 
 export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string, mutation?: MutationType, isSeed?: boolean) => void }) {
   const { state, update, perform, getState, awaitHarvests, activeWeather, reloadFromCloud, saveGridNow, user, requestSignIn, pushGenericToast } = useGame();
+  const { settings } = useSettings();
   useGrowthTick(5_000);
 
   const [showGrowthDebug, setShowGrowthDebug] = useState(getDevShowGrowthDebug());
@@ -98,6 +109,11 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
           if (!opt) {
             harvestingPlots.current.delete(key);
           } else {
+            if (harvestedSpeciesId) {
+              audioManager.playSfx(harvestedMutation ? "mutation" : "harvest");
+              onHarvestPopup(harvestedSpeciesId, harvestedMutation);
+              if (harvestedHeirloom) onHarvestPopup(harvestedSpeciesId, undefined, true);
+            }
             perform(
               opt.state,
               async () => {
@@ -108,10 +124,18 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
                 }
               },
               () => {
-                // Show harvest popup for bell auto-harvests just like manual ones
+                // Achievement stats for bell auto-harvests
                 if (harvestedSpeciesId) {
-                  onHarvestPopup(harvestedSpeciesId, harvestedMutation);
-                  if (harvestedHeirloom) onHarvestPopup(harvestedSpeciesId, undefined, true);
+                  const flower = getFlower(harvestedSpeciesId);
+                  if (flower) {
+                    incrementStat("total_harvests");
+                    for (const type of flower.types) {
+                      incrementStat(`harvest_${type}`);
+                    }
+                    if (flower.rarity === "legendary" || flower.rarity === "mythic" || flower.rarity === "prismatic") {
+                      incrementStat(`harvest_${flower.rarity}` as AchievementStatKey);
+                    }
+                  }
                 }
               },
               {
@@ -212,6 +236,8 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
   const [highlightSource, setHighlightSource] = useState<{ row: number; col: number; gearType: GearType } | null>(null);
   /** Pending fan placement — waits for the player to choose a direction */
   const [pendingFan, setPendingFan] = useState<{ gearType: GearType; row: number; col: number } | null>(null);
+  /** Bulk-action modal: "plant" or "harvest" filter sheet, null = closed */
+  const [bulkModal, setBulkModal] = useState<"plant" | "harvest" | null>(null);
 
   // Track plots with a harvest in-flight so we don't open the seed picker
   // before the server has removed the plant from the DB.
@@ -236,6 +262,18 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
     state.farmSize === 5 ? "w-15 h-15 sm:w-16 sm:h-16" :
     "w-11 h-11 sm:w-16 sm:h-16"; // 6+ cols: compact on mobile
 
+  // Close SeedPicker if the selected plot is claimed by the auto-planter (or any
+  // other concurrent write) while the picker is open. Catches the case where
+  // perform() advanced stateRef synchronously before React re-rendered.
+  useEffect(() => {
+    if (!selectedPlot) return;
+    const { row, col } = selectedPlot;
+    const plot = state.grid[row]?.[col];
+    if (plot?.plant || plantingPlots.current.has(`plant-${row}-${col}`)) {
+      setSelectedPlot(null);
+    }
+  }, [state.grid, selectedPlot]);
+
   // Auto-clear highlightSource when the gear tile it's tracking is removed or expires.
   // This runs in Garden (the owner of highlightSource) rather than in PlotTile's useEffect
   // so we never call a parent's setState from a child effect (React 18 concurrent-mode warning).
@@ -258,18 +296,19 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
   }, [highlightSource, state.farmRows, state.farmSize, state.grid]);
 
   // Per-cell gear coverage — used for plant indicator icons
-  const { regularSprinklerKeys, aqueductCoveredCells, mutationSprinklerMap, scarecrowCoveredCells, composterCoveredCells, growLampKeys, fanCoveredCells, harvestBellCoveredCells, lawnmowerCoveredCells, balanceScaleCoveredCells, autoPlantCoveredCells, aegisCoveredCells } =
+  const { regularSprinklerKeys, aqueductCoveredCells, mutationSprinklerMap, scarecrowCoveredCells, composterCoveredCells, growLampKeys, fanCoveredCells, harvestBellCoveredCells, lawnmowerCoveredCells, balanceScaleCoveredCells, balanceScaleFlipCells, autoPlantCoveredCells, aegisCoveredCells } =
     useMemo(() => {
       const regular   = new Set<string>(); // sprinkler_regular only — excludes aqueduct
       const aqueduct  = new Set<string>(); // aqueduct only — displayed separately from sprinkler
-      const mutation  = new Map<string, { emoji: string; label: string }[]>(); // cellKey → unique mutation sprinklers
+      const mutation  = new Map<string, { emoji: string; label: string; sprite?: string }[]>(); // cellKey → unique mutation sprinklers
       const scarecrow = new Set<string>();
       const composter = new Set<string>();
       const growLamp  = new Set<string>();
       const fan        = new Map<string, FanDirection>();
       const harvestBell  = new Set<string>();
       const lawnmower    = new Map<string, FanDirection>();
-      const balanceScale = new Map<string, "boost" | "slow">();
+      const balanceScale     = new Map<string, "boost" | "slow">();
+      const balanceScaleFlip = new Map<string, number>(); // ms until next phase flip
       const autoPlanter  = new Set<string>();
       const aegis        = new Set<string>();
       const now = Date.now();
@@ -285,12 +324,13 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
           } else if (def.passiveSubtype === "aqueduct") {
             keys.forEach((k) => aqueduct.add(k));
           } else if (def.category === "sprinkler_mutation" && def.mutationType) {
-            const emoji = MUTATIONS[def.mutationType as MutationType]?.emoji ?? "✨";
-            const label = def.name;
+            const emoji  = MUTATIONS[def.mutationType as MutationType]?.emoji ?? "✨";
+            const sprite = MUTATIONS[def.mutationType as MutationType]?.sprite;
+            const label  = def.name;
             keys.forEach((k) => {
               const existing = mutation.get(k);
-              if (!existing) mutation.set(k, [{ emoji, label }]);
-              else if (!existing.some((e) => e.emoji === emoji)) existing.push({ emoji, label });
+              if (!existing) mutation.set(k, [{ emoji, label, sprite }]);
+              else if (!existing.some((e) => e.emoji === emoji)) existing.push({ emoji, label, sprite });
             });
           } else if (def.passiveSubtype === "scarecrow") {
             keys.forEach((k) => scarecrow.add(k));
@@ -310,12 +350,16 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
             // Must use placedAt-relative phase to match gameStore's growth computation.
             // Wall-clock phase was wrong: it drifted from the actual effect whenever the
             // scale was placed mid-hour, causing boost/slow labels to be flipped (#221).
-            const phase  = Math.floor((now - (g.placedAt ?? 0)) / 3_600_000) % 2;
+            const HOUR_MS     = 3_600_000;
+            const elapsed     = now - (g.placedAt ?? 0);
+            const phase       = Math.floor(elapsed / HOUR_MS) % 2;
+            const msUntilFlip = HOUR_MS - (elapsed % HOUR_MS);
             affected.forEach(([r, c]) => {
               const dc      = c - ci;
               const inLeft  = dc < 0;
               const isBoost = phase === 0 ? inLeft : !inLeft;
               balanceScale.set(`${r}-${c}`, isBoost ? "boost" : "slow");
+              balanceScaleFlip.set(`${r}-${c}`, msUntilFlip);
             });
           } else if (def.passiveSubtype === "auto_planter") {
             keys.forEach((k) => autoPlanter.add(k));
@@ -324,7 +368,7 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
           }
         }
       }
-      return { regularSprinklerKeys: regular, aqueductCoveredCells: aqueduct, mutationSprinklerMap: mutation, scarecrowCoveredCells: scarecrow, composterCoveredCells: composter, growLampKeys: growLamp, fanCoveredCells: fan, harvestBellCoveredCells: harvestBell, lawnmowerCoveredCells: lawnmower, balanceScaleCoveredCells: balanceScale, autoPlantCoveredCells: autoPlanter, aegisCoveredCells: aegis };
+      return { regularSprinklerKeys: regular, aqueductCoveredCells: aqueduct, mutationSprinklerMap: mutation, scarecrowCoveredCells: scarecrow, composterCoveredCells: composter, growLampKeys: growLamp, fanCoveredCells: fan, harvestBellCoveredCells: harvestBell, lawnmowerCoveredCells: lawnmower, balanceScaleCoveredCells: balanceScale, balanceScaleFlipCells: balanceScaleFlip, autoPlantCoveredCells: autoPlanter, aegisCoveredCells: aegis };
     }, [state.grid, state.farmRows, state.farmSize]);
 
   // Plant cells adjacent to active cropsticks, mapped to the direction their
@@ -373,9 +417,32 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
     return map;
   }, [state.grid]);
 
+  const { trackProgress }  = useDailyProgress();
+  const { incrementStat }  = useAchievementStats();
+
+  // Maps a GearType to its "placed_*" achievement stat key group.
+  function gearTypeToPlacedGroup(gearType: string): string | null {
+    const overrides: Record<string, string> = {
+      sprinkler_flame:        "heater",
+      sprinkler_frost:        "cooler",
+      sprinkler_lightning:    "generator",
+      sprinkler_lunar:        "crystal_ball",
+      sprinkler_midas:        "golden_veil",
+      sprinkler_prism:        "kaleidoscope",
+      auto_planter_prismatic: "auto_planter",
+      cropsticks:             "cropsticks",
+    };
+    if (overrides[gearType]) return overrides[gearType];
+    return gearType.replace(/_(?:prismatic|exalted|mythic|legendary|rare|uncommon)$/, "") || null;
+  }
+
   function handlePlotClick(row: number, col: number) {
     const plot = state.grid[row][col];
-    if (plot.plant || harvestingPlots.current.has(`${row}-${col}`)) return;
+    if (
+      plot.plant ||
+      harvestingPlots.current.has(`${row}-${col}`) ||
+      plantingPlots.current.has(`plant-${row}-${col}`)
+    ) return;
 
     // Guest guard — guests have empty inventories, so opening the SeedPicker
     // would just show "Nothing to place" (#148). Surface the sign-in prompt
@@ -388,9 +455,17 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
   function handleSeedSelect(speciesId: string) {
     if (!selectedPlot) return;
     const { row, col } = selectedPlot;
-    const optimistic = plantSeed(state, row, col, speciesId);
+    // Use getState() (the always-current ref) rather than the React `state` closure,
+    // which may be stale if the auto-planter advanced stateRef between renders.
+    const optimistic = plantSeed(getState(), row, col, speciesId);
     if (optimistic) {
       const sp = getFlower(speciesId);
+      const discovered = state.discovered.includes(speciesId);
+      const emoji  = discovered && sp ? sp.emoji.seed : "❓";
+      const label  = discovered && sp ? `${sp.name} Seed` : "??? Seed";
+      const sprite = discovered && sp ? "/sprites/flowers/seed.png" : "/sprites/ui/unknown.png";
+      audioManager.playSfx("plant");
+      pushGenericToast(`loss:seed:${speciesId}`, emoji, label, "text-green-400", "loss", 1, sprite);
       perform(
         optimistic,
         async () => {
@@ -410,12 +485,7 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
             throw e;
           }
         },
-        () => {
-          const discovered = getState().discovered.includes(speciesId);
-          const emoji = discovered && sp ? sp.emoji.seed : "❓";
-          const label = discovered && sp ? `${sp.name} Seed` : "??? Seed";
-          pushGenericToast(`loss:seed:${speciesId}`, emoji, label, "text-green-400", "loss");
-        },
+        () => { incrementStat("seeds_planted"); },
       );
     }
     setSelectedPlot(null);
@@ -424,15 +494,17 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
   function handleBloomSelect(speciesId: string, mutation?: string) {
     if (!selectedPlot) return;
     const { row, col } = selectedPlot;
-    const optimistic = plantBloom(state, row, col, speciesId, mutation);
+    // Use getState() (the always-current ref) rather than the React `state` closure,
+    // which may be stale if the auto-planter advanced stateRef between renders.
+    const optimistic = plantBloom(getState(), row, col, speciesId, mutation);
     if (optimistic) {
       const sp = getFlower(speciesId);
+      audioManager.playSfx("plant");
+      if (sp) pushGenericToast(`loss:bloom:${speciesId}:${mutation ?? ""}`, sp.emoji.bloom, sp.name, RARITY_CONFIG[sp.rarity].color, "loss", 1, sp.sprite?.bloom);
       perform(
         optimistic,
         () => edgePlantBloom(row, col, speciesId, mutation),
-        () => {
-          if (sp) pushGenericToast(`loss:bloom:${speciesId}:${mutation ?? ""}`, sp.emoji.bloom, sp.name, RARITY_CONFIG[sp.rarity].color, "loss");
-        },
+        () => { incrementStat("seeds_planted"); },
       );
     }
     setSelectedPlot(null);
@@ -465,7 +537,11 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
           throw e;
         }
       },
-      () => pushGenericToast(`loss:gear:${gearType}`, gearDef.emoji, gearDef.name, RARITY_CONFIG[gearDef.rarity].color, "loss"),
+      () => {
+        pushGenericToast(`loss:gear:${gearType}`, gearDef.emoji, gearDef.name, RARITY_CONFIG[gearDef.rarity].color, "loss", 1, gearDef.sprite);
+        const group = gearTypeToPlacedGroup(gearType);
+        if (group) incrementStat(`placed_${group}` as AchievementStatKey);
+      },
       {
         rollback: (cur) => ({
           ...cur,
@@ -488,7 +564,41 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
     if (optimistic) perform(optimistic, () => edgeUpgradeFarm());
   }
 
-  function handleCollectAll() {
+  // ── Bulk-action modal item pools ──────────────────────────────────────────
+  // bloomedPool: one entry per unique species currently at bloom stage.
+  // seedPool:    one entry per seed species in inventory with quantity > 0.
+  // Both are used by BulkActionModal to drive its rarity/type filter chips.
+
+  const bloomedPool = useMemo<BulkPoolItem[]>(() => {
+    const map = new Map<string, BulkPoolItem>();
+    for (let ri = 0; ri < state.grid.length; ri++) {
+      for (let ci = 0; ci < state.grid[ri].length; ci++) {
+        const p = state.grid[ri][ci];
+        if (!p.plant || crossbreedSourceCells.has(`${ri}-${ci}`)) continue;
+        if (getCurrentStage(p.plant, Date.now(), activeWeather) !== "bloom") continue;
+        const flower = getFlower(p.plant.speciesId);
+        if (!flower) continue;
+        const existing = map.get(p.plant.speciesId);
+        if (existing) existing.count++;
+        else map.set(p.plant.speciesId, { speciesId: p.plant.speciesId, flower, count: 1 });
+      }
+    }
+    return Array.from(map.values());
+  }, [state.grid, activeWeather, crossbreedSourceCells]);
+
+  const seedPool = useMemo<BulkPoolItem[]>(() =>
+    state.inventory.flatMap((i) => {
+      if (!i.isSeed || i.quantity <= 0) return [];
+      const flower = getFlower(i.speciesId);
+      if (!flower) return [];
+      return [{ speciesId: i.speciesId, flower, count: i.quantity }];
+    }),
+    [state.inventory],
+  );
+
+  // ── Bulk handlers (accept optional rarity/type filter from the modal) ──────
+
+  function handleCollectAll(filter?: { rarities: Rarity[]; types: FlowerType[] }) {
     const currentState = getState();
 
     // Collect all bloomed plots and their harvest metadata upfront.
@@ -504,6 +614,14 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
         if (!p.plant || crossbreedSourceCells.has(`${ri}-${ci}`)) continue;
         if (getCurrentStage(p.plant, Date.now(), activeWeather) !== "bloom") continue;
         if (harvestingPlots.current.has(`${ri}-${ci}`)) continue;
+
+        // Apply rarity / type filter from the BulkActionModal (empty = all)
+        if (filter && (filter.rarities.length > 0 || filter.types.length > 0)) {
+          const flower = getFlower(p.plant.speciesId);
+          if (!flower) continue;
+          if (filter.rarities.length > 0 && !filter.rarities.includes(flower.rarity)) continue;
+          if (filter.types.length > 0 && !flower.types.some((t) => filter.types.includes(t))) continue;
+        }
 
         const next = harvestPlant(optState, ri, ci, activeWeather);
         if (!next) continue;
@@ -525,6 +643,7 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
       onHarvestPopup(speciesId, mutation);
       if (heirloomActive) onHarvestPopup(speciesId, undefined, true);
     }
+    audioManager.playSfx(toHarvest.some(({ mutation }) => !!mutation) ? "mutation" : "harvest");
 
     const plots = toHarvest.map(({ row, col }) => ({ row, col }));
 
@@ -537,7 +656,29 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
           for (const { row, col } of plots) harvestingPlots.current.delete(`${row}-${col}`);
         }
       },
-      undefined,
+      () => {
+        void trackProgress("harvest", plots.length);
+        // Aggregate per-type and per-rarity counts across all harvested plants
+        const typeCounts: Record<string, number>   = {};
+        const rarityCounts: Record<string, number> = {};
+        for (const { speciesId } of toHarvest) {
+          const flower = getFlower(speciesId);
+          if (!flower) continue;
+          for (const type of flower.types) {
+            typeCounts[type] = (typeCounts[type] ?? 0) + 1;
+          }
+          if (flower.rarity === "legendary" || flower.rarity === "mythic" || flower.rarity === "prismatic") {
+            rarityCounts[flower.rarity] = (rarityCounts[flower.rarity] ?? 0) + 1;
+          }
+        }
+        incrementStat("total_harvests", toHarvest.length);
+        for (const [type, count] of Object.entries(typeCounts)) {
+          incrementStat(`harvest_${type}` as AchievementStatKey, count);
+        }
+        for (const [rarity, count] of Object.entries(rarityCounts)) {
+          incrementStat(`harvest_${rarity}` as AchievementStatKey, count);
+        }
+      },
       {
         serialize: true,
         rollback: () => currentState,
@@ -545,11 +686,14 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
     );
   }
 
-  async function handlePlantAll() {
+  async function handlePlantAll(filter?: { rarities: Rarity[]; types: FlowerType[] }) {
     await awaitHarvests();
 
     const currentState = getState();
-    const optimistic = plantAll(currentState);
+    const optimistic = plantAll(
+      currentState,
+      filter && (filter.rarities.length > 0 || filter.types.length > 0) ? filter : undefined,
+    );
     if (optimistic === currentState) return;
 
     const planted: { row: number; col: number; speciesId: string }[] = [];
@@ -567,9 +711,10 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
     for (const { speciesId } of planted) {
       const sp = getFlower(speciesId);
       const disc  = discoveredSet.has(speciesId);
-      const emoji = disc && sp ? sp.emoji.seed : "❓";
-      const label = disc && sp ? `${sp.name} Seed` : "??? Seed";
-      pushGenericToast(`loss:seed:${speciesId}`, emoji, label, "text-green-400", "loss");
+      const emoji  = disc && sp ? sp.emoji.seed : "❓";
+      const label  = disc && sp ? `${sp.name} Seed` : "??? Seed";
+      const sprite = disc && sp ? "/sprites/flowers/seed.png" : "/sprites/ui/unknown.png";
+      pushGenericToast(`loss:seed:${speciesId}`, emoji, label, "text-green-400", "loss", 1, sprite);
     }
 
     perform(
@@ -582,7 +727,7 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
           throw e;
         }
       },
-      undefined,
+      () => { incrementStat("seeds_planted", planted.length); },
       {
         serialize: true,
         rollback: () => currentState,
@@ -614,7 +759,7 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
                   {bloomedCount} flower{bloomedCount > 1 ? "s" : ""} ready!
                 </p>
                 <button
-                  onClick={handleCollectAll}
+                  onClick={() => setBulkModal("harvest")}
                   className="px-3 py-1 rounded-full text-xs font-semibold bg-primary/20 border border-primary/50 text-primary hover:bg-primary/30 transition-all"
                 >
                   Collect All
@@ -623,10 +768,16 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
             )}
             {emptyPlotCount > 0 && availSeedCount > 0 && (
               <button
-                onClick={handlePlantAll}
+                onClick={() => setBulkModal("plant")}
                 className="px-3 py-1 rounded-full text-xs font-semibold bg-card border border-border text-muted-foreground hover:border-primary/50 hover:text-primary transition-all"
               >
-                🌱 Plant All
+                <span className="flex items-center gap-1">
+                  {settings.useSprites
+                    ? <img src="/sprites/flowers/seed.png" alt="🌱" className="w-3.5 h-3.5 object-contain" style={PX} />
+                    : <span>🌱</span>
+                  }
+                  Plant All
+                </span>
               </button>
             )}
           </div>
@@ -670,6 +821,7 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
                 isUnderLawnmower={lawnmowerCoveredCells.has(`${row}-${col}`)}
                 lawnmowerDirection={lawnmowerCoveredCells.get(`${row}-${col}`)}
                 balanceScaleSide={balanceScaleCoveredCells.get(`${row}-${col}`)}
+                balanceScaleFlipMs={balanceScaleFlipCells.get(`${row}-${col}`)}
                 isUnderAutoPlanter={autoPlantCoveredCells.has(`${row}-${col}`)}
                 isUnderAegis={aegisCoveredCells.has(`${row}-${col}`)}
                 crossbreedDirection={crossbreedSourceCells.get(`${row}-${col}`)}
@@ -682,6 +834,22 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
             );
           })}
         </div>
+
+        {/* Bulk plant / harvest filter modal */}
+        {bulkModal && (
+          <BulkActionModal
+            mode={bulkModal}
+            items={bulkModal === "harvest" ? bloomedPool : seedPool}
+            emptyPlots={bulkModal === "plant" ? emptyPlotCount : undefined}
+            onClose={() => setBulkModal(null)}
+            onExecute={(rarities, types) => {
+              const mode = bulkModal;
+              setBulkModal(null);
+              if (mode === "harvest") handleCollectAll({ rarities, types });
+              else void handlePlantAll({ rarities, types });
+            }}
+          />
+        )}
 
         {/* Seed + Gear picker modal */}
         {selectedPlot && (
@@ -735,7 +903,10 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
               }
             `}
           >
-            Upgrade to {nextUpgrade.label} — {nextUpgrade.cost.toLocaleString()} 🟡
+            <span className="flex items-center gap-1.5">
+              {`Upgrade to ${nextUpgrade.label} — ${nextUpgrade.cost.toLocaleString()}`}
+              <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-sm" imgSize="w-3.5 h-3.5" />
+            </span>
           </button>
           <p className="text-xs text-muted-foreground">{nextUpgrade.description}</p>
         </div>

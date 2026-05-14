@@ -1,5 +1,8 @@
 import { useState } from "react";
+import { useAchievementStats } from "../hooks/useAchievementStats";
 import { useGame } from "../store/GameContext";
+import { ItemSprite } from "./ItemSprite";
+import { FlowerSprite } from "./FlowerSprite";
 import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
 import type { MutationType } from "../data/flowers";
 import { FERTILIZERS } from "../data/upgrades";
@@ -14,6 +17,7 @@ import {
   edgeMarketplaceCreateGearListing,
   edgeMarketplaceCreateConsumableListing,
 } from "../lib/edgeFunctions";
+import { useDailyProgress } from "../hooks/useDailyProgress";
 
 const LISTING_FEE_PCT = 0.05;
 
@@ -51,6 +55,9 @@ export function CreateListingModal({ onClose, onListed }: Props) {
   const gearItems = state.gearInventory
     .filter((g) => g.quantity > 0)
     .map((g) => ({ gearType: g.gearType as GearType, quantity: g.quantity }));
+
+  const { trackProgress } = useDailyProgress();
+  const { incrementStat } = useAchievementStats();
 
   function switchTab(tab: Tab) {
     setActiveTab(tab);
@@ -98,6 +105,8 @@ export function CreateListingModal({ onClose, onListed }: Props) {
         );
         update({ ...state, coins: result.coins, inventory: result.inventory });
       }
+      void trackProgress("marketplace_list");
+      incrementStat("marketplace_sales");
       onListed();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to create listing");
@@ -113,21 +122,21 @@ export function CreateListingModal({ onClose, onListed }: Props) {
       const name = item.kind === "fertilizer"
         ? FERTILIZERS[item.type].name
         : CONSUMABLE_RECIPE_MAP[item.id as ConsumableId]?.name ?? item.id;
-      btnLabel = `List ${name} for ${formatCoins(askPrice)} 🟡`;
+      btnLabel = `List ${name} for ${formatCoins(askPrice)}`;
     } else if (activeTab === "gear") {
       const name = GEAR_CATALOG[(selectedItem as { gearType: GearType }).gearType]?.name ?? "item";
-      btnLabel = `List ${name} for ${formatCoins(askPrice)} 🟡`;
+      btnLabel = `List ${name} for ${formatCoins(askPrice)}`;
     } else {
       const inv = selectedItem as { speciesId: string; isSeed?: boolean };
       const name = getFlower(inv.speciesId)?.name ?? "item";
-      btnLabel = `List ${name} for ${formatCoins(askPrice)} 🟡`;
+      btnLabel = `List ${name} for ${formatCoins(askPrice)}`;
     }
   }
 
-  const TAB_CONFIG: { id: Tab; emoji: string; count: number }[] = [
-    { id: "flowers",     emoji: "🌸", count: flowers.length     },
-    { id: "consumables", emoji: "🧪", count: consumables.length },
-    { id: "gear",        emoji: "⚙️", count: gearItems.length   },
+  const TAB_CONFIG: { id: Tab; emoji: string; sprite: string; count: number }[] = [
+    { id: "flowers",     emoji: "🌸", sprite: "/sprites/flowers/bloom.png",  count: flowers.length     },
+    { id: "consumables", emoji: "🧪", sprite: "/sprites/ui/consumables.png", count: consumables.length },
+    { id: "gear",        emoji: "⚙️", sprite: "/sprites/ui/gear.png",        count: gearItems.length   },
   ];
 
   return (
@@ -158,18 +167,18 @@ export function CreateListingModal({ onClose, onListed }: Props) {
 
         {/* ── Tabs — always visible ── */}
         <div className="flex gap-1.5">
-          {TAB_CONFIG.map(({ id, emoji, count }) => (
+          {TAB_CONFIG.map(({ id, emoji, sprite, count }) => (
             <button
               key={id}
               onClick={() => switchTab(id)}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all text-center ${
+              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all text-center inline-flex items-center justify-center gap-1 ${
                 activeTab === id
                   ? "bg-primary text-primary-foreground"
                   : "bg-background border border-border text-muted-foreground hover:border-primary/40"
               }`}
             >
-              {emoji}
-              <span className={`ml-1 font-mono text-[10px] ${activeTab === id ? "opacity-75" : "opacity-50"}`}>
+              <ItemSprite emoji={emoji} sprite={sprite} name={id} textSize="text-base" imgSize="w-4 h-4" />
+              <span className={`font-mono text-[10px] ${activeTab === id ? "opacity-75" : "opacity-50"}`}>
                 ({count})
               </span>
             </button>
@@ -179,9 +188,12 @@ export function CreateListingModal({ onClose, onListed }: Props) {
         {/* ── Item list — capped height, independently scrollable ── */}
         {tabItems.length === 0 ? (
           <div className="min-h-[18vh] flex flex-col items-center justify-center space-y-1">
-            <p className="text-2xl">
-              {activeTab === "flowers" ? "🌸" : activeTab === "consumables" ? "🧪" : "⚙️"}
-            </p>
+            <ItemSprite
+              emoji={activeTab === "flowers" ? "🌸" : activeTab === "consumables" ? "🧪" : "⚙️"}
+              sprite={activeTab === "flowers" ? "/sprites/flowers/bloom.png" : activeTab === "consumables" ? "/sprites/ui/consumables.png" : "/sprites/ui/gear.png"}
+              name="empty"
+              textSize="text-2xl" imgSize="w-8 h-8"
+            />
             <p className="text-sm text-muted-foreground">
               {activeTab === "flowers"     ? "No flowers to list."
                : activeTab === "consumables" ? "No consumables to list."
@@ -202,14 +214,14 @@ export function CreateListingModal({ onClose, onListed }: Props) {
                 return (
                   <button key={`fert-${item.type}`} onClick={() => { setSelectedIdx(selected ? null : idx); setError(""); }}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-left ${selected ? "border-primary bg-primary/10" : "border-border bg-background hover:border-primary/40"}`}>
-                    <span className="text-2xl flex-shrink-0">{def.emoji}</span>
+                    <ItemSprite emoji={def.emoji} sprite={def.sprite} name={def.name} textSize="text-2xl" imgSize="w-7 h-7" className="flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm font-medium ${def.color}`}>{def.name}</p>
                       <p className="text-xs text-muted-foreground font-mono">Fertilizer · {def.speedMultiplier}× speed</p>
                     </div>
                     <div className="text-right flex-shrink-0">
                       <p className="text-xs text-muted-foreground">×{item.quantity}</p>
-                      <p className="text-[10px] text-muted-foreground/60">{formatCoins(def.shopPrice)} 🟡 shop</p>
+                      <p className="text-[10px] text-muted-foreground/60 inline-flex items-center gap-0.5">{formatCoins(def.shopPrice)} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /> shop</p>
                     </div>
                   </button>
                 );
@@ -219,7 +231,7 @@ export function CreateListingModal({ onClose, onListed }: Props) {
                 return (
                   <button key={`consumable-${item.id}`} onClick={() => { setSelectedIdx(selected ? null : idx); setError(""); }}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-left ${selected ? "border-primary bg-primary/10" : "border-border bg-background hover:border-primary/40"}`}>
-                    <span className="text-2xl flex-shrink-0">{recipe?.emoji ?? "🧪"}</span>
+                    <ItemSprite emoji={recipe?.emoji ?? "🧪"} sprite={recipe?.sprite} name={recipe?.name ?? ""} textSize="text-2xl" imgSize="w-7 h-7" className="flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium">{recipe?.name ?? item.id}</p>
                       <p className={`text-xs font-mono ${rarityDef?.color ?? "text-muted-foreground"}`}>{rarityDef?.label ?? recipe?.rarity}</p>
@@ -240,14 +252,14 @@ export function CreateListingModal({ onClose, onListed }: Props) {
               return (
                 <button key={`gear-${item.gearType}`} onClick={() => { setSelectedIdx(selected ? null : idx); setError(""); }}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-left ${selected ? "border-primary bg-primary/10" : "border-border bg-background hover:border-primary/40"}`}>
-                  <span className="text-2xl flex-shrink-0">{def?.emoji ?? "⚙️"}</span>
+                  <ItemSprite emoji={def?.emoji ?? "⚙️"} sprite={def?.sprite} name={def?.name ?? ""} textSize="text-2xl" imgSize="w-7 h-7" className="flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium">{def?.name ?? item.gearType}</p>
                     <p className={`text-xs font-mono ${rarity?.color}`}>{rarity?.label}</p>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className="text-xs text-muted-foreground">×{item.quantity}</p>
-                    {def && <p className="text-[10px] text-muted-foreground/60">{formatCoins(def.shopPrice)} 🟡 shop</p>}
+                    {def && <p className="text-[10px] text-muted-foreground/60 inline-flex items-center gap-0.5">{formatCoins(def.shopPrice)} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /> shop</p>}
                   </div>
                 </button>
               );
@@ -273,27 +285,26 @@ export function CreateListingModal({ onClose, onListed }: Props) {
                     }
                   `}
                 >
-                  <div className="relative flex-shrink-0">
-                    <span className="text-2xl">
-                      {item.isSeed ? (species.emoji.seed ?? "🌱") : species.emoji.bloom}
-                    </span>
-                    {!item.isSeed && mut && (
-                      <span className="absolute -top-1 -right-1 text-xs">{mut.emoji}</span>
-                    )}
-                  </div>
+                  <FlowerSprite
+                    species={species}
+                    stage={item.isSeed ? "seed" : "bloom"}
+                    textSize="text-2xl"
+                    imgSize="w-7 h-7"
+                    className={!item.isSeed && mut ? mut.vfxClass : ""}
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <p className="text-sm font-medium truncate">{species.name}</p>
                       {item.isSeed
                         ? <span className="text-xs font-mono text-muted-foreground">Seed</span>
-                        : mut && <span className={`text-xs font-mono ${mut.color}`}>{mut.name}</span>
+                        : mut && <span className={`text-xs font-mono ${mut.color} inline-flex items-center gap-0.5`}><ItemSprite emoji={mut.emoji} sprite={mut.sprite} name={mut.emoji} textSize="text-xs" imgSize="w-3 h-3" />{mut.name}</span>
                       }
                     </div>
                     <p className={`text-xs font-mono ${rarity?.color}`}>{rarity?.label}</p>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className="text-xs text-muted-foreground">×{item.quantity}</p>
-                    <p className="text-[10px] text-muted-foreground/60">{formatCoins(Math.floor(species.sellValue * (mut?.valueMultiplier ?? 1)))} 🟡 {mut ? "sell value" : "base"}</p>
+                    <p className="text-[10px] text-muted-foreground/60 inline-flex items-center gap-0.5">{formatCoins(Math.floor(species.sellValue * (mut?.valueMultiplier ?? 1)))} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /> {mut ? "sell value" : "base"}</p>
                   </div>
                 </button>
               );
@@ -306,8 +317,8 @@ export function CreateListingModal({ onClose, onListed }: Props) {
 
           {/* Ask price */}
           <div className="space-y-1.5">
-            <p className="text-xs font-mono text-muted-foreground uppercase tracking-wide">
-              Ask price (🟡 coins)
+            <p className="text-xs font-mono text-muted-foreground uppercase tracking-wide inline-flex items-center gap-0.5">
+              Ask price (<ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3 h-3" /> coins)
             </p>
             <input
               type="number"
@@ -324,18 +335,18 @@ export function CreateListingModal({ onClose, onListed }: Props) {
             <div className="bg-background border border-border rounded-xl px-3 py-2.5 space-y-1 text-xs font-mono">
               <div className="flex justify-between text-muted-foreground">
                 <span>Ask price</span>
-                <span>{formatCoins(askPrice)} 🟡</span>
+                <span className="inline-flex items-center gap-0.5">{formatCoins(askPrice)} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /></span>
               </div>
               <div className="flex justify-between text-muted-foreground">
                 <span>Listing fee (5%)</span>
-                <span className="text-red-400">−{formatCoins(fee)} 🟡</span>
+                <span className="text-red-400 inline-flex items-center gap-0.5">−{formatCoins(fee)} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /></span>
               </div>
               <div className="border-t border-border/60 pt-1 flex justify-between font-bold">
                 <span>You earn (on sale)</span>
-                <span className="text-primary">{formatCoins(askPrice)} 🟡</span>
+                <span className="text-primary inline-flex items-center gap-0.5">{formatCoins(askPrice)} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /></span>
               </div>
-              <p className="text-[10px] text-muted-foreground/60 text-right">
-                Fee of {formatCoins(fee)} 🟡 charged now · non-refundable
+              <p className="text-[10px] text-muted-foreground/60 text-right inline-flex items-center gap-0.5 justify-end">
+                Fee of {formatCoins(fee)} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /> charged now · non-refundable
               </p>
             </div>
           )}
@@ -348,12 +359,17 @@ export function CreateListingModal({ onClose, onListed }: Props) {
             disabled={selectedIdx === null || !validPrice || listing || state.coins < fee}
             className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-40 text-center"
           >
-            {listing ? "Listing..." : btnLabel}
+            {listing ? "Listing..." : (
+              <span className="inline-flex items-center justify-center gap-1.5">
+                {btnLabel}
+                {selectedItem && validPrice && <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-sm" imgSize="w-4 h-4" />}
+              </span>
+            )}
           </button>
 
           {selectedIdx !== null && validPrice && state.coins < fee && (
             <p className="text-xs text-red-400 font-mono text-center">
-              Not enough coins for the listing fee ({formatCoins(fee)} 🟡 needed)
+              <span className="inline-flex items-center gap-0.5">Not enough coins for the listing fee ({formatCoins(fee)} <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" /> needed)</span>
             </p>
           )}
         </div>

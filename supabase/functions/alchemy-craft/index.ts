@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { initSentry, Sentry } from "../_shared/sentry.ts";
+import { awardXp, DISCOVERY_XP_BY_RARITY } from "../_shared/gardenerLevel.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin":  "*",
@@ -41,10 +42,10 @@ const CONSUMABLE_RECIPES: ConsumableRecipeDef[] = [
   { id: "bloom_burst_5", cost: U("bloom_burst_4", 2) },
   // Heirloom Charm
   { id: "heirloom_charm_1", cost: E([{ type: "fairy", amount: 8 }, { type: "stellar", amount: 4 }, { type: "arcane", amount: 4 }]) },
-  { id: "heirloom_charm_2", cost: U("heirloom_charm_1", 2) },
-  { id: "heirloom_charm_3", cost: U("heirloom_charm_2", 2) },
-  { id: "heirloom_charm_4", cost: U("heirloom_charm_3", 2) },
-  { id: "heirloom_charm_5", cost: U("heirloom_charm_4", 2) },
+  { id: "heirloom_charm_2", cost: U("heirloom_charm_1", 3) },
+  { id: "heirloom_charm_3", cost: U("heirloom_charm_2", 3) },
+  { id: "heirloom_charm_4", cost: U("heirloom_charm_3", 3) },
+  { id: "heirloom_charm_5", cost: U("heirloom_charm_4", 3) },
   // Eclipse Tonic
   { id: "eclipse_tonic_1", cost: E([{ type: "solar", amount: 4 }, { type: "lunar", amount: 4 }]) },
   { id: "eclipse_tonic_2", cost: U("eclipse_tonic_1", 2) },
@@ -125,10 +126,10 @@ const CONSUMABLE_RECIPES: ConsumableRecipeDef[] = [
   { id: "garden_pin",      cost: E([{ type: "arcane", amount: 4 }, { type: "fairy",   amount: 4 }]) },
   // Generic Seed Pouches (I–V)
   { id: "seed_pouch_1", cost: E([{ type: "universal", amount: 1 }]) },
-  { id: "seed_pouch_2", cost: U("seed_pouch_1", 2) },
-  { id: "seed_pouch_3", cost: U("seed_pouch_2", 2) },
-  { id: "seed_pouch_4", cost: U("seed_pouch_3", 2) },
-  { id: "seed_pouch_5", cost: U("seed_pouch_4", 2) },
+  { id: "seed_pouch_2", cost: U("seed_pouch_1", 3) },
+  { id: "seed_pouch_3", cost: U("seed_pouch_2", 3) },
+  { id: "seed_pouch_4", cost: U("seed_pouch_3", 3) },
+  { id: "seed_pouch_5", cost: U("seed_pouch_4", 3) },
 ];
 
 // Typed Seed Pouches (12 element types × 5 tiers = 60 recipes)
@@ -138,7 +139,7 @@ for (const t of ["blaze","tide","grove","frost","storm","lunar","solar","fairy",
       id: `seed_pouch_${t}_${tier}`,
       cost: tier === 1
         ? E([{ type: t, amount: 16 }])
-        : U(`seed_pouch_${t}_${tier - 1}`, 2),
+        : U(`seed_pouch_${t}_${tier - 1}`, 3),
     });
   }
 }
@@ -146,11 +147,11 @@ for (const t of ["blaze","tide","grove","frost","storm","lunar","solar","fairy",
 const CONSUMABLE_RECIPE_MAP = Object.fromEntries(CONSUMABLE_RECIPES.map((r) => [r.id, r]));
 
 const ATTUNEMENT_RECIPES: AttunementRecipeDef[] = [
-  { tier: 1, rarity: "rare",      cost: { kind: "essence",    amounts: [{ type: "universal", amount: 2 }] } },
-  { tier: 2, rarity: "legendary", cost: { kind: "attunement", tier: 1, quantity: 2 } },
-  { tier: 3, rarity: "mythic",    cost: { kind: "attunement", tier: 2, quantity: 2 } },
-  { tier: 4, rarity: "exalted",   cost: { kind: "attunement", tier: 3, quantity: 2 } },
-  { tier: 5, rarity: "prismatic", cost: { kind: "attunement", tier: 4, quantity: 2 } },
+  { tier: 1, rarity: "rare",      cost: { kind: "essence",    amounts: [{ type: "universal", amount: 3 }] } },
+  { tier: 2, rarity: "legendary", cost: { kind: "attunement", tier: 1, quantity: 3 } },
+  { tier: 3, rarity: "mythic",    cost: { kind: "attunement", tier: 2, quantity: 3 } },
+  { tier: 4, rarity: "exalted",   cost: { kind: "attunement", tier: 3, quantity: 3 } },
+  { tier: 5, rarity: "prismatic", cost: { kind: "attunement", tier: 4, quantity: 3 } },
 ];
 
 // ── Handlers ─────────────────────────────────────────────────────────────────
@@ -198,7 +199,7 @@ Deno.serve(async (req: Request) => {
       supabaseAdmin.auth.getUser(token),
       supabaseAdmin
         .from("game_saves")
-        .select("essences, consumables, infusers, updated_at") // "infusers" is the DB column name for attunements
+        .select("essences, consumables, infusers, gardener_level, gardener_xp, updated_at") // "infusers" is the DB column name for attunements
         .eq("user_id", userId)
         .single(),
     ]);
@@ -216,6 +217,8 @@ Deno.serve(async (req: Request) => {
 
     const save          = saveResult.data;
     const priorUpdatedAt = save.updated_at as string;
+    const gardenerLevel = (save.gardener_level as number) ?? 1;
+    const gardenerXp    = (save.gardener_xp    as number) ?? 0;
 
     let essences:    { type: string; amount: number }[]    = (save.essences    ?? []) as { type: string; amount: number }[];
     let consumables: { id: string;   quantity: number }[]  = (save.consumables ?? []) as { id: string;   quantity: number }[];
@@ -314,10 +317,22 @@ Deno.serve(async (req: Request) => {
         : [...attunements, { rarity: recipe.rarity, quantity: 1 }];
     }
 
+    const xpGained = craftType === "attunement"
+      ? (DISCOVERY_XP_BY_RARITY[ATTUNEMENT_RECIPES.find((r) => r.tier === parseInt(id!, 10))?.rarity ?? ""] ?? 0)
+      : 25;
+    const { level: newLevel, xp: newXp, leveledUp, levelsGained } = awardXp(gardenerLevel, gardenerXp, xpGained);
+
     // ── Write ────────────────────────────────────────────────────────────────
     const { data: updateData, error: updateError } = await supabaseAdmin
       .from("game_saves")
-      .update({ essences, consumables, infusers: attunements, updated_at: new Date().toISOString() })
+      .update({
+        essences,
+        consumables,
+        infusers:       attunements,
+        gardener_level: newLevel,
+        gardener_xp:    newXp,
+        updated_at:     new Date().toISOString(),
+      })
       .eq("user_id", userId)
       .eq("updated_at", priorUpdatedAt)
       .select("updated_at")
@@ -337,7 +352,18 @@ Deno.serve(async (req: Request) => {
     });
 
     return new Response(
-      JSON.stringify({ ok: true, essences, consumables, infusers: attunements, serverUpdatedAt: updateData.updated_at }),
+      JSON.stringify({
+        ok:              true,
+        essences,
+        consumables,
+        infusers:        attunements,
+        xpGained,
+        gardenerLevel:   newLevel,
+        gardenerXp:      newXp,
+        leveledUp,
+        levelsGained,
+        serverUpdatedAt: updateData.updated_at,
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {

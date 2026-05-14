@@ -1,5 +1,10 @@
 import { supabase } from "../lib/supabase";
-import type { GameState } from "./gameStore";
+import type { GameState, EventEntry, EventProgress } from "./gameStore";
+import { pruneExpiredGear } from "./gameStore";
+import { awardXp, DISCOVERY_XP_BY_RARITY, MUTATION_DISCOVERY_BONUS } from "../data/gardenerLevel";
+import { getFlower } from "../data/flowers";
+import { freshDailyState, isStale } from "../lib/dailySeed";
+import type { AchievementStats } from "../data/achievements";
 
 export interface CloudProfile {
   id: string;
@@ -118,7 +123,7 @@ export async function loadCloudSave(userId: string): Promise<GameState | null> {
 
     if (result.error || !result.data) return null;
     const data = result.data;
-    return {
+    const state = {
       coins:                data.coins,
       farmSize:             data.farm_size,
       farmRows:             data.farm_rows ?? data.farm_size, // backfill: square for old saves
@@ -164,9 +169,96 @@ export async function loadCloudSave(userId: string): Promise<GameState | null> {
       // v2.3 Alchemy attunement queue (separate from craft queue — own slot count)
       attunementSlots:      (data.attunement_slots      as number)                      ?? 0,
       attunementQueue:      (data.attunement_queue      as GameState["attunementQueue"]) ?? [],
+      // Gardener Level
+      gardenerLevel:        (data.gardener_level        as number)                      ?? 1,
+      gardenerXp:           (data.gardener_xp           as number)                      ?? 0,
+      codexXpBackfilled:    (data.codex_xp_backfilled   as boolean)                     ?? false,
+      // v2.4 — Daily tasks
+      dailyTasks:           (data.daily_tasks           as GameState["dailyTasks"])      ?? null,
+      // v2.4 — Gems
+      gems:                 (data.gems                  as number)                       ?? 0,
+      // v2.4 — Achievements
+      achievementStats:    (data.achievement_stats    as AchievementStats) ?? {},
+      achievementsClaimed: (data.achievements_claimed as string[])         ?? [],
     } as GameState;
+
+    // ── Gardener XP backfill (one-time, flag-gated) ───────────────────────
+    // Recompute XP from the discovered array so existing players get credit
+    // for codex entries they earned before the Gardener Level system launched.
+    // Guarded by codex_xp_backfilled so it runs exactly once per account,
+    // regardless of how much XP the player has already accumulated.
+    if (!state.codexXpBackfilled && state.discovered.length > 0) {
+      let backfillXp = 0;
+      for (const entry of state.discovered) {
+        const sep        = entry.indexOf(":");
+        const speciesId  = sep === -1 ? entry : entry.slice(0, sep);
+        const isMutation = sep !== -1;
+        const rarity     = getFlower(speciesId)?.rarity;
+        if (!rarity) continue;
+        const baseXp = DISCOVERY_XP_BY_RARITY[rarity];
+        backfillXp += isMutation ? Math.floor(baseXp * MUTATION_DISCOVERY_BONUS) : baseXp;
+      }
+      if (backfillXp > 0) {
+        const { level, xp } = awardXp(1, 0, backfillXp);
+        state.gardenerLevel = level;
+        state.gardenerXp    = xp;
+      }
+      // Always mark as done so the regular saveToCloud persists it — even if
+      // backfillXp was 0 (no discovered entries to credit).
+      state.codexXpBackfilled = true;
+    }
+
+    // ── Daily tasks init / reset ───────────────────────────────────────────
+    // If daily_tasks is null (new column) or stale (yesterday's tasks),
+    // generate a fresh set for today and silently write it to the DB.
+    if (!state.dailyTasks || isStale(state.dailyTasks)) {
+      const fresh      = freshDailyState(userId);
+      state.dailyTasks = fresh;
+      void supabase
+        .from("game_saves")
+        .update({ daily_tasks: fresh })
+        .eq("user_id", userId);
+    }
+    return state;
   } catch {
     return null;
+  }
+}
+
+export async function loadEvents(userId: string): Promise<EventEntry[]> {
+  try {
+    const now = new Date().toISOString();
+
+    const { data: eventRows, error } = await supabase
+      .from("events")
+      .select("*")
+      .gte("ends_at", now)
+      .order("starts_at", { ascending: false });
+
+    if (error || !eventRows || eventRows.length === 0) return [];
+
+    const { data: progressRows } = await supabase
+      .from("event_progress")
+      .select("event_id, progress")
+      .eq("user_id", userId)
+      .in("event_id", eventRows.map((e) => e.id));
+
+    const progressMap = new Map(
+      (progressRows ?? []).map((p) => [p.event_id, p.progress as EventProgress])
+    );
+
+    return eventRows.map((e) => ({
+      id:          e.id          as string,
+      type:        e.type        as string,
+      name:        e.name        as string,
+      description: e.description as string,
+      startsAt:    e.starts_at   as string,
+      endsAt:      e.ends_at     as string,
+      config:      e.config,
+      progress:    progressMap.get(e.id) ?? null,
+    }));
+  } catch {
+    return [];
   }
 }
 
@@ -179,13 +271,17 @@ export async function saveToCloud(
   state: GameState
 ): Promise<string | false> {
   const newUpdatedAt = new Date().toISOString();
+  // Always prune expired gear before persisting — the 1s tick removes expired
+  // gear from React display state but stateRef may momentarily lag, so this is
+  // the definitive guard that prevents ghost gear from being written to DB (#242).
+  const grid = pruneExpiredGear(state.grid, Date.now());
   const payload = {
     user_id:                userId,
     coins:                  state.coins,
     farm_size:              state.farmSize,
     farm_rows:              state.farmRows,
     shop_slots:             state.shopSlots,
-    grid:                   state.grid,
+    grid:                   grid,
     inventory:              state.inventory,
     fertilizers:            state.fertilizers,
     shop:                   state.shop,
@@ -222,6 +318,18 @@ export async function saveToCloud(
     // v2.3 Alchemy attunement queue
     attunement_slots:       state.attunementSlots   ?? 0,
     attunement_queue:       state.attunementQueue   ?? [],
+    // Gardener Level
+    gardener_level:         state.gardenerLevel     ?? 1,
+    gardener_xp:            state.gardenerXp        ?? 0,
+    // v2.4 — Daily tasks (must never be null — column has NOT NULL constraint)
+    daily_tasks:            state.dailyTasks        ?? freshDailyState(userId),
+    // v2.4 — Gems
+    gems:                   state.gems              ?? 0,
+    // v2.4 — Achievements
+    achievement_stats:    state.achievementStats    ?? {},
+    achievements_claimed: state.achievementsClaimed ?? [],
+    // v2.4 — Codex XP backfill flag
+    codex_xp_backfilled:  state.codexXpBackfilled  ?? false,
     updated_at:             newUpdatedAt,
   };
 
@@ -323,6 +431,18 @@ export async function getPublicSave(userId: string): Promise<GameState | null> {
     attunementQueue:      (data.attunement_queue      as GameState["attunementQueue"])    ?? [],
     activeBoosts:         (data.active_boosts         as GameState["activeBoosts"])       ?? [],
     serverUpdatedAt:      (data.updated_at            as string | null)                   ?? null,
+    // Gardener Level
+    gardenerLevel:        (data.gardener_level        as number)                          ?? 1,
+    gardenerXp:           (data.gardener_xp           as number)                          ?? 0,
+    dailyTasks:           null,
+    gems:                 (data.gems                  as number)                       ?? 0,
+    // v2.4 — Achievements
+    achievementStats:    (data.achievement_stats    as AchievementStats) ?? {},
+    achievementsClaimed: (data.achievements_claimed as string[])         ?? [],
+    // v2.4 — Codex XP backfill flag
+    codexXpBackfilled:   (data.codex_xp_backfilled  as boolean)          ?? false,
+    // v2.4 — Events (public save never needs event progress)
+    events:              [],
   } as GameState;
 }
 

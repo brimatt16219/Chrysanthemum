@@ -41,23 +41,65 @@ import { WeatherForecastPanel } from "./components/WeatherForecastPanel";
 import { DayNightOverlay } from "./components/DayNightOverlay";
 import { useGame } from "./store/GameContext";
 import { supabase } from "./lib/supabase";
-import { SettingsProvider } from "./store/SettingsContext";
+import { SettingsProvider, useSettings } from "./store/SettingsContext";
 import { useFriendRequests } from "./hooks/useFriendRequests";
 import { useGiftNotifications } from "./hooks/useGiftNotifications";
 import { useMailbox } from "./hooks/useMailbox";
 import { useDayNight } from "./hooks/useDayNight";
 import { getFlower, MUTATIONS } from "./data/flowers";
 import type { MutationType } from "./data/flowers";
+import { FlowerSprite } from "./components/FlowerSprite";
 import { useVersionCheck } from "./hooks/useVersionCheck";
 import { usePresence } from "./hooks/usePresence";
 import { UpdateBanner } from "./components/UpdateBanner";
 import { HarvestPopup } from "./components/HarvestPopup";
 import { GenericToastPopup } from "./components/GenericToastPopup";
+import { GardenerXpBar } from "./components/GardenerXpBar";
 import { CHANGELOGS, LATEST_CHANGELOG_VERSION, type ChangelogEntry } from "./data/changelog";
+import { EventsTab } from "./components/EventsTab";
+import { ACHIEVEMENTS } from "./data/achievements";
+import { LoginPage } from "./components/LoginPage";
+import { useAudio } from "./hooks/useAudio";
+import { audioManager } from "./lib/audioManager";
+import { SettingsModal } from "./components/SettingsModal";
+import { ItemSprite } from "./components/ItemSprite";
 
-type Tab        = "garden" | "shop" | "inventory" | "social" | "codex" | "alchemy" | "craft";
+type Tab = "garden" | "shop" | "inventory" | "social" | "codex" | "alchemy" | "craft" | "events";
 type ShopView   = "seeds" | "supply";
 type SocialView = "search" | "friends" | "mailbox" | "leaderboard" | "marketplace";
+
+const TAB_EMOJI: Record<Tab, string> = {
+  garden:    "🌱",
+  shop:      "🛒",
+  inventory: "🎒",
+  alchemy:   "⚗️",
+  craft:     "⚒️",
+  codex:     "📖",
+  events:    "🎉",
+  social:    "🌍",
+};
+
+const SOCIAL_EMOJI:  Record<SocialView, string> = {
+  search:      "🔍",
+  friends:     "👥",
+  mailbox:     "📬",
+  marketplace: "🏪",
+  leaderboard: "🏆",
+};
+const SOCIAL_SPRITE: Record<SocialView, string> = {
+  search:      "/sprites/ui/search.png",
+  friends:     "/sprites/ui/social_friends.png",
+  mailbox:     "/sprites/ui/social_mailbox.png",
+  marketplace: "/sprites/ui/social_market.png",
+  leaderboard: "/sprites/ui/social_ranks.png",
+};
+const SOCIAL_LABEL:  Record<SocialView, string> = {
+  search:      "Search",
+  friends:     "Friends",
+  mailbox:     "Mailbox",
+  marketplace: "Market",
+  leaderboard: "Ranks",
+};
 
 
 export default function App() {
@@ -70,8 +112,9 @@ function AppInner() {
     shopJustRestocked,   clearShopNotification,
     supplyJustRestocked, clearSupplyNotification,
     gearExpiry, clearGearExpiry,
-    craftCompletions, dismissCraftCompletion,
-    attunementCompletions, dismissAttunementCompletion,
+    craftCompletions, dismissCraftCompletion, clearAllCraftCompletions,
+    attunementCompletions, dismissAttunementCompletion, clearAllAttunementCompletions,
+    clearAllBanners,
     user, profile, authLoading,
     signInWithGoogle, signOut,
     needsUsername, completeUsername,
@@ -80,11 +123,30 @@ function AppInner() {
     activeWeather, weatherMsLeft, weatherIsActive,
   } = useGame();
 
+  const { settings } = useSettings();
+
+  /** True once the user has clicked "Enter Garden" on the title screen. */
+  const [gameEntered, setGameEntered] = useState(false);
+
+  useAudio(!!user && gameEntered);
+
+  // ── Level-up SFX ─────────────────────────────────────────────────────────────
+  // Guard on gameEntered so the initial save-load (level jumps from default → real
+  // value) doesn't trigger the SFX before the user has entered the garden.
+  const prevGardenerLevelRef = useRef(state.gardenerLevel);
+  useEffect(() => {
+    if (gameEntered && state.gardenerLevel > prevGardenerLevelRef.current) {
+      audioManager.playSfx("levelUp");
+    }
+    prevGardenerLevelRef.current = state.gardenerLevel;
+  }, [state.gardenerLevel, gameEntered]);
+
   usePresence();
 
   const { pendingCount, newRequest, clearNewRequest } = useFriendRequests(user?.id ?? null);
   const { newGift, clearNewGift } = useGiftNotifications(user?.id ?? null);
   const { unreadCount: mailboxUnreadCount } = useMailbox(user?.id ?? null);
+  const [showSettings,  setShowSettings]  = useState(false);
 
   const [tab, setTab]               = useState<Tab>("garden");
   const [shopView,      setShopView]      = useState<ShopView>("seeds");
@@ -270,12 +332,36 @@ function AppInner() {
     return craftBadgeNow >= doneAt ? acc + 1 : acc;
   }, 0);
 
+  // ── Events tab badge ─────────────────────────────────────────────────────────
+  // True if any sub-section (events / daily / achievements) has something actionable.
+  const eventsBadge = useMemo(() => {
+    // Events: any active events
+    if ((state.events ?? []).length > 0) return true;
+    // Daily: any reward tier unlocked but not yet collected
+    if (state.dailyTasks) {
+      const { tasks, rewardsCollected } = state.dailyTasks;
+      const completedCount = tasks.filter((t) => t.completed).length;
+      if (rewardsCollected.some((_c, i) => !rewardsCollected[i] && completedCount >= i + 1)) return true;
+    }
+    // Achievements: any locally-verifiable achievement ready to claim
+    const speciesDiscovered = new Set(
+      state.inventory.filter((i) => !i.isSeed).map((i) => i.speciesId)
+    ).size;
+    return ACHIEVEMENTS.some((a) => {
+      if (state.achievementsClaimed.includes(a.id)) return false;
+      if (a.check.kind === "friends_count" || a.check.kind === "recipe_completed") return false;
+      if (a.check.kind === "stat") return (state.achievementStats[a.check.statKey] ?? 0) >= a.target;
+      if (a.check.kind === "species_discovered") return speciesDiscovered >= a.target;
+      return false;
+    });
+  }, [state.events, state.dailyTasks, state.achievementsClaimed, state.achievementStats, state.inventory]);
+
   // ── Swipe navigation ─────────────────────────────────────────────────────────
   // Flat order: garden(0) → shop:seeds(1) → shop:supply(2) →
   //             inventory(3) → alchemy(4) → codex(5) →
   //             social:search(6) → friends(7) → mailbox(8) →
   //             marketplace(9) → leaderboard(10) → me(profile)
-  const MAIN_TABS: Tab[] = ["garden", "shop", "inventory", "alchemy", "craft", "codex", "social"];
+  const MAIN_TABS: Tab[] = ["garden", "shop", "inventory", "alchemy", "craft", "codex", "events", "social"];
 
   const handleSwipeLeft = useCallback(() => {
     if (profileUsername) return;
@@ -480,8 +566,20 @@ function AppInner() {
     setProfileUsername(null);
   }
 
+  if (!user || !gameEntered) {
+    return (
+      <LoginPage
+        onSignIn={signInWithGoogle}
+        onEnter={user ? () => setGameEntered(true) : undefined}
+        onSignOut={user ? signOut : undefined}
+        isLoading={authLoading}
+        username={profile?.username ?? user?.email ?? null}
+      />
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className={`min-h-screen bg-background text-foreground flex flex-col${settings.pixelBorders ? " pixel-borders" : ""}`}>
 
       {/* Stale-tab overlay — shown when another tab took over this session */}
       {isStaleTab && (
@@ -522,36 +620,88 @@ function AppInner() {
           vertically when multiple fire instead of rendering on top of each
           other. flex-col-reverse keeps the most recent banner closest to the
           anchor (bottom edge); older banners stack above. */}
-      {(shopJustRestocked || supplyJustRestocked || craftCompletions.length > 0 || attunementCompletions.length > 0 || !!gearExpiry) && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col-reverse items-center gap-2 pointer-events-none">
-          {shopJustRestocked && (
-            <ShopRestockBanner onDismiss={clearShopNotification} type="seeds" />
-          )}
-          {supplyJustRestocked && (
-            <ShopRestockBanner onDismiss={clearSupplyNotification} type="supply" />
-          )}
-          {gearExpiry && (
-            <GearExpiryBanner gearType={gearExpiry.gearType} onDismiss={clearGearExpiry} />
-          )}
-          {craftCompletions.map((c) => (
-            <CraftCompletionBanner
-              key={c.id}
-              emoji={c.emoji}
-              name={c.name}
-              onDismiss={() => dismissCraftCompletion(c.id)}
-            />
-          ))}
-          {attunementCompletions.map((c) => (
-            <CraftCompletionBanner
-              key={c.id}
-              emoji={c.emoji}
-              name={c.name}
-              title="Attunement Ready!"
-              onDismiss={() => dismissAttunementCompletion(c.id)}
-            />
-          ))}
-        </div>
-      )}
+      {(shopJustRestocked || supplyJustRestocked || craftCompletions.length > 0 || attunementCompletions.length > 0 || !!gearExpiry) && (() => {
+          // Count how many distinct banner slots are active (craft/attunement each
+          // count as 1 regardless of how many individual completions are queued).
+          const bannerCount =
+            (shopJustRestocked      ? 1 : 0) +
+            (supplyJustRestocked    ? 1 : 0) +
+            (gearExpiry != null      ? 1 : 0) +
+            (craftCompletions.length      > 0 ? 1 : 0) +
+            (attunementCompletions.length > 0 ? 1 : 0);
+
+          return (
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col-reverse items-center gap-2 pointer-events-none">
+              {shopJustRestocked && (
+                <ShopRestockBanner onDismiss={clearShopNotification} type="seeds" />
+              )}
+              {supplyJustRestocked && (
+                <ShopRestockBanner onDismiss={clearSupplyNotification} type="supply" />
+              )}
+              {gearExpiry && (
+                <GearExpiryBanner gearType={gearExpiry.gearType} onDismiss={clearGearExpiry} />
+              )}
+              {/* Craft completions — consolidated to a single banner when > 1 */}
+              {craftCompletions.length === 1 && (
+                <CraftCompletionBanner
+                  key={craftCompletions[0].id}
+                  emoji={craftCompletions[0].emoji}
+                  sprite={craftCompletions[0].sprite}
+                  name={craftCompletions[0].name}
+                  onDismiss={() => dismissCraftCompletion(craftCompletions[0].id)}
+                />
+              )}
+              {craftCompletions.length > 1 && (
+                <CraftCompletionBanner
+                  key="consolidated-craft"
+                  emoji={craftCompletions[0].emoji}
+                  sprite={craftCompletions[0].sprite}
+                  name={craftCompletions[0].name}
+                  count={craftCompletions.length}
+                  title="Crafts Ready!"
+                  onDismiss={clearAllCraftCompletions}
+                />
+              )}
+              {/* Attunement completions — consolidated to a single banner when > 1 */}
+              {attunementCompletions.length === 1 && (
+                <CraftCompletionBanner
+                  key={attunementCompletions[0].id}
+                  emoji={attunementCompletions[0].emoji}
+                  sprite={attunementCompletions[0].sprite}
+                  name={attunementCompletions[0].name}
+                  title="Attunement Ready!"
+                  onDismiss={() => dismissAttunementCompletion(attunementCompletions[0].id)}
+                />
+              )}
+              {attunementCompletions.length > 1 && (
+                <CraftCompletionBanner
+                  key="consolidated-attunement"
+                  emoji={attunementCompletions[0].emoji}
+                  sprite={attunementCompletions[0].sprite}
+                  name={attunementCompletions[0].name}
+                  count={attunementCompletions.length}
+                  title="Attunements Ready!"
+                  onDismiss={clearAllAttunementCompletions}
+                />
+              )}
+              {/* "Clear all" pill — sits at the top of the visual stack (last in
+                  flex-col-reverse DOM order) when 2+ banner slots are active. */}
+              {bannerCount >= 2 && (
+                <button
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={() => {
+                    clearAllBanners();
+                    clearNewRequest();
+                    clearNewGift();
+                  }}
+                  className="pointer-events-auto text-[11px] text-muted-foreground hover:text-foreground bg-card/80 hover:bg-card border border-border rounded-full px-3 py-1 transition-colors"
+                >
+                  Clear all ✕
+                </button>
+              )}
+            </div>
+          );
+        })()}
       {newRequest && (
         <FriendRequestNotification
           onDismiss={clearNewRequest}
@@ -589,6 +739,12 @@ function AppInner() {
           }}
         />
       )}
+      {showSettings && (
+        <SettingsModal
+          onClose={() => setShowSettings(false)}
+          onSignOut={user ? () => { setShowSettings(false); setGameEntered(false); } : undefined}
+        />
+      )}
 
       {updateAvailable && !dismissedUpdate && (
         <UpdateBanner onDismiss={() => setDismissedUpdate(true)} />
@@ -606,7 +762,7 @@ function AppInner() {
       <DayNightOverlay period={dayPeriod} />
 
       {/* Weather overlay — z-20, above day/night */}
-      <WeatherOverlay weatherType={activeWeather} isActive={weatherIsActive} />
+      <WeatherOverlay weatherType={activeWeather} isActive={weatherIsActive && settings.weatherEffects} />
 
       {/* HUD + Tab bar — sticky together so both stay pinned while scrolling */}
       <div className="sticky top-0 z-30" data-sticky-nav>
@@ -616,7 +772,10 @@ function AppInner() {
             className="font-bold text-primary tracking-wide cursor-pointer flex items-center gap-1"
             onClick={() => handleTabChange("garden")}
           >
-            <span className="text-lg">🌸</span>
+            {settings.useSprites
+              ? <img src="/sprites/flowers/sakura_blossom.png" alt="🌸" className="w-6 h-6 object-contain" style={{ imageRendering: "pixelated" }} />
+              : <span>🌸</span>
+            }
             <span className="hidden sm:block text-lg">Chrysanthemum</span>
           </h1>
           <div className="flex items-center gap-2 sm:gap-3">
@@ -637,7 +796,17 @@ function AppInner() {
               />
             </button>
             <ActiveBoostsHUD activeBoosts={state.activeBoosts} />
-            <span className="text-sm font-mono" title={state.coins.toLocaleString()}>🟡 {formatCoins(state.coins)}</span>
+            <span className="flex items-center gap-1 text-sm font-mono" title={state.coins.toLocaleString()}>
+              <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-4 h-4" />
+              {formatCoins(state.coins)}
+            </span>
+            <span className="flex items-center gap-1 text-sm font-mono" title={state.gems.toLocaleString()}>
+              {settings.useSprites
+                ? <img src="/sprites/ui/gems.png" alt="gems" className="w-4 h-4 object-contain" style={{ imageRendering: "pixelated" }} />
+                : <span>💎</span>
+              }
+              {state.gems.toLocaleString()}
+            </span>
             {!authLoading && (
               user ? (
                 <div className="flex items-center gap-2">
@@ -645,21 +814,14 @@ function AppInner() {
                     onClick={() => handleViewProfile(profile?.username ?? "")}
                     className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5"
                   >
-                    <span className="relative text-base leading-none">
-                      {getFlower(profile?.display_flower ?? "daisy")?.emoji.bloom ?? "🌸"}
-                      {profile?.display_mutation && (
-                        <span className="absolute -top-1 -right-1 text-xs leading-none">
-                          {MUTATIONS[profile.display_mutation as MutationType]?.emoji}
-                        </span>
-                      )}
-                    </span>
+                    {(() => {
+                      const f   = getFlower(profile?.display_flower ?? "daisy");
+                      const mut = profile?.display_mutation ? MUTATIONS[profile.display_mutation as MutationType] : null;
+                      return f
+                        ? <FlowerSprite species={f} stage="bloom" imgSize="w-5 h-5" textSize="text-base" className={mut?.vfxClass ?? ""} />
+                        : <span className="text-base leading-none">🌸</span>;
+                    })()}
                     <span className="hidden sm:inline">{profile?.username ?? "..."}</span>
-                  </button>
-                  <button
-                    onClick={signOut}
-                    className="text-xs px-2 sm:px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
-                  >
-                    Sign out
                   </button>
                 </div>
               ) : (
@@ -671,14 +833,25 @@ function AppInner() {
                 </button>
               )
             )}
+            <button
+              onClick={() => setShowSettings(true)}
+              className="text-xs px-2 py-1.5 rounded-lg border border-border text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
+              title="Settings"
+            >
+              {settings.useSprites
+                ? <img src="/sprites/ui/settings.png" alt="⚙️" className="w-4 h-4 object-contain" style={{ imageRendering: "pixelated" }} />
+                : <span>⚙️</span>
+              }
+            </button>
           </div>
         </div>
+        <GardenerXpBar level={state.gardenerLevel} xp={state.gardenerXp} />
       </header>
 
       {/* Tabs */}
       <nav className="bg-card/40 border-b border-border backdrop-blur">
         <div className="w-full sm:max-w-2xl sm:mx-auto flex">
-          {(["garden", "shop", "inventory", "alchemy", "craft", "codex", "social"] as Tab[]).map((t) => (
+          {(["garden", "shop", "inventory", "alchemy", "craft", "codex", "events", "social"] as Tab[]).map((t) => (
             <button
               key={t}
               onClick={() => handleTabChange(t)}
@@ -691,50 +864,25 @@ function AppInner() {
                 }
               `}
             >
-              {t === "garden"      ? "🌱"
-               : t === "shop"      ? "🛒"
-               : t === "inventory" ? "🎒"
-               : t === "alchemy"   ? "⚗️"
-               : t === "craft"     ? "⚒️"
-               : t === "codex"     ? "📖"
-               : "🌍"}
-              <span className="ml-1 hidden sm:inline capitalize">{t}</span>
+              {settings.useSprites
+                ? <img
+                    src={`/sprites/ui/tab_${t}.png`}
+                    alt={t}
+                    className="w-5 h-5 sm:w-6 sm:h-6 object-contain"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                : <span className="text-lg sm:text-xl leading-none">{TAB_EMOJI[t]}</span>
+              }
+              <span className="hidden sm:inline text-xs capitalize">{t}</span>
 
-              {t === "garden" && gardenNewBlooms > 0 && (
-                <span className="absolute top-2 right-1 sm:right-6 w-4 h-4 bg-yellow-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
-                  {gardenNewBlooms > 9 ? "9+" : gardenNewBlooms}
-                </span>
-              )}
-              {t === "shop" && (newSeedsShopBadge + newSupplyShopBadge) > 0 && (
-                <span className="absolute top-2 right-1 sm:right-6 w-4 h-4 bg-yellow-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
-                  {(newSeedsShopBadge + newSupplyShopBadge) > 9 ? "9+" : newSeedsShopBadge + newSupplyShopBadge}
-                </span>
-              )}
-              {t === "inventory" && newInvTotal > 0 && (
-                <span className="absolute top-2 right-1 sm:right-6 w-4 h-4 bg-primary rounded-full text-[10px] text-primary-foreground flex items-center justify-center font-bold">
-                  {newInvTotal > 9 ? "9+" : newInvTotal}
-                </span>
-              )}
-              {t === "craft" && claimableCraftsCount > 0 && (
-                <span className="absolute top-2 right-1 sm:right-6 w-4 h-4 bg-amber-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
-                  {claimableCraftsCount > 9 ? "9+" : claimableCraftsCount}
-                </span>
-              )}
-              {t === "alchemy" && claimableAttunementsCount > 0 && (
-                <span className="absolute top-2 right-1 sm:right-6 w-4 h-4 bg-emerald-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
-                  {claimableAttunementsCount > 9 ? "9+" : claimableAttunementsCount}
-                </span>
-              )}
-              {t === "codex" && unseenCodex.size > 0 && (
-                <span className="absolute top-2 right-1 sm:right-6 w-4 h-4 bg-primary rounded-full text-[10px] text-primary-foreground flex items-center justify-center font-bold">
-                  {unseenCodex.size > 9 ? "9+" : unseenCodex.size}
-                </span>
-              )}
-              {t === "social" && socialBadgeCount > 0 && (
-                <span className="absolute top-2 right-1 sm:right-6 w-4 h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
-                  {socialBadgeCount > 9 ? "9+" : socialBadgeCount}
-                </span>
-              )}
+              {t === "garden"    && gardenNewBlooms > 0                              && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary" style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }} />}
+              {t === "shop"      && (newSeedsShopBadge + newSupplyShopBadge) > 0      && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary" style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }} />}
+              {t === "inventory" && newInvTotal > 0                                   && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary" style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }} />}
+              {t === "craft"     && claimableCraftsCount > 0                          && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary" style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }} />}
+              {t === "alchemy"   && claimableAttunementsCount > 0                     && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary" style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }} />}
+              {t === "codex"     && unseenCodex.size > 0                              && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary" style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }} />}
+              {t === "events"    && eventsBadge                                        && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary" style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }} />}
+              {t === "social"    && socialBadgeCount > 0                              && <span className="absolute top-2 right-1 sm:right-6 w-2.5 h-2.5 bg-primary" style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }} />}
             </button>
           ))}
         </div>
@@ -764,24 +912,32 @@ function AppInner() {
                 {(["seeds", "supply"] as ShopView[]).map((v) => {
                   const badge = v === "seeds" ? newSeedsShopBadge : newSupplyShopBadge;
                   return (
-                    <button
-                      key={v}
-                      onClick={() => handleShopViewChange(v)}
-                      className={`
-                        flex-1 py-2 rounded-xl text-xs font-semibold transition-all text-center relative
-                        ${shopView === v
-                          ? "bg-primary/20 border border-primary/50 text-primary"
-                          : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
-                        }
-                      `}
-                    >
-                      {v === "seeds" ? "🌱 Seeds" : "🧪 Supply"}
-                      {badge > 0 && shopView !== v && (
-                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
-                          {badge}
+                    <div key={v} className="relative flex-1">
+                      <button
+                        onClick={() => handleShopViewChange(v)}
+                        className={`
+                          w-full py-2 rounded-xl text-xs font-semibold transition-all text-center
+                          ${shopView === v
+                            ? "bg-primary/20 border border-primary/50 text-primary"
+                            : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
+                          }
+                        `}
+                      >
+                        <span className="inline-flex items-center justify-center gap-1">
+                          <ItemSprite
+                            emoji={v === "seeds" ? "🌱" : "🧪"}
+                            sprite={v === "seeds" ? "/sprites/flowers/seed.png" : "/sprites/ui/consumables.png"}
+                            textSize="text-xs"
+                            imgSize="w-4 h-4"
+                            name={v}
+                          />
+                          {v === "seeds" ? "Seeds" : "Supply"}
                         </span>
+                      </button>
+                      {badge > 0 && shopView !== v && (
+                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary" style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }} />
                       )}
-                    </button>
+                    </div>
                   );
                 })}
               </div>
@@ -811,6 +967,7 @@ function AppInner() {
           {tab === "alchemy"     && <AlchemyTab activeView={alchemyView} onViewChange={setAlchemyView} />}
           {tab === "craft"       && <CraftingTab />}
           {tab === "codex"       && <Codex unseenEntries={unseenCodex} markSeen={markCodexSeen} />}
+          {tab === "events"      && <EventsTab />}
           {tab === "social"    && (
             <>
               {/* Sub-nav — always visible for signed-in users; guests only see Market */}
@@ -819,42 +976,35 @@ function AppInner() {
                   {(["search", "friends", "mailbox", "marketplace", "leaderboard"] as SocialView[]).map((v) => {
                     const mailboxBadge = mailboxUnreadCount;
                     return (
-                      <button
-                        key={v}
-                        onClick={() => handleSocialViewChange(v)}
-                        className={`
-                          flex-1 py-2 rounded-xl text-xs font-semibold transition-all relative text-center
-                          ${socialView === v && !profileUsername
-                            ? "bg-primary/20 border border-primary/50 text-primary"
-                            : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
-                          }
-                        `}
-                      >
-                        <span>
-                          {v === "search"        ? "🔍"
-                           : v === "friends"     ? "👥"
-                           : v === "mailbox"     ? "📬"
-                           : v === "marketplace" ? "🏪"
-                           : "🏆"}
-                        </span>
-                        <span className="hidden sm:inline ml-1">
-                          {v === "search"        ? "Search"
-                           : v === "friends"     ? "Friends"
-                           : v === "mailbox"     ? "Mailbox"
-                           : v === "marketplace" ? "Market"
-                           : "Ranks"}
-                        </span>
-                        {v === "friends" && pendingCount > 0 && (
-                          <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
-                            {pendingCount}
+                      <div key={v} className="relative flex-1">
+                        <button
+                          onClick={() => handleSocialViewChange(v)}
+                          className={`
+                            w-full py-2 rounded-xl text-xs font-semibold transition-all text-center
+                            ${socialView === v && !profileUsername
+                              ? "bg-primary/20 border border-primary/50 text-primary"
+                              : "bg-card/60 border border-border text-muted-foreground hover:border-primary/30"
+                            }
+                          `}
+                        >
+                          <span className="inline-flex items-center justify-center gap-1">
+                            <ItemSprite emoji={SOCIAL_EMOJI[v]} sprite={SOCIAL_SPRITE[v]} textSize="text-base" imgSize="w-5 h-5" name={SOCIAL_LABEL[v]} />
+                            <span className="hidden sm:inline">{SOCIAL_LABEL[v]}</span>
                           </span>
+                        </button>
+                        {v === "friends" && pendingCount > 0 && (
+                          <span
+                            className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary"
+                            style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }}
+                          />
                         )}
                         {v === "mailbox" && mailboxBadge > 0 && (
-                          <span className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
-                            {mailboxBadge > 9 ? "9+" : mailboxBadge}
-                          </span>
+                          <span
+                            className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary"
+                            style={{ clipPath: "polygon(0px 2px,2px 2px,2px 0px,calc(100% - 2px) 0px,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0px calc(100% - 2px))" }}
+                          />
                         )}
-                      </button>
+                      </div>
                     );
                   })}
                   {user && (
@@ -868,8 +1018,10 @@ function AppInner() {
                         }
                       `}
                     >
-                      <span>👤</span>
-                      <span className="hidden sm:inline ml-1">Me</span>
+                      <span className="inline-flex items-center justify-center gap-1">
+                        <ItemSprite emoji="👤" sprite="/sprites/ui/social_me.png" textSize="text-base" imgSize="w-5 h-5" name="Me" />
+                        <span className="hidden sm:inline">Me</span>
+                      </span>
                     </button>
                   )}
                 </div>
@@ -923,6 +1075,7 @@ function AppInner() {
             <GenericToastPopup
               key={key}
               emoji={entry.emoji}
+              sprite={entry.sprite}
               label={entry.label}
               count={entry.count}
               color={entry.color}

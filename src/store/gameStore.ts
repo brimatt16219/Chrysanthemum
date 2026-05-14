@@ -21,6 +21,28 @@ import {
   SUPPLY_POOLS, SUPPLY_RARITY_WEIGHTS, isRarityUnlocked,
   type GearType, type PlacedGear, type GearInventoryItem, type FanDirection,
 } from "../data/gear";
+import type { DailyTaskState } from "../lib/dailySeed";
+import type { AchievementStats } from "../data/achievements";
+
+// ── Events ───────────────────────────────────────────────────────────────────
+
+export interface EventProgress {
+  claimedDays?:     number[];
+  lastClaimedAt?:   string;
+  completedQuests?: string[];
+  claimedRewards?:  string[];
+}
+
+export interface EventEntry {
+  id:          string;
+  type:        string;
+  name:        string;
+  description: string;
+  startsAt:    string;
+  endsAt:      string;
+  config:      unknown;
+  progress:    EventProgress | null;
+}
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -239,6 +261,15 @@ export interface GameState {
   // saveToCloud uses this as a CAS guard so stale sessions can't overwrite
   // server-authoritative state (inventory, coins, etc.) with stale client data.
   serverUpdatedAt:   string | null;
+  
+  gardenerLevel:       number,
+  gardenerXp:          number,
+  codexXpBackfilled:   boolean,
+  dailyTasks:          DailyTaskState | null,
+  gems:                number,
+  achievementStats:    AchievementStats,
+  achievementsClaimed: string[],
+  events:              EventEntry[],
 }
 
 export interface OfflineSummary {
@@ -356,9 +387,13 @@ const SEED_PRICE_RATIO: Record<Rarity, number> = {
   prismatic: 0.85,
 };
 
-function generateShop(shopSlots: number = DEFAULT_SHOP_SLOTS): ShopSlot[] {
+function generateShop(
+  shopSlots: number = DEFAULT_SHOP_SLOTS,
+  maxFerts: number = 2,
+  preUsedIds: Set<string> = new Set(),
+): ShopSlot[] {
   const chosen: ShopSlot[] = [];
-  const usedIds = new Set<string>();
+  const usedIds = new Set<string>(preUsedIds);
 
   // ── FLOWERS — roll rarity first, then pick a random flower from that tier ─
   let attempts = 0;
@@ -407,7 +442,7 @@ function generateShop(shopSlots: number = DEFAULT_SHOP_SLOTS): ShopSlot[] {
   let fertCount = 0;
   attempts = 0;
 
-  while (fertCount < 2 && attempts < 1000) {
+  while (fertCount < maxFerts && attempts < 1000) {
     let roll = Math.random() * fertTotalWeight;
 
     for (const f of ferts) {
@@ -435,6 +470,34 @@ function generateShop(shopSlots: number = DEFAULT_SHOP_SLOTS): ShopSlot[] {
 
   return chosen;
 }
+
+/**
+ * Re-generate the seed shop for a new cycle, preserving any permanently-pinned
+ * slots (locked === true) with fresh stock and filling the rest with new picks.
+ */
+function regenerateSeedShop(shopSlots: number, current: ShopSlot[]): ShopSlot[] {
+  const lockedSlots       = current.filter((s) => s.locked && !s.isEmpty);
+  const lockedFlowerCount = lockedSlots.filter((s) => !s.isFertilizer).length;
+  const lockedFertCount   = lockedSlots.filter((s) =>  s.isFertilizer).length;
+  const newFlowerCount    = Math.max(0, shopSlots - lockedFlowerCount);
+  const newFertCount      = Math.max(0, 2 - lockedFertCount);
+
+  // Avoid regenerating the same species/fertilizer as a locked slot
+  const preUsedIds = new Set<string>(lockedSlots.map((s) => s.speciesId));
+  const freshSlots = generateShop(newFlowerCount, newFertCount, preUsedIds);
+
+  return [
+    ...lockedSlots.map((s) => ({
+      ...s,
+      locked:   true,
+      quantity: s.isFertilizer
+        ? Math.floor(Math.random() * 3) + 1
+        : Math.floor(Math.random() * 4) + 1,
+    })),
+    ...freshSlots,
+  ];
+}
+
 // ── Supply shop generation ─────────────────────────────────────────────────
 
 export const SUPPLY_RESET_INTERVAL = 10 * 60 * 1_000; // 10 minutes
@@ -540,6 +603,14 @@ export function defaultState(): GameState {
     attunementQueue:      [],
     activeBoosts:         [],
     serverUpdatedAt:      null,
+    gardenerLevel:        1,
+    gardenerXp:           0,
+    codexXpBackfilled:    false,
+    dailyTasks:           null,
+    gems:                 0,
+    achievementStats:    {},
+    achievementsClaimed: [],
+    events: [],
   };
 }
 
@@ -613,6 +684,7 @@ export function applyOfflineTick(
     ),
     discovered:           save.discovered           ?? [],
     codexAcked:           save.codexAcked           ?? [],
+    events:               save.events               ?? [],
     shopSlots:            save.shopSlots            ?? DEFAULT_SHOP_SLOTS,
     weatherForecastSlots: save.weatherForecastSlots ?? 0,
     supplySlots:          save.supplySlots          ?? DEFAULT_SUPPLY_SLOTS,
@@ -631,13 +703,17 @@ export function applyOfflineTick(
     attunementSlots:      save.attunementSlots       ?? 0,
     attunementQueue:      save.attunementQueue       ?? [],
     activeBoosts:         pruneActiveBoosts(save.activeBoosts, now),
+    gardenerLevel:        save.gardenerLevel         ?? 1,
+    gardenerXp:           save.gardenerXp            ?? 0,
+    dailyTasks:           save.dailyTasks            ?? null,
+    gems:                 save.gems                  ?? 0,
   };
 
   let shopRestocked    = false;
   const timeSinceReset = now - updated.lastShopReset;
 
   if (timeSinceReset >= SHOP_RESET_INTERVAL) {
-    updated       = { ...updated, shop: generateShop(updated.shopSlots), lastShopReset: now };
+    updated       = { ...updated, shop: regenerateSeedShop(updated.shopSlots, updated.shop), lastShopReset: now };
     shopRestocked = true;
   }
 
@@ -809,7 +885,7 @@ export function tickShop(state: GameState): GameState {
   if (now - state.lastShopReset < SHOP_RESET_INTERVAL) return state;
   return {
     ...state,
-    shop:          generateShop(state.shopSlots),
+    shop:          regenerateSeedShop(state.shopSlots, state.shop),
     lastShopReset: now,
   };
 }
@@ -826,9 +902,16 @@ function regenerateSupplyShop(slots: number, current: ShopSlot[]): ShopSlot[] {
   const lockedSlots = current.filter((s) => s.locked && !s.isEmpty);
   const newSlotCount = Math.max(0, slots - lockedSlots.length);
   const freshSlots = generateSupplyShop(newSlotCount);
-  // Clear the lock flag on kept slots so they re-roll on the next reset
+  // Locked slots persist indefinitely (locked: true stays set) until the player
+  // manually removes the pin. Each restock cycle gives them fresh stock so the
+  // player can buy the item again — fertilizers re-roll a random 1-3 quantity,
+  // gear and consumables always get 1.
   return [
-    ...lockedSlots.map((s) => ({ ...s, locked: false })),
+    ...lockedSlots.map((s) => ({
+      ...s,
+      locked:   true,
+      quantity: s.isFertilizer ? Math.floor(Math.random() * 3) + 1 : 1,
+    })),
     ...freshSlots,
   ];
 }
@@ -1044,8 +1127,10 @@ export function getEffectiveGrowthMultiplier(
   from: number,
   to: number,
 ): number {
-  // Zero-width window — no growth to attribute, avoid divide-by-zero
-  if (from >= to) return 1.0;
+  // Zero-width window (render fired the same millisecond as the last tick stamp).
+  // Return the current point-in-time multiplier rather than 1.0 — otherwise the
+  // tooltip shows the unmodified base time for one frame and flip-flops (#239).
+  if (from >= to) return getPassiveGrowthMultiplier(grid, row, col, to);
 
   // Ask: which gears were affecting this cell at the START of the window?
   // getGearAffectingCell already skips expired gear, so passing `from` (not
@@ -1735,7 +1820,7 @@ export function tickFanMutations(
  *  Called both in the live tick and in applyOfflineTick for offline progress. */
 export function tickHarvestBells(
   state: GameState,
-  weatherType: WeatherType = "clear"
+  weatherType: WeatherType = "clear",
 ): GameState {
   const now     = Date.now();
   let   updated = state;
@@ -1837,6 +1922,7 @@ export function tickAutoPlanter(state: GameState): GameState {
       const def = GEAR[planterPlot.gear.gearType];
       if (!isAutoPlanter(def)) continue;
       if (isGearExpired(planterPlot.gear, now)) continue;
+      if (planterPlot.gear.paused) continue;
 
       const gridRows = updated.grid.length;
       const gridCols = updated.grid[0]?.length ?? 0;
@@ -1891,6 +1977,7 @@ export function findAutoPlantTargets(
       const def = GEAR[planterPlot.gear.gearType];
       if (!isAutoPlanter(def)) continue;
       if (isGearExpired(planterPlot.gear, now)) continue;
+      if (planterPlot.gear.paused) continue;
 
       const gridRows = state.grid.length;
       const gridCols = state.grid[0]?.length ?? 0;
@@ -2023,12 +2110,21 @@ const RARITY_PRIORITY: Record<Rarity, number> = {
   common:    6,
 };
 
-export function plantAll(state: GameState): GameState {
-  // Build sorted seed list: highest rarity first, then highest sell value
+export function plantAll(
+  state: GameState,
+  filter?: { rarities?: Rarity[]; types?: FlowerType[] },
+): GameState {
+  // Build sorted seed list: highest rarity first, then highest sell value.
+  // When a filter is provided only seeds matching ALL specified criteria are planted.
   const seeds = state.inventory
     .filter((i) => i.isSeed && i.quantity > 0)
     .map((i) => ({ ...i, species: getFlower(i.speciesId) }))
-    .filter((i) => i.species)
+    .filter((i) => {
+      if (!i.species) return false;
+      if (filter?.rarities?.length && !filter.rarities.includes(i.species.rarity)) return false;
+      if (filter?.types?.length && !i.species.types.some((t) => filter.types!.includes(t))) return false;
+      return true;
+    })
     .sort((a, b) => {
       const rarityDiff = RARITY_PRIORITY[a.species!.rarity] - RARITY_PRIORITY[b.species!.rarity];
       if (rarityDiff !== 0) return rarityDiff;
@@ -2572,6 +2668,27 @@ export function removeGear(
   return { ...state, grid: newGrid, fertilizers: newFertilizers };
 }
 
+/** Optimistically toggles the paused flag on an auto-planter.
+ *  The server confirms via the toggle_pause gear-action. */
+export function toggleAutoPlanter(
+  state: GameState,
+  row: number,
+  col: number
+): GameState | null {
+  const plot = state.grid[row]?.[col];
+  if (!plot?.gear) return null;
+
+  const newGrid = state.grid.map((r, ri) =>
+    r.map((p, ci) =>
+      ri === row && ci === col
+        ? { ...p, gear: { ...p.gear!, paused: !p.gear!.paused } }
+        : p
+    )
+  );
+
+  return { ...state, grid: newGrid };
+}
+
 /** Collect all fertilizers stored in a composter and add them to player inventory. */
 export function collectFromComposter(
   state: GameState,
@@ -2949,6 +3066,47 @@ export function applySlotLock(state: GameState, slotSpeciesId: string): GameStat
   };
 }
 
+
+/** Optimistically remove the pin from a locked supply shop slot. */
+export function unlockSupplySlot(state: GameState, slotSpeciesId: string): GameState | null {
+  const slot = (state.supplyShop ?? []).find((s) => s.speciesId === slotSpeciesId);
+  if (!slot || !slot.locked) return null;
+  return {
+    ...state,
+    supplyShop: state.supplyShop.map((s) =>
+      s.speciesId === slotSpeciesId ? { ...s, locked: false } : s
+    ),
+  };
+}
+
+/**
+ * Optimistically apply Slot Lock to a seed shop slot — deducts consumable and
+ * marks the slot as permanently pinned until the player manually removes it.
+ */
+export function lockSeedSlot(state: GameState, slotSpeciesId: string): GameState | null {
+  const after = deductConsumable(state, "slot_lock");
+  if (!after) return null;
+  const slot = (after.shop ?? []).find((s) => s.speciesId === slotSpeciesId);
+  if (!slot || slot.isEmpty || slot.locked) return null;
+  return {
+    ...after,
+    shop: (after.shop ?? []).map((s) =>
+      s.speciesId === slotSpeciesId ? { ...s, locked: true } : s
+    ),
+  };
+}
+
+/** Optimistically remove the pin from a locked seed shop slot. */
+export function unlockSeedSlot(state: GameState, slotSpeciesId: string): GameState | null {
+  const slot = (state.shop ?? []).find((s) => s.speciesId === slotSpeciesId);
+  if (!slot || !slot.locked) return null;
+  return {
+    ...state,
+    shop: state.shop.map((s) =>
+      s.speciesId === slotSpeciesId ? { ...s, locked: false } : s
+    ),
+  };
+}
 
 export function upgradeFarm(state: GameState): GameState | null {
   const next = getNextUpgrade(state.farmRows, state.farmSize);

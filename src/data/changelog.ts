@@ -14,6 +14,65 @@ export interface ChangelogEntry {
 // Most recent version first — update this with every release
 export const CHANGELOGS: ChangelogEntry[] = [
   {
+    version: "2.4.0",
+    title:   "The Sakura Festival Update",
+    items: [
+      // ── Pixel Art Sprites ────────────────────────────────────────────────
+      { type: "added",   text: "Pixel art sprite system — all 192 flowers, gear, consumables, essences, and UI elements now render as hand-crafted pixel art sprites; sprite rendering can be toggled in settings" },
+      { type: "added",   text: "Mutation VFX — mutated plants display a filter-based colorized sheen animation (grayscale → sepia → hue-rotate pipeline) across all UI: plot tiles, tooltips, inventory, codex, marketplace, and profiles; badge and VFX toggles added to settings" },
+      { type: "added",   text: "Medal sprites on leaderboard — top-3 ranks show pixel art medal icons alongside corrected coin layout" },
+      // ── Audio ────────────────────────────────────────────────────────────
+      { type: "added",   text: "Audio system — ambient background music (login, day, night), a separate weather ambience layer (rain, storm, wind), and SFX for all major actions (plant, harvest, sell, buy, craft, level-up); music and SFX volume + mute controls added to settings" },
+      { type: "added",   text: "Sequential title music playlist — the login page cycles through a curated track library, advancing to the next track at the end of each song" },
+      // ── Achievements, XP & Gems ─────────────────────────────────────────
+      { type: "added",   text: "Achievements — 618 milestone achievements across 23 categories (harvests, sales, discoveries, leveling, crafting, and more); claim gems as rewards from a dedicated Achievements panel with category tabs and progress bars" },
+      { type: "added",   text: "Gardener XP & leveling system — all game actions grant XP (harvest, sell, buy, craft, sacrifice, seed pouch open, marketplace sale); XP bar shown in HUD header; gardener level gates marketplace slot unlocks and farm upgrades" },
+      { type: "added",   text: "Flower discovery achievement tiers — cumulative discovery milestones replace harvest-count achievements; tiers unlock as you fill out the codex across all rarities" },
+      { type: "added",   text: "Gems — new currency awarded from achievements and daily task streaks; gem balance displayed in the HUD" },
+      // ── Daily Tasks & Events ─────────────────────────────────────────────
+      { type: "added",   text: "Daily Tasks — refreshing daily quests with per-action progress tracking; completing all tasks awards coins and gems via the daily-complete edge function" },
+      { type: "added",   text: "Events system — live timed events with check-in and collection quest types; event date range shown on each event card" },
+      { type: "added",   text: "Sakura Blossom Event (May 10 – May 31) — check-in event with an exclusive Sakura Blossom flower available only during the event" },
+      // ── Login Page & Title Screen ────────────────────────────────────────
+      { type: "added",   text: "Title screen \"Enter Garden\" flow — signed-in users land on the login page and must tap Enter Garden to load the game; all audio and level-up SFX are gated behind this action" },
+      { type: "added",   text: "Animated flower grid background on login page with polished petal and logo pixel art sprites" },
+      { type: "added",   text: "Google sign-in now opens in a popup instead of redirecting — OAuth completes without leaving the page; the main window reloads automatically after sign-in" },
+      { type: "added",   text: "Auth loading screen animated progress bar — labelled progress bar and loading text replace the plain spinner" },
+      // ── Garden & UI QoL ──────────────────────────────────────────────────
+      { type: "added",   text: "Notification consolidation — duplicate harvest/craft/sale toasts stack into a single pill counter; Clear All button dismisses every active notification at once (#224)" },
+      { type: "added",   text: "Rarity filter + sort in SeedPicker — filter seeds by rarity and sort before planting (#263)" },
+      { type: "added",   text: "Bulk plant/harvest filter modal — filter plots by rarity and flower type before Plant All or Collect All (#262)" },
+      { type: "added",   text: "Per-rarity select-all / clear buttons on the Sacrifice screen — instantly select or deselect an entire rarity tier in the alchemy sacrifice view (#251)" },
+      { type: "added",   text: "Slot lock on seed shop listings — lock any shop slot to protect it from being replaced on restock (#238)" },
+      { type: "added",   text: "Auto-planter pause/resume toggle — pause the auto-planter mid-run from the gear tooltip without removing it (#245)" },
+      { type: "added",   text: "Balance Scale flip countdown in gear tooltip — tooltip now shows exactly how long until the next boost/penalty phase flip (#239, #240)" },
+      { type: "added",   text: "Weather effects toggle in settings — disable animated weather overlays for a cleaner garden view" },
+      // ── Changed ──────────────────────────────────────────────────────────
+      { type: "changed", text: "Font switched to Pixelify Sans across the entire UI" },
+      { type: "changed", text: "Settings modal consolidated — visual and audio settings merged into a single panel; Sign Out button moved into settings" },
+      { type: "changed", text: "Guest play removed — an account is now required to play; the guest option is no longer shown on the login page" },
+      { type: "changed", text: "Login page subtitle updated to Sakura Blossom Event; HUD flower icon updated to the Sakura Blossom sprite" },
+      { type: "changed", text: "Notification badges unified to primary-colored pixel-corner dots across all nav tabs" },
+      { type: "changed", text: "Settings \"Sign out\" renamed to \"Go to title screen\" — returns you to the login page without signing out" },
+      { type: "changed", text: "Balance — Seed Pouch upgrade cost increased from 2× to 3× of the previous tier (applies to all base and typed/elemental pouches)" },
+      { type: "changed", text: "Balance — Heirloom Charm upgrade cost increased from 2× to 3× of the previous tier" },
+      { type: "changed", text: "Balance — Infuser I cost increased from 2 to 3 Universal Essence; Infuser II–V upgrade cost increased from 2× to 3× of the previous tier" },
+      // ── Fixed ────────────────────────────────────────────────────────────
+      { type: "fixed",   text: "Ghost gear no longer lingers on plot tiles after expiry — expired gear is removed from client state and DB atomically (#242)" },
+      { type: "fixed",   text: "Shop restock blink race fixed — rapid restock poll no longer briefly blanks the shop grid (#243)" },
+      { type: "fixed",   text: "Heirloom Charm duplication exploit blocked — plant_timings are now synced when an eclipse tonic is applied and the server rejects duplicate charm activation" },
+      { type: "fixed",   text: "Harvest and generic toasts no longer loop — removed count from dismiss timer dependencies so accumulated toast pills clear correctly" },
+      { type: "fixed",   text: "Notification mousedown no longer closes an open plant tooltip (#225)" },
+      { type: "fixed",   text: "\"Plot already occupied\" race condition fixed — seed/bloom picker now reads the live state ref so plots filled by the auto-planter between renders are correctly blocked (#1A)" },
+      { type: "fixed",   text: "Level-up SFX no longer fires on sign-in — gated behind entering the garden" },
+      { type: "fixed",   text: "Garden music no longer plays on the login page — audio starts only after Enter Garden is clicked" },
+      { type: "fixed",   text: "Login music now plays correctly on a fresh page load" },
+      { type: "fixed",   text: "Crossbreeding claim no longer incorrectly gated on a non-existent Master Botanist achievement tier" },
+      { type: "fixed",   text: "Achievement stats now reliably reach the DB — periodic cloud saves and a pre-claim flush prevent stat loss between server writes" },
+      { type: "fixed",   text: "Loading screen no longer flashes before the login page — the auth-resolving spinner is replaced with a subtle inline pulse on the login page itself" },
+    ],
+  },
+  {
     version: "2.3.8",
     title:   "Gear Removal & Progress Fixes",
     items: [

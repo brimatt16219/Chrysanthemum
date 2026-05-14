@@ -81,6 +81,20 @@ const REQUIRED_EXPORTS = [
   "edgeMarketplaceBuy",
   "edgeMarketplaceCancel",
   "edgeClaimMail",
+  // Auto-planter control (v2.4.0)
+  "edgeToggleAutoPlanter",
+  // Supply slot upgrades (v2.4.0)
+  "edgeUnlockSupplySlot",
+  // Seed shop slot lock/unlock (v2.4.0)
+  "edgeLockSeedSlot",
+  "edgeUnlockSeedSlot",
+  // Daily tasks (v2.4.0)
+  "edgeDailyComplete",
+  // Achievements (v2.4.0)
+  "edgeAchievementClaim",
+  // Events (v2.4.0)
+  "edgeCheckinClaim",
+  "edgeQuestSubmit",
 ] as const;
 
 describe("edgeFunctions client contract (regression)", () => {

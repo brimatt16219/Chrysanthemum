@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 import { useGame } from "../store/GameContext";
+import { useSettings } from "../store/SettingsContext";
+import { ItemSprite } from "./ItemSprite";
+
+const PX = { imageRendering: "pixelated" as const };
 import { msUntilShopReset, upgradeShopSlots, buyAllSeeds, SHOP_RARITY_WEIGHTS } from "../store/gameStore";
 import { edgeUpgradeShopSlots, edgeBuyAllSeeds } from "../lib/edgeFunctions";
 import { getNextShopSlotUpgrade, MAX_SHOP_SLOTS } from "../data/upgrades";
@@ -34,6 +38,7 @@ interface ShopProps {
 
 export function Shop({ view }: ShopProps) {
   const { state, getState, perform, user, requestSignIn, pushGenericToast } = useGame();
+  const { settings } = useSettings();
   const [countdown,  setCountdown]  = useState(() => msUntilShopReset(state));
   const [showRates,  setShowRates]  = useState(false);
   const [buyingAll,  setBuyingAll]  = useState(false);
@@ -77,14 +82,15 @@ export function Shop({ view }: ShopProps) {
           qty:       after - before,
           emoji:     discovered && sp ? sp.emoji.seed : "❓",
           label:     discovered && sp ? `${sp.name} Seed` : "??? Seed",
+          sprite:    discovered && sp ? "/sprites/flowers/seed.png" : "/sprites/ui/unknown.png",
         };
       })
       .filter((d) => d.qty > 0);
     setBuyingAll(true);
     try {
       await perform(optimistic, () => edgeBuyAllSeeds(), () => {
-        for (const { speciesId, qty, emoji, label } of seedDeltas) {
-          pushGenericToast(`gain:seed:${speciesId}`, emoji, label, "text-green-400", "gain", qty);
+        for (const { speciesId, qty, emoji, label, sprite } of seedDeltas) {
+          pushGenericToast(`gain:seed:${speciesId}`, emoji, label, "text-green-400", "gain", qty, sprite);
         }
       });
     } finally {
@@ -125,7 +131,13 @@ export function Shop({ view }: ShopProps) {
             className="text-xs text-muted-foreground hover:text-primary transition-colors px-2 py-1 rounded-lg border border-border hover:border-primary/40"
             title="View drop rates"
           >
-            📊 Rates
+            <span className="flex items-center gap-1">
+              {settings.useSprites
+                ? <img src="/sprites/ui/shop_rates.png" alt="📊" className="w-3.5 h-3.5 object-contain" style={PX} />
+                : <span>📊</span>
+              }
+              Rates
+            </span>
           </button>
           <div className="text-right">
             <p className="text-xs text-muted-foreground font-mono">Restocks in</p>
@@ -138,7 +150,7 @@ export function Shop({ view }: ShopProps) {
 
       {/* Coins */}
       <div className="flex items-center gap-2 bg-card/40 border border-border rounded-lg px-4 py-2.5">
-        <span className="text-lg">🟡</span>
+        <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-lg" imgSize="w-5 h-5" />
         <span className="text-sm font-mono font-medium">
           {state.coins.toLocaleString()} coins
         </span>
@@ -150,7 +162,10 @@ export function Shop({ view }: ShopProps) {
           disabled={buyingAll}
           className="w-full py-2.5 rounded-xl border border-primary text-primary text-sm font-semibold hover:bg-primary/10 transition-colors text-center disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Buy All Seeds — {buyAllCost.toLocaleString()} 🟡
+          <span className="flex items-center justify-center gap-1.5">
+            {`Buy All Seeds — ${buyAllCost.toLocaleString()}`}
+            <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-sm" imgSize="w-3.5 h-3.5" />
+          </span>
         </button>
       )}
 
@@ -184,7 +199,10 @@ export function Shop({ view }: ShopProps) {
                 : "bg-card border border-border text-muted-foreground cursor-not-allowed opacity-50"
               }`}
           >
-            🟡 {nextSlotUpgrade!.cost.toLocaleString()}
+            <span className="flex items-center gap-1">
+              <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-sm" imgSize="w-3.5 h-3.5" />
+              {nextSlotUpgrade!.cost.toLocaleString()}
+            </span>
           </button>
         )}
       </div>

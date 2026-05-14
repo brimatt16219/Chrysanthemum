@@ -9,11 +9,11 @@ import { getFlower, RARITY_CONFIG, MUTATIONS, FLOWERS } from "../data/flowers";
 import type { MutationType } from "../data/flowers";
 import { getPresenceStatus, formatLastSeen, STATUS_DOT, STATUS_TEXT_COLOR } from "../lib/presence";
 import { useGame } from "../store/GameContext";
-import { useSettings } from "../store/SettingsContext";
-import { THEMES } from "../data/themes";
 import { FriendButton } from "./FriendButton";
 import { SendGiftModal } from "./SendGiftModal";
 import { Codex } from "./Codex";
+import { ItemSprite } from "./ItemSprite";
+import { FlowerSprite } from "./FlowerSprite";
 
 interface Props {
   username: string;
@@ -214,10 +214,7 @@ export function ProfilePage({ username }: Props) {
                 ${flowerOpen ? "ring-2 ring-primary/50" : ""}
               `}
             >
-              {displayFlower?.emoji.bloom ?? "🌱"}
-              {mutObj && (
-                <span className="absolute -top-1 -right-1 text-lg">{mutObj.emoji}</span>
-              )}
+              {displayFlower ? <FlowerSprite species={displayFlower} stage="bloom" imgSize="w-10 h-10" textSize="text-4xl" className={mutObj?.vfxClass ?? ""} /> : "🌱"}
               <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-card border border-border flex items-center justify-center text-[10px] text-muted-foreground">
                 ✎
               </span>
@@ -227,10 +224,7 @@ export function ProfilePage({ username }: Props) {
               relative w-16 h-16 rounded-2xl border-2 flex items-center justify-center text-4xl flex-shrink-0
               ${displayRarity?.glow ?? ""} ${avatarBorderClass}
             `}>
-              {displayFlower?.emoji.bloom ?? "🌱"}
-              {mutObj && (
-                <span className="absolute -top-1 -right-1 text-lg">{mutObj.emoji}</span>
-              )}
+              {displayFlower ? <FlowerSprite species={displayFlower} stage="bloom" imgSize="w-10 h-10" textSize="text-4xl" className={mutObj?.vfxClass ?? ""} /> : "🌱"}
               {presenceStatus && (
                 <span className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-background ${STATUS_DOT[presenceStatus]}`} />
               )}
@@ -302,11 +296,12 @@ export function ProfilePage({ username }: Props) {
 
             {/* Display flower line */}
             {displayFlower && (
-              <p className={`text-xs font-mono ${displayRarity?.color}`}>
-                {displayFlower.emoji.bloom} {displayFlower.name}
+              <p className={`text-xs font-mono ${displayRarity?.color} flex items-center gap-1 flex-wrap`}>
+                <FlowerSprite species={displayFlower} stage="bloom" imgSize="w-3.5 h-3.5" textSize="text-xs" />
+                {displayFlower.name}
                 {mutObj && (
-                  <span className={`ml-1 ${MUTATIONS[displayMutation as MutationType].color}`}>
-                    · {mutObj.emoji} {mutObj.name}
+                  <span className={`ml-1 inline-flex items-center gap-0.5 ${MUTATIONS[displayMutation as MutationType].color}`}>
+                    · <ItemSprite emoji={mutObj.emoji} sprite={mutObj.sprite} name={mutObj.emoji} textSize="text-xs" imgSize="w-3.5 h-3.5" /> {mutObj.name}
                   </span>
                 )}
                 {" · "}{displayRarity?.label}
@@ -402,7 +397,9 @@ export function ProfilePage({ username }: Props) {
                       : "border-border hover:border-primary/50 bg-background"
                     }`}
                 >
-                  <span className="text-2xl leading-none w-9 text-center">{getFlower(pendingSpecies)?.emoji.bloom}</span>
+                  <span className="w-9 flex items-center justify-center flex-shrink-0">
+                    {(() => { const pf = getFlower(pendingSpecies!); return pf ? <FlowerSprite species={pf} stage="bloom" imgSize="w-8 h-8" textSize="text-2xl" /> : null; })()}
+                  </span>
                   <div>
                     <p className="text-sm font-medium">No mutation</p>
                     <p className="text-xs text-muted-foreground font-mono">Base bloom</p>
@@ -422,9 +419,8 @@ export function ProfilePage({ username }: Props) {
                         : "border-border hover:border-primary/50 bg-background"
                       }`}
                   >
-                    <div className="relative w-9 text-center flex-shrink-0">
-                      <span className="text-2xl leading-none">{getFlower(pendingSpecies)?.emoji.bloom}</span>
-                      <span className="absolute -top-1 -right-0 text-sm leading-none">{mut.emoji}</span>
+                    <div className="w-9 flex items-center justify-center flex-shrink-0">
+                      {(() => { const pf = getFlower(pendingSpecies!); return pf ? <FlowerSprite species={pf} stage="bloom" imgSize="w-8 h-8" textSize="text-2xl" className={mut.vfxClass} /> : null; })()}
                     </div>
                     <div>
                       <p className={`text-sm font-medium ${mut.color}`}>{mut.name}</p>
@@ -448,7 +444,7 @@ export function ProfilePage({ username }: Props) {
                         ${isCurrent ? "border-primary bg-primary/20" : "border-border hover:border-primary/50 bg-background"}`}
                     >
                       <div className="w-9 h-9 flex items-center justify-center flex-shrink-0">
-                        <span className="text-2xl leading-none">{flower.emoji.bloom}</span>
+                        <FlowerSprite species={flower} stage="bloom" imgSize="w-8 h-8" textSize="text-2xl" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium">{flower.name}</p>
@@ -487,21 +483,20 @@ export function ProfilePage({ username }: Props) {
       {save && (
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: "Coins",   value: save.coins.toLocaleString(), emoji: "🟡" },
-            { label: "Items",   value: totalItems.toString(),       emoji: "🎒" },
-            { label: "Species", value: uniqueSpecies.toString(),    emoji: "🌸" },
-          ].map(({ label, value, emoji }) => (
+            { label: "Coins",   value: save.coins.toLocaleString(), emoji: "🟡", sprite: "/sprites/ui/coins.png"      },
+            { label: "Items",   value: totalItems.toString(),       emoji: "🎒", sprite: "/sprites/ui/tab_inventory.png" },
+            { label: "Species", value: uniqueSpecies.toString(),    emoji: "🌸", sprite: "/sprites/flowers/bloom.png" },
+          ].map(({ label, value, emoji, sprite }) => (
             <div key={label} className="bg-card/60 border border-border rounded-xl px-3 py-3 text-center">
-              <p className="text-xl">{emoji}</p>
+              <p className="flex justify-center text-xl">
+                <ItemSprite emoji={emoji} sprite={sprite} textSize="text-xl" imgSize="w-6 h-6" name={label} />
+              </p>
               <p className="text-base font-bold mt-1">{value}</p>
               <p className="text-xs text-muted-foreground">{label}</p>
             </div>
           ))}
         </div>
       )}
-
-      {/* Visual settings — own profile only */}
-      {isOwnProfile && <SettingsPanel />}
 
       {/* Garden */}
       {save && save.grid.length > 0 && (
@@ -531,8 +526,7 @@ export function ProfilePage({ username }: Props) {
                   className={`relative flex items-center gap-1.5 bg-background border border-border rounded-lg px-2.5 py-1.5 ${rarity?.glow}`}
                   title={`${species.name}${mut ? ` (${mut.name})` : ""}`}
                 >
-                  <span className="text-base">{species.emoji.bloom}</span>
-                  {mut && <span className="absolute -top-1 -right-1 text-xs">{mut.emoji}</span>}
+                  <FlowerSprite species={species} stage="bloom" imgSize="w-5 h-5" textSize="text-base" className={mut ? mut.vfxClass : ""} />
                   <span className="text-xs text-muted-foreground">×{item.quantity}</span>
                 </div>
               );
@@ -563,109 +557,3 @@ export function ProfilePage({ username }: Props) {
   );
 }
 
-// ── Visual settings panel ─────────────────────────────────────────────────
-
-function SettingsPanel() {
-  const { settings, setSetting } = useSettings();
-
-  const rows: { key: keyof typeof settings; label: string; description: string }[] = [
-    {
-      key:         "plotAnimations",
-      label:       "Tile animations",
-      description: "Particle effects on tiles (water drops, glow, birds, sparkles)",
-    },
-    {
-      key:         "plotGearIndicator",
-      label:       "Gear indicators",
-      description: "Small icons showing active gear effects (💧 🌸 🧹 🧺 💡)",
-    },
-    {
-      key:         "plotMutationIndicator",
-      label:       "Mutation badge",
-      description: "Mutation emoji shown on bloomed tiles",
-    },
-    {
-      key:         "plotMasteryIndicator",
-      label:       "Mastery badge",
-      description: "⚡ shown on tiles with a mastery speed bonus",
-    },
-    {
-      key:         "plotFertilizerIndicator",
-      label:       "Fertilizer badge",
-      description: "Fertilizer emoji shown on tiles with an active fertilizer",
-    },
-  ];
-
-  return (
-    <div className="bg-card/60 border border-border rounded-2xl p-5">
-      <div className="mb-4">
-        <h3 className="text-sm font-semibold">Visual Settings</h3>
-        <p className="text-xs text-muted-foreground mt-0.5">Stored locally on this device</p>
-      </div>
-
-      {/* Theme picker */}
-      <div className="mb-4">
-        <p className="text-xs font-medium text-foreground mb-2">Theme</p>
-        <div className="grid grid-cols-3 gap-2">
-          {THEMES.map((t) => {
-            const active = settings.theme === t.id;
-            return (
-              <button
-                key={t.id}
-                onClick={() => setSetting("theme", t.id)}
-                className={`
-                  rounded-xl border-2 p-2 transition-all text-left
-                  ${active ? "border-primary scale-[1.03]" : "border-border hover:border-primary/40"}
-                `}
-              >
-                <div
-                  className="w-full h-7 rounded-lg mb-1.5 relative overflow-hidden"
-                  style={{ backgroundColor: t.swatch[0] }}
-                >
-                  <div
-                    className="absolute bottom-1 right-1.5 w-3 h-3 rounded-full"
-                    style={{ backgroundColor: t.swatch[1] }}
-                  />
-                </div>
-                <p className="text-[10px] font-medium leading-none">{t.emoji} {t.name}</p>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="border-t border-border pt-4 space-y-3">
-        {rows.map(({ key, label, description }) => (
-          <div key={key} className="flex items-center justify-between gap-4">
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-foreground">{label}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">{description}</p>
-            </div>
-            <button
-              onClick={() => setSetting(key, !settings[key])}
-              className={`
-                relative flex-shrink-0 w-10 h-6 rounded-full border transition-colors duration-200
-                ${settings[key]
-                  ? "bg-primary/30 border-primary/60"
-                  : "bg-card border-border"
-                }
-              `}
-              role="switch"
-              aria-checked={settings[key] as boolean}
-            >
-              <span
-                className={`
-                  absolute inset-y-0 my-auto w-4 h-4 rounded-full transition-transform duration-200
-                  ${settings[key]
-                    ? "translate-x-5 bg-primary"
-                    : "translate-x-0.5 bg-muted-foreground/50"
-                  }
-                `}
-              />
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}

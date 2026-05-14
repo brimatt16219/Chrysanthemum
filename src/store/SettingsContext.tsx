@@ -2,27 +2,39 @@ import { createContext, useContext, useState, useCallback, useEffect, type React
 import { applyTheme } from "../data/themes";
 
 export interface Settings {
-  /** Gear ambient particle / glow animations on plant tiles */
-  plotAnimations:        boolean;
-  /** Bottom-left gear effect icons (💧 🌸 🧹 🧺 💡) */
-  plotGearIndicator:     boolean;
-  /** Mutation emoji badge on bloomed tiles */
-  plotMutationIndicator: boolean;
-  /** ⚡ mastery badge on tiles */
-  plotMasteryIndicator:  boolean;
-  /** Fertilizer emoji badge on growing tiles */
+  plotAnimations:          boolean;
+  plotGearIndicator:       boolean;
+  plotMutationIndicator:   boolean;
+  plotMutationVfx:         boolean;
+  plotMasteryIndicator:    boolean;
   plotFertilizerIndicator: boolean;
-  /** Active theme id */
-  theme: string;
+  useSprites:              boolean;
+  pixelBorders:            boolean;
+  theme:                   string;
+  weatherEffects:          boolean;
+  // ── Audio ──────────────────────────────────────────────
+  musicVolume:             number;   // 0–1
+  sfxVolume:               number;   // 0–1
+  musicMuted:              boolean;
+  sfxMuted:                boolean;
 }
 
 const DEFAULTS: Settings = {
-  plotAnimations:        true,
-  plotGearIndicator:     true,
-  plotMutationIndicator: true,
-  plotMasteryIndicator:  true,
+  plotAnimations:          true,
+  plotGearIndicator:       true,
+  plotMutationIndicator:   false,
+  plotMutationVfx:         true,
+  plotMasteryIndicator:    true,
   plotFertilizerIndicator: true,
-  theme: "garden",
+  useSprites:              true,
+  pixelBorders:            true,
+  theme:                   "garden",
+  weatherEffects:          true,
+  // ── Audio ──────────────────────────────────────────────
+  musicVolume:             0.5,
+  sfxVolume:               0.7,
+  musicMuted:              false,
+  sfxMuted:                false,
 };
 
 const LS_KEY = "chrysanthemum_settings";

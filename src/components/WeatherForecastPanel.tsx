@@ -1,7 +1,24 @@
+import React from "react";
 import { WEATHER } from "../data/weather";
 import type { WeatherType } from "../data/weather";
 import { useGame } from "../store/GameContext";
 import { FORECAST_SLOT_COSTS, MAX_FORECAST_SLOTS } from "../store/gameStore";
+import { useSettings } from "../store/SettingsContext";
+import { ItemSprite } from "./ItemSprite";
+
+const PX: React.CSSProperties = { imageRendering: "pixelated" };
+
+const WEATHER_SPRITE: Record<WeatherType, string> = {
+  clear:           "/sprites/ui/weather_clear.png",
+  rain:            "/sprites/ui/weather_rain.png",
+  golden_hour:     "/sprites/ui/weather_golden_hour.png",
+  prismatic_skies: "/sprites/ui/weather_prismatic_skies.png",
+  star_shower:     "/sprites/ui/weather_star_shower.png",
+  cold_front:      "/sprites/ui/weather_cold_front.png",
+  heatwave:        "/sprites/ui/weather_heatwave.png",
+  thunderstorm:    "/sprites/ui/weather_thunderstorm.png",
+  tornado:         "/sprites/ui/weather_tornado.png",
+};
 
 const accentClass: Record<WeatherType, string> = {
   clear:           "border-border/40 text-muted-foreground",
@@ -63,6 +80,8 @@ export function WeatherForecastPanel({ onClose }: Props) {
     weatherIsActive,
   } = useGame();
 
+  const { settings } = useSettings();
+
   const slots      = state.weatherForecastSlots ?? 0;
   const canUpgrade = slots < MAX_FORECAST_SLOTS;
   const nextCost   = canUpgrade ? FORECAST_SLOT_COSTS[slots] : null;
@@ -107,7 +126,10 @@ export function WeatherForecastPanel({ onClose }: Props) {
         {/* Sticky header */}
         <div className="flex items-center justify-between px-5 py-4 sticky top-0 bg-card rounded-t-2xl z-10 border-b border-border/40">
           <h2 className="font-bold text-base flex items-center gap-2">
-            <span>🔭</span>
+            {settings.useSprites
+              ? <img src="/sprites/ui/forecast.png" alt="forecast" className="w-5 h-5 object-contain" style={PX} />
+              : <span>🔭</span>
+            }
             <span>Weather Forecast</span>
           </h2>
           <button
@@ -123,7 +145,10 @@ export function WeatherForecastPanel({ onClose }: Props) {
 
         {/* Current weather */}
         <div className={`flex items-center gap-3 rounded-xl border p-3 ${bgClass[activeWeather]} ${accentClass[activeWeather]}`}>
-          <span className="text-3xl">{currentDef.emoji}</span>
+          {settings.useSprites
+            ? <img src={WEATHER_SPRITE[activeWeather]} alt={currentDef.name} className="w-10 h-10 object-contain shrink-0" style={PX} />
+            : <span className="text-3xl shrink-0">{currentDef.emoji}</span>
+          }
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm">{currentDef.name}</p>
             <p className="text-xs text-muted-foreground">Now</p>
@@ -144,7 +169,10 @@ export function WeatherForecastPanel({ onClose }: Props) {
 
           {slots === 0 ? (
             <div className="flex flex-col items-center gap-2 py-6 text-center">
-              <span className="text-4xl">🌫️</span>
+              {settings.useSprites
+                ? <img src="/sprites/ui/weather_unknown.png" alt="unknown" className="w-10 h-10 object-contain" style={PX} />
+                : <span className="text-3xl">🌫️</span>
+              }
               <p className="text-sm text-muted-foreground">
                 Purchase forecast slots to see upcoming weather.
               </p>
@@ -162,7 +190,7 @@ export function WeatherForecastPanel({ onClose }: Props) {
                       key={i}
                       className="flex items-center gap-3 rounded-xl border border-dashed border-border/40 p-3 opacity-50"
                     >
-                      <span className="text-2xl opacity-40">❓</span>
+                      <ItemSprite emoji="❓" sprite="/sprites/ui/weather_unknown.png" name="Pending forecast" textSize="text-2xl" imgSize="w-7 h-7" className="opacity-40" />
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Pending…</p>
                         <p className="text-xs text-muted-foreground/60">
@@ -179,7 +207,10 @@ export function WeatherForecastPanel({ onClose }: Props) {
                     key={i}
                     className={`flex items-center gap-3 rounded-xl border p-3 ${bgClass[entry.type]} ${accentClass[entry.type]}`}
                   >
-                    <span className="text-2xl shrink-0">{def.emoji}</span>
+                    {settings.useSprites
+                      ? <img src={WEATHER_SPRITE[entry.type]} alt={def.name} className="w-8 h-8 object-contain shrink-0" style={PX} />
+                      : <span className="text-2xl shrink-0">{def.emoji}</span>
+                    }
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold">{def.name}</p>
                       <p className="text-xs text-muted-foreground/70 font-mono">
@@ -207,11 +238,15 @@ export function WeatherForecastPanel({ onClose }: Props) {
                 }
               `}
             >
-              {`Unlock slot ${slots + 1} — ${nextCost!.toLocaleString()} 🟡`}
+              <span className="flex items-center justify-center gap-1.5">
+                {`Unlock slot ${slots + 1} — ${nextCost!.toLocaleString()}`}
+                <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-sm" imgSize="w-4 h-4" />
+              </span>
             </button>
             {!canAfford && (
-              <p className="text-xs text-muted-foreground/60 text-center">
-                You have {state.coins.toLocaleString()} 🟡
+              <p className="text-xs text-muted-foreground/60 text-center inline-flex items-center justify-center gap-1 w-full">
+                You have {state.coins.toLocaleString()}
+                <ItemSprite emoji="🟡" sprite="/sprites/ui/coins.png" name="coins" textSize="text-xs" imgSize="w-3.5 h-3.5" />
               </p>
             )}
           </div>

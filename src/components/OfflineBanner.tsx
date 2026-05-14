@@ -2,6 +2,7 @@ import type { OfflineSummary } from "../store/gameStore";
 import { getCurrentPeriod } from "../data/dayNight";
 import type { ChangelogEntry } from "../data/changelog";
 import { CHANGELOG_ITEM_ICONS } from "../data/changelog";
+import { ItemSprite } from "./ItemSprite";
 
 interface Props {
   summary:   OfflineSummary;
@@ -44,7 +45,9 @@ export function OfflineBanner({ summary, onDismiss, changelog, username }: Props
 
         {/* Header */}
         <div className="text-center space-y-1">
-          <p className="text-3xl">{period.emoji}</p>
+          <div className="flex justify-center">
+            <ItemSprite emoji={period.emoji} sprite={`/sprites/ui/period_${period.id}.png`} name={period.label} textSize="text-3xl" imgSize="w-10 h-10" />
+          </div>
           <h2 className="text-lg font-bold">{greeting}</h2>
           {minutesAway >= 1 && (
             <p className="text-sm text-muted-foreground">
@@ -58,7 +61,7 @@ export function OfflineBanner({ summary, onDismiss, changelog, username }: Props
           <div className="space-y-2">
             {readyToHarvest > 0 && (
               <div className="flex items-center gap-3 bg-primary/10 border border-primary/20 rounded-xl px-4 py-3">
-                <span className="text-2xl">🌼</span>
+                <ItemSprite emoji="🌼" sprite="/sprites/ui/task_harvest.png" name="harvest" textSize="text-2xl" imgSize="w-7 h-7" />
                 <div>
                   <p className="text-sm font-semibold">
                     {readyToHarvest} flower{readyToHarvest > 1 ? "s" : ""} ready to harvest
@@ -71,7 +74,7 @@ export function OfflineBanner({ summary, onDismiss, changelog, username }: Props
             )}
             {shopRestocked && (
               <div className="flex items-center gap-3 bg-card/80 border border-border rounded-xl px-4 py-3">
-                <span className="text-2xl">🛒</span>
+                <ItemSprite emoji="🛒" sprite="/sprites/ui/tab_shop.png" name="shop" textSize="text-2xl" imgSize="w-7 h-7" />
                 <div>
                   <p className="text-sm font-semibold">Shop has restocked</p>
                   <p className="text-xs text-muted-foreground">
@@ -82,7 +85,7 @@ export function OfflineBanner({ summary, onDismiss, changelog, username }: Props
             )}
             {supplyRestocked && (
               <div className="flex items-center gap-3 bg-card/80 border border-border rounded-xl px-4 py-3">
-                <span className="text-2xl">🧪</span>
+                <ItemSprite emoji="🧪" sprite="/sprites/ui/consumables.png" name="Supply shop" textSize="text-2xl" imgSize="w-7 h-7" />
                 <div>
                   <p className="text-sm font-semibold">Supply shop has restocked</p>
                   <p className="text-xs text-muted-foreground">
@@ -93,7 +96,7 @@ export function OfflineBanner({ summary, onDismiss, changelog, username }: Props
             )}
             {craftsReady > 0 && (
               <div className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3">
-                <span className="text-2xl">⚒️</span>
+                <ItemSprite emoji="⚒️" sprite="/sprites/ui/tab_craft.png" name="craft" textSize="text-2xl" imgSize="w-7 h-7" />
                 <div>
                   <p className="text-sm font-semibold">
                     {craftsReady} craft{craftsReady > 1 ? "s" : ""} ready to collect
@@ -106,7 +109,7 @@ export function OfflineBanner({ summary, onDismiss, changelog, username }: Props
             )}
             {attunementsReady > 0 && (
               <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-4 py-3">
-                <span className="text-2xl">🌿</span>
+                <ItemSprite emoji="🌿" sprite="/sprites/ui/tab_alchemy.png" name="alchemy" textSize="text-2xl" imgSize="w-7 h-7" />
                 <div>
                   <p className="text-sm font-semibold">
                     {attunementsReady} attunement{attunementsReady > 1 ? "s" : ""} ready to collect
@@ -124,7 +127,7 @@ export function OfflineBanner({ summary, onDismiss, changelog, username }: Props
         {changelog && (
           <div className="border border-primary/20 rounded-xl overflow-hidden flex flex-col min-h-0 flex-1">
             <div className="bg-primary/10 px-4 py-2 flex items-center gap-2 shrink-0">
-              <span className="text-sm">📋</span>
+              <ItemSprite emoji="📋" sprite="/sprites/ui/task_list.png" name="Changelog" textSize="text-sm" imgSize="w-4 h-4" />
               <p className="text-xs font-semibold text-primary">
                 What's new in v{changelog.version} — {changelog.title}
               </p>
@@ -144,7 +147,7 @@ export function OfflineBanner({ summary, onDismiss, changelog, username }: Props
           onClick={onDismiss}
           className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity text-center shrink-0"
         >
-          Let's go! 🌱
+          <span className="inline-flex items-center justify-center gap-1.5">Let's go! <ItemSprite emoji="🌱" sprite="/sprites/flowers/seed.png" name="🌱" textSize="text-sm" imgSize="w-4 h-4" /></span>
         </button>
       </div>
     </div>
