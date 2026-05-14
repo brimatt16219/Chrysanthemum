@@ -63,9 +63,7 @@ export function EventsTab() {
   }, [state.dailyTasks]);
 
   const hasClaimableAchievement = useMemo(() => {
-    const speciesDiscovered = new Set(
-      state.inventory.filter((i) => !i.isSeed).map((i) => i.speciesId)
-    ).size;
+    const speciesDiscovered = state.discovered.filter((k) => !k.includes(":")).length;
     return ACHIEVEMENTS.some((a) => {
       if (state.achievementsClaimed.includes(a.id)) return false;
       if (a.check.kind === "friends_count" || a.check.kind === "recipe_completed") return false;
@@ -77,7 +75,7 @@ export function EventsTab() {
       }
       return false;
     });
-  }, [state.achievementsClaimed, state.achievementStats, state.inventory]);
+  }, [state.achievementsClaimed, state.achievementStats, state.discovered]);
 
   const badgeFor: Record<EventsView, boolean> = {
     events:       hasActiveEvents,

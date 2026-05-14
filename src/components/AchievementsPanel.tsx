@@ -30,10 +30,10 @@ export function AchievementsPanel() {
 
   // ── Derived values ───────────────────────────────────────────────────────────
 
-  /** Unique non-seed species in inventory. */
+  /** Unique base species ever discovered (matches the codex — not current inventory). */
   const speciesDiscovered = useMemo(() =>
-    new Set(state.inventory.filter((i) => !i.isSeed).map((i) => i.speciesId)).size,
-    [state.inventory],
+    state.discovered.filter((k) => !k.includes(":")).length,
+    [state.discovered],
   );
 
   /** Pre-computed { current, target } for every achievement — drives both the
