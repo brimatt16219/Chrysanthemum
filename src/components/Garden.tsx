@@ -565,7 +565,10 @@ export function Garden({ onHarvestPopup }: { onHarvestPopup: (speciesId: string,
   function handleUpgrade() {
     if (!user) { requestSignIn("to upgrade your farm"); return; }
     const optimistic = upgradeFarm(state);
-    if (optimistic) perform(optimistic, () => edgeUpgradeFarm());
+    if (optimistic) {
+      audioManager.playSfx("click");
+      perform(optimistic, () => edgeUpgradeFarm());
+    }
   }
 
   // ── Bulk-action modal item pools ──────────────────────────────────────────

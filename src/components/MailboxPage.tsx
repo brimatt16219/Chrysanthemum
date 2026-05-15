@@ -129,7 +129,7 @@ export function MailboxPage({ onViewProfile, onCountChange }: Props) {
         gearInventory: result.gearInventory,
         discovered:    result.discovered,
       });
-      audioManager.playSfx("click");
+      audioManager.playSfx("buy");
       setClaimedIds((prev) => [...prev, entry.id]);
       setOpenId((prev) => prev === entry.id ? null : prev);
       onCountChange?.(mail.filter((m) => m.id !== entry.id && !m.claimed && !claimedIds.includes(m.id)).length);
