@@ -1,3 +1,17 @@
+## [v2.4.3] — 2026-06-01 — Bug Fixes
+
+### Added
+- **Claim All on Achievements panel** — one tap claims every completed achievement in sequence; a single SFX and toast confirm the batch (#285)
+
+### Fixed
+- **Coin display truncation above 100M** — trailing integer zeros were stripped by a regex intended only for decimal cleanup, causing 100M → "1m", 110M → "11m", etc.; fix scopes the strip to decimal-only; billion tier (1b+) added (#284)
+- **"Session moved to another tab" false positive** — the stale-tab detector fired when the localStorage key was deleted (e.g. signing out in another tab), triggering the overlay with no second tab involved; now ignores key deletions and only triggers on an active session handoff (#283)
+- **Volume sliders unresponsive on mobile** — iOS Safari does not reliably fire React's `onChange` during a touch drag on `<input type="range">`; added `onInput` and `touch-pan-y` so sliders update continuously while dragging (#286)
+- **Flowers lost after Collect All** — if the DB inventory had duplicate entries for the same species (null vs undefined mutation from older saves), harvest-all stacked onto the first match and left the second intact, inflating counts and breaking subsequent sells; harvest-all now deduplicates and merges inventory on read (#287)
+- **Buy All not tracked by daily tasks / achievements** — the bulk "Buy All Seeds" handler was missing the `trackProgress` and `incrementStat` calls that per-slot buys already had (#282)
+
+---
+
 ## [v2.4.2] — 2026-05-14 — Alchemy Sacrifice Fix
 
 ### Fixed
