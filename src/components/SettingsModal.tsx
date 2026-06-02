@@ -261,7 +261,8 @@ function SliderRow({
         value={muted ? 0 : value}
         disabled={muted}
         onChange={(e) => onChange(parseFloat(e.target.value))}
-        className="flex-1 accent-primary disabled:opacity-40"
+        onInput={(e) => onChange(parseFloat((e.target as HTMLInputElement).value))}
+        className="flex-1 accent-primary disabled:opacity-40 touch-pan-y"
       />
       <span className="text-[11px] font-mono text-muted-foreground w-8 text-right">
         {muted ? "—" : `${Math.round(value * 100)}%`}
