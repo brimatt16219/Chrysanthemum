@@ -2,6 +2,7 @@ import React from "react";
 import { useSettings } from "../store/SettingsContext";
 import type { Settings } from "../store/SettingsContext";
 import { THEMES } from "../data/themes";
+import { audioManager } from "../lib/audioManager";
 
 const PX: React.CSSProperties = { imageRendering: "pixelated" };
 
@@ -184,7 +185,7 @@ export function SettingsModal({ onClose, onSignOut }: Props) {
           <>
             <div className="border-t border-border" />
             <button
-              onClick={onSignOut}
+              onClick={() => { audioManager.playSfx("click"); onSignOut!(); }}
               className="w-full py-2 rounded-xl text-xs font-semibold border border-border text-muted-foreground hover:border-primary/40 hover:text-foreground transition-colors text-center"
             >
               Go to title screen
@@ -260,7 +261,8 @@ function SliderRow({
         value={muted ? 0 : value}
         disabled={muted}
         onChange={(e) => onChange(parseFloat(e.target.value))}
-        className="flex-1 accent-primary disabled:opacity-40"
+        onInput={(e) => onChange(parseFloat((e.target as HTMLInputElement).value))}
+        className="flex-1 accent-primary disabled:opacity-40 touch-pan-y"
       />
       <span className="text-[11px] font-mono text-muted-foreground w-8 text-right">
         {muted ? "—" : `${Math.round(value * 100)}%`}

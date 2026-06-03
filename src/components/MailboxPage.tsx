@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useGame } from "../store/GameContext";
+import { audioManager } from "../lib/audioManager";
 import { getFlower, RARITY_CONFIG, MUTATIONS } from "../data/flowers";
 import type { MutationType } from "../data/flowers";
 import { FERTILIZERS } from "../data/upgrades";
@@ -128,6 +129,7 @@ export function MailboxPage({ onViewProfile, onCountChange }: Props) {
         gearInventory: result.gearInventory,
         discovered:    result.discovered,
       });
+      audioManager.playSfx("buy");
       setClaimedIds((prev) => [...prev, entry.id]);
       setOpenId((prev) => prev === entry.id ? null : prev);
       onCountChange?.(mail.filter((m) => m.id !== entry.id && !m.claimed && !claimedIds.includes(m.id)).length);

@@ -26,6 +26,7 @@ export function AchievementsPanel() {
 
   const [activeCategory, setActiveCategory] = useState<AchievementCategory>("harvest");
   const [claiming,       setClaiming]       = useState<string | null>(null);
+  const [claimingAll,    setClaimingAll]    = useState(false);
   const [claimError,     setClaimError]     = useState<string | null>(null);
 
   // ── Derived values ───────────────────────────────────────────────────────────
@@ -118,6 +119,52 @@ export function AchievementsPanel() {
     }
   }
 
+  // ── Claim all handler ────────────────────────────────────────────────────────
+
+  async function handleClaimAll() {
+    if (claimingAll || claiming) return;
+    const claimable = ACHIEVEMENTS.filter((a) => {
+      if (state.achievementsClaimed.includes(a.id)) return false;
+      if (a.check.kind === "friends_count" || a.check.kind === "recipe_completed") return false;
+      const { current, target } = allProgress[a.id];
+      return current >= target;
+    });
+    if (claimable.length === 0) return;
+    setClaimingAll(true);
+    setClaimError(null);
+    // Must be sequential — each call returns updated achievementsClaimed/gems/xp;
+    // parallel calls would each read the pre-claim state and the last write wins.
+    let lastResult: Awaited<ReturnType<typeof edgeAchievementClaim>> | null = null;
+    for (const a of claimable) {
+      try {
+        await saveGridNow();
+        lastResult = await edgeAchievementClaim(a.id);
+        const cur = getState();
+        update({
+          ...cur,
+          achievementsClaimed: lastResult.achievementsClaimed,
+          gardenerLevel:       lastResult.gardenerLevel,
+          gardenerXp:          lastResult.gardenerXp,
+          gems:                lastResult.gems,
+          serverUpdatedAt:     lastResult.serverUpdatedAt,
+        });
+      } catch {
+        // skip individual failures — partial progress is still progress
+      }
+    }
+    if (lastResult) {
+      audioManager.playSfx("achievementClaim");
+      pushGenericToast(
+        "achievement_claim_all",
+        "🏆",
+        `Claimed ${claimable.length} achievement${claimable.length !== 1 ? "s" : ""}!`,
+        undefined,
+        "gain",
+      );
+    }
+    setClaimingAll(false);
+  }
+
   // ── Filtered list for active tab ─────────────────────────────────────────────
 
   const filtered = useMemo(
@@ -127,8 +174,26 @@ export function AchievementsPanel() {
 
   // ── Render ───────────────────────────────────────────────────────────────────
 
+  const totalClaimable = Object.values(claimableCounts).reduce((s, n) => s + n, 0);
+
   return (
     <div className="flex flex-col gap-4">
+
+      {/* ── Claim All button — shown when ≥1 achievement is ready ───────────── */}
+      {totalClaimable > 0 && (
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">
+            {totalClaimable} achievement{totalClaimable !== 1 ? "s" : ""} ready to claim
+          </p>
+          <button
+            onClick={handleClaimAll}
+            disabled={claimingAll || !!claiming}
+            className="text-xs text-primary hover:opacity-80 transition-opacity disabled:opacity-50 font-semibold"
+          >
+            {claimingAll ? "Claiming..." : "Claim All"}
+          </button>
+        </div>
+      )}
 
       {/* ── Category grid ───────────────────────────────────────────────────── */}
       <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5">

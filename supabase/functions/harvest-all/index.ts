@@ -228,7 +228,23 @@ Deno.serve(async (req: Request) => {
       }
 
       const grid = save.grid as GridCell[][];
-      let inventory = (save.inventory ?? []) as { speciesId: string; quantity: number; mutation?: string; isSeed?: boolean }[];
+      // Deduplicate inventory — normalize null/undefined mutations and merge
+      // quantities for logically identical slots. Pre-existing corruption (two
+      // rows for the same species+mutation due to old null-vs-undefined mismatch)
+      // would otherwise inflate counts and cause items to be "lost" after harvest.
+      type InvItem = { speciesId: string; quantity: number; mutation?: string | null; isSeed?: boolean };
+      const rawInventory = (save.inventory ?? []) as InvItem[];
+      const invMap = new Map<string, InvItem>();
+      for (const item of rawInventory) {
+        const key = `${item.speciesId}|${item.mutation ?? null}|${item.isSeed ? "1" : "0"}`;
+        const existing = invMap.get(key);
+        if (existing) {
+          invMap.set(key, { ...existing, quantity: existing.quantity + item.quantity });
+        } else {
+          invMap.set(key, { ...item, mutation: item.mutation ?? null });
+        }
+      }
+      let inventory = Array.from(invMap.values());
       const discovered = [...((save.discovered ?? []) as string[])];
 
       const now = Date.now();

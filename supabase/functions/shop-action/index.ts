@@ -324,7 +324,7 @@ Deno.serve(async (req: Request) => {
         });
       }
       const qty  = body.quantity ?? 1;
-      const item = newInventory.find((i) => i.speciesId === body.speciesId && i.mutation === body.mutation && !i.isSeed);
+      const item = newInventory.find((i) => i.speciesId === body.speciesId && (i.mutation ?? null) === (body.mutation ?? null) && !i.isSeed);
       if (!item || item.quantity < qty) {
         // Idempotent: item already sold or race-depleted — return current state as
         // a no-op success so the client doesn't roll back and re-queue the same sell.
@@ -337,7 +337,7 @@ Deno.serve(async (req: Request) => {
       coins += earned;
       xpGained += Math.floor(earned * SELL_XP_PERCENT);
       newInventory = newInventory
-        .map((i) => i.speciesId === body.speciesId && i.mutation === body.mutation && !i.isSeed ? { ...i, quantity: i.quantity - qty } : i)
+        .map((i) => i.speciesId === body.speciesId && (i.mutation ?? null) === (body.mutation ?? null) && !i.isSeed ? { ...i, quantity: i.quantity - qty } : i)
         .filter((i) => i.quantity > 0);
       logResult = { speciesId: body.speciesId, mutation: body.mutation, qty, earned, coins };
     }
@@ -348,7 +348,7 @@ Deno.serve(async (req: Request) => {
       for (const item of items) {
         const { speciesId, mutation, quantity } = item;
         const invItem = newInventory.find(
-          (i) => i.speciesId === speciesId && i.mutation === (mutation ?? undefined) && !i.isSeed
+          (i) => i.speciesId === speciesId && (i.mutation ?? null) === (mutation ?? null) && !i.isSeed
         );
         // Skip items that aren't in inventory (already sold / race) — never hard-fail
         if (!invItem || invItem.quantity < quantity) continue;
@@ -360,7 +360,7 @@ Deno.serve(async (req: Request) => {
         xpGained += Math.floor(earned * SELL_XP_PERCENT);
         newInventory = newInventory
           .map((i) =>
-            i.speciesId === speciesId && i.mutation === (mutation ?? undefined) && !i.isSeed
+            i.speciesId === speciesId && (i.mutation ?? null) === (mutation ?? null) && !i.isSeed
               ? { ...i, quantity: i.quantity - quantity }
               : i
           )

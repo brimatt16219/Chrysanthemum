@@ -6,10 +6,14 @@ function formatCoins(n: number): string {
     const exp     = Math.floor(Math.log10(x));
     const factor  = Math.pow(10, exp - digits + 1);
     const floored = Math.floor(x / factor) * factor;
-    return floored.toPrecision(digits).replace(/\.?0+$/, "");
+    const str     = floored.toPrecision(digits);
+    // Only strip trailing zeros that follow a decimal point.
+    // Without this guard, the regex would reduce integers like "100" → "1".
+    return str.includes(".") ? str.replace(/\.?0+$/, "") : str;
   }
-  if (n >= 1_000_000) return `${floorSigFigs(n / 1_000_000, 3)}m`;
-  if (n >= 1_000)     return `${floorSigFigs(n / 1_000, 3)}k`;
+  if (n >= 1_000_000_000) return `${floorSigFigs(n / 1_000_000_000, 3)}b`;
+  if (n >= 1_000_000)     return `${floorSigFigs(n / 1_000_000, 3)}m`;
+  if (n >= 1_000)         return `${floorSigFigs(n / 1_000, 3)}k`;
   return Math.floor(n).toString();
 }
 import { useSwipe } from "./hooks/useSwipe";

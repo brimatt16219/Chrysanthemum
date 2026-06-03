@@ -3,6 +3,7 @@ import { FLOWERS } from "../data/flowers";
 import { startLoginMusic } from "../lib/loginAudio";
 import { ItemSprite } from "./ItemSprite";
 import { useSettings } from "../store/SettingsContext";
+import { audioManager } from "../lib/audioManager";
 
 // ── Seeded pseudo-random (stable, no useState needed) ─────────────────────
 function sr(seed: number) {
@@ -173,7 +174,7 @@ export function LoginPage({ onSignIn, onEnter, onSignOut, username, isLoading }:
               style={{ background: "hsl(var(--primary) / 0.55)" }}
             >
               <button
-                onClick={onEnter}
+                onClick={() => { audioManager.playSfx("click"); onEnter(); }}
                 className="btn-pixel-2 w-full py-3 bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity text-center"
               >
                 Enter Garden
@@ -182,7 +183,7 @@ export function LoginPage({ onSignIn, onEnter, onSignOut, username, isLoading }:
             {/* Sign out — understated link */}
             {onSignOut && (
               <button
-                onClick={onSignOut}
+                onClick={() => { audioManager.playSfx("click"); onSignOut!(); }}
                 className="text-xs text-muted-foreground hover:text-foreground transition-colors text-center"
               >
                 Sign out
@@ -198,7 +199,7 @@ export function LoginPage({ onSignIn, onEnter, onSignOut, username, isLoading }:
             style={{ background: "hsl(var(--primary) / 0.55)" }}
           >
             <button
-              onClick={onSignIn}
+              onClick={() => { audioManager.playSfx("click"); onSignIn(); }}
               className="btn-pixel-2 w-full py-3 bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity text-center"
             >
               Sign in with Google
@@ -209,7 +210,7 @@ export function LoginPage({ onSignIn, onEnter, onSignOut, username, isLoading }:
 
       {/* ── Version ──────────────────────────────────────────────────────── */}
       <p className="relative text-[10px] text-muted-foreground/50 tracking-widest font-mono">
-        v2.4.0
+        v2.4.3
       </p>
 
     </div>

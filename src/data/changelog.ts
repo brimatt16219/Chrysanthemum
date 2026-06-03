@@ -14,6 +14,18 @@ export interface ChangelogEntry {
 // Most recent version first — update this with every release
 export const CHANGELOGS: ChangelogEntry[] = [
   {
+    version: "2.4.3",
+    title:   "Bug Fixes",
+    items: [
+      { type: "fixed",   text: "Coin display now correctly shows values above 100M (e.g. 100M, 200M, 110M) — trailing integer zeros were being stripped by a regex intended only for decimal cleanup, causing 100M to render as 1M; added a billion tier (1B+) as well (#284)" },
+      { type: "fixed",   text: "\"Session moved to another tab\" overlay no longer fires as a false positive when signing out in another tab — the stale-tab detector now ignores key deletions (e.g. sign-out) and only triggers on an active session handoff (#283)" },
+      { type: "fixed",   text: "Volume sliders now respond to touch on mobile — iOS Safari does not reliably fire React's onChange during a drag on range inputs; added onInput and touch-pan-y so sliders update continuously while dragging (#286)" },
+      { type: "fixed",   text: "Collecting all blooms no longer silently loses flowers when the inventory had duplicate entries for the same species — harvest-all now deduplicates and merges inventory on read, collapsing any null/undefined mutation duplicates left by older saves (#287)" },
+      { type: "fixed",   text: "Buy All seed purchases are now counted by daily tasks and achievement stats — the bulk buy handler was missing the trackProgress and incrementStat calls that per-slot buys already had (#282)" },
+      { type: "added",   text: "Claim All button on the Achievements panel — one tap claims every completed achievement in sequence; a single SFX and toast confirm the batch (#285)" },
+    ],
+  },
+  {
     version: "2.4.2",
     title:   "Alchemy Sacrifice Fix",
     items: [

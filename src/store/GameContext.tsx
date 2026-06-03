@@ -425,7 +425,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!user) return;
     function handleStorage(e: StorageEvent) {
-      if (e.key === `chrysanthemum_active_tab_${user!.id}` && e.newValue !== tabId.current) {
+      // e.newValue is null when the key is deleted (e.g. sign-out in another tab).
+      // Only set stale when a DIFFERENT active tabId is written — not on deletion.
+      if (
+        e.key === `chrysanthemum_active_tab_${user!.id}` &&
+        e.newValue !== null &&
+        e.newValue !== tabId.current
+      ) {
         saveEnabled.current = false;
         setIsStaleTab(true);
       }

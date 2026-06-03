@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { useGame } from "../store/GameContext";
 import { useSettings } from "../store/SettingsContext";
 import { ItemSprite } from "./ItemSprite";
+import { audioManager } from "../lib/audioManager";
+import { useDailyProgress } from "../hooks/useDailyProgress";
+import { useAchievementStats } from "../hooks/useAchievementStats";
 
 const PX = { imageRendering: "pixelated" as const };
 import { msUntilShopReset, upgradeShopSlots, buyAllSeeds, SHOP_RARITY_WEIGHTS } from "../store/gameStore";
@@ -39,6 +42,8 @@ interface ShopProps {
 export function Shop({ view }: ShopProps) {
   const { state, getState, perform, user, requestSignIn, pushGenericToast } = useGame();
   const { settings } = useSettings();
+  const { trackProgress } = useDailyProgress();
+  const { incrementStat } = useAchievementStats();
   const [countdown,  setCountdown]  = useState(() => msUntilShopReset(state));
   const [showRates,  setShowRates]  = useState(false);
   const [buyingAll,  setBuyingAll]  = useState(false);
@@ -89,6 +94,12 @@ export function Shop({ view }: ShopProps) {
     setBuyingAll(true);
     try {
       await perform(optimistic, () => edgeBuyAllSeeds(), () => {
+        audioManager.playSfx("buy");
+        const totalBought = seedDeltas.reduce((acc, d) => acc + d.qty, 0);
+        if (totalBought > 0) {
+          void trackProgress("shop_buy");
+          incrementStat("plants_bought", totalBought);
+        }
         for (const { speciesId, qty, emoji, label, sprite } of seedDeltas) {
           pushGenericToast(`gain:seed:${speciesId}`, emoji, label, "text-green-400", "gain", qty, sprite);
         }
